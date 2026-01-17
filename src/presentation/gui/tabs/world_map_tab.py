@@ -305,11 +305,11 @@ class WorldMapTab(QWidget):
             if char.world_id == self.selected_world.id:
                 row = self.characters_table.rowCount()
                 self.characters_table.insertRow(row)
-                self.characters_table.setItem(row, 0, QTableWidgetItem(char.name))
-                self.characters_table.setItem(row, 1, QTableWidgetItem(char.status))
-                abilities = ", ".join([a.name for a in char.abilities])
+                self.characters_table.setItem(row, 0, QTableWidgetItem(str(char.name)))
+                self.characters_table.setItem(row, 1, QTableWidgetItem(str(char.status)))
+                abilities = ", ".join([str(a.name) for a in char.abilities])
                 self.characters_table.setItem(row, 2, QTableWidgetItem(abilities))
-                self.characters_table.setItem(row, 3, QTableWidgetItem(char.backstory[:100] + "..." if len(char.backstory) > 100 else char.backstory))
+                self.characters_table.setItem(row, 3, QTableWidgetItem(char.backstory[:100] + "..." if len(str(char.backstory)) > 100 else str(char.backstory)))
 
     def _update_events(self):
         """Update events table."""
@@ -321,10 +321,10 @@ class WorldMapTab(QWidget):
             if event.world_id == self.selected_world.id:
                 row = self.events_table.rowCount()
                 self.events_table.insertRow(row)
-                self.events_table.setItem(row, 0, QTableWidgetItem(event.name))
+                self.events_table.setItem(row, 0, QTableWidgetItem(str(event.name)))
                 self.events_table.setItem(row, 1, QTableWidgetItem(str(event.start_date) if event.start_date else "N/A"))
                 self.events_table.setItem(row, 2, QTableWidgetItem(str(event.end_date) if event.end_date else "N/A"))
-                self.events_table.setItem(row, 3, QTableWidgetItem(event.outcome))
+                self.events_table.setItem(row, 3, QTableWidgetItem(str(event.outcome)))
 
     def _update_items(self):
         """Update items table."""
@@ -336,10 +336,10 @@ class WorldMapTab(QWidget):
             if item.world_id == self.selected_world.id:
                 row = self.items_table.rowCount()
                 self.items_table.insertRow(row)
-                self.items_table.setItem(row, 0, QTableWidgetItem(item.name))
-                self.items_table.setItem(row, 1, QTableWidgetItem(item.item_type))
-                self.items_table.setItem(row, 2, QTableWidgetItem(item.rarity))
-                self.items_table.setItem(row, 3, QTableWidgetItem(item.description[:100] + "..." if len(item.description) > 100 else item.description))
+                self.items_table.setItem(row, 0, QTableWidgetItem(str(item.name)))
+                self.items_table.setItem(row, 1, QTableWidgetItem(str(item.item_type)))
+                self.items_table.setItem(row, 2, QTableWidgetItem(str(item.rarity) if item.rarity else "N/A"))
+                self.items_table.setItem(row, 3, QTableWidgetItem(str(item.description)[:100] + "..." if len(str(item.description)) > 100 else str(item.description)))
 
     def _update_quests(self):
         """Update quests table."""
@@ -351,8 +351,8 @@ class WorldMapTab(QWidget):
             if quest.world_id == self.selected_world.id:
                 row = self.quests_table.rowCount()
                 self.quests_table.insertRow(row)
-                self.quests_table.setItem(row, 0, QTableWidgetItem(quest.name))
-                self.quests_table.setItem(row, 1, QTableWidgetItem(quest.status))
+                self.quests_table.setItem(row, 0, QTableWidgetItem(str(quest.name)))
+                self.quests_table.setItem(row, 1, QTableWidgetItem(str(quest.status)))
                 objectives = "\n".join(quest.objectives)
                 self.quests_table.setItem(row, 2, QTableWidgetItem(objectives[:100] + "..." if len(objectives) > 100 else objectives))
                 rewards = ", ".join([str(r) for r in quest.reward_ids])
@@ -368,8 +368,8 @@ class WorldMapTab(QWidget):
             if storyline.world_id == self.selected_world.id:
                 row = self.storylines_table.rowCount()
                 self.storylines_table.insertRow(row)
-                self.storylines_table.setItem(row, 0, QTableWidgetItem(storyline.name))
-                self.storylines_table.setItem(row, 1, QTableWidgetItem(storyline.storyline_type))
+                self.storylines_table.setItem(row, 0, QTableWidgetItem(str(storyline.name)))
+                self.storylines_table.setItem(row, 1, QTableWidgetItem(str(storyline.storyline_type)))
                 events_quests = f"Events: {len(storyline.event_ids)}, Quests: {len(storyline.quest_ids)}"
                 self.storylines_table.setItem(row, 2, QTableWidgetItem(events_quests))
 
@@ -383,9 +383,9 @@ class WorldMapTab(QWidget):
             if story.world_id == self.selected_world.id:
                 row = self.stories_table.rowCount()
                 self.stories_table.insertRow(row)
-                self.stories_table.setItem(row, 0, QTableWidgetItem(story.name))
-                self.stories_table.setItem(row, 1, QTableWidgetItem(story.story_type))
-                self.stories_table.setItem(row, 2, QTableWidgetItem(story.content[:100] + "..." if len(story.content) > 100 else story.content))
+                self.stories_table.setItem(row, 0, QTableWidgetItem(str(story.name)))
+                self.stories_table.setItem(row, 1, QTableWidgetItem(str(story.story_type)))
+                self.stories_table.setItem(row, 2, QTableWidgetItem(str(story.content)[:100] + "..." if len(str(story.content)) > 100 else str(story.content)))
                 self.stories_table.setItem(row, 3, QTableWidgetItem(str(len(story.choice_ids))))
 
     def _update_tags(self):
@@ -398,10 +398,10 @@ class WorldMapTab(QWidget):
             if tag.world_id == self.selected_world.id:
                 row = self.tags_table.rowCount()
                 self.tags_table.insertRow(row)
-                self.tags_table.setItem(row, 0, QTableWidgetItem(tag.name))
-                self.tags_table.setItem(row, 1, QTableWidgetItem(tag.tag_type))
-                self.tags_table.setItem(row, 2, QTableWidgetItem(tag.color))
-                self.tags_table.setItem(row, 3, QTableWidgetItem(tag.description))
+                self.tags_table.setItem(row, 0, QTableWidgetItem(str(tag.name)))
+                self.tags_table.setItem(row, 1, QTableWidgetItem(str(tag.tag_type)))
+                self.tags_table.setItem(row, 2, QTableWidgetItem(tag.color if tag.color else "N/A"))
+                self.tags_table.setItem(row, 3, QTableWidgetItem(tag.description if tag.description else "N/A"))
 
     def _update_images(self):
         """Update images table."""
@@ -414,9 +414,9 @@ class WorldMapTab(QWidget):
                 row = self.images_table.rowCount()
                 self.images_table.insertRow(row)
                 self.images_table.setItem(row, 0, QTableWidgetItem(image.name))
-                self.images_table.setItem(row, 1, QTableWidgetItem(image.image_type))
-                self.images_table.setItem(row, 2, QTableWidgetItem(image.path))
-                self.images_table.setItem(row, 3, QTableWidgetItem(image.description))
+                self.images_table.setItem(row, 1, QTableWidgetItem(str(image.image_type)))
+                self.images_table.setItem(row, 2, QTableWidgetItem(str(image.path)))
+                self.images_table.setItem(row, 3, QTableWidgetItem(image.description if image.description else "N/A"))
 
     def _update_maps(self):
         """Update maps table."""
@@ -429,9 +429,9 @@ class WorldMapTab(QWidget):
                 row = self.maps_table.rowCount()
                 self.maps_table.insertRow(row)
                 self.maps_table.setItem(row, 0, QTableWidgetItem(map_obj.name))
-                self.maps_table.setItem(row, 1, QTableWidgetItem(map_obj.scale))
+                self.maps_table.setItem(row, 1, QTableWidgetItem(map_obj.scale if map_obj.scale else "N/A"))
                 self.maps_table.setItem(row, 2, QTableWidgetItem("Yes" if map_obj.is_interactive else "No"))
-                self.maps_table.setItem(row, 3, QTableWidgetItem(map_obj.description))
+                self.maps_table.setItem(row, 3, QTableWidgetItem(map_obj.description if map_obj.description else "N/A"))
 
     def _update_notes(self):
         """Update notes table."""
@@ -457,8 +457,8 @@ class WorldMapTab(QWidget):
             if session.world_id == self.selected_world.id:
                 row = self.sessions_table.rowCount()
                 self.sessions_table.insertRow(row)
-                self.sessions_table.setItem(row, 0, QTableWidgetItem(session.name))
-                self.sessions_table.setItem(row, 1, QTableWidgetItem(session.status))
+                self.sessions_table.setItem(row, 0, QTableWidgetItem(str(session.name)))
+                self.sessions_table.setItem(row, 1, QTableWidgetItem(str(session.status)))
                 self.sessions_table.setItem(row, 2, QTableWidgetItem(str(session.scheduled_start)))
                 self.sessions_table.setItem(row, 3, QTableWidgetItem(f"{session.estimated_duration_hours}h"))
                 self.sessions_table.setItem(row, 4, QTableWidgetItem(str(len(session.player_ids))))
