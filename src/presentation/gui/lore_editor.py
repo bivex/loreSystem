@@ -1852,6 +1852,10 @@ class MainWindow(QMainWindow):
         self.resize(1400, 900)
         self._setup_shortcuts()
 
+        # Auto-load sample data
+        sample_path = '/Volumes/External/Code/loreSystem/examples/sample_dark_fantasy_gacha_ru.json'
+        self._load_file_by_path(sample_path, show_message=True)
+
     def _setup_style(self):
         """Setup modern dark theme styling."""
         self.setStyleSheet("""
@@ -2791,6 +2795,87 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save file: {e}")
     
+    def _load_file_by_path(self, file_path: str, show_message: bool = True):
+        """Load lore from a specific file path.
+
+        Args:
+            file_path: Path to the JSON file to load
+            show_message: Whether to show success/error message boxes
+
+        Returns:
+            bool: True if loaded successfully, False otherwise
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            self.lore_data.from_dict(data)
+            self.current_file = Path(file_path)
+            self._refresh_all()
+
+            # Get comprehensive entity counts
+            entity_counts = {
+                'worlds': len(self.lore_data.worlds),
+                'characters': len(self.lore_data.characters),
+                'events': len(self.lore_data.events),
+                'improvements': len(self.lore_data.improvements),
+                'items': len(self.lore_data.items),
+                'quests': len(self.lore_data.quests),
+                'storylines': len(self.lore_data.storylines),
+                'pages': len(self.lore_data.pages),
+                'templates': len(self.lore_data.templates),
+                'stories': len(self.lore_data.stories),
+                'tags': len(self.lore_data.tags),
+                'images': len(self.lore_data.images),
+                'choices': len(self.lore_data.choices),
+                'flowcharts': len(self.lore_data.flowcharts),
+                'handouts': len(self.lore_data.handouts),
+                'inspirations': len(self.lore_data.inspirations),
+                'maps': len(self.lore_data.maps),
+                'notes': len(self.lore_data.notes),
+                'requirements': len(self.lore_data.requirements),
+                'sessions': len(self.lore_data.sessions),
+                'tokenboards': len(self.lore_data.tokenboards),
+            }
+
+            total_entities = sum(entity_counts.values())
+
+            # Update window title
+            self.setWindowTitle(f"🎮 LoreForge - {Path(file_path).name}")
+
+            if show_message:
+                # Build detailed entity report
+                entity_report = '\n'.join([
+                    f"{name.title()}: {count}" for name, count in entity_counts.items() if count > 0
+                ])
+
+                QMessageBox.information(
+                    self, "Success",
+                    f"Project loaded successfully!\n\n"
+                    f"Total Entities: {total_entities}\n\n"
+                    f"{entity_report}"
+                )
+
+            return True
+
+        except FileNotFoundError:
+            if show_message:
+                QMessageBox.warning(
+                    self, "File Not Found",
+                    f"Sample file not found:\n{file_path}\n\n"
+                    f"The application will start with an empty project."
+                )
+            return False
+
+        except Exception as e:
+            if show_message:
+                QMessageBox.critical(
+                    self, "Load Error",
+                    f"Failed to load project:\n\n{str(e)}\n\n"
+                    f"The application will start with an empty project."
+                )
+            return False
+
     def _refresh_all(self):
         """Refresh all tabs."""
         self.worlds_tab.refresh()
@@ -2805,6 +2890,15 @@ class MainWindow(QMainWindow):
         self.stories_tab.refresh()
         self.tags_tab.refresh()
         self.images_tab.refresh()
+        self.choices_tab.refresh()
+        self.flowcharts_tab.refresh()
+        self.handouts_tab.refresh()
+        self.inspirations_tab.refresh()
+        self.maps_tab.refresh()
+        self.notes_tab.refresh()
+        self.requirements_tab.refresh()
+        self.sessions_tab.refresh()
+        self.tokenboards_tab.refresh()
 
 
 def main():
