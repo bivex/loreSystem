@@ -2342,9 +2342,9 @@ class MainWindow(QMainWindow):
                     data = json.load(f)
 
                 self.lore_data.from_dict(data)
-                self.current_file = sample_file
+                # Don't set current_file for sample data to prevent overwriting
                 self._refresh_all()
-                self.setWindowTitle(f"🎮 MythWeave - {sample_file.name}")
+                self.setWindowTitle("🎮 MythWeave - Sample Data")
                 self.statusBar().showMessage("Sample data loaded successfully!")
                 
             except Exception as e:

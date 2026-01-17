@@ -106,6 +106,14 @@ class LoreData:
         self.items.append(item)
         return item
     
+    def update_item(self, item: Item) -> Item:
+        """Update existing item."""
+        for i, existing in enumerate(self.items):
+            if existing.id == item.id:
+                self.items[i] = item
+                return item
+        raise ValueError(f"Item with id {item.id} not found")
+    
     def add_quest(self, quest: Quest) -> Quest:
         """Add quest with generated ID."""
         if quest.id is None:
