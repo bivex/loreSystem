@@ -30,7 +30,9 @@ from src.domain.value_objects.common import (
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
     ItemType, Rarity, QuestStatus, StorylineType,
     PageName, Content, TemplateName, TemplateType, StoryName, StoryType,
-    TagName, TagType, ImagePath, ImageType
+    TagName, TagType, ImagePath, ImageType, ChoiceType, SessionStatus,
+    NoteTitle, MapName, HandoutName, InspirationName, TokenboardName,
+    FlowchartName, Version, GitCommitHash, ImprovementStatus, SessionName
 )
 from src.domain.value_objects.ability import Ability
 

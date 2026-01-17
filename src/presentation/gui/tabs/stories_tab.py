@@ -264,7 +264,7 @@ class StoriesTab(QWidget):
         if self.selected_story and hasattr(self.lore_data, 'choices'):
             for choice_id in self.selected_story.choice_ids:
                 choice = next((c for c in self.lore_data.choices if c.id == choice_id), None)
-                name = str(choice.text) if choice else f"Unknown (ID: {choice_id.value})"
+                name = choice.prompt[:50] + "..." if choice and len(choice.prompt) > 50 else (choice.prompt if choice else f"Unknown (ID: {choice_id.value})")
                 self.choices_list.addItem(name)
 
     def _refresh_connections_list(self):
