@@ -34,6 +34,9 @@ def test_backstory_min_length():
     # valid
     b = Backstory("X" * 120)
     assert len(str(b)) >= 120
+    # test excerpt
+    assert b.excerpt(10) == "X" * 10 + "..."
+    assert b.excerpt(200) == "X" * 120  # no truncation needed
 
 
 def test_version_increment():
@@ -60,6 +63,11 @@ def test_timestamp_and_daterange():
     end = Timestamp(now.value + timedelta(days=1))
     dr = DateRange(start, end)
     assert dr.duration_days() == 1
+
+    # test ongoing event (no end date)
+    ongoing = DateRange(start)
+    assert ongoing.is_ongoing() is True
+    assert ongoing.duration_days() is None
 
     # end before start
     with pytest.raises(ValueError):
