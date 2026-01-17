@@ -1,6 +1,6 @@
 {
-  "app.title": "🎮 LoreForge - Lore Management System",
-  "app.title_short": "🎮 LoreForge",
+  "app.title": "🎮 MythWeave - Lore Management System",
+  "app.title_short": "🎮 MythWeave",
   "menu.file": "File",
   "menu.file.new": "New Project",
   "menu.file.open": "Open...",
@@ -33,6 +33,6 @@
   "new.storyline.name": "New Storyline",
   "new.storyline.description": "Storyline description",
   "new.quest.description": "Quest description",
-  "sample.welcome.title": "Welcome to LoreForge!",
+  "sample.welcome.title": "Welcome to MythWeave!",
   "sample.welcome.body": "Would you like to load the sample lore data to explore the features?"
 }

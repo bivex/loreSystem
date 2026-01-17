@@ -1,4 +1,4 @@
-# LoreForge Chronicles - Git-Based Lore Management System
+# MythWeave Chronicles - Git-Based Lore Management System
 
 A domain-driven, event-sourced lore management system for games using Git version control, SQL for structured data, and safe improvement generation.
 
@@ -245,7 +245,7 @@ See [GUI Quick Start Guide](QUICKSTART_GUI.md) for detailed tutorial.
 
 ## GUI Features
 
-LoreForge includes a PyQt6-based graphical editor:
+MythWeave includes a PyQt6-based graphical editor:
 
 - **Worlds Management**: Create, edit, delete game worlds
 - **Characters Management**: Add characters with abilities and backstories
@@ -292,7 +292,7 @@ python3 run_gui.py
    - Alembic downgrade for schema
    - Elasticsearch snapshots
 
-## Example: LoreForge Chronicles Game
+## Example: MythWeave Chronicles Game
 
 A gacha RPG where:
 - Players collect characters through procedurally-generated narratives

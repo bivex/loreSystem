@@ -7,7 +7,7 @@ RED=\033[0;31m
 NC=\033[0m # No Color
 
 help: ## Show this help message
-	@echo "$(BLUE)LoreForge System - Available Commands$(NC)"
+	@echo "$(BLUE)MythWeave System - Available Commands$(NC)"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
 

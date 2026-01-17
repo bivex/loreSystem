@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launcher script for LoreForge GUI.
+Launcher script for MythWeave GUI.
 
 Usage:
     python run_gui.py

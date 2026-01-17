@@ -1,4 +1,4 @@
-# LoreForge System - Comprehensive Implementation Guide
+# MythWeave System - Comprehensive Implementation Guide
 
 ## Quick Start
 
@@ -372,7 +372,7 @@ def test_create_world_to_elasticsearch_sync():
     assert result['_source']['world_name'] == world_dto.name
 ```
 
-## Example: LoreForge Chronicles Game
+## Example: MythWeave Chronicles Game
 
 ### Game Mechanics Integration
 

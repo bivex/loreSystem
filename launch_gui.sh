@@ -1,8 +1,8 @@
 #!/bin/bash
-# LoreForge GUI Launcher Script
+# MythWeave GUI Launcher Script
 # This script sets up the virtual environment and runs the GUI
 
-echo "🎮 LoreForge GUI Launcher"
+echo "🎮 MythWeave GUI Launcher"
 echo "========================="
 
 # Check if we're in the right directory
@@ -34,7 +34,7 @@ if ! python3 -c "import pydantic" 2>/dev/null; then
 fi
 
 # Run the GUI
-echo "🚀 Starting LoreForge GUI..."
+echo "🚀 Starting MythWeave GUI..."
 echo ""
 echo "💡 Tips:"
 echo "   - Load sample data: Click 'Load' → Select examples/sample_lore.json"

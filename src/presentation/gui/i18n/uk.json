@@ -1,6 +1,6 @@
 {
-  "app.title": "🎮 LoreForge - Система управління всесвітом",
-  "app.title_short": "🎮 LoreForge",
+  "app.title": "🎮 MythWeave - Система управління всесвітом",
+  "app.title_short": "🎮 MythWeave",
   "menu.file": "Файл",
   "menu.file.new": "Новий проект",
   "menu.file.open": "Відкрити...",
@@ -32,6 +32,6 @@
   "new.storyline.name": "Новий сюжет",
   "new.storyline.description": "Опис сюжету",
   "new.quest.description": "Опис квесту",
-  "sample.welcome.title": "Ласкаво просимо до LoreForge!",
+  "sample.welcome.title": "Ласкаво просимо до MythWeave!",
   "sample.welcome.body": "Бажаєте завантажити приклад даних, щоб ознайомитися з можливостями?"
 }

@@ -1,5 +1,5 @@
 """
-MainWindow - Main application window for LoreForge.
+MainWindow - Main application window for MythWeave.
 """
 import json
 import sys
@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         self.current_locale = 'en'  # Default to English
         self._setup_style()
         self._setup_ui()
-        self.setWindowTitle(I18n.t('app.title', "🎮 LoreForge - Lore Management System"))
+        self.setWindowTitle(I18n.t('app.title', "🎮 MythWeave - Lore Management System"))
         self.setWindowIcon(QIcon())  # We'll add a proper icon later
         self.resize(1400, 900)
         self._setup_shortcuts()
@@ -277,7 +277,7 @@ class MainWindow(QMainWindow):
         header_layout = QVBoxLayout()
         header_layout.setContentsMargins(20, 10, 20, 10)
 
-        title_label = QLabel("🎮 LoreForge Chronicles")
+        title_label = QLabel("🎮 MythWeave Chronicles")
         title_label.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setStyleSheet("color: #fff; font-weight: bold;")
@@ -417,7 +417,7 @@ class MainWindow(QMainWindow):
     def _retranslate_ui(self):
         """Update all translatable UI texts."""
         # Window title
-        self.setWindowTitle(I18n.t('app.title', "🎮 LoreForge - Lore Management System"))
+        self.setWindowTitle(I18n.t('app.title', "🎮 MythWeave - Lore Management System"))
 
         # Tabs
         try:
@@ -468,7 +468,7 @@ class MainWindow(QMainWindow):
             len(self.lore_data.items) == 0):
 
             reply = QMessageBox.question(
-                self, I18n.t('sample.welcome.title', "Welcome to LoreForge!"),
+                self, I18n.t('sample.welcome.title', "Welcome to MythWeave!"),
                 I18n.t('sample.welcome.body', "Would you like to load the sample lore data to explore the features?"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
@@ -489,7 +489,7 @@ class MainWindow(QMainWindow):
                 self.lore_data.from_dict(data)
                 self.current_file = sample_file
                 self._refresh_all()
-                self.setWindowTitle(f"🎮 LoreForge - {sample_file.name}")
+                self.setWindowTitle(f"🎮 MythWeave - {sample_file.name}")
                 self.statusBar().showMessage("Sample data loaded successfully!")
 
             except Exception as e:
@@ -575,7 +575,7 @@ class MainWindow(QMainWindow):
 
         about_action = QAction("&About", self)
         about_action.triggered.connect(self._show_about)
-        about_action.setToolTip("About LoreForge")
+        about_action.setToolTip("About MythWeave")
         help_menu.addAction(about_action)
 
     def _set_locale(self, locale: str):
@@ -597,7 +597,7 @@ class MainWindow(QMainWindow):
     def _retranslate_ui(self):
         """Update all translatable UI texts."""
         # Window title
-        self.setWindowTitle(I18n.t('app.title', "🎮 LoreForge - Lore Management System"))
+        self.setWindowTitle(I18n.t('app.title', "🎮 MythWeave - Lore Management System"))
 
         # Tabs
         try:
@@ -758,8 +758,8 @@ class MainWindow(QMainWindow):
     def _show_about(self):
         """Show about dialog."""
         QMessageBox.about(
-            self, "About LoreForge",
-            "<h2>LoreForge Chronicles</h2>"
+            self, "About MythWeave",
+            "<h2>MythWeave Chronicles</h2>"
             "<p>A powerful tool for managing fantasy world lore.</p>"
             "<p><b>Version:</b> 1.0.0</p>"
             "<p><b>Built with:</b> Python 3.14, PyQt6</p>"
@@ -831,7 +831,7 @@ class MainWindow(QMainWindow):
         self._refresh_all()
         self.progress_bar.setVisible(False)
         self.operation_label.setText("New project created")
-        self.setWindowTitle("🎮 LoreForge - Lore Management System (Untitled)")
+        self.setWindowTitle("🎮 MythWeave - Lore Management System (Untitled)")
 
     def _load_file(self):
         """Load lore from JSON file."""
@@ -857,7 +857,7 @@ class MainWindow(QMainWindow):
 
                 self.progress_bar.setVisible(False)
                 self.operation_label.setText(f"Loaded: {Path(file_path).name}")
-                self.setWindowTitle(f"🎮 LoreForge - {Path(file_path).name}")
+                self.setWindowTitle(f"🎮 MythWeave - {Path(file_path).name}")
 
                 # Get updated stats for the message
                 total_entities = (
@@ -920,7 +920,7 @@ class MainWindow(QMainWindow):
             self.current_file = file_path
             self.progress_bar.setVisible(False)
             self.operation_label.setText(f"Saved: {file_path.name}")
-            self.setWindowTitle(f"🎮 LoreForge - {file_path.name}")
+            self.setWindowTitle(f"🎮 MythWeave - {file_path.name}")
             QMessageBox.information(self, "Success", "Project saved successfully!")
 
         except Exception as e:

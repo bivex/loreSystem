@@ -1,6 +1,6 @@
-# LoreForge GUI Quick Start Guide
+# MythWeave GUI Quick Start Guide
 
-Get started with the LoreForge graphical editor in 5 minutes.
+Get started with the MythWeave graphical editor in 5 minutes.
 
 ## Installation
 

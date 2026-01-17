@@ -1,4 +1,4 @@
-# LoreForge GUI Editor
+# MythWeave GUI Editor
 
 PyQt6-based graphical user interface for managing game lore.
 
@@ -108,7 +108,7 @@ python3 run_gui.py
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│              🎮 LoreForge Chronicles                │
+│              🎮 MythWeave Chronicles                │
 ├─────────────────────────────────────────────────────┤
 │  [Worlds] [Characters] [Events] [Improvements] [Items] │
 │                                                      │
@@ -353,4 +353,4 @@ When extending the GUI:
 
 ## License
 
-Part of the LoreForge system. See main project LICENSE.
+Part of the MythWeave system. See main project LICENSE.

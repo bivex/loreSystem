@@ -99,7 +99,7 @@ class QuestsTab(QWidget):
         """Add a new quest."""
         # Simplified: just create a basic quest
         if not self.lore_data.worlds:
-            QMessageBox.warning(self, I18n.t('app.title_short', "LoreForge"), I18n.t('warning.no_worlds', "Please create a world first."))
+            QMessageBox.warning(self, I18n.t('app.title_short', "MythWeave"), I18n.t('warning.no_worlds', "Please create a world first."))
             return
 
         world = self.lore_data.worlds[0]  # Use first world

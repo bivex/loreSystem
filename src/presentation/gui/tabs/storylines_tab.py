@@ -94,7 +94,7 @@ class StorylinesTab(QWidget):
     def _add_storyline(self):
         """Add a new storyline."""
         if not self.lore_data.worlds:
-            QMessageBox.warning(self, I18n.t('app.title_short', "LoreForge"), I18n.t('warning.no_worlds', "Please create a world first."))
+            QMessageBox.warning(self, I18n.t('app.title_short', "MythWeave"), I18n.t('warning.no_worlds', "Please create a world first."))
             return
 
         world = self.lore_data.worlds[0]  # Use first world
@@ -105,7 +105,7 @@ class StorylinesTab(QWidget):
         if not events_in_world and not quests_in_world:
             QMessageBox.warning(
                 self,
-                I18n.t('app.title_short', "LoreForge"),
+                I18n.t('app.title_short', "MythWeave"),
                 I18n.t('warning.no_events_or_quests', "Please create at least one Event or Quest in the selected world before adding a Storyline.")
             )
             return

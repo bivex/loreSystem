@@ -1,4 +1,4 @@
-# LoreForge Chronicles - Implementation Complete ✓
+# MythWeave Chronicles - Implementation Complete ✓
 
 ## Executive Summary
 
@@ -178,7 +178,7 @@ lore-repo/
 6. **Domain Services**: (Prepared for: RequirementValidator)
 7. **Factories**: Entity.create() methods
 
-## Example: LoreForge Chronicles Game
+## Example: MythWeave Chronicles Game
 
 ### Gacha RPG Integration
 

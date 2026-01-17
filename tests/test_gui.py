@@ -28,7 +28,7 @@ def test_main_window_initialization(qtbot):
     qtbot.addWidget(window)
 
     # Check window properties
-    assert window.windowTitle().startswith("🎮 LoreForge")
+    assert window.windowTitle().startswith("🎮 MythWeave")
     assert window.lore_data is not None
     assert isinstance(window.lore_data, LoreData)
 

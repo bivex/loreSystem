@@ -1,5 +1,5 @@
 """
-Internationalization support for LoreForge.
+Internationalization support for MythWeave.
 """
 import json
 from pathlib import Path

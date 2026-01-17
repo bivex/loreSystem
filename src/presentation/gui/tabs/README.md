@@ -1,6 +1,6 @@
 # GUI Tab Modules
 
-This directory contains modular tab classes for the LoreForge GUI application. Each tab manages a specific entity type with full CRUD operations.
+This directory contains modular tab classes for the MythWeave GUI application. Each tab manages a specific entity type with full CRUD operations.
 
 ## Available Tabs
 

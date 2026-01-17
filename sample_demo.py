@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sample demonstration of the LoreForge system.
+Sample demonstration of the MythWeave system.
 
 This script demonstrates:
 1. Creating domain entities
@@ -274,7 +274,7 @@ def demo_value_object_validation():
 def main():
     """Run the complete demonstration."""
     print("\n" + "="*60)
-    print("  🎮 LoreForge Chronicles - System Demonstration")
+    print("  🎮 MythWeave Chronicles - System Demonstration")
     print("="*60)
     print("\nThis demo shows the core domain model in action:")
     print("• Creating worlds, characters, and events")

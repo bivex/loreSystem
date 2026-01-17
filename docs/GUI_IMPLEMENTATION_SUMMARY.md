@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully implemented a complete PyQt6-based graphical user interface for the LoreForge lore management system. The GUI provides a user-friendly way to create, edit, and manage game lore with full domain validation.
+Successfully implemented a complete PyQt6-based graphical user interface for the MythWeave lore management system. The GUI provides a user-friendly way to create, edit, and manage game lore with full domain validation.
 
 ## What Was Built
 
@@ -454,7 +454,7 @@ python3 run_gui.py
 
 ## Conclusion
 
-Successfully implemented a production-quality PyQt6 GUI for the LoreForge lore management system. The implementation:
+Successfully implemented a production-quality PyQt6 GUI for the MythWeave lore management system. The implementation:
 
 - ✅ Follows hexagonal architecture principles
 - ✅ Integrates seamlessly with domain layer
@@ -464,6 +464,6 @@ Successfully implemented a production-quality PyQt6 GUI for the LoreForge lore m
 - ✅ Works with sample data
 - ✅ Ready for end-user testing
 
-The GUI makes the LoreForge system accessible to non-technical users while maintaining the integrity of the domain-driven design. All domain validation rules are enforced, ensuring data quality and business rule compliance.
+The GUI makes the MythWeave system accessible to non-technical users while maintaining the integrity of the domain-driven design. All domain validation rules are enforced, ensuring data quality and business rule compliance.
 
 **Next steps**: Add Events tab, implement repository integration, add search functionality.

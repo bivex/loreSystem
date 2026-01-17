@@ -2,7 +2,7 @@
 
 # Application
 application:
-  name: "LoreForge System"
+  name: "MythWeave System"
   version: "0.1.0"
   environment: "development"  # development, staging, production
 

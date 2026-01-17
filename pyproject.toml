@@ -2,7 +2,7 @@
 name = "lore-system"
 version = "0.1.0"
 description = "Git-based lore management system for games following DDD principles"
-authors = ["LoreForge Team"]
+authors = ["MythWeave Team"]
 readme = "README.md"
 packages = [{include = "src"}]
 
