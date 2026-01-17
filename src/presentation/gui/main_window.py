@@ -30,6 +30,7 @@ from src.presentation.gui.tabs.templates_tab import TemplatesTab
 from src.presentation.gui.tabs.stories_tab import StoriesTab
 from src.presentation.gui.tabs.tags_tab import TagsTab
 from src.presentation.gui.tabs.images_tab import ImagesTab
+from src.presentation.gui.tabs.world_map_tab import WorldMapTab
 from src.domain.value_objects.common import EntityId
 
 
@@ -338,6 +339,11 @@ class MainWindow(QMainWindow):
         """)
 
         self.worlds_tab = WorldsTab(self.lore_data)
+        try:
+            self.world_map_tab = WorldMapTab(self.lore_data)
+        except Exception as e:
+            print(f"Error creating WorldMapTab: {e}")
+            self.world_map_tab = QWidget()  # Placeholder
         self.characters_tab = CharactersTab(self.lore_data)
         self.events_tab = EventsTab(self.lore_data)
         self.improvements_tab = ImprovementsTab(self.lore_data)
@@ -349,10 +355,18 @@ class MainWindow(QMainWindow):
         self.stories_tab = StoriesTab(self.lore_data)
         self.tags_tab = TagsTab(self.lore_data)
         self.images_tab = ImagesTab(self.lore_data)
+        try:
+            self.world_map_tab = WorldMapTab(self.lore_data)
+        except Exception as e:
+            print(f"Error creating WorldMapTab: {e}")
+            import traceback
+            traceback.print_exc()
+            self.world_map_tab = QWidget()  # Placeholder
 
         # Add to stacked widget and list
         tabs = [
             (self.worlds_tab, I18n.t('tab.worlds', "🌍 Worlds")),
+            (self.world_map_tab, I18n.t('tab.world_map', "🗺️ World Map")),
             (self.characters_tab, I18n.t('tab.characters', "👥 Characters")),
             (self.events_tab, I18n.t('tab.events', "⚡ Events")),
             (self.improvements_tab, I18n.t('tab.improvements', "⬆️ Improvements")),
@@ -372,6 +386,9 @@ class MainWindow(QMainWindow):
 
         # Set initial selection
         self.tab_list.setCurrentRow(0)
+        self.tab_list.update()
+        self.tab_list.repaint()
+        self.tab_list.setFocus()
 
         tab_layout.addWidget(self.tab_list)
         tab_layout.addWidget(self.stacked_widget)
@@ -462,7 +479,7 @@ class MainWindow(QMainWindow):
 
     def _load_sample_data(self):
         """Load the sample data file."""
-        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_lore.json"
+        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
 
         if sample_file.exists():
             try:
@@ -752,6 +769,7 @@ class MainWindow(QMainWindow):
     def _refresh_all(self):
         """Refresh all tabs and update statistics."""
         self.worlds_tab.refresh()
+        self.world_map_tab.refresh()
         self.characters_tab.refresh()
         self.events_tab.refresh()
         self.improvements_tab.refresh()

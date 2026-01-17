@@ -109,6 +109,7 @@ from src.presentation.gui.tabs import (
     ChoiceTab, FlowchartTab, HandoutTab, InspirationTab, MapTab,
     NoteTab, RequirementTab, SessionTab, TokenboardTab
 )
+from src.presentation.gui.tabs.world_map_tab import WorldMapTab
 
 
 # Import LoreData from separate module
@@ -2155,6 +2156,7 @@ class MainWindow(QMainWindow):
         """)
 
         self.worlds_tab = WorldsTab(self.lore_data)
+        self.world_map_tab = WorldMapTab(self.lore_data)
         self.characters_tab = CharactersTab(self.lore_data)
         self.events_tab = EventsTab(self.lore_data)
         self.improvements_tab = ImprovementsTab(self.lore_data)
@@ -2192,6 +2194,7 @@ class MainWindow(QMainWindow):
             nonlocal widget_index
             self.stacked_widget.addWidget(widget)
             self.tab_list.addItem(name)
+            print(f"Added tab: {name}")  # Debug
             # Map current row to widget index
             self.tab_row_to_widget_index[self.tab_list.count() - 1] = widget_index
             widget_index += 1
@@ -2199,6 +2202,7 @@ class MainWindow(QMainWindow):
         # Core Entities
         add_divider("Core Entities")
         add_tab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
+        add_tab(self.world_map_tab, I18N.t('tab.world_map', "🗺️ World Map"))
         add_tab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
         add_tab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
         add_tab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
@@ -2330,7 +2334,7 @@ class MainWindow(QMainWindow):
 
     def _load_sample_data(self):
         """Load the sample data file."""
-        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_lore.json"
+        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
         
         if sample_file.exists():
             try:
@@ -2921,6 +2925,7 @@ class MainWindow(QMainWindow):
     def _refresh_all(self):
         """Refresh all tabs."""
         self.worlds_tab.refresh()
+        self.world_map_tab.refresh()
         self.characters_tab.refresh()
         self.events_tab.refresh()
         self.improvements_tab.refresh()
