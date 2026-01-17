@@ -35,6 +35,7 @@ class Rarity(str, Enum):
     RARE = "rare"
     EPIC = "epic"
     LEGENDARY = "legendary"
+    MYTHIC = "mythic"
 
 
 class ImprovementStatus(str, Enum):
@@ -242,22 +243,3 @@ class DateRange:
             return None
         delta = self.end_date.value - self.start_date.value
         return delta.days
-
-
-class ItemType(str, Enum):
-    """Types of items in the lore."""
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    ARTIFACT = "artifact"
-    CONSUMABLE = "consumable"
-    TOOL = "tool"
-    OTHER = "other"
-
-
-class Rarity(str, Enum):
-    """Item rarity levels."""
-    COMMON = "common"
-    UNCOMMON = "uncommon"
-    RARE = "rare"
-    EPIC = "epic"
-    LEGENDARY = "legendary"
