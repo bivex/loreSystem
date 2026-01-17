@@ -142,6 +142,7 @@ class TestWorldInvariants:
                 tenant_id=TenantId(1),
                 name=WorldName("Test"),
                 description=Description("Test"),
+                parent_id=None,
                 created_at=now,
                 updated_at=earlier,  # Invalid: before created_at
                 version=Version(1),

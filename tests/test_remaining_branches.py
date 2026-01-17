@@ -36,6 +36,7 @@ def test_character_invariant_updated_before_created():
             backstory=Backstory("X" * 120),
             status=None,
             abilities=[],
+            parent_id=None,
             created_at=now,
             updated_at=past,
             version=None,

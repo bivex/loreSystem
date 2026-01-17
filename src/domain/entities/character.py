@@ -39,6 +39,7 @@ class Character:
     backstory: Backstory
     status: CharacterStatus
     abilities: List[Ability]
+    parent_id: Optional[EntityId]  # For hierarchical character relationships
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -70,6 +71,7 @@ class Character:
         backstory: Backstory,
         abilities: Optional[List[Ability]] = None,
         status: CharacterStatus = CharacterStatus.ACTIVE,
+        parent_id: Optional[EntityId] = None,
     ) -> 'Character':
         """
         Factory method for creating a new Character.
@@ -85,6 +87,7 @@ class Character:
             backstory=backstory,
             status=status,
             abilities=abilities or [],
+            parent_id=parent_id,
             created_at=now,
             updated_at=now,
             version=Version(1),
@@ -154,6 +157,15 @@ class Character:
     def is_active(self) -> bool:
         """Check if character is currently active."""
         return self.status == CharacterStatus.ACTIVE
+    
+    def move_to_parent(self, new_parent_id: Optional[EntityId]) -> None:
+        """Move character to new parent in hierarchy."""
+        if self.parent_id == new_parent_id:
+            return
+        
+        object.__setattr__(self, 'parent_id', new_parent_id)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
     
     def ability_count(self) -> int:
         """Get number of abilities."""

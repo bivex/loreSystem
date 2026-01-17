@@ -34,6 +34,7 @@ class World:
     tenant_id: TenantId
     name: WorldName
     description: Description
+    parent_id: Optional[EntityId]  # For hierarchical world structure
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -55,6 +56,7 @@ class World:
         tenant_id: TenantId,
         name: WorldName,
         description: Description,
+        parent_id: Optional[EntityId] = None,
     ) -> 'World':
         """
         Factory method for creating a new World.
@@ -67,6 +69,7 @@ class World:
             tenant_id=tenant_id,
             name=name,
             description=description,
+            parent_id=parent_id,
             created_at=now,
             updated_at=now,
             version=Version(1),
@@ -82,6 +85,19 @@ class World:
             return  # No change
         
         object.__setattr__(self, 'description', new_description)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
+    
+    def move_to_parent(self, new_parent_id: Optional[EntityId]) -> None:
+        """
+        Move world to new parent in hierarchy.
+        
+        Note: Must check for cycles and validity by repository.
+        """
+        if self.parent_id == new_parent_id:
+            return
+        
+        object.__setattr__(self, 'parent_id', new_parent_id)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     

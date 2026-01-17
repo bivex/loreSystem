@@ -18,6 +18,12 @@ class EntityType(str, Enum):
     ITEM = "item"
     QUEST = "quest"
     STORYLINE = "storyline"
+    PAGE = "page"
+    TEMPLATE = "template"
+    TAG = "tag"
+    IMAGE = "image"
+    STORY = "story"
+    CHOICE = "choice"
 
 
 class ItemType(str, Enum):
@@ -74,6 +80,79 @@ class StorylineType(str, Enum):
     MAIN = "main"
     SIDE = "side"
     EPISODE = "episode"
+
+
+class TemplateType(str, Enum):
+    """Types of templates."""
+    PAGE = "page"
+    RUNE = "rune"  # Template within template
+
+
+class TagType(str, Enum):
+    """Types of visual tags."""
+    CATEGORY = "category"
+    THEME = "theme"
+    STATUS = "status"
+    CUSTOM = "custom"
+
+
+class ImageType(str, Enum):
+    """Types of images."""
+    PNG = "png"
+    JPG = "jpg"
+    JPEG = "jpeg"
+    GIF = "gif"
+    SVG = "svg"
+
+
+class StoryType(str, Enum):
+    """Types of stories in Tome."""
+    LINEAR = "linear"
+    NON_LINEAR = "non_linear"
+    INTERACTIVE = "interactive"
+
+
+class ChoiceType(str, Enum):
+    """Types of player choices."""
+    BRANCH = "branch"
+    CONSEQUENCE = "consequence"
+    DECISION = "decision"
+
+
+class SessionStatus(str, Enum):
+    """Session lifecycle states."""
+    SCHEDULED = "scheduled"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class NoteType(str, Enum):
+    """Types of notes."""
+    GENERAL = "general"
+    REMINDER = "reminder"
+    SESSION = "session"
+    CHARACTER = "character"
+    PLOT = "plot"
+
+
+class HandoutType(str, Enum):
+    """Types of handouts."""
+    DOCUMENT = "document"
+    IMAGE = "image"
+    MAP = "map"
+    PROP = "prop"
+
+
+class InspirationCategory(str, Enum):
+    """Categories of inspiration."""
+    PLOT = "plot"
+    CHARACTER = "character"
+    SETTING = "setting"
+    ITEM = "item"
+    ENCOUNTER = "encounter"
+    DIALOGUE = "dialogue"
+    OTHER = "other"
 
 
 @dataclass(frozen=True)
@@ -260,3 +339,206 @@ class DateRange:
             return None
         delta = self.end_date.value - self.start_date.value
         return delta.days
+
+
+@dataclass(frozen=True)
+class PageName:
+    """Page name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Page name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Page name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class TemplateName:
+    """Template name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Template name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Template name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class TagName:
+    """Tag name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Tag name cannot be empty")
+        if len(self.value) > 100:
+            raise ValueError("Tag name must be <= 100 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class ImagePath:
+    """Image file path with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Image path cannot be empty")
+        if len(self.value) > 500:
+            raise ValueError("Image path must be <= 500 characters")
+        # Basic validation for file extension
+        allowed_ext = ['.png', '.jpg', '.jpeg', '.gif', '.svg']
+        if not any(self.value.lower().endswith(ext) for ext in allowed_ext):
+            raise ValueError("Image path must have valid extension")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class StoryName:
+    """Story name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Story name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Story name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class Content:
+    """Rich content for pages and stories."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or not self.value.strip():
+            raise ValueError("Content cannot be empty")
+
+    def __str__(self) -> str:
+        return self.value
+
+    def excerpt(self, length: int = 100) -> str:
+        """Return shortened version for display."""
+        if len(self.value) <= length:
+            return self.value
+        return self.value[:length] + "..."
+
+
+@dataclass(frozen=True)
+class SessionName:
+    """Session name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Session name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Session name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class NoteTitle:
+    """Note title with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Note title cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Note title must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class MapName:
+    """Map name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Map name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Map name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class HandoutName:
+    """Handout name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Handout name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Handout name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class InspirationName:
+    """Inspiration name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Inspiration name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Inspiration name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class TokenboardName:
+    """Tokenboard name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Tokenboard name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Tokenboard name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True)
+class FlowchartName:
+    """Flowchart name with validation."""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or len(self.value.strip()) == 0:
+            raise ValueError("Flowchart name cannot be empty")
+        if len(self.value) > 255:
+            raise ValueError("Flowchart name must be <= 255 characters")
+
+    def __str__(self) -> str:
+        return self.value

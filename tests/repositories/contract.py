@@ -33,14 +33,10 @@ class WorldRepositoryContract:
     @pytest.fixture
     def sample_world(self):
         """Sample world for testing."""
-        return World(
-            id=EntityId(1),
+        return World.create(
             tenant_id=TenantId(100),
             name=WorldName("Test World"),
-            description="A test world",
-            version=Version(1),
-            created_at=Timestamp.now(),
-            updated_at=Timestamp.now()
+            description="A test world"
         )
 
     def test_save_and_find_by_id(self, repo, sample_world):
@@ -114,23 +110,18 @@ class CharacterRepositoryContract:
     @pytest.fixture
     def sample_character(self):
         """Sample character for testing."""
-        return Character(
-            id=EntityId(1),
+        return Character.create(
             tenant_id=TenantId(100),
             world_id=EntityId(1),
             name=CharacterName("Test Character"),
             backstory=Backstory("A test character backstory" * 20),  # Meet min length
-            status="ACTIVE",
             abilities=[
                 Ability(
                     name=AbilityName("Strength"),
                     power_level=PowerLevel(5),
                     description="Physical strength"
                 )
-            ],
-            version=Version(1),
-            created_at=Timestamp.now(),
-            updated_at=Timestamp.now()
+            ]
         )
 
     def test_save_and_find_by_id(self, repo, sample_character):

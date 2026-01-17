@@ -228,6 +228,7 @@ class LoreData:
             tenant_id=TenantId(1),
             name=WorldName(data['name']),
             description=Description(data['description']),
+            parent_id=EntityId(data['parent_id']) if data.get('parent_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
