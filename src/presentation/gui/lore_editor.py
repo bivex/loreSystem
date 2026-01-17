@@ -24,6 +24,40 @@ from PyQt6.QtGui import (
     QFont, QColor, QPalette, QIcon, QAction, QPixmap, QKeySequence,
     QPainter, QBrush, QLinearGradient
 )
+import json
+from pathlib import Path as _Path
+
+
+# --- Simple i18n support -------------------------------------------------
+class I18n:
+    def __init__(self, locale: str | None = None):
+        self.locale = locale or 'en'
+        self._dict: dict = {}
+        self.load(self.locale)
+
+    def load(self, locale: str):
+        self.locale = locale
+        base = _Path(__file__).parent / 'i18n'
+        path = base / f"{locale}.json"
+        if path.exists():
+            with open(path, 'r', encoding='utf-8') as f:
+                self._dict = json.load(f)
+        else:
+            # fallback to en
+            fallback = base / 'en.json'
+            if fallback.exists():
+                with open(fallback, 'r', encoding='utf-8') as f:
+                    self._dict = json.load(f)
+            else:
+                self._dict = {}
+
+    def t(self, key: str, default: str | None = None) -> str:
+        return self._dict.get(key, default or key)
+
+
+# singleton
+I18N = I18n()
+
 import traceback
 
 
@@ -161,7 +195,19 @@ class LoreData:
         self.improvements = [self._dict_to_improvement(i) for i in data.get('improvements', [])]
         self.items = [self._dict_to_item(i) for i in data.get('items', [])]
         self.quests = [self._dict_to_quest(q) for q in data.get('quests', [])]
-        self.storylines = [self._dict_to_storyline(s) for s in data.get('storylines', [])]
+        
+        # Validate storylines before creating them
+        valid_storylines = []
+        for s in data.get('storylines', []):
+            if s.get('event_ids') or s.get('quest_ids'):
+                try:
+                    valid_storylines.append(self._dict_to_storyline(s))
+                except Exception as e:
+                    print(f"Warning: Skipping invalid storyline {s.get('id', 'unknown')}: {e}")
+            else:
+                print(f"Warning: Skipping storyline {s.get('id', 'unknown')} - must have at least one event or quest")
+        
+        self.storylines = valid_storylines
         self._next_id = data.get('next_id', 1)
     
     @staticmethod
@@ -1976,7 +2022,7 @@ class QuestsTab(QWidget):
         """Add a new quest."""
         # Simplified: just create a basic quest
         if not self.lore_data.worlds:
-            QMessageBox.warning(self, "No Worlds", "Please create a world first.")
+            QMessageBox.warning(self, I18N.t('app.title_short', "LoreForge"), I18N.t('warning.no_worlds', "Please create a world first."))
             return
         
         world = self.lore_data.worlds[0]  # Use first world
@@ -1997,8 +2043,8 @@ class QuestsTab(QWidget):
             id=None,
             tenant_id=self.lore_data.tenant_id,
             world_id=world.id,
-            name="New Quest",
-            description=Description("Quest description"),
+            name=I18N.t('new.quest.name', "New Quest"),
+            description=Description(I18N.t('new.quest.description', "Quest description")),
             objectives=["Complete objective 1"],
             status=QuestStatus.ACTIVE,
             participant_ids=[participant_id],
@@ -2100,7 +2146,7 @@ class StorylinesTab(QWidget):
     def _add_storyline(self):
         """Add a new storyline."""
         if not self.lore_data.worlds:
-            QMessageBox.warning(self, "No Worlds", "Please create a world first.")
+            QMessageBox.warning(self, I18N.t('app.title_short', "LoreForge"), I18N.t('warning.no_worlds', "Please create a world first."))
             return
         
         world = self.lore_data.worlds[0]  # Use first world
@@ -2111,8 +2157,8 @@ class StorylinesTab(QWidget):
         if not events_in_world and not quests_in_world:
             QMessageBox.warning(
                 self,
-                "No Events or Quests",
-                "Please create at least one Event or Quest in the selected world before adding a Storyline."
+                I18N.t('app.title_short', "LoreForge"),
+                I18N.t('warning.no_events_or_quests', "Please create at least one Event or Quest in the selected world before adding a Storyline.")
             )
             return
 
@@ -2125,7 +2171,7 @@ class StorylinesTab(QWidget):
             tenant_id=self.lore_data.tenant_id,
             world_id=world.id,
             name="New Storyline",
-            description=Description("Storyline description"),
+            description=Description(I18N.t('new.storyline.description', "Storyline description")),
             storyline_type=StorylineType.MAIN,
             event_ids=event_ids,
             quest_ids=quest_ids,
@@ -2155,9 +2201,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.lore_data = LoreData()
         self.current_file: Optional[Path] = None
+        self.current_locale = 'en'  # Default to English
         self._setup_style()
         self._setup_ui()
-        self.setWindowTitle("🎮 LoreForge - Lore Management System")
+        self.setWindowTitle(I18N.t('app.title', "🎮 LoreForge - Lore Management System"))
         self.setWindowIcon(QIcon())  # We'll add a proper icon later
         self.resize(1400, 900)
         self._setup_shortcuts()
@@ -2168,6 +2215,45 @@ class MainWindow(QMainWindow):
             QMainWindow {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 #2b2b2b, stop:1 #1a1a1a);
+            }
+
+            QMenuBar {
+                background: #2b2b2b;
+                color: #ddd;
+                border-bottom: 1px solid #555;
+            }
+
+            QMenuBar::item {
+                background: transparent;
+                color: #ddd;
+                padding: 5px 10px;
+            }
+
+            QMenuBar::item:selected {
+                background: #3a3a3a;
+                color: #fff;
+            }
+
+            QMenu {
+                background: #2b2b2b;
+                color: #ddd;
+                border: 1px solid #555;
+            }
+
+            QMenu::item {
+                background: transparent;
+                color: #ddd;
+                padding: 5px 20px;
+            }
+
+            QMenu::item:selected {
+                background: #3a3a3a;
+                color: #fff;
+            }
+
+            QMenu::item:checked {
+                background: #4a4a4a;
+                color: #fff;
             }
 
             QTabWidget::pane {
@@ -2323,6 +2409,10 @@ class MainWindow(QMainWindow):
     def _setup_ui(self):
         """Setup the enhanced user interface."""
         self._create_menu_bar()
+        # Ensure menu bar is visible (important on some platforms)
+        menubar = self.menuBar()
+        menubar.setVisible(True)
+        menubar.show()
         self._create_tool_bar()
 
         # Central widget with modern layout
@@ -2368,7 +2458,7 @@ class MainWindow(QMainWindow):
         search_label = QLabel("🔍 Quick Search:")
         search_label.setStyleSheet("color: #ddd; font-weight: bold;")
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search across all entities...")
+        self.search_input.setPlaceholderText(I18N.t('search.placeholder', "Search across all entities..."))
         self.search_input.textChanged.connect(self._on_search_text_changed)
 
         search_layout.addWidget(search_label)
@@ -2395,13 +2485,13 @@ class MainWindow(QMainWindow):
         self.quests_tab = QuestsTab(self.lore_data)
         self.storylines_tab = StorylinesTab(self.lore_data)
 
-        self.tabs.addTab(self.worlds_tab, "🌍 Worlds")
-        self.tabs.addTab(self.characters_tab, "👥 Characters")
-        self.tabs.addTab(self.events_tab, "⚡ Events")
-        self.tabs.addTab(self.improvements_tab, "⬆️ Improvements")
-        self.tabs.addTab(self.items_tab, "⚔️ Items")
-        self.tabs.addTab(self.quests_tab, "🎯 Quests")
-        self.tabs.addTab(self.storylines_tab, "📖 Storylines")
+        self.tabs.addTab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
+        self.tabs.addTab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
+        self.tabs.addTab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
+        self.tabs.addTab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
+        self.tabs.addTab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
+        self.tabs.addTab(self.quests_tab, I18N.t('tab.quests', "🎯 Quests"))
+        self.tabs.addTab(self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines"))
 
         main_layout.addWidget(self.tabs)
 
@@ -2414,6 +2504,51 @@ class MainWindow(QMainWindow):
         
         # Check for sample data on startup
         QTimer.singleShot(1000, self._check_for_sample_data)  # Delay to ensure UI is fully loaded
+
+    def _set_locale(self, locale: str):
+        """Set application locale and update UI texts."""
+        I18N.load(locale)
+        self.current_locale = locale
+        self._retranslate_ui()
+
+    def _retranslate_ui(self):
+        """Update all translatable UI texts."""
+        # Window title
+        self.setWindowTitle(I18N.t('app.title', "🎮 LoreForge - Lore Management System"))
+
+        # Tabs
+        try:
+            self.tabs.setTabText(0, I18N.t('tab.worlds', "🌍 Worlds"))
+            self.tabs.setTabText(1, I18N.t('tab.characters', "👥 Characters"))
+            self.tabs.setTabText(2, I18N.t('tab.events', "⚡ Events"))
+            self.tabs.setTabText(3, I18N.t('tab.improvements', "⬆️ Improvements"))
+            self.tabs.setTabText(4, I18N.t('tab.items', "⚔️ Items"))
+            # quests/storylines may not exist in older layouts
+            if self.tabs.count() > 5:
+                self.tabs.setTabText(5, I18N.t('tab.quests', "🎯 Quests"))
+            if self.tabs.count() > 6:
+                self.tabs.setTabText(6, I18N.t('tab.storylines', "📖 Storylines"))
+        except Exception:
+            pass
+
+        # Search placeholder
+        try:
+            self.search_input.setPlaceholderText(I18N.t('search.placeholder', "Search across all entities..."))
+        except Exception:
+            pass
+
+        # File menu (actions)
+        try:
+            # Update file menu title
+            if hasattr(self, 'file_menu'):
+                self.file_menu.setTitle(I18N.t('menu.file', 'File'))
+            self.new_action.setText(I18N.t('menu.file.new', 'New Project'))
+            self.open_action.setText(I18N.t('menu.file.open', 'Open...'))
+            self.load_sample_action.setText(I18N.t('menu.file.load_sample', 'Load Sample Data'))
+            self.save_action.setText(I18N.t('menu.file.save', 'Save'))
+            self.save_as_action.setText(I18N.t('menu.file.save_as', 'Save As...'))
+        except Exception:
+            pass
 
     def _on_world_selected(self, world_id: EntityId):
         """Handle world selection."""
@@ -2430,9 +2565,8 @@ class MainWindow(QMainWindow):
             len(self.lore_data.items) == 0):
             
             reply = QMessageBox.question(
-                self, "Welcome to LoreForge!",
-                "Would you like to load the sample lore data to explore the features?\n\n"
-                "This will load example worlds, characters, events, improvements, and items.",
+                self, I18N.t('sample.welcome.title', "Welcome to LoreForge!"),
+                I18N.t('sample.welcome.body', "Would you like to load the sample lore data to explore the features?"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
@@ -2471,43 +2605,61 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu("&File")
+        self.file_menu = menubar.addMenu(I18N.t('menu.file', "File"))
 
-        self.new_action = QAction("&New Project", self)
+        self.new_action = QAction(I18N.t('menu.file.new', "New Project"), self)
         self.new_action.triggered.connect(self._new_file)
-        self.new_action.setStatusTip("Create a new lore project")
-        file_menu.addAction(self.new_action)
+        self.new_action.setStatusTip(I18N.t('menu.file.new', "Create a new lore project"))
+        self.file_menu.addAction(self.new_action)
 
-        self.open_action = QAction("&Open...", self)
+        self.open_action = QAction(I18N.t('menu.file.open', "Open..."), self)
         self.open_action.triggered.connect(self._load_file)
-        self.open_action.setStatusTip("Open an existing lore file")
-        file_menu.addAction(self.open_action)
+        self.open_action.setStatusTip(I18N.t('menu.file.open', "Open an existing lore file"))
+        self.file_menu.addAction(self.open_action)
 
-        file_menu.addSeparator()
+        self.file_menu.addSeparator()
 
-        self.load_sample_action = QAction("Load &Sample Data", self)
+        self.load_sample_action = QAction(I18N.t('menu.file.load_sample', "Load Sample Data"), self)
         self.load_sample_action.triggered.connect(self._load_sample_data)
-        self.load_sample_action.setStatusTip("Load sample lore data to explore features")
-        file_menu.addAction(self.load_sample_action)
+        self.load_sample_action.setStatusTip(I18N.t('menu.file.load_sample', "Load sample lore data to explore features"))
+        self.file_menu.addAction(self.load_sample_action)
 
-        file_menu.addSeparator()
+        self.file_menu.addSeparator()
 
-        self.save_action = QAction("&Save", self)
+        self.save_action = QAction(I18N.t('menu.file.save', "Save"), self)
         self.save_action.triggered.connect(self._save_file)
-        self.save_action.setStatusTip("Save current project")
-        file_menu.addAction(self.save_action)
+        self.save_action.setStatusTip(I18N.t('menu.file.save', "Save current project"))
+        self.file_menu.addAction(self.save_action)
 
-        self.save_as_action = QAction("Save &As...", self)
+        self.save_as_action = QAction(I18N.t('menu.file.save_as', "Save As..."), self)
         self.save_as_action.triggered.connect(self._save_file_as)
-        self.save_as_action.setStatusTip("Save project with a new name")
-        file_menu.addAction(self.save_as_action)
+        self.save_as_action.setStatusTip(I18N.t('menu.file.save_as', "Save project with a new name"))
+        self.file_menu.addAction(self.save_as_action)
 
-        file_menu.addSeparator()
+        self.file_menu.addSeparator()
 
-        exit_action = QAction("E&xit", self)
+        exit_action = QAction(I18N.t('menu.file.exit', "Exit"), self)
         exit_action.triggered.connect(self.close)
-        exit_action.setStatusTip("Exit the application")
-        file_menu.addAction(exit_action)
+        exit_action.setStatusTip(I18N.t('menu.file.exit', "Exit the application"))
+        self.file_menu.addAction(exit_action)
+
+        # Language menu
+        lang_menu = menubar.addMenu(I18N.t('menu.language', "Language"))
+        en_action = QAction(I18N.t('language.english', "🇺🇸 English"), self)
+        en_action.setCheckable(True)
+        en_action.setChecked(self.current_locale == 'en')
+        en_action.triggered.connect(lambda: self._set_locale('en'))
+        uk_action = QAction(I18N.t('language.ukrainian', "🇺🇦 Ukrainian"), self)
+        uk_action.setCheckable(True)
+        uk_action.setChecked(self.current_locale == 'uk')
+        uk_action.triggered.connect(lambda: self._set_locale('uk'))
+        ru_action = QAction(I18N.t('language.russian', "🇷🇺 Russian"), self)
+        ru_action.setCheckable(True)
+        ru_action.setChecked(self.current_locale == 'ru')
+        ru_action.triggered.connect(lambda: self._set_locale('ru'))
+        lang_menu.addAction(en_action)
+        lang_menu.addAction(uk_action)
+        lang_menu.addAction(ru_action)
 
         # Edit menu
         edit_menu = menubar.addMenu("&Edit")
@@ -2522,6 +2674,93 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self._show_about)
         about_action.setStatusTip("About LoreForge")
         help_menu.addAction(about_action)
+
+    def _set_locale(self, locale: str):
+        """Set application locale and update UI texts."""
+        I18N.load(locale)
+        self.current_locale = locale
+        # Update combo box selection
+        if hasattr(self, 'lang_combo'):
+            self.lang_combo.blockSignals(True)
+            self.lang_combo.setCurrentText("🇺🇸 English" if locale == "en" else "🇺🇦 Українська" if locale == "uk" else "🇷🇺 Русский")
+            self.lang_combo.blockSignals(False)
+        self._retranslate_ui()
+
+    def _on_language_changed(self):
+        """Handle language combo box selection change."""
+        locale = self.lang_combo.currentData()
+        self._set_locale(locale)
+
+    def _retranslate_ui(self):
+        """Update all translatable UI texts."""
+        # Window title
+        self.setWindowTitle(I18N.t('app.title', "🎮 LoreForge - Lore Management System"))
+
+        # Tabs
+        try:
+            self.tabs.setTabText(0, I18N.t('tab.worlds', "🌍 Worlds"))
+            self.tabs.setTabText(1, I18N.t('tab.characters', "👥 Characters"))
+            self.tabs.setTabText(2, I18N.t('tab.events', "⚡ Events"))
+            self.tabs.setTabText(3, I18N.t('tab.improvements', "⬆️ Improvements"))
+            self.tabs.setTabText(4, I18N.t('tab.items', "⚔️ Items"))
+            # quests/storylines may not exist in older layouts
+            if self.tabs.count() > 5:
+                self.tabs.setTabText(5, I18N.t('tab.quests', "🎯 Quests"))
+            if self.tabs.count() > 6:
+                self.tabs.setTabText(6, I18N.t('tab.storylines', "📖 Storylines"))
+        except Exception:
+            pass
+
+        # Search placeholder
+        try:
+            self.search_input.setPlaceholderText(I18N.t('search.placeholder', "Search across all entities..."))
+        except Exception:
+            pass
+
+        # File menu (actions)
+        try:
+            # Update file menu title
+            if hasattr(self, 'file_menu'):
+                self.file_menu.setTitle(I18N.t('menu.file', 'File'))
+            self.new_action.setText(I18N.t('menu.file.new', 'New Project'))
+            self.open_action.setText(I18N.t('menu.file.open', 'Open...'))
+            self.load_sample_action.setText(I18N.t('menu.file.load_sample', 'Load Sample Data'))
+            self.save_action.setText(I18N.t('menu.file.save', 'Save'))
+            self.save_as_action.setText(I18N.t('menu.file.save_as', 'Save As...'))
+        except Exception:
+            pass
+
+        # Update language menu checkmarks
+        try:
+            # Find the language menu and update checkmarks
+            menubar = self.menuBar()
+            for i in range(menubar.count()):
+                menu = menubar.actions()[i].menu()
+                if menu and I18N.t('menu.language', 'Language') in menu.title():
+                    for action in menu.actions():
+                        if 'English' in action.text() or 'Англійська' in action.text() or 'English' in action.text():
+                            action.setChecked(self.current_locale == 'en')
+                        elif 'Ukrainian' in action.text() or 'Українська' in action.text() or 'Українська' in action.text():
+                            action.setChecked(self.current_locale == 'uk')
+                        elif 'Russian' in action.text() or 'Русский' in action.text() or 'Російська' in action.text():
+                            action.setChecked(self.current_locale == 'ru')
+                    break
+        except Exception:
+            pass
+
+        # Update language combo box
+        try:
+            if hasattr(self, 'lang_combo'):
+                self.lang_combo.blockSignals(True)
+                self.lang_combo.clear()
+                self.lang_combo.addItem(I18N.t('language.english', "🇺🇸 English"), "en")
+                self.lang_combo.addItem(I18N.t('language.ukrainian', "🇺🇦 Ukrainian"), "uk")
+                self.lang_combo.addItem(I18N.t('language.russian', "🇷🇺 Russian"), "ru")
+                current_text = I18N.t('language.english', "🇺🇸 English") if self.current_locale == "en" else I18N.t('language.ukrainian', "🇺🇦 Ukrainian") if self.current_locale == "uk" else I18N.t('language.russian', "🇷🇺 Russian")
+                self.lang_combo.setCurrentText(current_text)
+                self.lang_combo.blockSignals(False)
+        except Exception:
+            pass
 
     def _create_tool_bar(self):
         """Create application tool bar."""
@@ -2539,6 +2778,44 @@ class MainWindow(QMainWindow):
         sample_action.triggered.connect(self._load_sample_data)
         sample_action.setToolTip("Load sample lore data")
         toolbar.addAction(sample_action)
+        toolbar.addSeparator()
+
+        # Language selector
+        from PyQt6.QtWidgets import QComboBox
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItem(I18N.t('language.english', "🇺🇸 English"), "en")
+        self.lang_combo.addItem(I18N.t('language.ukrainian', "🇺🇦 Ukrainian"), "uk")
+        self.lang_combo.addItem(I18N.t('language.russian', "🇷🇺 Russian"), "ru")
+        self.lang_combo.setCurrentText(I18N.t('language.english', "🇺🇸 English") if self.current_locale == "en" else I18N.t('language.ukrainian', "🇺🇦 Ukrainian") if self.current_locale == "uk" else I18N.t('language.russian', "🇷🇺 Russian"))
+        self.lang_combo.currentIndexChanged.connect(self._on_language_changed)
+        self.lang_combo.setToolTip(I18N.t('menu.language', 'Select language'))
+        self.lang_combo.setStyleSheet("""
+            QComboBox {
+                background: #3a3a3a;
+                color: #ddd;
+                border: 1px solid #555;
+                border-radius: 3px;
+                padding: 2px 5px;
+                min-width: 120px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 4px solid #ddd;
+                margin-right: 5px;
+            }
+            QComboBox QAbstractItemView {
+                background: #2b2b2b;
+                color: #ddd;
+                border: 1px solid #555;
+                selection-background-color: #4a4a4a;
+            }
+        """)
+        toolbar.addWidget(self.lang_combo)
         toolbar.addSeparator()
 
         # Quick stats
