@@ -1,0 +1,76 @@
+# LoreSystem Configuration
+
+# Application
+application:
+  name: "LoreForge System"
+  version: "0.1.0"
+  environment: "development"  # development, staging, production
+
+# Database
+database:
+  host: "localhost"
+  port: 5432
+  name: "lore_system"
+  user: "lore_user"
+  # Password should be in environment variable: DATABASE_PASSWORD
+  pool_size: 10
+  max_overflow: 20
+  echo_sql: false  # Set to true for SQL debugging
+
+# Elasticsearch
+elasticsearch:
+  host: "localhost"
+  port: 9200
+  # Credentials in environment: ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD
+  timeout: 30
+  max_retries: 3
+  retry_on_timeout: true
+
+# Git
+git:
+  repository_path: "./lore-repo"
+  default_branch: "main"
+  auto_commit: true
+  commit_author_name: "LoreSystem"
+  commit_author_email: "lore@example.com"
+
+# Improvement Generation
+generation:
+  enabled: true
+  provider: "openai"  # openai, anthropic, local
+  # API key in environment: OPENAI_API_KEY or ANTHROPIC_API_KEY
+  model: "gpt-4"
+  temperature: 0.7
+  max_tokens: 1000
+
+# Validation
+validation:
+  strict_mode: true
+  check_requirements_on_save: true
+  max_backstory_length: 10000
+  min_backstory_length: 100
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # json, text
+  output: "stdout"  # stdout, file
+  file_path: "./logs/lore_system.log"
+  rotate_size_mb: 100
+  rotate_count: 5
+
+# Multi-tenancy
+tenancy:
+  default_tenant_id: 1
+  enforce_tenant_isolation: true
+
+# Performance
+performance:
+  cache_enabled: false
+  cache_ttl_seconds: 300
+  batch_size: 100
+
+# Security
+security:
+  enable_audit_log: true
+  mask_sensitive_data: true

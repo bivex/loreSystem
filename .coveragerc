@@ -1,0 +1,11 @@
+[run]
+omit =
+    */venv/*
+    tests/*
+    examples/*
+    src/presentation/gui/README.md
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:EOF

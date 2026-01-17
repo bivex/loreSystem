@@ -1,0 +1,41 @@
+# Production Dependencies
+# Core
+python>=3.11,<3.13
+
+# Database
+psycopg2-binary>=2.9.9
+SQLAlchemy>=2.0.23
+alembic>=1.13.1
+
+# Search
+elasticsearch>=8.11.0
+
+# Git integration
+pygit2>=1.13.3
+
+# Validation
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# Configuration
+PyYAML>=6.0.1
+python-dotenv>=1.0.0
+
+# Logging
+structlog>=24.1.0
+python-json-logger>=2.0.7
+
+# Dependency Injection
+dependency-injector>=4.41.0
+
+# Utilities
+click>=8.1.7  # CLI framework
+rich>=13.7.0  # Beautiful CLI output
+python-dateutil>=2.8.2
+
+# GUI
+PyQt6>=6.6.1  # GUI framework
+
+# Testing (minimal for production)
+pytest>=7.4.3
+pytest-cov>=4.1.0

@@ -1,0 +1,295 @@
+{
+  "worlds": [
+    {
+      "id": 1,
+      "name": "Eternal Forge",
+      "description": "A realm where reality itself bends to the will of master craftsmen. The Eternal Forge burns at the heart of existence, capable of creating or destroying entire dimensions. Ancient smiths guard its secrets, passing knowledge through generations of devoted apprentices.",
+      "created_at": "2024-01-01T00:00:00+00:00",
+      "updated_at": "2024-01-15T10:30:00+00:00",
+      "version": 2
+    },
+    {
+      "id": 2,
+      "name": "Shadowmere Wastes",
+      "description": "A desolate expanse where shadows have physical form and light itself fears to tread. Once a thriving civilization, now only ruins remain, haunted by echoes of the past. Those brave enough to venture here seek forbidden knowledge hidden in crumbling temples.",
+      "created_at": "2024-01-10T00:00:00+00:00",
+      "updated_at": "2024-01-10T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "characters": [
+    {
+      "id": 3,
+      "world_id": 1,
+      "name": "Aria Flameheart",
+      "backstory": "Born under the crimson eclipse, Aria was destined for greatness from her first breath. As the youngest Forge Master in a thousand years, she possesses an innate understanding of the cosmic flames that power creation itself. Her mentor, the ancient smith Valorian, recognized her potential when she was merely five years old, reforging a broken legendary blade with nothing but raw determination and intuition. Now, at twenty-three, she stands as guardian of the Eternal Forge, tasked with maintaining the balance between creation and destruction while dark forces seek to corrupt the forge's power for their own ends.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Flame Mastery",
+          "description": "Complete control over all forms of fire, from the smallest spark to cosmic infernos",
+          "power_level": 9
+        },
+        {
+          "name": "Soul Forging",
+          "description": "The ability to craft weapons and artifacts that can contain and amplify souls",
+          "power_level": 8
+        },
+        {
+          "name": "Reality Anchoring",
+          "description": "Can stabilize dimensional rifts and prevent reality from unraveling",
+          "power_level": 7
+        }
+      ],
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-16T14:20:00+00:00",
+      "version": 3
+    },
+    {
+      "id": 4,
+      "world_id": 1,
+      "name": "Valorian the Eternal",
+      "backstory": "The oldest living being in the Eternal Forge, Valorian has witnessed the rise and fall of countless civilizations over his ten thousand year existence. His true origins are lost to time, though legends speak of him being forged directly from the first flames of creation. As a master smith and teacher, he has trained generations of Forge Masters, each one carefully selected for their potential and moral character. His weathered face bears the scars of a thousand battles, and his eyes hold the wisdom of ages. Despite his immense power, Valorian chooses to work in the shadows, guiding rather than ruling, knowing that true strength comes from nurturing others rather than dominating them.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Cosmic Smithing",
+          "description": "Can forge artifacts from pure energy and cosmic matter",
+          "power_level": 10
+        },
+        {
+          "name": "Immortal Wisdom",
+          "description": "Possesses knowledge spanning ten millennia of history",
+          "power_level": 6
+        },
+        {
+          "name": "Time Manipulation",
+          "description": "Limited ability to slow or speed local time flow",
+          "power_level": 5
+        }
+      ],
+      "created_at": "2024-01-03T00:00:00+00:00",
+      "updated_at": "2024-01-03T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 5,
+      "world_id": 2,
+      "name": "Umbra Nightwhisper",
+      "backstory": "Once a brilliant scholar of the old world, Umbra was consumed by her obsession with understanding the nature of shadows. When the great cataclysm destroyed her civilization, she made a desperate pact with the Shadow King to survive. Now neither fully alive nor dead, she exists as a bridge between light and darkness, using her unique perspective to decode the ancient texts left behind by her people. Her transformation has given her powers beyond mortal comprehension, but at the cost of never again being able to experience sunlight. She wanders the Shadowmere Wastes seeking redemption and a way to undo the curse that destroyed her homeland.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Shadow Walking",
+          "description": "Can traverse any distance instantly through connected shadows",
+          "power_level": 8
+        },
+        {
+          "name": "Darkness Manifestation",
+          "description": "Creates tangible constructs from pure shadow",
+          "power_level": 7
+        },
+        {
+          "name": "Ancient Knowledge",
+          "description": "Retains memories of the pre-cataclysm civilization",
+          "power_level": 6
+        }
+      ],
+      "created_at": "2024-01-11T00:00:00+00:00",
+      "updated_at": "2024-01-11T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "events": [
+    {
+      "id": 6,
+      "world_id": 1,
+      "name": "The Great Reforging",
+      "description": "A cataclysmic event where Aria and Valorian must work together to reforge the Cosmic Anchor, the artifact that holds reality together. As dimensional rifts threaten to tear the Eternal Forge apart, they race against time to complete the most ambitious smithing project ever attempted.",
+      "start_date": "2024-01-20T00:00:00+00:00",
+      "end_date": null,
+      "outcome": "ongoing",
+      "participant_ids": [3, 4],
+      "created_at": "2024-01-17T00:00:00+00:00",
+      "updated_at": "2024-01-17T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 7,
+      "world_id": 2,
+      "name": "Discovery of the Lost Archives",
+      "description": "Umbra uncovers a hidden chamber deep within the Temple of Eternal Night, containing the lost archives of her civilization. These texts hold the key to understanding what caused the cataclysm and potentially how to reverse it.",
+      "start_date": "2024-01-12T00:00:00+00:00",
+      "end_date": "2024-01-18T00:00:00+00:00",
+      "outcome": "success",
+      "participant_ids": [5],
+      "created_at": "2024-01-18T00:00:00+00:00",
+      "updated_at": "2024-01-18T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "improvements": [
+    {
+      "id": 8,
+      "entity_type": "character",
+      "entity_id": 3,
+      "suggestion": "Add a new ability called 'Forge Mastery' that allows Aria to create temporary portals between forges, enabling instant travel between different crafting locations.",
+      "status": "proposed",
+      "git_commit_hash": "0000000000000000000000000000000000000000",
+      "created_at": "2024-01-20T00:00:00+00:00"
+    },
+    {
+      "id": 9,
+      "entity_type": "world",
+      "entity_id": 1,
+      "suggestion": "Introduce a new faction called the 'Crystal Guardians' who protect ancient artifacts and could serve as allies or antagonists depending on player choices.",
+      "status": "approved",
+      "git_commit_hash": "0000000000000000000000000000000000000000",
+      "created_at": "2024-01-21T00:00:00+00:00"
+    },
+    {
+      "id": 10,
+      "entity_type": "event",
+      "entity_id": 6,
+      "suggestion": "Add a branching narrative where players can choose to help Valorian sacrifice himself to stabilize the forge, or find an alternative solution that saves him but weakens the forge temporarily.",
+      "status": "proposed",
+      "git_commit_hash": "0000000000000000000000000000000000000000",
+      "created_at": "2024-01-22T00:00:00+00:00"
+    }
+  ],
+  "items": [
+    {
+      "id": 11,
+      "world_id": 1,
+      "name": "Soulfire Blade",
+      "description": "A legendary sword forged in the heart of the Eternal Forge, capable of cutting through dimensions. The blade contains the soul of a fallen guardian, granting it sentience and the ability to choose its wielder. Aria Flameheart wields this blade during the Great Reforging.",
+      "item_type": "weapon",
+      "rarity": "legendary",
+      "created_at": "2024-01-03T00:00:00+00:00",
+      "updated_at": "2024-01-03T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 12,
+      "world_id": 1,
+      "name": "Phoenix Armor",
+      "description": "Armor crafted from the feathers of an immortal phoenix. It regenerates when damaged and provides immunity to fire-based attacks. Valorian the Eternal wears this armor during battles against shadow creatures.",
+      "item_type": "armor",
+      "rarity": "epic",
+      "created_at": "2024-01-04T00:00:00+00:00",
+      "updated_at": "2024-01-04T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 13,
+      "world_id": 1,
+      "name": "Crystal of Eternity",
+      "description": "A mystical artifact that can manipulate time within a limited radius. Used by the Crystal Guardians to protect ancient secrets. This crystal powers the Cosmic Anchor during the Great Reforging event.",
+      "item_type": "artifact",
+      "rarity": "legendary",
+      "created_at": "2024-01-05T00:00:00+00:00",
+      "updated_at": "2024-01-05T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 14,
+      "world_id": 1,
+      "name": "Healing Potion",
+      "description": "A glowing blue potion that instantly heals wounds and cures most poisons. Brewed from rare herbs found only in the Eternal Forge. Essential for Forge Masters during dangerous crafting rituals.",
+      "item_type": "consumable",
+      "rarity": "uncommon",
+      "created_at": "2024-01-06T00:00:00+00:00",
+      "updated_at": "2024-01-06T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 15,
+      "world_id": 1,
+      "name": "Forge Hammer",
+      "description": "A simple but well-balanced hammer used by apprentice smiths. Made from enchanted steel that never dulls. Every Forge Master starts with one of these.",
+      "item_type": "tool",
+      "rarity": null,
+      "created_at": "2024-01-07T00:00:00+00:00",
+      "updated_at": "2024-01-07T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 16,
+      "world_id": 1,
+      "name": "Reality Anchor Fragment",
+      "description": "A broken piece of the Cosmic Anchor that holds reality together. This fragment contains immense power but is dangerously unstable. Aria discovered this during her training.",
+      "item_type": "other",
+      "rarity": "rare",
+      "created_at": "2024-01-08T00:00:00+00:00",
+      "updated_at": "2024-01-08T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 17,
+      "world_id": 2,
+      "name": "Shadow Cloak",
+      "description": "A cloak woven from living shadows that allows the wearer to become nearly invisible in darkness. It feeds on the wearer's life force. Umbra Nightwhisper wears this cloak while exploring the Shadowmere Wastes.",
+      "item_type": "armor",
+      "rarity": "rare",
+      "created_at": "2024-01-11T00:00:00+00:00",
+      "updated_at": "2024-01-11T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 18,
+      "world_id": 2,
+      "name": "Ancient Tome",
+      "description": "A leather-bound book containing forbidden knowledge about shadow manipulation. Reading it risks corruption of the mind. Found by Umbra in the Lost Archives.",
+      "item_type": "tool",
+      "rarity": "epic",
+      "created_at": "2024-01-12T00:00:00+00:00",
+      "updated_at": "2024-01-12T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 19,
+      "world_id": 2,
+      "name": "Shadow Essence Crystal",
+      "description": "A crystal that captures pure shadow essence. Used in dark rituals and shadow manipulation spells. Essential for advanced shadow magic practitioners.",
+      "item_type": "artifact",
+      "rarity": "uncommon",
+      "created_at": "2024-01-13T00:00:00+00:00",
+      "updated_at": "2024-01-13T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 20,
+      "world_id": 2,
+      "name": "Darkvision Potion",
+      "description": "A potion that grants the ability to see in complete darkness for several hours. Made from fermented shadow berries found only in the Shadowmere Wastes.",
+      "item_type": "consumable",
+      "rarity": null,
+      "created_at": "2024-01-14T00:00:00+00:00",
+      "updated_at": "2024-01-14T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 21,
+      "world_id": 2,
+      "name": "Ruined Amulet",
+      "description": "A broken amulet from the pre-cataclysm civilization. The gem is cracked but still pulses with faint magical energy. Umbra believes it holds the key to reversing the cataclysm.",
+      "item_type": "other",
+      "rarity": "rare",
+      "created_at": "2024-01-15T00:00:00+00:00",
+      "updated_at": "2024-01-15T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 22,
+      "world_id": 2,
+      "name": "Shadow Blade",
+      "description": "A dagger made from solidified shadow. It can phase through armor and leaves wounds that don't heal naturally. A dangerous weapon for those who can control it.",
+      "item_type": "weapon",
+      "rarity": "epic",
+      "created_at": "2024-01-16T00:00:00+00:00",
+      "updated_at": "2024-01-16T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "next_id": 23
+}
