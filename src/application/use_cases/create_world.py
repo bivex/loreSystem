@@ -5,15 +5,15 @@ Demonstrates clean application layer orchestration.
 """
 from typing import Optional
 
-from ..domain.entities.world import World
-from ..domain.repositories.world_repository import IWorldRepository
-from ..domain.value_objects.common import (
+from src.domain.entities.world import World
+from src.domain.repositories.world_repository import IWorldRepository
+from src.domain.value_objects.common import (
     TenantId,
     WorldName,
     Description,
 )
-from ..domain.exceptions import DuplicateEntity
-from .dto import CreateWorldDTO, WorldDTO
+from src.domain.exceptions import DuplicateEntity
+from src.application.dto import CreateWorldDTO, WorldDTO
 
 
 class CreateWorldUseCase:
