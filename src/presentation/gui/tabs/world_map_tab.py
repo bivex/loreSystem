@@ -309,7 +309,7 @@ class WorldMapTab(QWidget):
                 self.characters_table.setItem(row, 1, QTableWidgetItem(str(char.status)))
                 abilities = ", ".join([str(a.name) for a in char.abilities])
                 self.characters_table.setItem(row, 2, QTableWidgetItem(abilities))
-                self.characters_table.setItem(row, 3, QTableWidgetItem(char.backstory[:100] + "..." if len(str(char.backstory)) > 100 else str(char.backstory)))
+                self.characters_table.setItem(row, 3, QTableWidgetItem(str(char.backstory)[:100] + "..." if len(str(char.backstory)) > 100 else str(char.backstory)))
 
     def _update_events(self):
         """Update events table."""
@@ -322,8 +322,8 @@ class WorldMapTab(QWidget):
                 row = self.events_table.rowCount()
                 self.events_table.insertRow(row)
                 self.events_table.setItem(row, 0, QTableWidgetItem(str(event.name)))
-                self.events_table.setItem(row, 1, QTableWidgetItem(str(event.start_date) if event.start_date else "N/A"))
-                self.events_table.setItem(row, 2, QTableWidgetItem(str(event.end_date) if event.end_date else "N/A"))
+                self.events_table.setItem(row, 1, QTableWidgetItem(str(event.date_range.start_date)))
+                self.events_table.setItem(row, 2, QTableWidgetItem(str(event.date_range.end_date) if event.date_range.end_date else "N/A"))
                 self.events_table.setItem(row, 3, QTableWidgetItem(str(event.outcome)))
 
     def _update_items(self):
