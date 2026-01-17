@@ -170,6 +170,11 @@ class TemplatesTab(QWidget):
         if not hasattr(self.lore_data, 'templates'):
             return
 
+        # Ensure all templates have IDs
+        for template in self.lore_data.templates:
+            if template.id is None:
+                object.__setattr__(template, 'id', self.lore_data.get_next_id())
+
         for template in self.lore_data.templates:
             row = self.table.rowCount()
             self.table.insertRow(row)
@@ -178,7 +183,7 @@ class TemplatesTab(QWidget):
             world = next((w for w in self.lore_data.worlds if w.id == template.world_id), None)
             world_name = str(world.name) if world else f"ID: {template.world_id.value}"
 
-            self.table.setItem(row, 0, QTableWidgetItem(str(template.id.value) if template.id else ""))
+            self.table.setItem(row, 0, QTableWidgetItem(str(template.id.value)))
             self.table.setItem(row, 1, QTableWidgetItem(world_name))
             self.table.setItem(row, 2, QTableWidgetItem(str(template.name)))
             self.table.setItem(row, 3, QTableWidgetItem(template.template_type.value.title()))
@@ -302,10 +307,7 @@ class TemplatesTab(QWidget):
                 parent_template_id=parent_template_id
             )
 
-            if not hasattr(self.lore_data, 'templates'):
-                self.lore_data.templates = []
-
-            self.lore_data.templates.append(template)
+            self.lore_data.add_template(template)
             self.refresh()
             self._clear_form()
             QMessageBox.information(self, "Success", "Template created successfully!")

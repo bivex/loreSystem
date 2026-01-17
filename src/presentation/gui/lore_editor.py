@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QFileDialog, QGroupBox, QListWidget,
     QDialog, QDialogButtonBox, QInputDialog, QSplitter, QFrame,
     QStatusBar, QMenuBar, QMenu, QToolBar, QProgressBar,
-    QSystemTrayIcon, QHeaderView
+    QSystemTrayIcon, QHeaderView, QStackedWidget
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import (
@@ -183,6 +183,13 @@ class LoreData:
         self.storylines.append(storyline)
         return storyline
     
+    def add_template(self, template: Template) -> Template:
+        """Add template with generated ID."""
+        if template.id is None:
+            object.__setattr__(template, 'id', self.get_next_id())
+        self.templates.append(template)
+        return template
+    
     def get_world_by_id(self, world_id: EntityId) -> Optional[World]:
         """Find world by ID."""
         return next((w for w in self.worlds if w.id == world_id), None)
@@ -201,6 +208,7 @@ class LoreData:
             'items': [self._item_to_dict(i) for i in self.items],
             'quests': [self._quest_to_dict(q) for q in self.quests],
             'storylines': [self._storyline_to_dict(s) for s in self.storylines],
+            'templates': [self._template_to_dict(t) for t in self.templates],
             'next_id': self._next_id
         }
     
@@ -225,6 +233,7 @@ class LoreData:
                 print(f"Warning: Skipping storyline {s.get('id', 'unknown')} - must have at least one event or quest")
         
         self.storylines = valid_storylines
+        self.templates = [self._dict_to_template(t) for t in data.get('templates', [])]
         self._next_id = data.get('next_id', 1)
     
     @staticmethod
@@ -431,6 +440,39 @@ class LoreData:
             storyline_type=StorylineType(data['storyline_type']),
             event_ids=[EntityId(e) for e in data['event_ids']],
             quest_ids=[EntityId(q) for q in data['quest_ids']],
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+    
+    @staticmethod
+    def _template_to_dict(template: Template) -> Dict:
+        return {
+            'id': template.id.value if template.id else None,
+            'world_id': template.world_id.value,
+            'name': str(template.name),
+            'description': template.description,
+            'template_type': template.template_type.value,
+            'content': str(template.content),
+            'rune_ids': [r.value for r in template.rune_ids],
+            'parent_template_id': template.parent_template_id.value if template.parent_template_id else None,
+            'created_at': template.created_at.value.isoformat(),
+            'updated_at': template.updated_at.value.isoformat(),
+            'version': template.version.value
+        }
+    
+    @staticmethod
+    def _dict_to_template(data: Dict) -> Template:
+        return Template(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=TemplateName(data['name']),
+            description=data['description'],
+            template_type=TemplateType(data['template_type']),
+            content=Content(data['content']),
+            rune_ids=[EntityId(r) for r in data['rune_ids']],
+            parent_template_id=EntityId(data['parent_template_id']) if data.get('parent_template_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
@@ -2486,10 +2528,31 @@ class MainWindow(QMainWindow):
 
         main_layout.addLayout(search_layout)
 
-        # Tabs with enhanced styling
-        self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
+        # Tabs with enhanced styling - using list and stacked widget for better readability
+        tab_layout = QHBoxLayout()
+        
+        self.tab_list = QListWidget()
+        self.tab_list.setMaximumWidth(200)
+        self.tab_list.setStyleSheet("""
+            QListWidget {
+                background: #2b2b2b;
+                border: 2px solid #666;
+                border-radius: 8px;
+                color: #ddd;
+            }
+            QListWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #444;
+            }
+            QListWidget::item:selected {
+                background: #444;
+                color: #fff;
+            }
+        """)
+        
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setStyleSheet("""
+            QStackedWidget {
                 border: 2px solid #666;
                 background: #2b2b2b;
                 border-radius: 8px;
@@ -2509,27 +2572,43 @@ class MainWindow(QMainWindow):
         self.tags_tab = TagsTab(self.lore_data)
         self.images_tab = ImagesTab(self.lore_data)
 
-        self.tabs.addTab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
-        self.tabs.addTab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
-        self.tabs.addTab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
-        self.tabs.addTab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
-        self.tabs.addTab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
-        self.tabs.addTab(self.quests_tab, I18N.t('tab.quests', "🎯 Quests"))
-        self.tabs.addTab(self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines"))
-        self.tabs.addTab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
-        self.tabs.addTab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
-        self.tabs.addTab(self.stories_tab, I18N.t('tab.stories', "📖 Stories"))
-        self.tabs.addTab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
-        self.tabs.addTab(self.images_tab, I18N.t('tab.images', "🖼️ Images"))
+        # Add to stacked widget and list
+        tabs = [
+            (self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds")),
+            (self.characters_tab, I18N.t('tab.characters', "👥 Characters")),
+            (self.events_tab, I18N.t('tab.events', "⚡ Events")),
+            (self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements")),
+            (self.items_tab, I18N.t('tab.items', "⚔️ Items")),
+            (self.quests_tab, I18N.t('tab.quests', "🎯 Quests")),
+            (self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines")),
+            (self.pages_tab, I18N.t('tab.pages', "📄 Pages")),
+            (self.templates_tab, I18N.t('tab.templates', "📐 Templates")),
+            (self.stories_tab, I18N.t('tab.stories', "📖 Stories")),
+            (self.tags_tab, I18N.t('tab.tags', "🏷️ Tags")),
+            (self.images_tab, I18N.t('tab.images', "🖼️ Images")),
+        ]
+        
+        for tab, name in tabs:
+            self.stacked_widget.addWidget(tab)
+            self.tab_list.addItem(name)
 
-        main_layout.addWidget(self.tabs)
+        # Set initial selection
+        self.tab_list.setCurrentRow(0)
+
+        tab_layout.addWidget(self.tab_list)
+        tab_layout.addWidget(self.stacked_widget)
+
+        main_layout.addLayout(tab_layout)
+
+        # Connect list to stacked widget
+        self.tab_list.currentRowChanged.connect(self.stacked_widget.setCurrentIndex)
+        self.tab_list.currentRowChanged.connect(self._on_tab_changed)
 
         # Enhanced status bar
         self._setup_status_bar()
 
         # Connect signals
         self.worlds_tab.world_selected.connect(self._on_world_selected)
-        self.tabs.currentChanged.connect(self._on_tab_changed)
         
         # Check for sample data on startup
         QTimer.singleShot(1000, self._check_for_sample_data)  # Delay to ensure UI is fully loaded
@@ -2875,8 +2954,11 @@ class MainWindow(QMainWindow):
 
     def _on_tab_changed(self, index: int):
         """Handle tab changes."""
-        tab_name = self.tabs.tabText(index)
-        self.statusBar().showMessage(f"Switched to {tab_name} tab")
+        if index >= 0:
+            tab_name = self.tab_list.item(index).text()
+            self.statusBar().showMessage(f"Switched to {tab_name} tab")
+        else:
+            self.statusBar().showMessage("")
 
     def _show_about(self):
         """Show about dialog."""
