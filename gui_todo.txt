@@ -1,399 +1,425 @@
-# GUI Implementation Todo List for New Lore System Entities
+# GUI Implementation Status & TODO List
 
-## Overview
-The lore system domain has been extended with new entities: Note, Map, Handout, Inspiration, Tokenboard, and Flowchart. However, the PyQt6 GUI currently only supports: Worlds, Characters, Events, Improvements, Items, Quests, and Storylines.
-
-## Missing GUI Features
+## ✅ COMPLETED FEATURES
 
 ### 1. LoreData Class Updates
-- [ ] Add lists for new entities:
-  - `self.notes: List[Note] = []`
-  - `self.maps: List[Map] = []`
-  - `self.handouts: List[Handout] = []`
-  - `self.inspirations: List[Inspiration] = []`
-  - `self.tokenboards: List[Tokenboard] = []`
-  - `self.flowcharts: List[Flowchart] = []`
-
-- [ ] Add add_* methods for each new entity:
-  - `add_note(note: Note) -> Note`
-  - `add_map(map: Map) -> Map`
-  - `add_handout(handout: Handout) -> Handout`
-  - `add_inspiration(inspiration: Inspiration) -> Inspiration`
-  - `add_tokenboard(tokenboard: Tokenboard) -> Tokenboard`
-  - `add_flowchart(flowchart: Flowchart) -> Flowchart`
-
-- [ ] Update `to_dict()` method to include new entities in serialization
-- [ ] Update `from_dict()` method to load new entities from JSON
-- [ ] Add serialization helper methods:
-  - `_note_to_dict(note: Note) -> Dict`
-  - `_dict_to_note(data: Dict) -> Note`
-  - `_map_to_dict(map: Map) -> Dict`
-  - `_dict_to_map(data: Dict) -> Map`
-  - `_handout_to_dict(handout: Handout) -> Dict`
-  - `_dict_to_handout(data: Dict) -> Handout`
-  - `_inspiration_to_dict(inspiration: Inspiration) -> Dict`
-  - `_dict_to_inspiration(data: Dict) -> Inspiration`
-  - `_tokenboard_to_dict(tokenboard: Tokenboard) -> Dict`
-  - `_dict_to_tokenboard(data: Dict) -> Tokenboard`
-  - `_flowchart_to_dict(flowchart: Flowchart) -> Dict`
-  - `_dict_to_flowchart(data: Dict) -> Flowchart`
+- ✅ All entity lists added (notes, maps, handouts, inspirations, tokenboards, flowcharts, etc.)
+- ✅ All add_* methods implemented for each entity
+- ✅ to_dict() and from_dict() methods updated with all entities
+- ✅ All serialization helper methods implemented
 
 ### 2. MainWindow Class Updates
-- [ ] Add new tabs to the tab widget:
-  - `self.notes_tab = NotesTab(self.lore_data)`
-  - `self.maps_tab = MapsTab(self.lore_data)`
-  - `self.handouts_tab = HandoutsTab(self.lore_data)`
-  - `self.inspirations_tab = InspirationsTab(self.lore_data)`
-  - `self.tokenboards_tab = TokenboardsTab(self.lore_data)`
-  - `self.flowcharts_tab = FlowchartsTab(self.lore_data)`
+- ✅ All 21 tabs added to the UI
+- ✅ Tab navigation with stacked widget and list
+- ✅ _refresh_all() updated for all tabs
+- ✅ Auto-load sample data on startup
+- ✅ Comprehensive entity verification on load
 
-- [ ] Add tabs to the QTabWidget:
-  - `self.tabs.addTab(self.notes_tab, "📝 Notes")`
-  - `self.tabs.addTab(self.maps_tab, "🗺️ Maps")`
-  - `self.tabs.addTab(self.handouts_tab, "📄 Handouts")`
-  - `self.tabs.addTab(self.inspirations_tab, "💡 Inspirations")`
-  - `self.tabs.addTab(self.tokenboards_tab, "🎯 Tokenboards")`
-  - `self.tabs.addTab(self.flowcharts_tab, "📊 Flowcharts")`
+### 3. Implemented Tabs (Basic CRUD)
+- ✅ NotesTab - full CRUD operations
+- ✅ MapsTab - full CRUD operations
+- ✅ HandoutsTab - full CRUD operations
+- ✅ InspirationsTab - full CRUD operations
+- ✅ TokenboardsTab - full CRUD operations
+- ✅ FlowchartsTab - full CRUD operations
+- ✅ PagesTab - full CRUD operations
+- ✅ TemplatesTab - full CRUD operations
+- ✅ StoriesTab - full CRUD operations
+- ✅ ChoicesTab - full CRUD operations
+- ✅ SessionsTab - full CRUD operations
+- ✅ TagsTab - full CRUD operations
+- ✅ ImagesTab - full CRUD operations
+- ✅ RequirementsTab - full CRUD operations
 
-- [ ] Update `_refresh_all()` method to refresh new tabs
-- [ ] Update `_update_statistics()` method to include counts for new entities
-- [ ] Update toolbar statistics label to show new entity counts
-- [ ] Update sample data loading to include new entities if present
-
-### 3. New Tab Classes Implementation
-
-#### NotesTab(QWidget)
-- [ ] Implement table with columns: ID, World, Title, Content, Tags, Created
-- [ ] Add form for creating/editing notes with fields:
-  - World selection dropdown
-  - Title input
-  - Content text area
-  - Tags input (comma-separated)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add filtering by world, tags, and text search
-- [ ] Add refresh() method
-
-#### MapsTab(QWidget)
-- [ ] Implement table with columns: ID, World, Name, Description, Map Type, Created
-- [ ] Add form for creating/editing maps with fields:
-  - World selection dropdown
-  - Name input
-  - Description text area
-  - Map type dropdown (world, region, city, dungeon, etc.)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add filtering by world, map type, and text search
-- [ ] Add refresh() method
-
-#### HandoutsTab(QWidget)
-- [ ] Implement table with columns: ID, World, Title, Content Type, Status, Created
-- [ ] Add form for creating/editing handouts with fields:
-  - World selection dropdown
-  - Title input
-  - Content text area
-  - Content type dropdown (text, image, document, etc.)
-  - Status dropdown (draft, ready, distributed)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add filtering by world, content type, status, and text search
-- [ ] Add refresh() method
-
-#### InspirationsTab(QWidget)
-- [ ] Implement table with columns: ID, World, Title, Category, Source, Created
-- [ ] Add form for creating/editing inspirations with fields:
-  - World selection dropdown
-  - Title input
-  - Description text area
-  - Category dropdown (character, location, plot, item, etc.)
-  - Source input (book, website, personal, etc.)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add filtering by world, category, source, and text search
-- [ ] Add refresh() method
-
-#### TokenboardsTab(QWidget)
-- [ ] Implement table with columns: ID, World, Name, Description, Token Count, Created
-- [ ] Add form for creating/editing tokenboards with fields:
-  - World selection dropdown
-  - Name input
-  - Description text area
-  - Token count display (calculated from tokens)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add token management (add/remove tokens from board)
-- [ ] Add filtering by world and text search
-- [ ] Add refresh() method
-
-#### FlowchartsTab(QWidget)
-- [ ] Implement table with columns: ID, World, Name, Description, Node Count, Created
-- [ ] Add form for creating/editing flowcharts with fields:
-  - World selection dropdown
-  - Name input
-  - Description text area
-  - Node count display (calculated from nodes)
-- [ ] Implement CRUD operations: Add, Edit, Delete, Duplicate
-- [ ] Add node/connection management interface
-- [ ] Add filtering by world and text search
-- [ ] Add refresh() method
-
-### 4. Import Requirements
-- [ ] Ensure all new entity classes are imported in lore_editor.py:
-  - `from src.domain.entities.note import Note`
-  - `from src.domain.entities.map import Map`
-  - `from src.domain.entities.handout import Handout`
-  - `from src.domain.entities.inspiration import Inspiration`
-  - `from src.domain.entities.tokenboard import Tokenboard`
-  - `from src.domain.entities.flowchart import Flowchart`
-
-- [ ] Import any new value objects/enums needed for the forms
-
-### 5. UI/UX Consistency
-- [ ] Follow existing design patterns from ItemsTab and other tabs
-- [ ] Use consistent styling and icons
-- [ ] Implement proper form validation with error messages
-- [ ] Add tooltips and keyboard shortcuts where appropriate
-- [ ] Ensure responsive layout with splitter widgets for larger forms
-
-### 6. Search and Filtering
-- [ ] Update main window search to work with new tabs
-- [ ] Implement filter_items() method in each new tab class
-- [ ] Add filter controls consistent with ItemsTab implementation
-
-### 7. Testing
-- [ ] Test serialization/deserialization of new entities
-- [ ] Test GUI CRUD operations for each new entity
-- [ ] Test filtering and search functionality
-- [ ] Test integration with existing entities (world relationships)
-
-## Implementation Priority
-1. **High Priority**: LoreData updates (serialization, add methods)
-2. **High Priority**: Basic tab classes with CRUD operations
-3. **Medium Priority**: Advanced features (filtering, search, validation)
-4. **Low Priority**: UI polish, keyboard shortcuts, advanced interactions
-
-## Dependencies
-- All new entity classes must be implemented in the domain layer
-- Value objects and enums must be available
-- Existing GUI patterns should be followed for consistency
+### 4. Core Functionality
+- ✅ JSON serialization/deserialization for all entities
+- ✅ File save/load operations
+- ✅ Basic form validation
+- ✅ Error handling with QMessageBox
+- ✅ Entity relationships (world_id, etc.)
 
 ---
 
-## New Features & Enhancements
+## 🔧 IMPROVEMENTS NEEDED - BETTER CRUD MANAGEMENT
 
-### 8. Page & Template System
-- [ ] Add PagesTab for managing lore pages:
-  - Table view with columns: ID, World, Name, Template, Tags, Updated
-  - Rich text editor for page content
-  - Template selection dropdown
-  - Tag management (add/remove visual tags)
-  - Image management (attach images to pages)
-  - Parent page selection for hierarchical structure
-  - Preview mode for rendered pages
+### Priority 1: JSON Field Editors (CRITICAL for UX)
 
-- [ ] Add TemplatesTab for managing page templates:
-  - Table view with columns: ID, World, Name, Type, Runes, Updated
-  - Template editor with content structure
-  - Rune management (sub-templates)
-  - Template type selection (Page/Rune)
-  - Parent template selection
-  - Template preview/test functionality
+#### ChoiceTab - Replace JSON text inputs with visual editors
+**Current Problem:** Users must manually edit JSON arrays for options, consequences, and next_story_ids
+```python
+# Current (bad UX):
+self.options_input = QTextEdit()  # User types: ["Option 1", "Option 2"]
+```
 
-### 9. Story & Choice System
-- [ ] Add StoriesTab for narrative management:
-  - Table view with columns: ID, World, Name, Type, Status, Choices, Updated
-  - Story editor with rich text content
-  - Story type selection (Linear/Non-Linear/Interactive)
-  - Choice management for non-linear stories
-  - World element connections
-  - Activation/deactivation toggle
-  - Story flow visualization
+**Needed Improvements:**
+- [ ] **Options Editor Widget**
+  - Add/Remove buttons for each option
+  - Text input for each option
+  - Reorder buttons (up/down arrows)
+  - Visual list display
 
-- [ ] Add ChoicesTab for managing player choices:
-  - Table view with columns: ID, World, Text, Type, Impact, Created
-  - Choice editor with description
-  - Choice type selection (Branch/Consequence/Decision)
-  - Impact/consequence editor
-  - Link to related story pages
-  - Preview of choice outcomes
+- [ ] **Consequences Editor Widget**
+  - Linked to options (same count)
+  - Add/Edit/Remove for each consequence
+  - Rich text editor for consequence descriptions
 
-### 10. Session Management
-- [ ] Add SessionsTab for game session tracking:
-  - Table view with columns: ID, World, Name, Date, Status, Duration, Notes
-  - Session planner with date/time picker
-  - Status management (Scheduled/Active/Completed/Cancelled)
-  - Session notes editor
-  - Character attendance tracking
-  - Session summary generator
-  - Link to related notes and handouts
+- [ ] **Next Stories Editor Widget**
+  - Dropdown for each option (story selection or "Ending")
+  - Visual flow preview
+  - Validate story IDs exist
 
-### 11. Tags & Visual Organization
-- [ ] Add TagsTab for managing visual tags:
-  - Table view with columns: ID, World, Name, Type, Color, Usage Count
-  - Tag editor with color picker
-  - Tag type selection (Category/Theme/Status/Custom)
-  - Description editor
-  - Tag usage analytics (show which pages use this tag)
-  - Color-coded display in other tabs
+#### TokenboardTab - Replace JSON inputs with structured editors
+**Current Problem:** Users type complex JSON for counters, notes, shortcuts, timers
+```python
+# Current (bad UX):
+self.counters_input = QTextEdit()  # User types: {"hp": 100, "mp": 50}
+```
 
-### 12. Images & Media
-- [ ] Add ImagesTab for media library:
-  - Grid/table view with thumbnails
-  - Image upload and management
-  - Image type selection (PNG/JPG/GIF/SVG)
-  - File path display
-  - Usage tracking (show where image is used)
-  - Image preview and metadata
-  - Bulk upload functionality
+**Needed Improvements:**
+- [ ] **Counters Editor**
+  - Table widget with columns: Name, Value, Min, Max
+  - Add/Remove row buttons
+  - Spinbox for numeric values
+  - No JSON typing required
 
-### 13. Advanced Search & Filtering
-- [ ] Global search across all entities:
-  - Search bar in main toolbar
-  - Filter by entity type
-  - Full-text search in content fields
-  - Search history
-  - Saved search filters
-  - Results grouped by entity type
+- [ ] **Notes Editor**
+  - Simple list widget
+  - Add/Edit/Delete note buttons
+  - Text editor for each note
 
-- [ ] Advanced filtering panel:
-  - Multi-criteria filters
-  - Date range filters
-  - Tag-based filtering
-  - Status-based filtering
-  - Custom filter presets
+- [ ] **Shortcuts Editor**
+  - Table: Shortcut Key, Action, Description
+  - Keyboard shortcut recorder widget
+  - Validation for duplicate shortcuts
 
-### 14. Relationships & Connections
-- [ ] Add RelationshipsTab:
-  - Visualize connections between entities
-  - Graph view of world structure
-  - Character relationships diagram
-  - Story flow diagrams
-  - Entity dependency tracking
-  - Quick navigation between related entities
+- [ ] **Timers Editor**
+  - Table: Name, Duration, Active/Paused
+  - Duration picker (hours:minutes:seconds)
+  - Start/Stop/Reset buttons
 
-### 15. Export & Reporting
-- [ ] Export functionality:
-  - Export to PDF (individual pages or entire world)
-  - Export to Markdown
-  - Export to HTML (static wiki)
-  - Export to JSON (backup/sharing)
-  - Custom export templates
-  - Batch export options
+#### FlowchartTab - Visual node/edge editor
+**Current Problem:** Users type JSON for nodes and connections
+```python
+# Current (bad UX):
+self.nodes_input = QTextEdit()  # User types complex graph structure
+```
 
-- [ ] Reporting dashboard:
-  - World statistics overview
-  - Character statistics
-  - Story completion tracking
-  - Session history reports
-  - Content creation timeline
-  - Export reports as PDF/CSV
+**Needed Improvements:**
+- [ ] **Visual Flowchart Editor**
+  - Canvas with drag-and-drop nodes
+  - Click-and-drag to create connections
+  - Node properties panel (id, label, type)
+  - Export to JSON automatically
+  - Zoom and pan controls
+  - Auto-layout algorithm
 
-### 16. Import & Integration
-- [ ] Import functionality:
-  - Import from JSON
-  - Import from Markdown files
-  - Import from other lore management tools
-  - Bulk import wizard
-  - Import conflict resolution
-  - Import preview before commit
+- [ ] **Alternative: Simple Node/Connection Tables** (easier to implement first)
+  - Nodes table: ID, Label, Type, Position
+  - Connections table: From Node, To Node, Label
+  - Add/Remove buttons for both
 
-### 17. Versioning & History
-- [ ] Version control features:
-  - Entity version history viewer
-  - Compare versions side-by-side
-  - Revert to previous version
-  - Version annotations/comments
-  - Automatic version snapshots
-  - Version conflict detection
+### Priority 2: List/Array Management
 
-### 18. Collaboration Features
-- [ ] Multi-user support:
-  - User/GM mode toggle
-  - Permission levels (read/write/admin)
-  - Entity locking during editing
-  - Change notifications
-  - Comment system on entities
-  - Share-specific entities with players
+#### StoriesTab - Better world elements management
+**Current Problem:** QListWidget with basic add/remove, no entity details shown
+```python
+# Current:
+self.world_elements_list = QListWidget()  # Just shows IDs
+```
 
-### 19. AI Assistant Integration
-- [ ] AI-powered features:
-  - Content generation assistance
-  - Character backstory generator
-  - Plot suggestion tool
-  - Name generator (characters, places, items)
-  - Content improvement suggestions
-  - Consistency checker
-  - Grammar and style checker
+**Needed Improvements:**
+- [ ] **World Elements Multi-Select**
+  - Show element names, not just IDs
+  - Filter by element type (character, item, location, etc.)
+  - Checkbox list for easy selection
+  - Preview of selected elements
+  - Quick-add from dropdown
 
-### 20. UI/UX Enhancements
-- [ ] Theme customization:
-  - Dark/Light mode toggle
-  - Custom color schemes
-  - Font size adjustment
-  - Layout presets (compact/comfortable/spacious)
-  - Custom entity icons
+#### PagesTab - Better tag and image management
+**Current Problem:** Text input for comma-separated tag IDs, image IDs
 
-- [ ] Workflow improvements:
-  - Quick add buttons in toolbar
-  - Recent items sidebar
-  - Favorites/bookmarks system
-  - Keyboard shortcuts panel
-  - Context menus for quick actions
-  - Drag-and-drop entity linking
-  - Undo/redo functionality
+**Needed Improvements:**
+- [ ] **Tags Multi-Select Widget**
+  - Visual tag chips with colors
+  - Click to add/remove tags
+  - Tag creation on-the-fly
+  - Show tag count and popularity
 
-- [ ] Accessibility:
-  - Screen reader support
-  - High contrast mode
-  - Keyboard navigation throughout
-  - Tooltips and help text
-  - Tutorial/onboarding wizard
+- [ ] **Images Gallery Widget**
+  - Thumbnail grid view
+  - Click to add/remove images
+  - Drag to reorder
+  - Upload new image button
+  - Image preview on hover
 
-### 21. Performance & Optimization
-- [ ] Large dataset handling:
-  - Lazy loading for tables
-  - Virtual scrolling for large lists
-  - Background loading indicators
-  - Pagination for large result sets
-  - Database indexing optimization
-  - Memory usage optimization
+### Priority 3: Date/Time Pickers
 
-### 22. Backup & Recovery
-- [ ] Automated backup system:
-  - Configurable auto-save interval
-  - Backup location configuration
-  - Backup rotation/retention policy
-  - One-click restore from backup
-  - Cloud backup integration (optional)
-  - Backup integrity verification
+#### SessionsTab - Better date/time input
+**Current Problem:** QLineEdit with text input, error-prone
+```python
+# Current:
+self.scheduled_start_input = QLineEdit()  # User types "2026-01-17 14:00:00"
+```
+
+**Needed Improvements:**
+- [ ] **QDateTimeEdit Widget**
+  - Calendar popup for date selection
+  - Time spinner for hour/minute
+  - Timezone support
+  - Validation built-in
+  - Format display (locale-aware)
+
+#### EventsTab - Date range picker
+**Current Problem:** Two separate text inputs for start/end dates
+
+**Needed Improvements:**
+- [ ] **Date Range Widget**
+  - Start date picker
+  - End date picker (optional)
+  - Visual duration display
+  - Validate end > start
+
+### Priority 4: Search and Filtering (NOT IMPLEMENTED)
+
+**All tabs need:**
+- [ ] **Search Bar**
+  - Text search across relevant fields
+  - Real-time filtering
+  - Clear search button
+  - Search highlights in results
+
+- [ ] **Filter Widgets**
+  - World filter dropdown (show only entities for selected world)
+  - Status filter (active/inactive, completed/ongoing, etc.)
+  - Type filter (entity type dropdown)
+  - Date range filter
+  - Tag filter (multi-select tags)
+
+- [ ] **Filter Presets**
+  - "My Favorites" filter
+  - "Recently Modified" filter
+  - "Active Items" filter
+  - Save custom filters
+
+### Priority 5: Visual Validation & Feedback
+
+**Needed across all tabs:**
+- [ ] **Real-time Validation Indicators**
+  - Red border for invalid fields
+  - Green checkmark for valid fields
+  - Warning icon with tooltip for issues
+  - Character count for text fields (e.g., "245/1000")
+
+- [ ] **Required Field Markers**
+  - Asterisk (*) for required fields
+  - Visual grouping of related fields
+  - Disable submit until valid
+
+- [ ] **Better Error Messages**
+  - Inline error text below field
+  - Specific error details (not just "invalid")
+  - Suggestions for fixing errors
+
+### Priority 6: Keyboard Shortcuts & Tooltips
+
+**Needed across all tabs:**
+- [ ] **Keyboard Shortcuts**
+  - Ctrl+N: New entity
+  - Ctrl+S: Save/Update entity
+  - Ctrl+D: Delete entity
+  - Ctrl+F: Focus search
+  - Escape: Clear selection
+  - Enter: Submit form
+
+- [ ] **Tooltips**
+  - Hover tooltips for all form fields
+  - Explain validation rules
+  - Show examples for complex fields
+  - Shortcut hints in tooltips
+
+### Priority 7: Undo/Redo System
+
+**Not implemented at all:**
+- [ ] **Command Pattern Implementation**
+  - Undo stack for all operations
+  - Redo stack
+  - Ctrl+Z / Ctrl+Y shortcuts
+  - Visual undo/redo buttons in toolbar
+  - Operation history viewer
+
+### Priority 8: Drag & Drop
+
+**Would greatly improve UX:**
+- [ ] **Drag & Drop for Lists**
+  - Reorder items in lists by dragging
+  - Drag entities between tabs (e.g., drag character to story)
+  - Drag images onto entities
+  - Visual drop indicators
+
+### Priority 9: Bulk Operations
+
+**Not implemented:**
+- [ ] **Multi-Select in Tables**
+  - Checkbox column in tables
+  - "Select All" / "Deselect All" buttons
+  - Bulk delete (with confirmation)
+  - Bulk edit (change world, tags, etc.)
+  - Bulk export
+
+### Priority 10: Advanced Features
+
+**Nice to have:**
+- [ ] **Entity Preview Panel**
+  - Show entity details on hover/selection
+  - Quick edit without opening full form
+  - Related entities display
+  - Version history
+
+- [ ] **Relationship Visualization**
+  - Graph view of entity connections
+  - Click to navigate between related entities
+  - Filter by relationship type
+
+- [ ] **Import/Export UI**
+  - Import from CSV/JSON
+  - Export selected entities
+  - Export to Markdown/PDF
+  - Backup/Restore wizard
+
+- [ ] **Templates & Presets**
+  - Entity templates (e.g., "Standard Character" template)
+  - Quick-create from template
+  - Save custom templates
 
 ---
 
-## Implementation Roadmap
+## 📋 SPECIFIC TAB IMPROVEMENTS
 
-### Phase 1: Core Missing Entities (Weeks 1-3)
-- Notes, Maps, Handouts tabs
-- Basic CRUD operations
-- Serialization/deserialization
+### ChoiceTab (Lines 19-417 in choice_tab.py)
+**CRITICAL IMPROVEMENTS NEEDED:**
+1. Replace `options_input` QTextEdit with OptionsListWidget (add/remove/edit rows)
+2. Replace `consequences_input` QTextEdit with ConsequencesListWidget (linked to options)
+3. Replace `next_stories_input` QTextEdit with NextStoriesDropdownList
+4. Add visual flow preview showing: Option → Consequence → Next Story
+5. Add validation indicator showing option count matches
+6. Add "Duplicate option" button for similar choices
 
-### Phase 2: Advanced Entities (Weeks 4-6)
-- Pages, Templates, Stories, Choices tabs
-- Tags and Images tabs
-- Visual organization features
+### TokenboardTab (Lines 19-353 in tokenboard_tab.py)
+**CRITICAL IMPROVEMENTS NEEDED:**
+1. Replace `counters_input` with CountersTableWidget (Name, Value, Min, Max columns)
+2. Replace `notes_input` with NotesListWidget (simple list with add/edit/delete)
+3. Replace `shortcuts_input` with ShortcutsTableWidget
+4. Replace `timers_input` with TimersTableWidget with time picker
+5. Add visual preview panel showing tokenboard layout
+6. Add quick increment/decrement buttons for counters
 
-### Phase 3: Session & Workflow (Weeks 7-8)
-- Sessions tab
-- Advanced search and filtering
-- Relationships visualization
+### FlowchartTab (Lines 19-329 in flowchart_tab.py)
+**CRITICAL IMPROVEMENTS NEEDED:**
+1. Replace JSON inputs with NodesTableWidget and ConnectionsTableWidget
+2. Add visual canvas for node layout (optional, can be Phase 2)
+3. Add node type selector with icons
+4. Add connection validation (ensure from/to nodes exist)
+5. Add export to image (PNG/SVG)
 
-### Phase 4: Export & Import (Weeks 9-10)
-- Export functionality (PDF, Markdown, HTML)
-- Import functionality
-- Reporting dashboard
+### SessionsTab (Lines 19-380 in session_tab.py)
+**IMPROVEMENTS NEEDED:**
+1. Replace date/time QLineEdit with QDateTimeEdit widgets
+2. Add duration calculator (auto-calculate from start/end)
+3. Add participant selector (multi-select characters)
+4. Add session notes rich text editor (not plain text)
+5. Add "Schedule next session" button (auto-create with +1 week)
+6. Add session status workflow buttons (Start Session, End Session, Cancel)
 
-### Phase 5: Polish & Enhancements (Weeks 11-12)
-- Theme customization
-- UI/UX improvements
-- Performance optimization
-- Backup system
+### StoriesTab (Lines shown in summary)
+**IMPROVEMENTS NEEDED:**
+1. Improve world_elements selector (show names, not IDs)
+2. Add choice selector with visual preview
+3. Add story activation toggle (big switch button)
+4. Add story preview mode (render how it looks to players)
+5. Add story flow visualization
+6. Add export to Markdown button
 
-### Phase 6: Advanced Features (Future)
-- Versioning system
-- Collaboration features
-- AI assistant integration</content>
-<parameter name="filePath">/Volumes/External/Code/loreSystem/gui_todo.txt
+### PagesTab (Previously shown)
+**IMPROVEMENTS NEEDED:**
+1. Add rich text editor for content (not plain QTextEdit)
+2. Add template preview panel
+3. Add tag chips widget (visual tags)
+4. Add image gallery widget
+5. Add parent page tree view (hierarchical structure)
+6. Add page preview/render mode
+
+---
+
+## 🎯 IMPLEMENTATION PRIORITY ORDER
+
+### Phase 1: Critical UX Fixes (Week 1-2)
+**Focus: Make JSON inputs user-friendly**
+1. ChoiceTab: Options/Consequences/NextStories visual editors
+2. TokenboardTab: Counters/Notes/Shortcuts/Timers tables
+3. SessionsTab: Date/Time pickers
+4. All tabs: Search and filtering
+
+### Phase 2: Visual Enhancements (Week 3-4)
+**Focus: Better visual feedback**
+1. Real-time validation indicators
+2. Required field markers
+3. Better error messages
+4. Tooltips on all fields
+5. Tag chips and image galleries
+
+### Phase 3: Advanced UX (Week 5-6)
+**Focus: Productivity features**
+1. Keyboard shortcuts
+2. Undo/Redo system
+3. Drag & Drop
+4. Bulk operations
+5. Entity preview panels
+
+### Phase 4: Polish (Week 7-8)
+**Focus: Professional finish**
+1. FlowchartTab visual canvas
+2. Relationship visualization
+3. Import/Export wizards
+4. Templates & Presets
+5. Performance optimization
+
+---
+
+## 🚀 QUICK WINS (Do These First!)
+
+1. **SessionsTab Date Pickers** (30 min)
+   - Replace QLineEdit with QDateTimeEdit - instant UX improvement
+
+2. **All Tabs: Search Bar** (1 hour per tab)
+   - Add QLineEdit search at top
+   - Filter table on text change
+   - Massive usability boost
+
+3. **Validation Indicators** (2 hours total)
+   - Add red/green borders to invalid/valid fields
+   - Add character counters
+   - Helps users fix errors faster
+
+4. **World Filter Dropdown** (1 hour per tab)
+   - Add "Filter by World" dropdown at top
+   - Show only entities for selected world
+   - Reduces clutter in large projects
+
+5. **Required Field Asterisks** (30 min)
+   - Add "*" to required field labels
+   - Makes validation rules clear
+
+---
+
+## 📝 NOTES
+
+- Current implementation has **basic CRUD working** but UX is **developer-oriented**, not **user-friendly**
+- Biggest pain points: **JSON text inputs** in ChoiceTab, TokenboardTab, FlowchartTab
+- Second biggest: **No search/filtering** makes large projects hard to navigate
+- Third: **No keyboard shortcuts** forces mouse-only usage
+- All tabs follow **consistent patterns**, making bulk improvements easier
+
+**Overall Status:**
+- ✅ Functionality: 95% complete
+- ⚠️ Usability: 40% complete
+- 🎯 Target: Make it intuitive enough for non-programmers to use comfortably
