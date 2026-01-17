@@ -88,13 +88,25 @@ from src.domain.entities.improvement import Improvement
 from src.domain.entities.item import Item
 from src.domain.entities.quest import Quest
 from src.domain.entities.storyline import Storyline
+from src.domain.entities.page import Page
+from src.domain.entities.template import Template
+from src.domain.entities.story import Story
+from src.domain.entities.tag import Tag
+from src.domain.entities.image import Image
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, Description, CharacterName,
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
-    ItemType, Rarity, QuestStatus, StorylineType
+    ItemType, Rarity, QuestStatus, StorylineType,
+    PageName, Content, TemplateName, TemplateType, StoryName, StoryType,
+    TagName, TagType, ImagePath, ImageType
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 from src.domain.exceptions import DomainException
+
+# Import new tab modules
+from src.presentation.gui.tabs import (
+    PagesTab, TemplatesTab, StoriesTab, TagsTab, ImagesTab
+)
 
 
 class LoreData:
@@ -108,6 +120,11 @@ class LoreData:
         self.items: List[Item] = []
         self.quests: List[Quest] = []
         self.storylines: List[Storyline] = []
+        self.pages: List[Page] = []
+        self.templates: List[Template] = []
+        self.stories: List[Story] = []
+        self.tags: List[Tag] = []
+        self.images: List[Image] = []
         self.tenant_id = TenantId(1)
         self._next_id = 1
     
@@ -2486,6 +2503,11 @@ class MainWindow(QMainWindow):
         self.items_tab = ItemsTab(self.lore_data)
         self.quests_tab = QuestsTab(self.lore_data)
         self.storylines_tab = StorylinesTab(self.lore_data)
+        self.pages_tab = PagesTab(self.lore_data)
+        self.templates_tab = TemplatesTab(self.lore_data)
+        self.stories_tab = StoriesTab(self.lore_data)
+        self.tags_tab = TagsTab(self.lore_data)
+        self.images_tab = ImagesTab(self.lore_data)
 
         self.tabs.addTab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
         self.tabs.addTab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
@@ -2494,6 +2516,11 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
         self.tabs.addTab(self.quests_tab, I18N.t('tab.quests', "🎯 Quests"))
         self.tabs.addTab(self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines"))
+        self.tabs.addTab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
+        self.tabs.addTab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
+        self.tabs.addTab(self.stories_tab, I18N.t('tab.stories', "📖 Stories"))
+        self.tabs.addTab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
+        self.tabs.addTab(self.images_tab, I18N.t('tab.images', "🖼️ Images"))
 
         main_layout.addWidget(self.tabs)
 
@@ -3089,6 +3116,13 @@ class MainWindow(QMainWindow):
         self.events_tab.refresh()
         self.improvements_tab.refresh()
         self.items_tab.refresh()
+        self.quests_tab.refresh()
+        self.storylines_tab.refresh()
+        self.pages_tab.refresh()
+        self.templates_tab.refresh()
+        self.stories_tab.refresh()
+        self.tags_tab.refresh()
+        self.images_tab.refresh()
 
 
 def main():
