@@ -34,7 +34,7 @@ def test_main_window_initialization(qtbot):
 
     # Check that tabs are created
     assert hasattr(window, 'tabs')
-    assert window.tabs.count() == 5  # Worlds, Characters, Events, Improvements, Items
+    assert window.tabs.count() == 7  # Worlds, Characters, Events, Improvements, Items, Quests, Storylines
 
     # Check tab names
     tab_texts = []
@@ -46,6 +46,8 @@ def test_main_window_initialization(qtbot):
     assert "⚡ Events" in tab_texts
     assert "⬆️ Improvements" in tab_texts
     assert "⚔️ Items" in tab_texts
+    assert "🎯 Quests" in tab_texts
+    assert "📖 Storylines" in tab_texts
 
 
 def test_lore_data_initialization():

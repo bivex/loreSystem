@@ -291,5 +291,208 @@
       "version": 1
     }
   ],
-  "next_id": 23
+  "quests": [
+    {
+      "id": 23,
+      "world_id": 1,
+      "name": "Forge the Eternal Blade",
+      "description": "Create a legendary weapon capable of sealing dimensional rifts",
+      "objectives": [
+        "Gather rare materials from the Shadowmere Wastes",
+        "Temper the blade in the heart of the Eternal Forge",
+        "Infuse the blade with Aria's soul essence"
+      ],
+      "status": "active",
+      "participant_ids": [3],
+      "reward_ids": [11],
+      "created_at": "2024-01-17T00:00:00+00:00",
+      "updated_at": "2024-01-17T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 25,
+      "world_id": 1,
+      "name": "The Crystal Guardian Alliance",
+      "description": "Form an alliance with the ancient Crystal Guardians to protect the Eternal Forge",
+      "objectives": [
+        "Locate the hidden Crystal Temple",
+        "Prove worthiness through the Trial of Light",
+        "Forge a pact artifact with the Guardian elders"
+      ],
+      "status": "completed",
+      "participant_ids": [3, 4],
+      "reward_ids": [13],
+      "created_at": "2024-01-19T00:00:00+00:00",
+      "updated_at": "2024-01-25T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 26,
+      "world_id": 2,
+      "name": "Restore the Lost Civilization",
+      "description": "Use the knowledge from the Lost Archives to begin restoring the pre-cataclysm civilization",
+      "objectives": [
+        "Decipher the ancient texts completely",
+        "Reconstruct the Shadow Binding ritual",
+        "Establish a new settlement in the Wastes"
+      ],
+      "status": "active",
+      "participant_ids": [5],
+      "reward_ids": [18, 21],
+      "created_at": "2024-01-20T00:00:00+00:00",
+      "updated_at": "2024-01-20T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 27,
+      "world_id": 2,
+      "name": "Hunt the Shadow Beasts",
+      "description": "Clear dangerous shadow creatures from the ancient ruins to make exploration safer",
+      "objectives": [
+        "Track and eliminate the Shadow Wraith pack",
+        "Destroy the corrupted nesting grounds",
+        "Collect shadow essence for research"
+      ],
+      "status": "failed",
+      "participant_ids": [5],
+      "reward_ids": [19],
+      "created_at": "2024-01-15T00:00:00+00:00",
+      "updated_at": "2024-01-22T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 30,
+      "world_id": 1,
+      "name": "The Dimensional Breach",
+      "description": "Investigate and seal a growing rift between worlds threatening to merge realities",
+      "objectives": [
+        "Investigate the source of dimensional instability",
+        "Gather stabilizing crystals from the Crystal Temple",
+        "Perform the Reality Anchoring ritual",
+        "Monitor the seal for 30 days"
+      ],
+      "status": "active",
+      "participant_ids": [3, 4],
+      "reward_ids": [12, 14],
+      "created_at": "2024-01-23T00:00:00+00:00",
+      "updated_at": "2024-01-23T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 31,
+      "world_id": 1,
+      "name": "Master the Forge Flames",
+      "description": "Learn to control the primordial flames of creation to become a true Forge Master",
+      "objectives": [
+        "Meditate in the Heart Chamber for 7 days",
+        "Survive the Flame Baptism ritual",
+        "Craft a personal flame artifact"
+      ],
+      "status": "cancelled",
+      "participant_ids": [3],
+      "reward_ids": [],
+      "created_at": "2024-01-10T00:00:00+00:00",
+      "updated_at": "2024-01-14T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 32,
+      "world_id": 2,
+      "name": "The Shadow King's Bargain",
+      "description": "Negotiate with the Shadow King for forbidden knowledge about the cataclysm",
+      "objectives": [
+        "Find the Shadow King's throne room",
+        "Offer a worthy sacrifice",
+        "Extract information without losing your soul",
+        "Escape with the knowledge intact"
+      ],
+      "status": "completed",
+      "participant_ids": [5],
+      "reward_ids": [17, 22],
+      "created_at": "2024-01-24T00:00:00+00:00",
+      "updated_at": "2024-01-28T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 33,
+      "world_id": 2,
+      "name": "Purify the Corrupted Temple",
+      "description": "Cleanse the Temple of Eternal Night from shadow corruption to access its full power",
+      "objectives": [
+        "Identify sources of corruption",
+        "Destroy shadow anchors",
+        "Perform purification rituals",
+        "Reactivate the temple's protective wards"
+      ],
+      "status": "active",
+      "participant_ids": [5],
+      "reward_ids": [20],
+      "created_at": "2024-01-26T00:00:00+00:00",
+      "updated_at": "2024-01-26T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "storylines": [
+    {
+      "id": 24,
+      "world_id": 1,
+      "name": "The Eternal Flame Saga",
+      "description": "The epic tale of the Forge Masters and their battle to preserve creation",
+      "storyline_type": "main",
+      "event_ids": [6],
+      "quest_ids": [23, 25, 30],
+      "created_at": "2024-01-18T00:00:00+00:00",
+      "updated_at": "2024-01-18T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 28,
+      "world_id": 2,
+      "name": "Shadows of the Past",
+      "description": "Umbra's journey to uncover the truth about the cataclysm and restore her civilization",
+      "storyline_type": "main",
+      "event_ids": [7],
+      "quest_ids": [26, 27, 32, 33],
+      "created_at": "2024-01-21T00:00:00+00:00",
+      "updated_at": "2024-01-21T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 29,
+      "world_id": 1,
+      "name": "The Apprentice's Path",
+      "description": "Aria's journey from novice to master Forge Guardian",
+      "storyline_type": "side",
+      "event_ids": [],
+      "quest_ids": [23, 31],
+      "created_at": "2024-01-16T00:00:00+00:00",
+      "updated_at": "2024-01-16T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 34,
+      "world_id": 1,
+      "name": "The Dimensional Crisis",
+      "description": "A short but intense crisis involving a breach between worlds",
+      "storyline_type": "episode",
+      "event_ids": [],
+      "quest_ids": [30],
+      "created_at": "2024-01-23T00:00:00+00:00",
+      "updated_at": "2024-01-23T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 35,
+      "world_id": 2,
+      "name": "The Temple's Secret",
+      "description": "The mystery and danger of the Temple of Eternal Night",
+      "storyline_type": "side",
+      "event_ids": [7],
+      "quest_ids": [32, 33],
+      "created_at": "2024-01-24T00:00:00+00:00",
+      "updated_at": "2024-01-24T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "next_id": 36
 }

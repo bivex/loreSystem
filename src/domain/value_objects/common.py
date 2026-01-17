@@ -16,6 +16,8 @@ class EntityType(str, Enum):
     CHARACTER = "character"
     EVENT = "event"
     ITEM = "item"
+    QUEST = "quest"
+    STORYLINE = "storyline"
 
 
 class ItemType(str, Enum):
@@ -57,6 +59,21 @@ class CharacterStatus(str, Enum):
     """Character availability status."""
     ACTIVE = "active"
     INACTIVE = "inactive"
+
+
+class QuestStatus(str, Enum):
+    """Quest completion status."""
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class StorylineType(str, Enum):
+    """Types of storylines."""
+    MAIN = "main"
+    SIDE = "side"
+    EPISODE = "episode"
 
 
 @dataclass(frozen=True)

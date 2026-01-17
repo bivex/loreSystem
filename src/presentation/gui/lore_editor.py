@@ -24,16 +24,40 @@ from PyQt6.QtGui import (
     QFont, QColor, QPalette, QIcon, QAction, QPixmap, QKeySequence,
     QPainter, QBrush, QLinearGradient
 )
+import traceback
+
+
+def _exception_hook(exc_type, exc_value, exc_tb):
+    """Global exception hook for uncaught exceptions in PyQt slots.
+
+    Prints the traceback and shows a QMessageBox instead of letting
+    the process abort inside the Qt/C++ runtime.
+    """
+    # Print full traceback to stderr / logs
+    traceback.print_exception(exc_type, exc_value, exc_tb)
+    # Try to show an error dialog if the Qt app is running
+    try:
+        QMessageBox.critical(None, "Unhandled Exception", f"{exc_type.__name__}: {exc_value}")
+    except Exception:
+        # If QMessageBox isn't available or another error occurs, ignore
+        pass
+
+
+# Install our global hook so uncaught exceptions don't trigger Qt fatal
+import sys
+sys.excepthook = _exception_hook
 
 from src.domain.entities.world import World
 from src.domain.entities.character import Character
 from src.domain.entities.event import Event
 from src.domain.entities.improvement import Improvement
 from src.domain.entities.item import Item
+from src.domain.entities.quest import Quest
+from src.domain.entities.storyline import Storyline
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, Description, CharacterName,
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
-    ItemType, Rarity
+    ItemType, Rarity, QuestStatus, StorylineType
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 from src.domain.exceptions import DomainException
@@ -48,6 +72,8 @@ class LoreData:
         self.events: List[Event] = []
         self.improvements: List[Improvement] = []
         self.items: List[Item] = []
+        self.quests: List[Quest] = []
+        self.storylines: List[Storyline] = []
         self.tenant_id = TenantId(1)
         self._next_id = 1
     
@@ -92,6 +118,20 @@ class LoreData:
         self.items.append(item)
         return item
     
+    def add_quest(self, quest: Quest) -> Quest:
+        """Add quest with generated ID."""
+        if quest.id is None:
+            object.__setattr__(quest, 'id', self.get_next_id())
+        self.quests.append(quest)
+        return quest
+    
+    def add_storyline(self, storyline: Storyline) -> Storyline:
+        """Add storyline with generated ID."""
+        if storyline.id is None:
+            object.__setattr__(storyline, 'id', self.get_next_id())
+        self.storylines.append(storyline)
+        return storyline
+    
     def get_world_by_id(self, world_id: EntityId) -> Optional[World]:
         """Find world by ID."""
         return next((w for w in self.worlds if w.id == world_id), None)
@@ -108,6 +148,8 @@ class LoreData:
             'events': [self._event_to_dict(e) for e in self.events],
             'improvements': [self._improvement_to_dict(i) for i in self.improvements],
             'items': [self._item_to_dict(i) for i in self.items],
+            'quests': [self._quest_to_dict(q) for q in self.quests],
+            'storylines': [self._storyline_to_dict(s) for s in self.storylines],
             'next_id': self._next_id
         }
     
@@ -118,6 +160,8 @@ class LoreData:
         self.events = [self._dict_to_event(e) for e in data.get('events', [])]
         self.improvements = [self._dict_to_improvement(i) for i in data.get('improvements', [])]
         self.items = [self._dict_to_item(i) for i in data.get('items', [])]
+        self.quests = [self._dict_to_quest(q) for q in data.get('quests', [])]
+        self.storylines = [self._dict_to_storyline(s) for s in data.get('storylines', [])]
         self._next_id = data.get('next_id', 1)
     
     @staticmethod
@@ -258,6 +302,70 @@ class LoreData:
             description=Description(data['description']),
             item_type=ItemType(data['item_type']),
             rarity=Rarity(data['rarity']) if data['rarity'] else None,
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+    
+    @staticmethod
+    def _quest_to_dict(quest: Quest) -> Dict:
+        return {
+            'id': quest.id.value if quest.id else None,
+            'world_id': quest.world_id.value,
+            'name': quest.name,
+            'description': str(quest.description),
+            'objectives': quest.objectives,
+            'status': quest.status.value,
+            'participant_ids': [p.value for p in quest.participant_ids],
+            'reward_ids': [r.value for r in quest.reward_ids],
+            'created_at': quest.created_at.value.isoformat(),
+            'updated_at': quest.updated_at.value.isoformat(),
+            'version': quest.version.value
+        }
+    
+    @staticmethod
+    def _dict_to_quest(data: Dict) -> Quest:
+        return Quest(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            objectives=data['objectives'],
+            status=QuestStatus(data['status']),
+            participant_ids=[EntityId(p) for p in data['participant_ids']],
+            reward_ids=[EntityId(r) for r in data['reward_ids']],
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+    
+    @staticmethod
+    def _storyline_to_dict(storyline: Storyline) -> Dict:
+        return {
+            'id': storyline.id.value if storyline.id else None,
+            'world_id': storyline.world_id.value,
+            'name': storyline.name,
+            'description': str(storyline.description),
+            'storyline_type': storyline.storyline_type.value,
+            'event_ids': [e.value for e in storyline.event_ids],
+            'quest_ids': [q.value for q in storyline.quest_ids],
+            'created_at': storyline.created_at.value.isoformat(),
+            'updated_at': storyline.updated_at.value.isoformat(),
+            'version': storyline.version.value
+        }
+    
+    @staticmethod
+    def _dict_to_storyline(data: Dict) -> Storyline:
+        return Storyline(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            storyline_type=StorylineType(data['storyline_type']),
+            event_ids=[EntityId(e) for e in data['event_ids']],
+            quest_ids=[EntityId(q) for q in data['quest_ids']],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
@@ -1786,6 +1894,260 @@ class ItemsTab(QWidget):
         self._clear_form()
 
 
+class QuestsTab(QWidget):
+    """Tab for managing quests."""
+
+    quest_selected = pyqtSignal(EntityId)
+
+    def __init__(self, lore_data: LoreData):
+        super().__init__()
+        self.lore_data = lore_data
+        self.selected_quest: Optional[Quest] = None
+        self._setup_ui()
+        self.refresh()
+
+    def _setup_ui(self):
+        """Setup the user interface."""
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # Table
+        self.table = QTableWidget()
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels([
+            "ID", "World", "Name", "Status", "Objectives"
+        ])
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.itemSelectionChanged.connect(self._on_quest_selected)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        self.add_btn = QPushButton("Add Quest")
+        self.add_btn.clicked.connect(self._add_quest)
+        self.edit_btn = QPushButton("Edit Quest")
+        self.edit_btn.clicked.connect(self._edit_quest)
+        self.edit_btn.setEnabled(False)
+        self.delete_btn = QPushButton("Delete Quest")
+        self.delete_btn.clicked.connect(self._delete_quest)
+        self.delete_btn.setEnabled(False)
+
+        button_layout.addWidget(self.add_btn)
+        button_layout.addWidget(self.edit_btn)
+        button_layout.addWidget(self.delete_btn)
+        button_layout.addStretch()
+
+        layout.addWidget(self.table)
+        layout.addLayout(button_layout)
+
+    def refresh(self):
+        """Refresh the table with current quests."""
+        self.table.setRowCount(0)
+        for quest in self.lore_data.quests:
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            
+            self.table.setItem(row, 0, QTableWidgetItem(str(quest.id.value)))
+            world = self.lore_data.get_world_by_id(quest.world_id)
+            world_name = str(world.name) if world else "Unknown"
+            self.table.setItem(row, 1, QTableWidgetItem(world_name))
+            self.table.setItem(row, 2, QTableWidgetItem(quest.name))
+            self.table.setItem(row, 3, QTableWidgetItem(quest.status.value))
+            objectives_text = "; ".join(quest.objectives[:2])  # Show first 2 objectives
+            if len(quest.objectives) > 2:
+                objectives_text += "..."
+            self.table.setItem(row, 4, QTableWidgetItem(objectives_text))
+
+    def _on_quest_selected(self):
+        """Handle quest selection."""
+        current_row = self.table.currentRow()
+        if current_row >= 0:
+            quest_id = int(self.table.item(current_row, 0).text())
+            self.selected_quest = next((q for q in self.lore_data.quests if q.id.value == quest_id), None)
+            self.edit_btn.setEnabled(True)
+            self.delete_btn.setEnabled(True)
+            self.quest_selected.emit(EntityId(quest_id))
+        else:
+            self.selected_quest = None
+            self.edit_btn.setEnabled(False)
+            self.delete_btn.setEnabled(False)
+
+    def _add_quest(self):
+        """Add a new quest."""
+        # Simplified: just create a basic quest
+        if not self.lore_data.worlds:
+            QMessageBox.warning(self, "No Worlds", "Please create a world first.")
+            return
+        
+        world = self.lore_data.worlds[0]  # Use first world
+        
+        # Check if there are characters in this world
+        characters_in_world = [c for c in self.lore_data.characters if c.world_id == world.id]
+        if not characters_in_world:
+            QMessageBox.warning(
+                self, "No Characters", 
+                f"No characters exist in world '{world.name}'. Please create characters first before creating quests."
+            )
+            return
+        
+        # Use the first character as a participant
+        participant_id = characters_in_world[0].id
+        
+        quest = Quest(
+            id=None,
+            tenant_id=self.lore_data.tenant_id,
+            world_id=world.id,
+            name="New Quest",
+            description=Description("Quest description"),
+            objectives=["Complete objective 1"],
+            status=QuestStatus.ACTIVE,
+            participant_ids=[participant_id],
+            reward_ids=[],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+        )
+        self.lore_data.add_quest(quest)
+        self.refresh()
+
+    def _edit_quest(self):
+        """Edit selected quest."""
+        if self.selected_quest:
+            # For now, just show a message
+            QMessageBox.information(self, "Edit", f"Editing quest: {self.selected_quest.name}")
+
+    def _delete_quest(self):
+        """Delete selected quest."""
+        if self.selected_quest:
+            self.lore_data.quests.remove(self.selected_quest)
+            self.refresh()
+
+
+class StorylinesTab(QWidget):
+    """Tab for managing storylines."""
+
+    storyline_selected = pyqtSignal(EntityId)
+
+    def __init__(self, lore_data: LoreData):
+        super().__init__()
+        self.lore_data = lore_data
+        self.selected_storyline: Optional[Storyline] = None
+        self._setup_ui()
+        self.refresh()
+
+    def _setup_ui(self):
+        """Setup the user interface."""
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # Table
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels([
+            "ID", "World", "Name", "Type"
+        ])
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.itemSelectionChanged.connect(self._on_storyline_selected)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        self.add_btn = QPushButton("Add Storyline")
+        self.add_btn.clicked.connect(self._add_storyline)
+        self.edit_btn = QPushButton("Edit Storyline")
+        self.edit_btn.clicked.connect(self._edit_storyline)
+        self.edit_btn.setEnabled(False)
+        self.delete_btn = QPushButton("Delete Storyline")
+        self.delete_btn.clicked.connect(self._delete_storyline)
+        self.delete_btn.setEnabled(False)
+
+        button_layout.addWidget(self.add_btn)
+        button_layout.addWidget(self.edit_btn)
+        button_layout.addWidget(self.delete_btn)
+        button_layout.addStretch()
+
+        layout.addWidget(self.table)
+        layout.addLayout(button_layout)
+
+    def refresh(self):
+        """Refresh the table with current storylines."""
+        self.table.setRowCount(0)
+        for storyline in self.lore_data.storylines:
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            
+            self.table.setItem(row, 0, QTableWidgetItem(str(storyline.id.value)))
+            world = self.lore_data.get_world_by_id(storyline.world_id)
+            world_name = str(world.name) if world else "Unknown"
+            self.table.setItem(row, 1, QTableWidgetItem(world_name))
+            self.table.setItem(row, 2, QTableWidgetItem(storyline.name))
+            self.table.setItem(row, 3, QTableWidgetItem(storyline.storyline_type.value))
+
+    def _on_storyline_selected(self):
+        """Handle storyline selection."""
+        current_row = self.table.currentRow()
+        if current_row >= 0:
+            storyline_id = int(self.table.item(current_row, 0).text())
+            self.selected_storyline = next((s for s in self.lore_data.storylines if s.id.value == storyline_id), None)
+            self.edit_btn.setEnabled(True)
+            self.delete_btn.setEnabled(True)
+            self.storyline_selected.emit(EntityId(storyline_id))
+        else:
+            self.selected_storyline = None
+            self.edit_btn.setEnabled(False)
+            self.delete_btn.setEnabled(False)
+
+    def _add_storyline(self):
+        """Add a new storyline."""
+        if not self.lore_data.worlds:
+            QMessageBox.warning(self, "No Worlds", "Please create a world first.")
+            return
+        
+        world = self.lore_data.worlds[0]  # Use first world
+        # Ensure at least one event or quest exists for the new storyline
+        events_in_world = [e for e in self.lore_data.events if e.world_id == world.id]
+        quests_in_world = [q for q in self.lore_data.quests if q.world_id == world.id]
+
+        if not events_in_world and not quests_in_world:
+            QMessageBox.warning(
+                self,
+                "No Events or Quests",
+                "Please create at least one Event or Quest in the selected world before adding a Storyline."
+            )
+            return
+
+        # Prefer adding an event if available, otherwise attach a quest
+        event_ids = [events_in_world[0].id] if events_in_world else []
+        quest_ids = [quests_in_world[0].id] if (not event_ids and quests_in_world) else []
+
+        storyline = Storyline(
+            id=None,
+            tenant_id=self.lore_data.tenant_id,
+            world_id=world.id,
+            name="New Storyline",
+            description=Description("Storyline description"),
+            storyline_type=StorylineType.MAIN,
+            event_ids=event_ids,
+            quest_ids=quest_ids,
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+        )
+        self.lore_data.add_storyline(storyline)
+        self.refresh()
+
+    def _edit_storyline(self):
+        """Edit selected storyline."""
+        if self.selected_storyline:
+            QMessageBox.information(self, "Edit", f"Editing storyline: {self.selected_storyline.name}")
+
+    def _delete_storyline(self):
+        """Delete selected storyline."""
+        if self.selected_storyline:
+            self.lore_data.storylines.remove(self.selected_storyline)
+            self.refresh()
+
+
 class MainWindow(QMainWindow):
     """Main application window with enhanced UI/UX."""
 
@@ -2030,12 +2392,16 @@ class MainWindow(QMainWindow):
         self.events_tab = EventsTab(self.lore_data)
         self.improvements_tab = ImprovementsTab(self.lore_data)
         self.items_tab = ItemsTab(self.lore_data)
+        self.quests_tab = QuestsTab(self.lore_data)
+        self.storylines_tab = StorylinesTab(self.lore_data)
 
         self.tabs.addTab(self.worlds_tab, "🌍 Worlds")
         self.tabs.addTab(self.characters_tab, "👥 Characters")
         self.tabs.addTab(self.events_tab, "⚡ Events")
         self.tabs.addTab(self.improvements_tab, "⬆️ Improvements")
         self.tabs.addTab(self.items_tab, "⚔️ Items")
+        self.tabs.addTab(self.quests_tab, "🎯 Quests")
+        self.tabs.addTab(self.storylines_tab, "📖 Storylines")
 
         main_layout.addWidget(self.tabs)
 
