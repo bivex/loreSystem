@@ -24,6 +24,14 @@ class EntityType(str, Enum):
     IMAGE = "image"
     STORY = "story"
     CHOICE = "choice"
+    FLOWCHART = "flowchart"
+    HANDOUT = "handout"
+    INSPIRATION = "inspiration"
+    MAP = "map"
+    NOTE = "note"
+    REQUIREMENT = "requirement"
+    SESSION = "session"
+    TOKENBOARD = "tokenboard"
 
 
 class ItemType(str, Enum):

@@ -105,7 +105,9 @@ from src.domain.exceptions import DomainException
 
 # Import new tab modules
 from src.presentation.gui.tabs import (
-    PagesTab, TemplatesTab, StoriesTab, TagsTab, ImagesTab
+    PagesTab, TemplatesTab, StoriesTab, TagsTab, ImagesTab,
+    ChoiceTab, FlowchartTab, HandoutTab, InspirationTab, MapTab,
+    NoteTab, RequirementTab, SessionTab, TokenboardTab
 )
 
 
@@ -2151,6 +2153,15 @@ class MainWindow(QMainWindow):
         self.stories_tab = StoriesTab(self.lore_data)
         self.tags_tab = TagsTab(self.lore_data)
         self.images_tab = ImagesTab(self.lore_data)
+        self.choices_tab = ChoiceTab(self.lore_data)
+        self.flowcharts_tab = FlowchartTab(self.lore_data)
+        self.handouts_tab = HandoutTab(self.lore_data)
+        self.inspirations_tab = InspirationTab(self.lore_data)
+        self.maps_tab = MapTab(self.lore_data)
+        self.notes_tab = NoteTab(self.lore_data)
+        self.requirements_tab = RequirementTab(self.lore_data)
+        self.sessions_tab = SessionTab(self.lore_data)
+        self.tokenboards_tab = TokenboardTab(self.lore_data)
 
         # Add to stacked widget and list
         tabs = [
@@ -2166,6 +2177,15 @@ class MainWindow(QMainWindow):
             (self.stories_tab, I18N.t('tab.stories', "📖 Stories")),
             (self.tags_tab, I18N.t('tab.tags', "🏷️ Tags")),
             (self.images_tab, I18N.t('tab.images', "🖼️ Images")),
+            (self.choices_tab, I18N.t('tab.choices', "🎯 Choices")),
+            (self.flowcharts_tab, I18N.t('tab.flowcharts', "📊 Flowcharts")),
+            (self.handouts_tab, I18N.t('tab.handouts', "📄 Handouts")),
+            (self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration")),
+            (self.maps_tab, I18N.t('tab.maps', "🗺️ Maps")),
+            (self.notes_tab, I18N.t('tab.notes', "📝 Notes")),
+            (self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements")),
+            (self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions")),
+            (self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards")),
         ]
         
         for tab, name in tabs:

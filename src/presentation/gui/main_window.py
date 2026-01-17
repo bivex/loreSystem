@@ -25,6 +25,11 @@ from src.presentation.gui.tabs.improvements_tab import ImprovementsTab
 from src.presentation.gui.tabs.items_tab import ItemsTab
 from src.presentation.gui.tabs.quests_tab import QuestsTab
 from src.presentation.gui.tabs.storylines_tab import StorylinesTab
+from src.presentation.gui.tabs.pages_tab import PagesTab
+from src.presentation.gui.tabs.templates_tab import TemplatesTab
+from src.presentation.gui.tabs.stories_tab import StoriesTab
+from src.presentation.gui.tabs.tags_tab import TagsTab
+from src.presentation.gui.tabs.images_tab import ImagesTab
 from src.domain.value_objects.common import EntityId
 
 
@@ -339,7 +344,11 @@ class MainWindow(QMainWindow):
         self.items_tab = ItemsTab(self.lore_data)
         self.quests_tab = QuestsTab(self.lore_data)
         self.storylines_tab = StorylinesTab(self.lore_data)
-        # TODO: Add missing tabs: PagesTab, TemplatesTab, StoriesTab, TagsTab, ImagesTab
+        self.pages_tab = PagesTab(self.lore_data)
+        self.templates_tab = TemplatesTab(self.lore_data)
+        self.stories_tab = StoriesTab(self.lore_data)
+        self.tags_tab = TagsTab(self.lore_data)
+        self.images_tab = ImagesTab(self.lore_data)
 
         # Add to stacked widget and list
         tabs = [
@@ -350,6 +359,11 @@ class MainWindow(QMainWindow):
             (self.items_tab, I18n.t('tab.items', "⚔️ Items")),
             (self.quests_tab, I18n.t('tab.quests', "🎯 Quests")),
             (self.storylines_tab, I18n.t('tab.storylines', "📖 Storylines")),
+            (self.pages_tab, I18n.t('tab.pages', "📄 Pages")),
+            (self.templates_tab, I18n.t('tab.templates', "📋 Templates")),
+            (self.stories_tab, I18n.t('tab.stories', "📚 Stories")),
+            (self.tags_tab, I18n.t('tab.tags', "🏷️ Tags")),
+            (self.images_tab, I18n.t('tab.images', "🖼️ Images")),
         ]
 
         for tab, name in tabs:
