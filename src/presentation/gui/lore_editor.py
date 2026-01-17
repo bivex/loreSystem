@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QPushButton, QTableWidget, QTableWidgetItem,
     QFormLayout, QLineEdit, QTextEdit, QSpinBox, QComboBox,
-    QLabel, QMessageBox, QFileDialog, QGroupBox, QListWidget,
+    QLabel, QMessageBox, QFileDialog, QGroupBox, QListWidget, QListWidgetItem,
     QDialog, QDialogButtonBox, QInputDialog, QSplitter, QFrame,
     QStatusBar, QMenuBar, QMenu, QToolBar, QProgressBar,
     QSystemTrayIcon, QHeaderView, QStackedWidget
@@ -2118,7 +2118,7 @@ class MainWindow(QMainWindow):
         tab_layout = QHBoxLayout()
         
         self.tab_list = QListWidget()
-        self.tab_list.setMaximumWidth(200)
+        self.tab_list.setMaximumWidth(220)
         self.tab_list.setStyleSheet("""
             QListWidget {
                 background: #2b2b2b;
@@ -2133,6 +2133,15 @@ class MainWindow(QMainWindow):
             QListWidget::item:selected {
                 background: #444;
                 color: #fff;
+            }
+            QListWidget::item:disabled {
+                background: #1a1a1a;
+                color: #888;
+                font-weight: bold;
+                font-size: 11px;
+                padding: 5px 10px;
+                border-top: 2px solid #555;
+                border-bottom: 2px solid #555;
             }
         """)
         
@@ -2167,46 +2176,79 @@ class MainWindow(QMainWindow):
         self.sessions_tab = SessionTab(self.lore_data)
         self.tokenboards_tab = TokenboardTab(self.lore_data)
 
-        # Add to stacked widget and list
-        tabs = [
-            (self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds")),
-            (self.characters_tab, I18N.t('tab.characters', "👥 Characters")),
-            (self.events_tab, I18N.t('tab.events', "⚡ Events")),
-            (self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements")),
-            (self.items_tab, I18N.t('tab.items', "⚔️ Items")),
-            (self.quests_tab, I18N.t('tab.quests', "🎯 Quests")),
-            (self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines")),
-            (self.pages_tab, I18N.t('tab.pages', "📄 Pages")),
-            (self.templates_tab, I18N.t('tab.templates', "📐 Templates")),
-            (self.stories_tab, I18N.t('tab.stories', "📖 Stories")),
-            (self.tags_tab, I18N.t('tab.tags', "🏷️ Tags")),
-            (self.images_tab, I18N.t('tab.images', "🖼️ Images")),
-            (self.choices_tab, I18N.t('tab.choices', "🎯 Choices")),
-            (self.flowcharts_tab, I18N.t('tab.flowcharts', "📊 Flowcharts")),
-            (self.handouts_tab, I18N.t('tab.handouts', "📄 Handouts")),
-            (self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration")),
-            (self.maps_tab, I18N.t('tab.maps', "🗺️ Maps")),
-            (self.notes_tab, I18N.t('tab.notes', "📝 Notes")),
-            (self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements")),
-            (self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions")),
-            (self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards")),
-        ]
-        
-        for tab, name in tabs:
-            self.stacked_widget.addWidget(tab)
-            self.tab_list.addItem(name)
+        # Add to stacked widget and list with categorical dividers
+        # Track mapping between list rows and widget indices (excluding dividers)
+        self.tab_row_to_widget_index = {}
+        widget_index = 0
 
-        # Set initial selection
-        self.tab_list.setCurrentRow(0)
+        def add_divider(text):
+            """Add a category divider to the tab list."""
+            divider = QListWidgetItem(f"━━ {text.upper()} ━━")
+            divider.setFlags(divider.flags() & ~Qt.ItemFlag.ItemIsSelectable & ~Qt.ItemFlag.ItemIsEnabled)
+            self.tab_list.addItem(divider)
+
+        def add_tab(widget, name):
+            """Add a tab to both stacked widget and list."""
+            nonlocal widget_index
+            self.stacked_widget.addWidget(widget)
+            self.tab_list.addItem(name)
+            # Map current row to widget index
+            self.tab_row_to_widget_index[self.tab_list.count() - 1] = widget_index
+            widget_index += 1
+
+        # Core Entities
+        add_divider("Core Entities")
+        add_tab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
+        add_tab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
+        add_tab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
+        add_tab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
+        add_tab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
+
+        # Game Content
+        add_divider("Game Content")
+        add_tab(self.quests_tab, I18N.t('tab.quests', "🎯 Quests"))
+        add_tab(self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines"))
+
+        # Pages & Stories
+        add_divider("Pages & Stories")
+        add_tab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
+        add_tab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
+        add_tab(self.stories_tab, I18N.t('tab.stories', "📖 Stories"))
+        add_tab(self.choices_tab, I18N.t('tab.choices', "🎯 Choices"))
+        add_tab(self.flowcharts_tab, I18N.t('tab.flowcharts', "📊 Flowcharts"))
+
+        # Media & Organization
+        add_divider("Media & Tags")
+        add_tab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
+        add_tab(self.images_tab, I18N.t('tab.images', "🖼️ Images"))
+
+        # GM Tools
+        add_divider("GM Tools")
+        add_tab(self.handouts_tab, I18N.t('tab.handouts', "📄 Handouts"))
+        add_tab(self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration"))
+        add_tab(self.maps_tab, I18N.t('tab.maps', "🗺️ Maps"))
+        add_tab(self.notes_tab, I18N.t('tab.notes', "📝 Notes"))
+        add_tab(self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements"))
+        add_tab(self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions"))
+        add_tab(self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards"))
+
+        # Set initial selection (skip first divider, select Worlds tab)
+        self.tab_list.setCurrentRow(1)
 
         tab_layout.addWidget(self.tab_list)
         tab_layout.addWidget(self.stacked_widget)
 
         main_layout.addLayout(tab_layout)
 
-        # Connect list to stacked widget
-        self.tab_list.currentRowChanged.connect(self.stacked_widget.setCurrentIndex)
-        self.tab_list.currentRowChanged.connect(self._on_tab_changed)
+        # Connect list to stacked widget with mapping for dividers
+        def on_tab_row_changed(row):
+            """Handle tab list row change, accounting for dividers."""
+            if row in self.tab_row_to_widget_index:
+                widget_index = self.tab_row_to_widget_index[row]
+                self.stacked_widget.setCurrentIndex(widget_index)
+                self._on_tab_changed(row)
+
+        self.tab_list.currentRowChanged.connect(on_tab_row_changed)
 
         # Enhanced status bar
         self._setup_status_bar()
