@@ -258,6 +258,7 @@ class LoreData:
             backstory=Backstory(data['backstory']),
             status=CharacterStatus(data['status']),
             abilities=[Ability.from_dict(a) for a in data['abilities']],
+            parent_id=EntityId(data['parent_id']) if data.get('parent_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])

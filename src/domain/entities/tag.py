@@ -116,5 +116,5 @@ class Tag:
     def __repr__(self) -> str:
         return (
             f"Tag(id={self.id}, world_id={self.world_id}, "
-            f"name='{self.name}', type={self.tag_type}, version={self.version})"
+            f"name='{self.name}', type={self.tag_type.value}, version={self.version})"
         )

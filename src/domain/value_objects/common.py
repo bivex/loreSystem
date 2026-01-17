@@ -308,6 +308,30 @@ class Timestamp:
     def __str__(self) -> str:
         return self.value.isoformat()
 
+    def __le__(self, other: 'Timestamp') -> bool:
+        """Less than or equal comparison."""
+        if not isinstance(other, Timestamp):
+            return NotImplemented
+        return self.value <= other.value
+
+    def __lt__(self, other: 'Timestamp') -> bool:
+        """Less than comparison."""
+        if not isinstance(other, Timestamp):
+            return NotImplemented
+        return self.value < other.value
+
+    def __ge__(self, other: 'Timestamp') -> bool:
+        """Greater than or equal comparison."""
+        if not isinstance(other, Timestamp):
+            return NotImplemented
+        return self.value >= other.value
+
+    def __gt__(self, other: 'Timestamp') -> bool:
+        """Greater than comparison."""
+        if not isinstance(other, Timestamp):
+            return NotImplemented
+        return self.value > other.value
+
     @classmethod
     def now(cls) -> 'Timestamp':
         """Create timestamp for current UTC time."""

@@ -18,7 +18,7 @@ from src.domain.entities.character import Character
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, CharacterName,
-    Backstory, Timestamp, Version
+    Backstory, Timestamp, Version, CharacterStatus, Description
 )
 from src.domain.exceptions import DuplicateEntity, EntityNotFound
 
@@ -90,7 +90,8 @@ class WorldRepositoryContract:
             id=EntityId(2),
             tenant_id=sample_world.tenant_id,
             name=sample_world.name,  # Same name
-            description="Another description",
+            description=Description("Another description"),
+            parent_id=None,
             version=Version(1),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now()
@@ -210,7 +211,7 @@ class CharacterRepositoryContract:
             world_id=sample_character.world_id,  # Same world
             name=sample_character.name,  # Same name
             backstory=Backstory("Different backstory" * 20),
-            status="ACTIVE",
+            status=CharacterStatus.ACTIVE,
             abilities=[
                 Ability(
                     name=AbilityName("Magic"),
@@ -218,6 +219,7 @@ class CharacterRepositoryContract:
                     description="Magical ability"
                 )
             ],
+            parent_id=None,
             version=Version(1),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now()
@@ -237,7 +239,7 @@ class CharacterRepositoryContract:
             world_id=EntityId(2),  # Different world
             name=sample_character.name,  # Same name
             backstory=Backstory("Different backstory" * 20),
-            status="ACTIVE",
+            status=CharacterStatus.ACTIVE,
             abilities=[
                 Ability(
                     name=AbilityName("Agility"),
@@ -245,6 +247,7 @@ class CharacterRepositoryContract:
                     description="Speed and dexterity"
                 )
             ],
+            parent_id=None,
             version=Version(1),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now()

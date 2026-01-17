@@ -156,5 +156,5 @@ class Story:
     def __repr__(self) -> str:
         return (
             f"Story(id={self.id}, world_id={self.world_id}, "
-            f"name='{self.name}', type={self.story_type}, version={self.version})"
+            f"name='{self.name}', type={self.story_type.value}, version={self.version})"
         )

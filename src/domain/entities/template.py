@@ -121,5 +121,5 @@ class Template:
     def __repr__(self) -> str:
         return (
             f"Template(id={self.id}, world_id={self.world_id}, "
-            f"name='{self.name}', type={self.template_type}, version={self.version})"
+            f"name='{self.name}', type={self.template_type.value}, version={self.version})"
         )

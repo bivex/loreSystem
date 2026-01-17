@@ -34,8 +34,16 @@ class InMemoryWorldRepository(IWorldRepository):
         self._names: Dict[Tuple[TenantId, WorldName], EntityId] = {}
         # Index: tenant_id -> list of world_ids
         self._by_tenant: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        # ID counter for generating new IDs
+        self._next_id = 1
 
     def save(self, world: World) -> World:
+        # Assign ID if this is a new world
+        if world.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(world, 'id', new_id)
+
         key = (world.tenant_id, world.id)
         name_key = (world.tenant_id, world.name)
 
@@ -109,8 +117,16 @@ class InMemoryCharacterRepository(ICharacterRepository):
         self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
         # Index: tenant_id -> list of character_ids
         self._by_tenant: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        # ID counter for generating new IDs
+        self._next_id = 1
 
     def save(self, character: Character) -> Character:
+        # Assign ID if this is a new character
+        if character.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(character, 'id', new_id)
+
         key = (character.tenant_id, character.id)
         name_key = (character.tenant_id, character.world_id, character.name)
 
