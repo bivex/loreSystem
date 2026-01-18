@@ -1,10 +1,11 @@
 """
-Item Entity
+Location Entity
 
-An Item represents a tangible object in the lore world.
+A Location represents a place in the world where events occur, items are found,
+and characters are present. Locations can be hierarchical (e.g., a chest inside a house).
 """
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 from ..value_objects.common import (
     TenantId,
@@ -12,20 +13,21 @@ from ..value_objects.common import (
     Description,
     Version,
     Timestamp,
-    ItemType,
-    Rarity,
+    LocationType,
 )
+from ..exceptions import InvariantViolation
 
 
 @dataclass
-class Item:
+class Location:
     """
-    Item entity within a World.
+    Location entity within a World.
     
     Invariants:
     - Must belong to exactly one World
+    - Name must not be empty
     - Version increases monotonically
-    - Can optionally be located in a specific Location
+    - Can have a parent location (for hierarchical locations like "chest in house")
     """
     
     id: Optional[EntityId]
@@ -33,9 +35,8 @@ class Item:
     world_id: EntityId
     name: str
     description: Description
-    item_type: ItemType
-    rarity: Optional[Rarity]
-    location_id: Optional[EntityId]  # Location where this item is found
+    location_type: LocationType
+    parent_location_id: Optional[EntityId]  # For hierarchical locations (e.g., room in house)
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -47,15 +48,15 @@ class Item:
     def _validate_invariants(self):
         """Check all invariants are satisfied."""
         if self.updated_at.value < self.created_at.value:
-            raise ValueError(
+            raise InvariantViolation(
                 "Updated timestamp must be >= created timestamp"
             )
         
         if not self.name or len(self.name.strip()) == 0:
-            raise ValueError("Item name cannot be empty")
+            raise InvariantViolation("Location name cannot be empty")
         
         if len(self.name) > 255:
-            raise ValueError("Item name must be <= 255 characters")
+            raise InvariantViolation("Location name must be <= 255 characters")
     
     @classmethod
     def create(
@@ -64,12 +65,11 @@ class Item:
         world_id: EntityId,
         name: str,
         description: Description,
-        item_type: ItemType,
-        rarity: Optional[Rarity] = None,
-        location_id: Optional[EntityId] = None,
-    ) -> 'Item':
+        location_type: LocationType,
+        parent_location_id: Optional[EntityId] = None,
+    ) -> 'Location':
         """
-        Factory method for creating a new Item.
+        Factory method for creating a new Location.
         """
         now = Timestamp.now()
         return cls(
@@ -78,16 +78,15 @@ class Item:
             world_id=world_id,
             name=name,
             description=description,
-            item_type=item_type,
-            rarity=rarity,
-            location_id=location_id,
+            location_type=location_type,
+            parent_location_id=parent_location_id,
             created_at=now,
             updated_at=now,
             version=Version(1),
         )
     
     def update_description(self, new_description: Description) -> None:
-        """Update item description."""
+        """Update location description."""
         if str(self.description) == str(new_description):
             return
         
@@ -96,53 +95,47 @@ class Item:
         object.__setattr__(self, 'version', self.version.increment())
     
     def rename(self, new_name: str) -> None:
-        """Rename the item."""
+        """Rename the location."""
         if self.name == new_name:
             return
         
         if not new_name or len(new_name.strip()) == 0:
-            raise ValueError("Item name cannot be empty")
+            raise InvariantViolation("Location name cannot be empty")
         
         if len(new_name) > 255:
-            raise ValueError("Item name must be <= 255 characters")
+            raise InvariantViolation("Location name must be <= 255 characters")
         
         object.__setattr__(self, 'name', new_name)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     
-    def change_type(self, new_type: ItemType) -> None:
-        """Change item type."""
-        if self.item_type == new_type:
+    def change_type(self, new_type: LocationType) -> None:
+        """Change location type."""
+        if self.location_type == new_type:
             return
         
-        object.__setattr__(self, 'item_type', new_type)
+        object.__setattr__(self, 'location_type', new_type)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     
-    def set_rarity(self, rarity: Optional[Rarity]) -> None:
-        """Set item rarity."""
-        if self.rarity == rarity:
+    def move_to_parent(self, new_parent_id: Optional[EntityId]) -> None:
+        """
+        Move location to new parent in hierarchy.
+        
+        Note: Must check for cycles and validity by repository.
+        """
+        if self.parent_location_id == new_parent_id:
             return
         
-        object.__setattr__(self, 'rarity', rarity)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def move_to_location(self, location_id: Optional[EntityId]) -> None:
-        """Move item to a different location."""
-        if self.location_id == location_id:
-            return
-        
-        object.__setattr__(self, 'location_id', location_id)
+        object.__setattr__(self, 'parent_location_id', new_parent_id)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     
     def __str__(self) -> str:
-        rarity_str = f" ({self.rarity.value})" if self.rarity else ""
-        return f"Item({self.name}{rarity_str}, {self.item_type.value})"
+        return f"Location({self.name}, {self.location_type.value})"
     
     def __repr__(self) -> str:
         return (
-            f"Item(id={self.id}, world_id={self.world_id}, "
-            f"name='{self.name}', type={self.item_type})"
+            f"Location(id={self.id}, world_id={self.world_id}, "
+            f"name='{self.name}', type={self.location_type}, version={self.version})"
         )

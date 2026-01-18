@@ -43,7 +43,8 @@
       ],
       "created_at": "2024-01-02T00:00:00+00:00",
       "updated_at": "2024-01-16T14:20:00+00:00",
-      "version": 3
+      "version": 3,
+      "location_id": 36
     },
     {
       "id": 4,
@@ -70,7 +71,8 @@
       ],
       "created_at": "2024-01-03T00:00:00+00:00",
       "updated_at": "2024-01-03T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 37
     },
     {
       "id": 5,
@@ -97,7 +99,8 @@
       ],
       "created_at": "2024-01-11T00:00:00+00:00",
       "updated_at": "2024-01-11T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 41
     }
   ],
   "events": [
@@ -109,10 +112,14 @@
       "start_date": "2024-01-20T00:00:00+00:00",
       "end_date": null,
       "outcome": "ongoing",
-      "participant_ids": [3, 4],
+      "participant_ids": [
+        3,
+        4
+      ],
       "created_at": "2024-01-17T00:00:00+00:00",
       "updated_at": "2024-01-17T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 36
     },
     {
       "id": 7,
@@ -122,10 +129,13 @@
       "start_date": "2024-01-12T00:00:00+00:00",
       "end_date": "2024-01-18T00:00:00+00:00",
       "outcome": "success",
-      "participant_ids": [5],
+      "participant_ids": [
+        5
+      ],
       "created_at": "2024-01-18T00:00:00+00:00",
       "updated_at": "2024-01-18T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 42
     }
   ],
   "improvements": [
@@ -167,7 +177,8 @@
       "rarity": "legendary",
       "created_at": "2024-01-03T00:00:00+00:00",
       "updated_at": "2024-01-03T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 38
     },
     {
       "id": 12,
@@ -178,7 +189,8 @@
       "rarity": "epic",
       "created_at": "2024-01-04T00:00:00+00:00",
       "updated_at": "2024-01-04T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 39
     },
     {
       "id": 13,
@@ -189,7 +201,8 @@
       "rarity": "legendary",
       "created_at": "2024-01-05T00:00:00+00:00",
       "updated_at": "2024-01-05T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 40
     },
     {
       "id": 14,
@@ -200,7 +213,8 @@
       "rarity": "uncommon",
       "created_at": "2024-01-06T00:00:00+00:00",
       "updated_at": "2024-01-06T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 15,
@@ -211,7 +225,8 @@
       "rarity": null,
       "created_at": "2024-01-07T00:00:00+00:00",
       "updated_at": "2024-01-07T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 39
     },
     {
       "id": 16,
@@ -222,7 +237,8 @@
       "rarity": "rare",
       "created_at": "2024-01-08T00:00:00+00:00",
       "updated_at": "2024-01-08T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 17,
@@ -233,7 +249,8 @@
       "rarity": "rare",
       "created_at": "2024-01-11T00:00:00+00:00",
       "updated_at": "2024-01-11T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 18,
@@ -244,7 +261,8 @@
       "rarity": "epic",
       "created_at": "2024-01-12T00:00:00+00:00",
       "updated_at": "2024-01-12T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": 42
     },
     {
       "id": 19,
@@ -255,7 +273,8 @@
       "rarity": "uncommon",
       "created_at": "2024-01-13T00:00:00+00:00",
       "updated_at": "2024-01-13T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 20,
@@ -266,7 +285,8 @@
       "rarity": null,
       "created_at": "2024-01-14T00:00:00+00:00",
       "updated_at": "2024-01-14T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 21,
@@ -277,7 +297,8 @@
       "rarity": "rare",
       "created_at": "2024-01-15T00:00:00+00:00",
       "updated_at": "2024-01-15T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     },
     {
       "id": 22,
@@ -288,7 +309,8 @@
       "rarity": "epic",
       "created_at": "2024-01-16T00:00:00+00:00",
       "updated_at": "2024-01-16T00:00:00+00:00",
-      "version": 1
+      "version": 1,
+      "location_id": null
     }
   ],
   "quests": [
@@ -303,8 +325,12 @@
         "Infuse the blade with Aria's soul essence"
       ],
       "status": "active",
-      "participant_ids": [3],
-      "reward_ids": [11],
+      "participant_ids": [
+        3
+      ],
+      "reward_ids": [
+        11
+      ],
       "created_at": "2024-01-17T00:00:00+00:00",
       "updated_at": "2024-01-17T00:00:00+00:00",
       "version": 1
@@ -320,8 +346,13 @@
         "Forge a pact artifact with the Guardian elders"
       ],
       "status": "completed",
-      "participant_ids": [3, 4],
-      "reward_ids": [13],
+      "participant_ids": [
+        3,
+        4
+      ],
+      "reward_ids": [
+        13
+      ],
       "created_at": "2024-01-19T00:00:00+00:00",
       "updated_at": "2024-01-25T00:00:00+00:00",
       "version": 1
@@ -337,8 +368,13 @@
         "Establish a new settlement in the Wastes"
       ],
       "status": "active",
-      "participant_ids": [5],
-      "reward_ids": [18, 21],
+      "participant_ids": [
+        5
+      ],
+      "reward_ids": [
+        18,
+        21
+      ],
       "created_at": "2024-01-20T00:00:00+00:00",
       "updated_at": "2024-01-20T00:00:00+00:00",
       "version": 1
@@ -354,8 +390,12 @@
         "Collect shadow essence for research"
       ],
       "status": "failed",
-      "participant_ids": [5],
-      "reward_ids": [19],
+      "participant_ids": [
+        5
+      ],
+      "reward_ids": [
+        19
+      ],
       "created_at": "2024-01-15T00:00:00+00:00",
       "updated_at": "2024-01-22T00:00:00+00:00",
       "version": 1
@@ -372,8 +412,14 @@
         "Monitor the seal for 30 days"
       ],
       "status": "active",
-      "participant_ids": [3, 4],
-      "reward_ids": [12, 14],
+      "participant_ids": [
+        3,
+        4
+      ],
+      "reward_ids": [
+        12,
+        14
+      ],
       "created_at": "2024-01-23T00:00:00+00:00",
       "updated_at": "2024-01-23T00:00:00+00:00",
       "version": 1
@@ -389,7 +435,9 @@
         "Craft a personal flame artifact"
       ],
       "status": "cancelled",
-      "participant_ids": [3],
+      "participant_ids": [
+        3
+      ],
       "reward_ids": [],
       "created_at": "2024-01-10T00:00:00+00:00",
       "updated_at": "2024-01-14T00:00:00+00:00",
@@ -407,8 +455,13 @@
         "Escape with the knowledge intact"
       ],
       "status": "completed",
-      "participant_ids": [5],
-      "reward_ids": [17, 22],
+      "participant_ids": [
+        5
+      ],
+      "reward_ids": [
+        17,
+        22
+      ],
       "created_at": "2024-01-24T00:00:00+00:00",
       "updated_at": "2024-01-28T00:00:00+00:00",
       "version": 1
@@ -425,8 +478,12 @@
         "Reactivate the temple's protective wards"
       ],
       "status": "active",
-      "participant_ids": [5],
-      "reward_ids": [20],
+      "participant_ids": [
+        5
+      ],
+      "reward_ids": [
+        20
+      ],
       "created_at": "2024-01-26T00:00:00+00:00",
       "updated_at": "2024-01-26T00:00:00+00:00",
       "version": 1
@@ -439,8 +496,14 @@
       "name": "The Eternal Flame Saga",
       "description": "The epic tale of the Forge Masters and their battle to preserve creation",
       "storyline_type": "main",
-      "event_ids": [6],
-      "quest_ids": [23, 25, 30],
+      "event_ids": [
+        6
+      ],
+      "quest_ids": [
+        23,
+        25,
+        30
+      ],
       "created_at": "2024-01-18T00:00:00+00:00",
       "updated_at": "2024-01-18T00:00:00+00:00",
       "version": 1
@@ -451,8 +514,15 @@
       "name": "Shadows of the Past",
       "description": "Umbra's journey to uncover the truth about the cataclysm and restore her civilization",
       "storyline_type": "main",
-      "event_ids": [7],
-      "quest_ids": [26, 27, 32, 33],
+      "event_ids": [
+        7
+      ],
+      "quest_ids": [
+        26,
+        27,
+        32,
+        33
+      ],
       "created_at": "2024-01-21T00:00:00+00:00",
       "updated_at": "2024-01-21T00:00:00+00:00",
       "version": 1
@@ -464,7 +534,10 @@
       "description": "Aria's journey from novice to master Forge Guardian",
       "storyline_type": "side",
       "event_ids": [],
-      "quest_ids": [23, 31],
+      "quest_ids": [
+        23,
+        31
+      ],
       "created_at": "2024-01-16T00:00:00+00:00",
       "updated_at": "2024-01-16T00:00:00+00:00",
       "version": 1
@@ -476,7 +549,9 @@
       "description": "A short but intense crisis involving a breach between worlds",
       "storyline_type": "episode",
       "event_ids": [],
-      "quest_ids": [30],
+      "quest_ids": [
+        30
+      ],
       "created_at": "2024-01-23T00:00:00+00:00",
       "updated_at": "2024-01-23T00:00:00+00:00",
       "version": 1
@@ -487,12 +562,107 @@
       "name": "The Temple's Secret",
       "description": "The mystery and danger of the Temple of Eternal Night",
       "storyline_type": "side",
-      "event_ids": [7],
-      "quest_ids": [32, 33],
+      "event_ids": [
+        7
+      ],
+      "quest_ids": [
+        32,
+        33
+      ],
       "created_at": "2024-01-24T00:00:00+00:00",
       "updated_at": "2024-01-24T00:00:00+00:00",
       "version": 1
     }
   ],
-  "next_id": 36
+  "next_id": 44,
+  "locations": [
+    {
+      "id": 36,
+      "world_id": 1,
+      "name": "The Eternal Forge",
+      "description": "The heart of creation itself, a massive forge where reality is shaped. The forge burns with cosmic flames that never die, powered by the energies of creation. Ancient anvils line the workshop, each one capable of crafting artifacts of immense power.",
+      "location_type": "building",
+      "parent_location_id": null,
+      "created_at": "2024-01-01T00:00:00+00:00",
+      "updated_at": "2024-01-01T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 37,
+      "world_id": 1,
+      "name": "Forge Master's House",
+      "description": "A sturdy stone house near the Eternal Forge, serving as living quarters for the Forge Masters. The walls are lined with ancient tomes and blueprints. A warm hearth keeps the dwelling comfortable despite the cosmic flames outside.",
+      "location_type": "house",
+      "parent_location_id": null,
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-02T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 38,
+      "world_id": 1,
+      "name": "Storage Chest in Master's House",
+      "description": "An ornate wooden chest reinforced with mythril bands. Contains valuable tools, rare materials, and personal effects of the Forge Masters. The lock is enchanted to open only for authorized individuals.",
+      "location_type": "other",
+      "parent_location_id": 37,
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-02T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 39,
+      "world_id": 1,
+      "name": "Tool Barn",
+      "description": "A large barn adjacent to the Forge Master's House, filled with smithing tools, raw materials, and unfinished projects. The air smells of metal and oil.",
+      "location_type": "barn",
+      "parent_location_id": null,
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-02T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 40,
+      "world_id": 1,
+      "name": "Crystal Temple",
+      "description": "An ancient temple built by the Crystal Guardians, its walls made of translucent crystal that refracts light into rainbow patterns. The temple serves as a sanctuary and meeting place for those who protect ancient artifacts.",
+      "location_type": "temple",
+      "parent_location_id": null,
+      "created_at": "2024-01-04T00:00:00+00:00",
+      "updated_at": "2024-01-04T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 41,
+      "world_id": 2,
+      "name": "Temple of Eternal Night",
+      "description": "A massive temple complex in the heart of the Shadowmere Wastes. Its black stone walls seem to absorb light, and the interior is filled with shadow-infused artifacts. The temple contains vast archives of pre-cataclysm knowledge.",
+      "location_type": "temple",
+      "parent_location_id": null,
+      "created_at": "2024-01-11T00:00:00+00:00",
+      "updated_at": "2024-01-11T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 42,
+      "world_id": 2,
+      "name": "Lost Archives Chamber",
+      "description": "A hidden chamber deep within the Temple of Eternal Night, discovered by Umbra. The walls are lined with ancient scrolls and books, protected by shadow magic. This room holds the secrets of the cataclysm.",
+      "location_type": "other",
+      "parent_location_id": 41,
+      "created_at": "2024-01-12T00:00:00+00:00",
+      "updated_at": "2024-01-12T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 43,
+      "world_id": 2,
+      "name": "Shadow King's Throne Room",
+      "description": "The dark throne room of the Shadow King, located in the deepest part of the Shadowmere Wastes. The throne itself is carved from a single piece of obsidian and radiates malevolent power. Few who enter this chamber leave unchanged.",
+      "location_type": "other",
+      "parent_location_id": null,
+      "created_at": "2024-01-24T00:00:00+00:00",
+      "updated_at": "2024-01-24T00:00:00+00:00",
+      "version": 1
+    }
+  ]
 }

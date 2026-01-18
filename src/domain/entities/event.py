@@ -28,6 +28,7 @@ class Event:
     - Must have at least one participant (Character)
     - Date range must be valid (start <= end)
     - Version increases monotonically
+    - Can optionally occur at a specific Location
     """
     
     id: Optional[EntityId]
@@ -38,6 +39,7 @@ class Event:
     date_range: DateRange
     outcome: EventOutcome
     participant_ids: List[EntityId]
+    location_id: Optional[EntityId]  # Location where this event occurs
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -75,6 +77,7 @@ class Event:
         participant_ids: List[EntityId],
         end_date: Optional[Timestamp] = None,
         outcome: EventOutcome = EventOutcome.ONGOING,
+        location_id: Optional[EntityId] = None,
     ) -> 'Event':
         """
         Factory method for creating a new Event.
@@ -88,6 +91,7 @@ class Event:
             participant_ids: IDs of participating characters (>= 1)
             end_date: When event ends (None if ongoing)
             outcome: Result of the event
+            location_id: Location where event occurs (optional)
         
         Raises:
             ValueError: If name is empty
@@ -113,6 +117,7 @@ class Event:
             date_range=date_range,
             outcome=outcome,
             participant_ids=participant_ids.copy(),
+            location_id=location_id,
             created_at=now,
             updated_at=now,
             version=Version(1),
@@ -186,6 +191,15 @@ class Event:
             return
         
         object.__setattr__(self, 'description', new_description)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
+    
+    def move_to_location(self, location_id: Optional[EntityId]) -> None:
+        """Move event to a different location."""
+        if self.location_id == location_id:
+            return
+        
+        object.__setattr__(self, 'location_id', location_id)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     

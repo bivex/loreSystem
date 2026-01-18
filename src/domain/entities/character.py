@@ -30,6 +30,7 @@ class Character:
     - Backstory >= 100 characters
     - Abilities must have unique names within character
     - Version increases monotonically
+    - Can optionally be located at a specific Location
     """
     
     id: Optional[EntityId]
@@ -40,6 +41,7 @@ class Character:
     status: CharacterStatus
     abilities: List[Ability]
     parent_id: Optional[EntityId]  # For hierarchical character relationships
+    location_id: Optional[EntityId]  # Location where this character is present
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -72,6 +74,7 @@ class Character:
         abilities: Optional[List[Ability]] = None,
         status: CharacterStatus = CharacterStatus.ACTIVE,
         parent_id: Optional[EntityId] = None,
+        location_id: Optional[EntityId] = None,
     ) -> 'Character':
         """
         Factory method for creating a new Character.
@@ -88,6 +91,7 @@ class Character:
             status=status,
             abilities=abilities or [],
             parent_id=parent_id,
+            location_id=location_id,
             created_at=now,
             updated_at=now,
             version=Version(1),
@@ -164,6 +168,15 @@ class Character:
             return
         
         object.__setattr__(self, 'parent_id', new_parent_id)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
+    
+    def move_to_location(self, location_id: Optional[EntityId]) -> None:
+        """Move character to a different location."""
+        if self.location_id == location_id:
+            return
+        
+        object.__setattr__(self, 'location_id', location_id)
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     

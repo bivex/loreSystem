@@ -32,6 +32,7 @@ class EntityType(str, Enum):
     REQUIREMENT = "requirement"
     SESSION = "session"
     TOKENBOARD = "tokenboard"
+    LOCATION = "location"
 
 
 class ItemType(str, Enum):
@@ -161,6 +162,26 @@ class InspirationCategory(str, Enum):
     ENCOUNTER = "encounter"
     DIALOGUE = "dialogue"
     OTHER = "other"
+
+
+class LocationType(str, Enum):
+    """Types of locations in the world."""
+    BUILDING = "building"  # Generic building
+    HOUSE = "house"  # Residential house
+    BARN = "barn"  # Storage building
+    TEMPLE = "temple"  # Religious building
+    CASTLE = "castle"  # Fortified structure
+    DUNGEON = "dungeon"  # Underground location
+    CAVE = "cave"  # Natural cave
+    FOREST = "forest"  # Natural forest area
+    MOUNTAIN = "mountain"  # Mountain location
+    CITY = "city"  # Large settlement
+    VILLAGE = "village"  # Small settlement
+    SHOP = "shop"  # Commercial building
+    TAVERN = "tavern"  # Inn or pub
+    RUINS = "ruins"  # Destroyed structure
+    LANDMARK = "landmark"  # Notable feature
+    OTHER = "other"  # Other location type
 
 
 @dataclass(frozen=True)
