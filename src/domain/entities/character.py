@@ -6,6 +6,7 @@ Part of the World aggregate.
 """
 from dataclasses import dataclass, field
 from typing import Optional, List, Set
+from enum import Enum
 
 from ..value_objects.common import (
     TenantId,
@@ -15,9 +16,29 @@ from ..value_objects.common import (
     Version,
     Timestamp,
     CharacterStatus,
+    Rarity,
 )
 from ..value_objects.ability import Ability
 from ..exceptions import InvariantViolation, InvalidState
+
+
+class CharacterElement(str, Enum):
+    """Character elemental affinity."""
+    PHYSICAL = "physical"
+    FIRE = "fire"
+    WATER = "water"
+    EARTH = "earth"
+    WIND = "wind"
+    LIGHT = "light"
+    DARK = "dark"
+
+
+class CharacterRole(str, Enum):
+    """Character role in combat."""
+    DPS = "dps"  # Damage dealer
+    TANK = "tank"  # Tank/defender
+    SUPPORT = "support"  # Healer/buffer
+    SPECIALIST = "specialist"  # Special role
 
 
 @dataclass
@@ -31,6 +52,7 @@ class Character:
     - Abilities must have unique names within character
     - Version increases monotonically
     - Can optionally be located at a specific Location
+    - Combat stats must be non-negative
     """
     
     id: Optional[EntityId]
@@ -42,6 +64,17 @@ class Character:
     abilities: List[Ability]
     parent_id: Optional[EntityId]  # For hierarchical character relationships
     location_id: Optional[EntityId]  # Location where this character is present
+    
+    # Combat stats (for gacha RPG)
+    rarity: Optional[Rarity]  # Character rarity (LEGENDARY, EPIC, RARE, etc.)
+    element: Optional[CharacterElement]  # Elemental affinity
+    role: Optional[CharacterRole]  # Combat role
+    base_hp: Optional[int]  # Base health points
+    base_atk: Optional[int]  # Base attack
+    base_def: Optional[int]  # Base defense
+    base_speed: Optional[int]  # Base speed/initiative
+    energy_cost: Optional[int]  # Ultimate ability cost
+    
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -63,6 +96,22 @@ class Character:
             raise InvariantViolation(
                 "Character cannot have duplicate ability names"
             )
+        
+        # Validate combat stats are non-negative
+        if self.base_hp is not None and self.base_hp < 0:
+            raise InvariantViolation("Base HP cannot be negative")
+        
+        if self.base_atk is not None and self.base_atk < 0:
+            raise InvariantViolation("Base ATK cannot be negative")
+        
+        if self.base_def is not None and self.base_def < 0:
+            raise InvariantViolation("Base DEF cannot be negative")
+        
+        if self.base_speed is not None and self.base_speed < 0:
+            raise InvariantViolation("Base speed cannot be negative")
+        
+        if self.energy_cost is not None and self.energy_cost < 0:
+            raise InvariantViolation("Energy cost cannot be negative")
     
     @classmethod
     def create(
@@ -75,6 +124,14 @@ class Character:
         status: CharacterStatus = CharacterStatus.ACTIVE,
         parent_id: Optional[EntityId] = None,
         location_id: Optional[EntityId] = None,
+        rarity: Optional[Rarity] = None,
+        element: Optional[CharacterElement] = None,
+        role: Optional[CharacterRole] = None,
+        base_hp: Optional[int] = None,
+        base_atk: Optional[int] = None,
+        base_def: Optional[int] = None,
+        base_speed: Optional[int] = None,
+        energy_cost: Optional[int] = None,
     ) -> 'Character':
         """
         Factory method for creating a new Character.
@@ -92,6 +149,14 @@ class Character:
             abilities=abilities or [],
             parent_id=parent_id,
             location_id=location_id,
+            rarity=rarity,
+            element=element,
+            role=role,
+            base_hp=base_hp,
+            base_atk=base_atk,
+            base_def=base_def,
+            base_speed=base_speed,
+            energy_cost=energy_cost,
             created_at=now,
             updated_at=now,
             version=Version(1),
