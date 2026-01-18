@@ -5,7 +5,7 @@ This test suite verifies that domain invariants are properly enforced
 and that the lore system is stable for production use in gacha games.
 """
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from src.domain.entities.world import World
 from src.domain.entities.character import Character, CharacterElement, CharacterRole
@@ -65,7 +65,7 @@ class TestWorldEdgeCases:
                 description=Description("Test"),
                 parent_id=None,
                 created_at=Timestamp.now(),
-                updated_at=Timestamp(datetime.now() - timedelta(days=1)),
+                updated_at=Timestamp(datetime.now(timezone.utc) - timedelta(days=1)),
                 version=world.version,
             )
     
@@ -340,7 +340,7 @@ class TestEventEdgeCases:
         )
         
         # Cannot complete with ONGOING outcome
-        end = Timestamp(datetime.now() + timedelta(hours=1))
+        end = Timestamp(datetime.now(timezone.utc) + timedelta(hours=1))
         with pytest.raises(ValueError, match="ONGOING"):
             event.complete(end, EventOutcome.ONGOING)
         
@@ -560,7 +560,7 @@ class TestBannerEdgeCases:
             name="Limited Banner",
             description=Description("Featured character"),
             featured_character_ids=[EntityId(3)],
-            start_date=datetime.now(),
+            start_date=datetime.now(timezone.utc),
             duration_days=21,
         )
         assert limited.banner_type == BannerType.LIMITED
@@ -947,7 +947,7 @@ class TestCrossEntityEdgeCases:
             name="Lira Rate-Up",
             description=Description("Featured: Lira Blood Whisper"),
             featured_character_ids=[EntityId(3), EntityId(4)],
-            start_date=datetime.now(),
+            start_date=datetime.now(timezone.utc),
             duration_days=21,
         )
         
