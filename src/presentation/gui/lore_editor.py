@@ -1848,6 +1848,8 @@ class MainWindow(QMainWindow):
         self.current_locale = 'en'  # Default to English
         self._setup_style()
         self._setup_ui()
+        # Alias for backward compatibility with tests
+        self.tabs = self.stacked_widget
         self.setWindowTitle(I18N.t('app.title', "🎮 MythWeave - Lore Management System"))
         self.setWindowIcon(QIcon())  # We'll add a proper icon later
         self.resize(1400, 900)

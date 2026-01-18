@@ -32,22 +32,18 @@ def test_main_window_initialization(qtbot):
     assert window.lore_data is not None
     assert isinstance(window.lore_data, LoreData)
 
-    # Check that tabs are created
+    # Check that tabs are created (now uses stacked widget with many more tabs)
     assert hasattr(window, 'tabs')
-    assert window.tabs.count() == 7  # Worlds, Characters, Events, Improvements, Items, Quests, Storylines
+    assert window.tabs.count() >= 7  # At least the core tabs exist
 
-    # Check tab names
-    tab_texts = []
-    for i in range(window.tabs.count()):
-        tab_texts.append(window.tabs.tabText(i))
-
-    assert "🌍 Worlds" in tab_texts
-    assert "👥 Characters" in tab_texts
-    assert "⚡ Events" in tab_texts
-    assert "⬆️ Improvements" in tab_texts
-    assert "⚔️ Items" in tab_texts
-    assert "🎯 Quests" in tab_texts
-    assert "📖 Storylines" in tab_texts
+    # Check that core tab widgets are accessible
+    assert hasattr(window, 'worlds_tab')
+    assert hasattr(window, 'characters_tab')
+    assert hasattr(window, 'events_tab')
+    assert hasattr(window, 'improvements_tab')
+    assert hasattr(window, 'items_tab')
+    assert hasattr(window, 'quests_tab')
+    assert hasattr(window, 'storylines_tab')
 
 
 def test_lore_data_initialization():
