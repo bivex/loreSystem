@@ -104,7 +104,7 @@ class TestVerification:
                 tenant_id=TenantId(1),
                 world_id=EntityId(1),
                 name="Test",
-                description="Test",
+                description=Description("Test"),
                 start_date=Timestamp.now(),
                 participant_ids=[]  # Violates ≥1 constraint
             )
@@ -145,7 +145,7 @@ class TestVerification:
         
         ability = Ability(
             name=AbilityName("Fireball"),
-            description=Description("Fire spell"),
+            description="Fire spell",
             power_level=PowerLevel(8)
         )
         char.add_ability(ability)
@@ -190,7 +190,7 @@ class TestVerification:
         
         ability = Ability(
             name=AbilityName("Fireball"),
-            description=Description("Fire spell"),
+            description="Fire spell",
             power_level=PowerLevel(8)
         )
         char.add_ability(ability)
@@ -234,7 +234,7 @@ class TestVerification:
         
         ability1 = Ability(
             name=AbilityName("Fireball"),
-            description=Description("Fire spell"),
+            description="Fire spell",
             power_level=PowerLevel(8)
         )
         char.add_ability(ability1)
@@ -242,7 +242,7 @@ class TestVerification:
         # UNIQUE constraint: No duplicate ability names
         ability2 = Ability(
             name=AbilityName("Fireball"),  # Duplicate name
-            description=Description("Different"),
+            description="Different",
             power_level=PowerLevel(9)
         )
         
@@ -278,7 +278,7 @@ class TestVerification:
                 tenant_id=TenantId(1),
                 world_id=EntityId(1),
                 name="Empty",
-                description="No participants",
+                description=Description("No participants"),
                 start_date=Timestamp.now(),
                 participant_ids=[]
             )
@@ -362,8 +362,8 @@ class TestVerification:
         from domain.repositories.character_repository import ICharacterRepository
         
         # Repository interfaces define query methods
-        assert hasattr(IWorldRepository, 'get')
-        assert hasattr(ICharacterRepository, 'get')
+        assert hasattr(IWorldRepository, "find_by_id")
+        assert hasattr(ICharacterRepository, "find_by_id")
     
     # 24. OWNERSHIP
     def test_ownership(self):
@@ -404,7 +404,7 @@ class TestVerification:
             tenant_id=TenantId(1),
             world_id=EntityId(1),
             name="Test",
-            description="Test",
+            description=Description("Test"),
             start_date=Timestamp.now(),
             participant_ids=[EntityId(1), EntityId(2)]
         )
