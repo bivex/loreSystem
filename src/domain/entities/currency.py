@@ -138,4 +138,5 @@ class Currency:
         """Calculate premium currency value for given amount."""
         if not self.can_convert_to_premium():
             raise ValueError(f"Currency {self.code} cannot be converted to premium")
-        return int(amount * self.conversion_rate_to_premium)
+        import math
+        return math.floor(amount * self.conversion_rate_to_premium)

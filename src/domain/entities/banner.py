@@ -6,7 +6,7 @@ Core monetization mechanism for gacha games.
 """
 from dataclasses import dataclass
 from typing import Optional, List, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 from ..value_objects.common import (
@@ -110,8 +110,8 @@ class Banner:
         if self.ten_pull_cost <= 0:
             raise InvariantViolation("Ten pull cost must be positive")
         
-        if self.ten_pull_cost >= self.single_pull_cost * 10:
-            raise InvariantViolation("Ten pull must be discounted (< 10x single pull)")
+        if self.ten_pull_cost > self.single_pull_cost * 10:
+            raise InvariantViolation("Ten pull cost cannot exceed 10x single pull cost")
         
         # Validate drop rates
         total_rate = self.ssr_rate + self.sr_rate + self.r_rate
@@ -211,7 +211,7 @@ class Banner:
             )
         """
         start_ts = Timestamp(start_date)
-        end_ts = Timestamp(datetime.fromtimestamp(start_date.timestamp() + duration_days * 86400))
+        end_ts = Timestamp(start_date + timedelta(days=duration_days))
         now = Timestamp.now()
         
         return cls(

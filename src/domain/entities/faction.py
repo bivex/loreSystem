@@ -201,7 +201,13 @@ class Faction:
         )
     
     def add_member(self, character_id: EntityId):
-        """Add a character to this faction."""
+        """
+        Add a character to this faction.
+        
+        Note: Uses mutation pattern for collection management.
+        Consider refactoring to immutable pattern with dataclasses.replace()
+        if this becomes a performance bottleneck.
+        """
         if character_id not in self.member_character_ids:
             self.member_character_ids.append(character_id)
             object.__setattr__(self, 'updated_at', Timestamp.now())

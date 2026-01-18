@@ -189,6 +189,10 @@ class CharacterRelationship:
         """
         Update relationship level based on an event.
         
+        Note: Uses object.__setattr__ to modify frozen dataclass.
+        This is intentional for tracking relationship changes over time.
+        Consider refactoring to event sourcing pattern if mutations become complex.
+        
         Args:
             delta: Change in relationship (-100 to +100)
             event_id: Event that caused the change
