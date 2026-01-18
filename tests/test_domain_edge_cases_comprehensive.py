@@ -25,6 +25,7 @@ from src.domain.value_objects.common import (
     ItemType,
     Rarity,
     CharacterStatus,
+    Version,
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 from src.domain.exceptions import InvariantViolation, InvalidState
@@ -444,7 +445,7 @@ class TestBannerEdgeCases:
                 total_pulls=0,
                 created_at=now,
                 updated_at=now,
-                version=banner.version,
+                version=Version(1),
             )
     
     def test_banner_pity_thresholds_validation(self):
@@ -480,7 +481,7 @@ class TestBannerEdgeCases:
                 total_pulls=0,
                 created_at=now,
                 updated_at=now,
-                version=Banner.create_standard_banner(tenant, "temp", Description("temp")).version,
+                version=Version(1),
             )
     
     def test_banner_pull_cost_validation(self):
@@ -516,7 +517,7 @@ class TestBannerEdgeCases:
                 total_pulls=0,
                 created_at=now,
                 updated_at=now,
-                version=Banner.create_standard_banner(tenant, "temp", Description("temp")).version,
+                version=Version(1),
             )
         
         # 10-pull cost exceeding 10x single should fail
@@ -547,7 +548,7 @@ class TestBannerEdgeCases:
                 total_pulls=0,
                 created_at=now,
                 updated_at=now,
-                version=Banner.create_standard_banner(tenant, "temp", Description("temp")).version,
+                version=Version(1),
             )
     
     def test_banner_limited_date_validation(self):
@@ -600,7 +601,7 @@ class TestBannerEdgeCases:
                 total_pulls=0,
                 created_at=now,
                 updated_at=now,
-                version=Banner.create_standard_banner(tenant, "temp", Description("temp")).version,
+                version=Version(1),
             )
     
     def test_banner_cost_calculation_for_pity(self):
