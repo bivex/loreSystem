@@ -24,7 +24,7 @@ install-dev: install ## Install development dependencies
 
 test: ## Run all tests
 	@echo "$(BLUE)Running all tests...$(NC)"
-	pytest tests/ -v --cov=src --cov-report=term-missing
+	PYTHONPATH=/Volumes/External/Code/loreSystem/src pytest tests/ -v --cov=src --cov-report=term-missing
 	@echo "$(GREEN)✓ Tests complete$(NC)"
 
 test-unit: ## Run unit tests only

@@ -220,6 +220,15 @@ class CharacterRepositoryContract:
                 )
             ],
             parent_id=None,
+            location_id=None,
+            rarity=None,
+            element=None,
+            role=None,
+            base_hp=None,
+            base_atk=None,
+            base_def=None,
+            base_speed=None,
+            energy_cost=None,
             version=Version(1),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now()
@@ -248,6 +257,15 @@ class CharacterRepositoryContract:
                 )
             ],
             parent_id=None,
+            location_id=None,
+            rarity=None,
+            element=None,
+            role=None,
+            base_hp=None,
+            base_atk=None,
+            base_def=None,
+            base_speed=None,
+            energy_cost=None,
             version=Version(1),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now()
