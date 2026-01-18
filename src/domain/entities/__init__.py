@@ -10,6 +10,10 @@ from .improvement import Improvement
 from .inspiration import Inspiration
 from .item import Item
 from .map import Map
+from .music_control import MusicControl
+from .music_state import MusicState
+from .music_theme import MusicTheme
+from .music_track import MusicTrack
 from .note import Note
 from .page import Page
 from .quest import Quest
@@ -33,6 +37,10 @@ __all__ = [
     "Inspiration",
     "Item",
     "Map",
+    "MusicControl",
+    "MusicState",
+    "MusicTheme",
+    "MusicTrack",
     "Note",
     "Page",
     "Quest",
