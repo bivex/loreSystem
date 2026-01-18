@@ -13,7 +13,6 @@ from ..value_objects.common import (
     EntityId,
     Version,
     Timestamp,
-    Rarity,
 )
 from ..exceptions import InvariantViolation
 

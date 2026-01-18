@@ -189,13 +189,13 @@ class Item:
         Enhance the item (increase enhancement level).
         
         Raises:
-            ValueError: If item is already at max enhancement or has no enhancement system
+            InvariantViolation: If item is already at max enhancement or has no enhancement system
         """
         if self.enhancement is None:
-            raise ValueError("Item has no enhancement system")
+            raise InvariantViolation("Item has no enhancement system")
         
         if self.max_enhancement and self.enhancement >= self.max_enhancement:
-            raise ValueError("Item is already at max enhancement")
+            raise InvariantViolation("Item is already at max enhancement")
         
         object.__setattr__(self, 'enhancement', self.enhancement + 1)
         object.__setattr__(self, 'updated_at', Timestamp.now())
@@ -206,10 +206,10 @@ class Item:
         Set item level.
         
         Raises:
-            ValueError: If level is invalid
+            InvariantViolation: If level is invalid
         """
         if new_level < 1 or new_level > 100:
-            raise ValueError("Item level must be between 1-100")
+            raise InvariantViolation("Item level must be between 1-100")
         
         if self.level == new_level:
             return
@@ -221,7 +221,7 @@ class Item:
     def __str__(self) -> str:
         rarity_str = f" ({self.rarity.value})" if self.rarity else ""
         level_str = f" Lv{self.level}" if self.level else ""
-        enhance_str = f" +{self.enhancement}" if self.enhancement else ""
+        enhance_str = f" +{self.enhancement}" if self.enhancement is not None else ""
         return f"Item({self.name}{rarity_str}{level_str}{enhance_str}, {self.item_type.value})"
     
     def __repr__(self) -> str:

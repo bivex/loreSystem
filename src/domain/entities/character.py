@@ -66,7 +66,7 @@ class Character:
     location_id: Optional[EntityId]  # Location where this character is present
     
     # Combat stats (for gacha RPG)
-    rarity: Optional[Rarity]  # Character rarity (SSR, SR, R)
+    rarity: Optional[Rarity]  # Character rarity (LEGENDARY, EPIC, RARE, etc.)
     element: Optional[CharacterElement]  # Elemental affinity
     role: Optional[CharacterRole]  # Combat role
     base_hp: Optional[int]  # Base health points
