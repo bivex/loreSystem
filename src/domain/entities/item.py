@@ -26,6 +26,7 @@ class Item:
     - Must belong to exactly one World
     - Version increases monotonically
     - Can optionally be located in a specific Location
+    - Level and enhancement stats must be non-negative
     """
     
     id: Optional[EntityId]
@@ -36,6 +37,17 @@ class Item:
     item_type: ItemType
     rarity: Optional[Rarity]
     location_id: Optional[EntityId]  # Location where this item is found
+    
+    # Item stats (for equipment/weapons)
+    level: Optional[int]  # Item level (1-100)
+    enhancement: Optional[int]  # Enhancement level (0-20)
+    max_enhancement: Optional[int]  # Maximum enhancement level
+    base_atk: Optional[int]  # Attack bonus
+    base_hp: Optional[int]  # HP bonus
+    base_def: Optional[int]  # Defense bonus
+    special_stat: Optional[str]  # Special stat name (e.g., "crit_rate")
+    special_stat_value: Optional[float]  # Special stat value
+    
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
@@ -56,6 +68,25 @@ class Item:
         
         if len(self.name) > 255:
             raise ValueError("Item name must be <= 255 characters")
+        
+        # Validate item stats
+        if self.level is not None and (self.level < 1 or self.level > 100):
+            raise ValueError("Item level must be between 1-100")
+        
+        if self.enhancement is not None and self.enhancement < 0:
+            raise ValueError("Enhancement cannot be negative")
+        
+        if self.max_enhancement is not None and self.max_enhancement < 0:
+            raise ValueError("Max enhancement cannot be negative")
+        
+        if self.base_atk is not None and self.base_atk < 0:
+            raise ValueError("Base ATK cannot be negative")
+        
+        if self.base_hp is not None and self.base_hp < 0:
+            raise ValueError("Base HP cannot be negative")
+        
+        if self.base_def is not None and self.base_def < 0:
+            raise ValueError("Base DEF cannot be negative")
     
     @classmethod
     def create(
@@ -67,6 +98,14 @@ class Item:
         item_type: ItemType,
         rarity: Optional[Rarity] = None,
         location_id: Optional[EntityId] = None,
+        level: Optional[int] = None,
+        enhancement: Optional[int] = None,
+        max_enhancement: Optional[int] = None,
+        base_atk: Optional[int] = None,
+        base_hp: Optional[int] = None,
+        base_def: Optional[int] = None,
+        special_stat: Optional[str] = None,
+        special_stat_value: Optional[float] = None,
     ) -> 'Item':
         """
         Factory method for creating a new Item.
@@ -81,6 +120,14 @@ class Item:
             item_type=item_type,
             rarity=rarity,
             location_id=location_id,
+            level=level,
+            enhancement=enhancement,
+            max_enhancement=max_enhancement,
+            base_atk=base_atk,
+            base_hp=base_hp,
+            base_def=base_def,
+            special_stat=special_stat,
+            special_stat_value=special_stat_value,
             created_at=now,
             updated_at=now,
             version=Version(1),
@@ -137,9 +184,45 @@ class Item:
         object.__setattr__(self, 'updated_at', Timestamp.now())
         object.__setattr__(self, 'version', self.version.increment())
     
+    def enhance(self) -> None:
+        """
+        Enhance the item (increase enhancement level).
+        
+        Raises:
+            ValueError: If item is already at max enhancement or has no enhancement system
+        """
+        if self.enhancement is None:
+            raise ValueError("Item has no enhancement system")
+        
+        if self.max_enhancement and self.enhancement >= self.max_enhancement:
+            raise ValueError("Item is already at max enhancement")
+        
+        object.__setattr__(self, 'enhancement', self.enhancement + 1)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
+    
+    def set_level(self, new_level: int) -> None:
+        """
+        Set item level.
+        
+        Raises:
+            ValueError: If level is invalid
+        """
+        if new_level < 1 or new_level > 100:
+            raise ValueError("Item level must be between 1-100")
+        
+        if self.level == new_level:
+            return
+        
+        object.__setattr__(self, 'level', new_level)
+        object.__setattr__(self, 'updated_at', Timestamp.now())
+        object.__setattr__(self, 'version', self.version.increment())
+    
     def __str__(self) -> str:
         rarity_str = f" ({self.rarity.value})" if self.rarity else ""
-        return f"Item({self.name}{rarity_str}, {self.item_type.value})"
+        level_str = f" Lv{self.level}" if self.level else ""
+        enhance_str = f" +{self.enhancement}" if self.enhancement else ""
+        return f"Item({self.name}{rarity_str}{level_str}{enhance_str}, {self.item_type.value})"
     
     def __repr__(self) -> str:
         return (

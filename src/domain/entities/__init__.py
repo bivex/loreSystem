@@ -1,12 +1,14 @@
 """Domain Entities - Objects with identity and lifecycle."""
 
 from .banner import Banner
-from .character import Character
+from .character import Character, CharacterElement, CharacterRole
 from .character_relationship import CharacterRelationship
 from .choice import Choice
 from .currency import Currency
 from .event import Event
+from .event_chain import EventChain
 from .faction import Faction
+from .faction_membership import FactionMembership
 from .flowchart import Flowchart
 from .handout import Handout
 from .image import Image
@@ -39,11 +41,15 @@ from .world import World
 __all__ = [
     "Banner",
     "Character",
+    "CharacterElement",
     "CharacterRelationship",
+    "CharacterRole",
     "Choice",
     "Currency",
     "Event",
+    "EventChain",
     "Faction",
+    "FactionMembership",
     "Flowchart",
     "Handout",
     "Image",
