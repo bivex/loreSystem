@@ -37,6 +37,7 @@ def test_character_invariant_updated_before_created():
             status=None,
             abilities=[],
             parent_id=None,
+            location_id=None,
             created_at=now,
             updated_at=past,
             version=None,

@@ -33,6 +33,10 @@ class EntityType(str, Enum):
     SESSION = "session"
     TOKENBOARD = "tokenboard"
     LOCATION = "location"
+    MUSIC_THEME = "music_theme"
+    MUSIC_TRACK = "music_track"
+    MUSIC_STATE = "music_state"
+    MUSIC_CONTROL = "music_control"
 
 
 class ItemType(str, Enum):
@@ -182,6 +186,108 @@ class LocationType(str, Enum):
     RUINS = "ruins"  # Destroyed structure
     LANDMARK = "landmark"  # Notable feature
     OTHER = "other"  # Other location type
+
+
+class MusicThemeType(str, Enum):
+    """Types of music themes in the lore system."""
+    MAIN_THEME = "main_theme"
+    WORLD_THEME = "world_theme"
+    FACTION_THEME = "faction_theme"
+    LOCATION_THEME = "location_theme"
+    ERA_THEME = "era_theme"
+    CHARACTER_THEME = "character_theme"
+    CALM_EXPLORATION = "calm_exploration"
+    MYSTERY_AMBIENCE = "mystery_ambience"
+    TENSION_BUILD = "tension_build"
+    CONFLICT = "conflict"
+    COMBAT = "combat"
+    BOSS_FIGHT = "boss_fight"
+    VICTORY = "victory"
+    DEFEAT = "defeat"
+    LOSS = "loss"
+    DISCOVERY = "discovery"
+    REVELATION = "revelation"
+    LORE_EXPOSITION = "lore_exposition"
+    FLASHBACK = "flashback"
+    MEMORY = "memory"
+    DREAM = "dream"
+    PROPHECY = "prophecy"
+    TRAVEL = "travel"
+    JOURNEY = "journey"
+    TRANSITION = "transition"
+    DOWNTIME = "downtime"
+    SAFE_ZONE = "safe_zone"
+    HUB = "hub"
+    CRAFTING = "crafting"
+    PREPARATION = "preparation"
+    DECISION_MOMENT = "decision_moment"
+    MORAL_CHOICE = "moral_choice"
+    BETRAYAL = "betrayal"
+    TRAGEDY = "tragedy"
+    SACRIFICE = "sacrifice"
+    HOPE = "hope"
+    REBIRTH = "rebirth"
+    CLIMAX = "climax"
+    RESOLUTION = "resolution"
+    EPILOGUE = "epilogue"
+    CREDITS = "credits"
+
+
+class MusicSystemType(str, Enum):
+    """Types of music system components."""
+    AMBIENT_LOOP = "ambient_loop"
+    DYNAMIC_LAYER = "dynamic_layer"
+    INTENSITY_LEVEL = "intensity_level"
+    STINGER = "stinger"
+    CUE = "cue"
+    LEITMOTIF = "leitmotif"
+    ADAPTIVE_STATE = "adaptive_state"
+    CROSSFADE_RULE = "crossfade_rule"
+    SILENCE_MOMENT = "silence_moment"
+
+
+class EmotionalTone(str, Enum):
+    """Emotional tones for music control."""
+    PEACEFUL = "peaceful"
+    TENSE = "tense"
+    JOYFUL = "joyful"
+    MELANCHOLIC = "melancholic"
+    MYSTERIOUS = "mysterious"
+    EPIC = "epic"
+    DRAMATIC = "dramatic"
+    SUSPENSEFUL = "suspenseful"
+    TRIUMPHANT = "triumphant"
+    SOMBER = "somber"
+    HOPEFUL = "hopeful"
+    FEARFUL = "fearful"
+    AGGRESSIVE = "aggressive"
+    CALM = "calm"
+
+
+class NarrativePhase(str, Enum):
+    """Narrative phases for music context."""
+    INTRODUCTION = "introduction"
+    RISING_ACTION = "rising_action"
+    CLIMAX = "climax"
+    FALLING_ACTION = "falling_action"
+    RESOLUTION = "resolution"
+    EPILOGUE = "epilogue"
+    INTERLUDE = "interlude"
+    FLASHBACK = "flashback"
+
+
+class PlayerContext(str, Enum):
+    """Player context states for music adaptation."""
+    EXPLORATION = "exploration"
+    COMBAT = "combat"
+    DIALOGUE = "dialogue"
+    CUTSCENE = "cutscene"
+    MENU = "menu"
+    INVENTORY = "inventory"
+    CRAFTING = "crafting"
+    TRADING = "trading"
+    RESTING = "resting"
+    TRAVELING = "traveling"
 
 
 @dataclass(frozen=True)
