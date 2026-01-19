@@ -20,6 +20,11 @@ from src.domain.entities.choice import Choice
 from src.domain.entities.flowchart import Flowchart
 from src.domain.entities.handout import Handout
 from src.domain.entities.inspiration import Inspiration
+from src.domain.entities.location import Location
+from src.domain.entities.banner import Banner
+from src.domain.entities.character_relationship import CharacterRelationship
+from src.domain.entities.faction import Faction
+from src.domain.entities.shop import Shop
 from src.domain.entities.map import Map
 from src.domain.entities.note import Note
 from src.domain.entities.requirement import Requirement
@@ -57,6 +62,11 @@ class LoreData:
         self.flowcharts: List[Flowchart] = []
         self.handouts: List[Handout] = []
         self.inspirations: List[Inspiration] = []
+        self.locations: List[Location] = []
+        self.banners: List[Banner] = []
+        self.character_relationships: List[CharacterRelationship] = []
+        self.factions: List[Faction] = []
+        self.shops: List[Shop] = []
         self.maps: List[Map] = []
         self.notes: List[Note] = []
         self.requirements: List[Requirement] = []
@@ -162,6 +172,154 @@ class LoreData:
             object.__setattr__(inspiration, 'id', self.get_next_id())
         self.inspirations.append(inspiration)
         return inspiration
+
+    def add_location(self, location_data) -> Location:
+        """Add location with generated ID."""
+        if isinstance(location_data, dict):
+            # Create Location entity from dictionary
+            location = Location(
+                id=None,
+                tenant_id=self.tenant_id,
+                world_id=location_data['world_id'],
+                name=location_data['name'],
+                description=Description(location_data['description']),
+                location_type=__import__('src.domain.value_objects.common', fromlist=['LocationType']).LocationType(location_data['type']),
+                parent_location_id=None,
+                created_at=Timestamp.now(),
+                updated_at=Timestamp.now(),
+                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            )
+        else:
+            # Assume it's already a Location entity
+            location = location_data
+
+        if location.id is None:
+            object.__setattr__(location, 'id', self.get_next_id())
+        self.locations.append(location)
+        return location
+
+    def delete_location(self, location_id: EntityId) -> None:
+        """Delete location by ID."""
+        self.locations = [l for l in self.locations if l.id != location_id]
+
+    def add_banner(self, banner) -> Banner:
+        """Add banner with generated ID."""
+        if isinstance(banner, dict):
+            banner = Banner(
+                id=None,
+                tenant_id=self.tenant_id,
+                world_id=banner['world_id'],
+                name=banner['name'],
+                description=Description(banner['description']),
+                banner_type=__import__('src.domain.value_objects.common', fromlist=['BannerType']).BannerType(banner['type']),
+                pity_system_id=banner.get('pity_system_id'),
+                is_active=banner.get('is_active', True),
+                created_at=Timestamp.now(),
+                updated_at=Timestamp.now(),
+                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            )
+        if banner.id is None:
+            object.__setattr__(banner, 'id', self.get_next_id())
+        self.banners.append(banner)
+        return banner
+
+    def get_banners(self) -> List[Banner]:
+        """Get all banners."""
+        return self.banners
+
+    def delete_banner(self, banner_id: EntityId) -> None:
+        """Delete banner by ID."""
+        self.banners = [b for b in self.banners if b.id != banner_id]
+
+    def add_character_relationship(self, relationship) -> CharacterRelationship:
+        """Add character relationship with generated ID."""
+        if isinstance(relationship, dict):
+            relationship = CharacterRelationship(
+                id=None,
+                tenant_id=self.tenant_id,
+                world_id=relationship['world_id'],
+                character1_id=relationship['character1_id'],
+                character2_id=relationship['character2_id'],
+                relationship_type=__import__('src.domain.value_objects.common', fromlist=['RelationshipType']).RelationshipType(relationship['type']),
+                description=Description(relationship['description']),
+                strength=relationship.get('strength', 1),
+                is_mutual=relationship.get('is_mutual', True),
+                created_at=Timestamp.now(),
+                updated_at=Timestamp.now(),
+                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            )
+        if relationship.id is None:
+            object.__setattr__(relationship, 'id', self.get_next_id())
+        self.character_relationships.append(relationship)
+        return relationship
+
+    def get_character_relationships(self) -> List[CharacterRelationship]:
+        """Get all character relationships."""
+        return self.character_relationships
+
+    def delete_character_relationship(self, relationship_id: EntityId) -> None:
+        """Delete character relationship by ID."""
+        self.character_relationships = [r for r in self.character_relationships if r.id != relationship_id]
+
+    def add_faction(self, faction) -> Faction:
+        """Add faction with generated ID."""
+        if isinstance(faction, dict):
+            faction = Faction(
+                id=None,
+                tenant_id=self.tenant_id,
+                world_id=faction['world_id'],
+                name=faction['name'],
+                description=Description(faction['description']),
+                faction_type=__import__('src.domain.value_objects.common', fromlist=['FactionType']).FactionType(faction['type']),
+                alignment=faction.get('alignment'),
+                reputation=faction.get('reputation', 0),
+                is_player_faction=faction.get('is_player_faction', False),
+                created_at=Timestamp.now(),
+                updated_at=Timestamp.now(),
+                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            )
+        if faction.id is None:
+            object.__setattr__(faction, 'id', self.get_next_id())
+        self.factions.append(faction)
+        return faction
+
+    def get_factions(self) -> List[Faction]:
+        """Get all factions."""
+        return self.factions
+
+    def delete_faction(self, faction_id: EntityId) -> None:
+        """Delete faction by ID."""
+        self.factions = [f for f in self.factions if f.id != faction_id]
+
+    def add_shop(self, shop) -> Shop:
+        """Add shop with generated ID."""
+        if isinstance(shop, dict):
+            shop = Shop(
+                id=None,
+                tenant_id=self.tenant_id,
+                world_id=shop['world_id'],
+                location_id=shop.get('location_id'),
+                name=shop['name'],
+                description=Description(shop['description']),
+                shop_type=__import__('src.domain.value_objects.common', fromlist=['ShopType']).ShopType(shop['type']),
+                currency_id=shop.get('currency_id'),
+                is_open=shop.get('is_open', True),
+                created_at=Timestamp.now(),
+                updated_at=Timestamp.now(),
+                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            )
+        if shop.id is None:
+            object.__setattr__(shop, 'id', self.get_next_id())
+        self.shops.append(shop)
+        return shop
+
+    def get_shops(self) -> List[Shop]:
+        """Get all shops."""
+        return self.shops
+
+    def delete_shop(self, shop_id: EntityId) -> None:
+        """Delete shop by ID."""
+        self.shops = [s for s in self.shops if s.id != shop_id]
     
     def add_map(self, map: Map) -> Map:
         """Add map with generated ID."""
@@ -201,7 +359,11 @@ class LoreData:
     def get_world_by_id(self, world_id: EntityId) -> Optional[World]:
         """Find world by ID."""
         return next((w for w in self.worlds if w.id == world_id), None)
-    
+
+    def get_locations(self) -> List[Location]:
+        """Get all locations."""
+        return self.locations
+
     def get_characters_by_world(self, world_id: EntityId) -> List[Character]:
         """Get all characters in a world."""
         return [c for c in self.characters if c.world_id == world_id]
@@ -225,6 +387,11 @@ class LoreData:
             'flowcharts': [self._flowchart_to_dict(f) for f in self.flowcharts],
             'handouts': [self._handout_to_dict(h) for h in self.handouts],
             'inspirations': [self._inspiration_to_dict(i) for i in self.inspirations],
+            'locations': [self._location_to_dict(l) for l in self.locations],
+            'banners': [self._banner_to_dict(b) for b in self.banners],
+            'character_relationships': [self._character_relationship_to_dict(r) for r in self.character_relationships],
+            'factions': [self._faction_to_dict(f) for f in self.factions],
+            'shops': [self._shop_to_dict(s) for s in self.shops],
             'maps': [self._map_to_dict(m) for m in self.maps],
             'notes': [self._note_to_dict(n) for n in self.notes],
             'requirements': [self._requirement_to_dict(r) for r in self.requirements],
@@ -263,6 +430,11 @@ class LoreData:
         self.flowcharts = [self._dict_to_flowchart(f) for f in data.get('flowcharts', [])]
         self.handouts = [self._dict_to_handout(h) for h in data.get('handouts', [])]
         self.inspirations = [self._dict_to_inspiration(i) for i in data.get('inspirations', [])]
+        self.locations = [self._dict_to_location(l) for l in data.get('locations', [])]
+        self.banners = [self._dict_to_banner(b) for b in data.get('banners', [])]
+        self.character_relationships = [self._dict_to_character_relationship(r) for r in data.get('character_relationships', [])]
+        self.factions = [self._dict_to_faction(f) for f in data.get('factions', [])]
+        self.shops = [self._dict_to_shop(s) for s in data.get('shops', [])]
         self.maps = [self._dict_to_map(m) for m in data.get('maps', [])]
         self.notes = [self._dict_to_note(n) for n in data.get('notes', [])]
         self.requirements = [self._dict_to_requirement(r) for r in data.get('requirements', [])]
@@ -779,6 +951,20 @@ class LoreData:
             'updated_at': inspiration.updated_at.value.isoformat(),
             'version': inspiration.version.value
         }
+
+    @staticmethod
+    def _location_to_dict(location: Location) -> Dict:
+        return {
+            'id': location.id.value if location.id else None,
+            'world_id': location.world_id.value,
+            'name': location.name,
+            'description': str(location.description),
+            'location_type': location.location_type.value,
+            'parent_location_id': location.parent_location_id.value if location.parent_location_id else None,
+            'created_at': location.created_at.value.isoformat(),
+            'updated_at': location.updated_at.value.isoformat(),
+            'version': location.version.value
+        }
     
     @staticmethod
     def _dict_to_inspiration(data: Dict) -> Inspiration:
@@ -792,6 +978,151 @@ class LoreData:
             tags=data.get('tags', []),
             source=data.get('source'),
             is_used=data.get('is_used', False),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_location(data: Dict) -> Location:
+        return Location(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            location_type=__import__('src.domain.value_objects.common', fromlist=['LocationType']).LocationType(data['location_type']),
+            parent_location_id=EntityId(data['parent_location_id']) if data.get('parent_location_id') else None,
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _banner_to_dict(banner: Banner) -> Dict:
+        return {
+            'id': banner.id.value if banner.id else None,
+            'world_id': banner.world_id.value,
+            'name': banner.name,
+            'description': str(banner.description),
+            'type': banner.banner_type.value,
+            'pity_system_id': banner.pity_system_id,
+            'is_active': banner.is_active,
+            'created_at': banner.created_at.value.isoformat(),
+            'updated_at': banner.updated_at.value.isoformat(),
+            'version': banner.version.value
+        }
+
+    @staticmethod
+    def _dict_to_banner(data: Dict) -> Banner:
+        return Banner(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            banner_type=__import__('src.domain.value_objects.common', fromlist=['BannerType']).BannerType(data['type']),
+            pity_system_id=data.get('pity_system_id'),
+            is_active=data.get('is_active', True),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _character_relationship_to_dict(relationship: CharacterRelationship) -> Dict:
+        return {
+            'id': relationship.id.value if relationship.id else None,
+            'world_id': relationship.world_id.value,
+            'character1_id': relationship.character1_id.value,
+            'character2_id': relationship.character2_id.value,
+            'type': relationship.relationship_type.value,
+            'description': str(relationship.description),
+            'strength': relationship.strength,
+            'is_mutual': relationship.is_mutual,
+            'created_at': relationship.created_at.value.isoformat(),
+            'updated_at': relationship.updated_at.value.isoformat(),
+            'version': relationship.version.value
+        }
+
+    @staticmethod
+    def _dict_to_character_relationship(data: Dict) -> CharacterRelationship:
+        return CharacterRelationship(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            character1_id=EntityId(data['character1_id']),
+            character2_id=EntityId(data['character2_id']),
+            relationship_type=__import__('src.domain.value_objects.common', fromlist=['RelationshipType']).RelationshipType(data['type']),
+            description=Description(data['description']),
+            strength=data.get('strength', 1),
+            is_mutual=data.get('is_mutual', True),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _faction_to_dict(faction: Faction) -> Dict:
+        return {
+            'id': faction.id.value if faction.id else None,
+            'world_id': faction.world_id.value,
+            'name': faction.name,
+            'description': str(faction.description),
+            'type': faction.faction_type.value,
+            'alignment': faction.alignment,
+            'reputation': faction.reputation,
+            'is_player_faction': faction.is_player_faction,
+            'created_at': faction.created_at.value.isoformat(),
+            'updated_at': faction.updated_at.value.isoformat(),
+            'version': faction.version.value
+        }
+
+    @staticmethod
+    def _dict_to_faction(data: Dict) -> Faction:
+        return Faction(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            faction_type=__import__('src.domain.value_objects.common', fromlist=['FactionType']).FactionType(data['type']),
+            alignment=data.get('alignment'),
+            reputation=data.get('reputation', 0),
+            is_player_faction=data.get('is_player_faction', False),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _shop_to_dict(shop: Shop) -> Dict:
+        return {
+            'id': shop.id.value if shop.id else None,
+            'world_id': shop.world_id.value,
+            'location_id': shop.location_id.value if shop.location_id else None,
+            'name': shop.name,
+            'description': str(shop.description),
+            'type': shop.shop_type.value,
+            'currency_id': shop.currency_id,
+            'is_open': shop.is_open,
+            'created_at': shop.created_at.value.isoformat(),
+            'updated_at': shop.updated_at.value.isoformat(),
+            'version': shop.version.value
+        }
+
+    @staticmethod
+    def _dict_to_shop(data: Dict) -> Shop:
+        return Shop(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(data['world_id']),
+            location_id=EntityId(data['location_id']) if data.get('location_id') else None,
+            name=data['name'],
+            description=Description(data['description']),
+            shop_type=__import__('src.domain.value_objects.common', fromlist=['ShopType']).ShopType(data['type']),
+            currency_id=data.get('currency_id'),
+            is_open=data.get('is_open', True),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])

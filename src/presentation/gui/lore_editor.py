@@ -2228,7 +2228,11 @@ class MainWindow(QMainWindow):
             nonlocal widget_index
             self.stacked_widget.addWidget(widget)
             self.tab_list.addItem(name)
-            print(f"Added tab: {name}")  # Debug
+            try:
+                print(f"Added tab: {name}")  # Debug
+            except UnicodeEncodeError:
+                # Handle encoding issues on Windows consoles
+                print(f"Added tab: {name.encode('ascii', 'ignore').decode('ascii')}")  # Debug
             # Map current row to widget index
             self.tab_row_to_widget_index[self.tab_list.count() - 1] = widget_index
             widget_index += 1

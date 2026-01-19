@@ -258,7 +258,7 @@ MythWeave includes a PyQt6-based graphical editor:
 See [GUI Documentation](src/presentation/gui/README.md) for details.
 
 ```bash
-# Launch GUI (easiest way)
+# Linux/macOS: Launch GUI (easiest way)
 ./launch_gui.sh
 
 # OR manual setup
@@ -267,7 +267,19 @@ source venv/bin/activate
 pip install "PyQt6>=6.6.1" "pydantic>=2.5.3" dataclasses-json
 python3 run_gui.py
 ```
-python3 run_gui.py
+
+```cmd
+REM Windows: Launch GUI (easiest way)
+launch_gui.bat
+
+REM Windows: Auto-install Python if missing (requires admin)
+launch_gui.bat --auto-install
+
+REM Windows: Manual setup
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
+python run_gui.py
 ```
 
 ## Safety and Non-Breaking Updates
