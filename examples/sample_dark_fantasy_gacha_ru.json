@@ -1067,28 +1067,216 @@
   "character_relationships": [
     {
       "id": 78,
-      "world_id": 1,
-      "character1_id": 3,
-      "character2_id": 4,
-      "type": "mentor",
+      "character_from_id": 3,
+      "character_to_id": 4,
+      "relationship_type": "mentor",
       "description": "Лира обучает Виктора искусству вампирской магии и контролю над проклятием",
-      "strength": 8,
+      "relationship_level": 8,
       "is_mutual": true,
+      "combat_bonus_when_together": 15.0,
+      "special_combo_ability_id": null,
+      "dialogue_unlocked": true,
+      "first_met_event_id": 6,
+      "relationship_changed_events": [6],
       "created_at": "2024-03-05T00:00:00+00:00",
       "updated_at": "2024-03-05T00:00:00+00:00",
       "version": 1
     },
     {
       "id": 79,
-      "world_id": 2,
-      "character1_id": 5,
-      "character2_id": 4,
-      "type": "ally",
+      "character_from_id": 5,
+      "character_to_id": 4,
+      "relationship_type": "ally",
       "description": "Элиза и Виктор объединены общей целью борьбы с проклятием нежити",
-      "strength": 6,
+      "relationship_level": 6,
       "is_mutual": true,
+      "combat_bonus_when_together": 10.0,
+      "special_combo_ability_id": null,
+      "dialogue_unlocked": false,
+      "first_met_event_id": 7,
+      "relationship_changed_events": [],
       "created_at": "2024-03-06T00:00:00+00:00",
       "updated_at": "2024-03-06T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "pity": [
+    {
+      "id": 72,
+      "player_id": "player_3",
+      "profile_id": 76,
+      "banner_id": 76,
+      "pulls_since_last_ssr": 45,
+      "pulls_since_last_featured": 45,
+      "total_pulls_on_banner": 45,
+      "total_ssr_pulled": 0,
+      "total_featured_pulled": 0,
+      "guaranteed_featured_next": false,
+      "last_pull_at": "2024-03-15T20:30:00+00:00",
+      "created_at": "2024-03-10T00:00:00+00:00",
+      "updated_at": "2024-03-15T20:30:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 73,
+      "player_id": "player_5",
+      "profile_id": 77,
+      "banner_id": 77,
+      "pulls_since_last_ssr": 67,
+      "pulls_since_last_featured": 67,
+      "total_pulls_on_banner": 67,
+      "total_ssr_pulled": 0,
+      "total_featured_pulled": 0,
+      "guaranteed_featured_next": false,
+      "last_pull_at": "2024-03-16T14:15:00+00:00",
+      "created_at": "2024-03-11T00:00:00+00:00",
+      "updated_at": "2024-03-16T14:15:00+00:00",
+      "version": 1
+    }
+  ],
+  "pulls": [
+    {
+      "id": 74,
+      "player_id": "player_3",
+      "profile_id": 76,
+      "banner_id": 76,
+      "pull_number": 45,
+      "is_ten_pull": false,
+      "ten_pull_batch_id": null,
+      "result_type": "character",
+      "result_id": 3,
+      "result_name": "Лира Кровавая Шёпот",
+      "result_rarity": "ssr",
+      "is_featured": true,
+      "currency_type": "gems",
+      "cost": 160,
+      "pity_count_at_pull": 45,
+      "broke_pity": true,
+      "pulled_at": "2024-03-15T20:30:00+00:00",
+      "created_at": "2024-03-15T20:30:00+00:00",
+      "updated_at": "2024-03-15T20:30:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 75,
+      "player_id": "player_5",
+      "profile_id": 77,
+      "banner_id": 77,
+      "pull_number": 67,
+      "is_ten_pull": false,
+      "ten_pull_batch_id": null,
+      "result_type": "item",
+      "result_id": 18,
+      "result_name": "Книга Мёртвых",
+      "result_rarity": "sr",
+      "is_featured": false,
+      "currency_type": "gems",
+      "cost": 160,
+      "pity_count_at_pull": 67,
+      "broke_pity": false,
+      "pulled_at": "2024-03-16T14:15:00+00:00",
+      "created_at": "2024-03-16T14:15:00+00:00",
+      "updated_at": "2024-03-16T14:15:00+00:00",
+      "version": 1
+    }
+  ],
+  "player_profiles": [
+    {
+      "id": 76,
+      "player_name": "Алексей Игрок",
+      "player_id": "player_alex",
+      "world_id": 1,
+      "level": 25,
+      "experience": 12500,
+      "currencies": {"GOLD": 5000, "GEM": 3200},
+      "total_pulls": 45,
+      "total_spent": 25.0,
+      "days_active": 45,
+      "last_login": "2024-03-17T10:00:00+00:00",
+      "preferences": {"theme": "dark", "sound_enabled": true},
+      "achievements": ["first_ssr", "vampire_master"],
+      "created_at": "2024-01-01T00:00:00+00:00",
+      "updated_at": "2024-03-17T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "currencies": [
+    {
+      "id": 78,
+      "world_id": 1,
+      "name": "Кровавые Кристаллы",
+      "description": "Редкая валюта, получаемая от вампирских ритуалов и битв",
+      "symbol": "💎",
+      "color": "#8B0000",
+      "exchange_rate_to_gems": 10,
+      "is_premium": true,
+      "max_storage": 9999,
+      "created_at": "2024-01-01T00:00:00+00:00",
+      "updated_at": "2024-01-01T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "rewards": [
+    {
+      "id": 80,
+      "world_id": 1,
+      "name": "Благословение Крови",
+      "description": "Увеличивает регенерацию здоровья на 25% в течение часа",
+      "reward_type": "buff",
+      "value": 25,
+      "duration_hours": 1,
+      "stackable": false,
+      "rarity": "rare",
+      "icon_path": "/rewards/blood_blessing.png",
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-02T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "purchases": [
+    {
+      "id": 82,
+      "player_id": "player_alex",
+      "shop_id": 82,
+      "item_id": 11,
+      "quantity": 1,
+      "total_cost": 500,
+      "currency_used": "gems",
+      "purchase_timestamp": "2024-03-10T15:20:00+00:00",
+      "used_in_game": false,
+      "created_at": "2024-03-10T15:20:00+00:00",
+      "version": 1
+    }
+  ],
+  "event_chains": [
+    {
+      "id": 84,
+      "world_id": 1,
+      "name": "Цикл Кровавой Луны",
+      "description": "Серия связанных событий, происходящих во время полнолуния",
+      "event_ids": [6],
+      "trigger_condition": "Полнолуние в Темных Землях Эреба",
+      "is_active": true,
+      "current_event_index": 0,
+      "completed": false,
+      "created_at": "2024-01-20T00:00:00+00:00",
+      "updated_at": "2024-01-20T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "faction_memberships": [
+    {
+      "id": 86,
+      "character_id": 3,
+      "faction_id": 80,
+      "rank": "Лидер",
+      "reputation": 100,
+      "is_official": true,
+      "joined_at": "2024-01-02T00:00:00+00:00",
+      "last_activity": "2024-03-17T15:00:00+00:00",
+      "special_permissions": ["ritual_leader", "blood_magic"],
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-03-17T15:00:00+00:00",
       "version": 1
     }
   ],
@@ -1439,5 +1627,5 @@
       "version": 3
     }
   ],
-  "next_id": 84
+  "next_id": 88
 }

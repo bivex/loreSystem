@@ -1871,8 +1871,9 @@ class MainWindow(QMainWindow):
         self._setup_shortcuts()
 
         # Auto-load sample data
-        sample_path = '/Volumes/External/Code/loreSystem/examples/sample_dark_fantasy_gacha_ru.json'
-        self._load_file_by_path(sample_path, show_message=True)
+        sample_path = Path(__file__).parent.parent.parent / 'examples' / 'sample_dark_fantasy_gacha_ru.json'
+        if sample_path.exists():
+            self._load_file_by_path(str(sample_path), show_message=False)
 
     def _setup_style(self):
         """Setup modern dark theme styling."""

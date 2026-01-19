@@ -30,6 +30,14 @@ from src.domain.entities.note import Note
 from src.domain.entities.requirement import Requirement
 from src.domain.entities.session import Session
 from src.domain.entities.tokenboard import Tokenboard
+from src.domain.entities.pity import Pity
+from src.domain.entities.pull import Pull
+from src.domain.entities.player_profile import PlayerProfile
+from src.domain.entities.currency import Currency
+from src.domain.entities.reward import Reward
+from src.domain.entities.purchase import Purchase
+from src.domain.entities.event_chain import EventChain
+from src.domain.entities.faction_membership import FactionMembership
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, Description, CharacterName,
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
@@ -72,6 +80,17 @@ class LoreData:
         self.requirements: List[Requirement] = []
         self.sessions: List[Session] = []
         self.tokenboards: List[Tokenboard] = []
+
+        # New entities
+        self.pity: List[Pity] = []
+        self.pulls: List[Pull] = []
+        self.player_profiles: List[PlayerProfile] = []
+        self.currencies: List[Currency] = []
+        self.rewards: List[Reward] = []
+        self.purchases: List[Purchase] = []
+        self.event_chains: List[EventChain] = []
+        self.faction_memberships: List[FactionMembership] = []
+
         self.tenant_id = TenantId(1)
         self._next_id = 1
     
@@ -397,6 +416,17 @@ class LoreData:
             'requirements': [self._requirement_to_dict(r) for r in self.requirements],
             'sessions': [self._session_to_dict(s) for s in self.sessions],
             'tokenboards': [self._tokenboard_to_dict(t) for t in self.tokenboards],
+
+            # New entities
+            'pity': [self._pity_to_dict(p) for p in self.pity],
+            'pulls': [self._pull_to_dict(p) for p in self.pulls],
+            'player_profiles': [self._player_profile_to_dict(p) for p in self.player_profiles],
+            'currencies': [self._currency_to_dict(c) for c in self.currencies],
+            'rewards': [self._reward_to_dict(r) for r in self.rewards],
+            'purchases': [self._purchase_to_dict(p) for p in self.purchases],
+            'event_chains': [self._event_chain_to_dict(e) for e in self.event_chains],
+            'faction_memberships': [self._faction_membership_to_dict(f) for f in self.faction_memberships],
+
             'next_id': self._next_id
         }
     
@@ -440,6 +470,17 @@ class LoreData:
         self.requirements = [self._dict_to_requirement(r) for r in data.get('requirements', [])]
         self.sessions = [self._dict_to_session(s) for s in data.get('sessions', [])]
         self.tokenboards = [self._dict_to_tokenboard(t) for t in data.get('tokenboards', [])]
+
+        # New entities
+        self.pity = [self._dict_to_pity(p) for p in data.get('pity', [])]
+        self.pulls = [self._dict_to_pull(p) for p in data.get('pulls', [])]
+        self.player_profiles = [self._dict_to_player_profile(p) for p in data.get('player_profiles', [])]
+        self.currencies = [self._dict_to_currency(c) for c in data.get('currencies', [])]
+        self.rewards = [self._dict_to_reward(r) for r in data.get('rewards', [])]
+        self.purchases = [self._dict_to_purchase(p) for p in data.get('purchases', [])]
+        self.event_chains = [self._dict_to_event_chain(e) for e in data.get('event_chains', [])]
+        self.faction_memberships = [self._dict_to_faction_membership(f) for f in data.get('faction_memberships', [])]
+
         self._next_id = data.get('next_id', 1)
     
     @staticmethod
@@ -1104,7 +1145,7 @@ class LoreData:
             'world_id': faction.world_id.value,
             'name': faction.name,
             'description': faction.description.value,
-            'faction_type': faction.faction_type.value,
+            'type': faction.faction_type.value,
             'alignment': faction.alignment.value,
             'leader_character_id': faction.leader_character_id.value if faction.leader_character_id else None,
             'member_character_ids': [cid.value for cid in faction.member_character_ids],
@@ -1353,6 +1394,160 @@ class LoreData:
             'updated_at': tokenboard.updated_at.value.isoformat(),
             'version': tokenboard.version.value
         }
+
+    @staticmethod
+    def _dict_to_pity(data: Dict) -> Pity:
+        return Pity(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            player_id=data['player_id'],
+            profile_id=EntityId(data['profile_id']),
+            banner_id=EntityId(data['banner_id']),
+            pulls_since_last_ssr=data['pulls_since_last_ssr'],
+            pulls_since_last_featured=data['pulls_since_last_featured'],
+            total_pulls_on_banner=data['total_pulls_on_banner'],
+            total_ssr_pulled=data['total_ssr_pulled'],
+            total_featured_pulled=data['total_featured_pulled'],
+            guaranteed_featured_next=data['guaranteed_featured_next'],
+            last_pull_at=Timestamp(datetime.fromisoformat(data['last_pull_at'])) if data.get('last_pull_at') else None,
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_pull(data: Dict) -> Pull:
+        from src.domain.entities.pull import PullResult
+        return Pull(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            player_id=data['player_id'],
+            profile_id=EntityId(data['profile_id']),
+            banner_id=EntityId(data['banner_id']),
+            pull_number=data['pull_number'],
+            is_ten_pull=data['is_ten_pull'],
+            ten_pull_batch_id=data.get('ten_pull_batch_id'),
+            result_type=data['result_type'],
+            result_id=EntityId(data['result_id']),
+            result_name=data['result_name'],
+            result_rarity=PullResult(data['result_rarity']),
+            is_featured=data['is_featured'],
+            currency_type=data['currency_type'],
+            cost=data['cost'],
+            pity_count_at_pull=data['pity_count_at_pull'],
+            broke_pity=data['broke_pity'],
+            pulled_at=Timestamp(datetime.fromisoformat(data['pulled_at'])),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_player_profile(data: Dict) -> PlayerProfile:
+        return PlayerProfile(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(1),
+            player_name=data['player_name'],
+            player_id=data['player_id'],
+            world_id=EntityId(data['world_id']) if data.get('world_id') else None,
+            level=data['level'],
+            experience=data['experience'],
+            currencies=data.get('currencies', {}),
+            total_pulls=data['total_pulls'],
+            total_spent=data['total_spent'],
+            days_active=data['days_active'],
+            last_login=Timestamp(datetime.fromisoformat(data['last_login'])),
+            preferences=data.get('preferences', {}),
+            achievements=data.get('achievements', []),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_currency(data: Dict) -> Currency:
+        return Currency(
+            id=EntityId(data['id']) if data['id'] else None,
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            symbol=data['symbol'],
+            color=data['color'],
+            exchange_rate_to_gems=data['exchange_rate_to_gems'],
+            is_premium=data.get('is_premium', False),
+            max_storage=data.get('max_storage'),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_reward(data: Dict) -> Reward:
+        return Reward(
+            id=EntityId(data['id']) if data['id'] else None,
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            reward_type=data['reward_type'],
+            value=data['value'],
+            duration_hours=data.get('duration_hours'),
+            stackable=data.get('stackable', False),
+            rarity=data['rarity'],
+            icon_path=data.get('icon_path'),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_purchase(data: Dict) -> Purchase:
+        return Purchase(
+            id=EntityId(data['id']) if data['id'] else None,
+            player_id=EntityId(data['player_id']),
+            shop_id=EntityId(data['shop_id']),
+            item_id=EntityId(data['item_id']),
+            quantity=data['quantity'],
+            total_cost=data['total_cost'],
+            currency_used=data['currency_used'],
+            purchase_timestamp=Timestamp(datetime.fromisoformat(data['purchase_timestamp'])),
+            used_in_game=data.get('used_in_game', False),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_event_chain(data: Dict) -> EventChain:
+        return EventChain(
+            id=EntityId(data['id']) if data['id'] else None,
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            event_ids=[EntityId(eid) for eid in data.get('event_ids', [])],
+            trigger_condition=data.get('trigger_condition'),
+            is_active=data.get('is_active', True),
+            current_event_index=data.get('current_event_index', 0),
+            completed=data.get('completed', False),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_faction_membership(data: Dict) -> FactionMembership:
+        return FactionMembership(
+            id=EntityId(data['id']) if data['id'] else None,
+            character_id=EntityId(data['character_id']),
+            faction_id=EntityId(data['faction_id']),
+            rank=data['rank'],
+            reputation=data['reputation'],
+            is_official=data.get('is_official', True),
+            joined_at=Timestamp(datetime.fromisoformat(data['joined_at'])),
+            last_activity=Timestamp(datetime.fromisoformat(data['last_activity'])) if data.get('last_activity') else None,
+            special_permissions=data.get('special_permissions', []),
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
     
     @staticmethod
     def _dict_to_tokenboard(data: Dict) -> Tokenboard:
@@ -1371,3 +1566,152 @@ class LoreData:
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
         )
+    @staticmethod
+    def _pity_to_dict(pity: Pity) -> Dict:
+        return {
+            'id': pity.id.value if pity.id else None,
+            'player_id': pity.player_id,
+            'profile_id': pity.profile_id.value,
+            'banner_id': pity.banner_id.value,
+            'pulls_since_last_ssr': pity.pulls_since_last_ssr,
+            'pulls_since_last_featured': pity.pulls_since_last_featured,
+            'total_pulls_on_banner': pity.total_pulls_on_banner,
+            'total_ssr_pulled': pity.total_ssr_pulled,
+            'total_featured_pulled': pity.total_featured_pulled,
+            'guaranteed_featured_next': pity.guaranteed_featured_next,
+            'last_pull_at': pity.last_pull_at.value.isoformat() if pity.last_pull_at else None,
+            'created_at': pity.created_at.value.isoformat(),
+            'updated_at': pity.updated_at.value.isoformat(),
+            'version': pity.version.value
+        }
+
+    @staticmethod
+    def _pull_to_dict(pull: Pull) -> Dict:
+        return {
+            'id': pull.id.value if pull.id else None,
+            'player_id': pull.player_id,
+            'profile_id': pull.profile_id.value,
+            'banner_id': pull.banner_id.value,
+            'pull_number': pull.pull_number,
+            'is_ten_pull': pull.is_ten_pull,
+            'ten_pull_batch_id': pull.ten_pull_batch_id,
+            'result_type': pull.result_type,
+            'result_id': pull.result_id.value,
+            'result_name': pull.result_name,
+            'result_rarity': pull.result_rarity.value,
+            'is_featured': pull.is_featured,
+            'currency_type': pull.currency_type,
+            'cost': pull.cost,
+            'pity_count_at_pull': pull.pity_count_at_pull,
+            'broke_pity': pull.broke_pity,
+            'pulled_at': pull.pulled_at.value.isoformat(),
+            'created_at': pull.created_at.value.isoformat(),
+            'updated_at': pull.updated_at.value.isoformat(),
+            'version': pull.version.value
+        }
+
+    @staticmethod
+    def _player_profile_to_dict(profile: PlayerProfile) -> Dict:
+        return {
+            'id': profile.id.value if profile.id else None,
+            'player_name': profile.player_name,
+            'player_id': profile.player_id,
+            'world_id': profile.world_id.value if profile.world_id else None,
+            'level': profile.level,
+            'experience': profile.experience,
+            'currencies': profile.currencies,
+            'total_pulls': profile.total_pulls,
+            'total_spent': profile.total_spent,
+            'days_active': profile.days_active,
+            'last_login': profile.last_login.value.isoformat(),
+            'preferences': profile.preferences,
+            'achievements': profile.achievements,
+            'created_at': profile.created_at.value.isoformat(),
+            'updated_at': profile.updated_at.value.isoformat(),
+            'version': profile.version.value
+        }
+
+    @staticmethod
+    def _currency_to_dict(currency: Currency) -> Dict:
+        return {
+            'id': currency.id.value if currency.id else None,
+            'world_id': currency.world_id.value,
+            'name': currency.name,
+            'description': currency.description.value,
+            'symbol': currency.symbol,
+            'color': currency.color,
+            'exchange_rate_to_gems': currency.exchange_rate_to_gems,
+            'is_premium': currency.is_premium,
+            'max_storage': currency.max_storage,
+            'created_at': currency.created_at.value.isoformat(),
+            'updated_at': currency.updated_at.value.isoformat(),
+            'version': currency.version.value
+        }
+
+    @staticmethod
+    def _reward_to_dict(reward: Reward) -> Dict:
+        return {
+            'id': reward.id.value if reward.id else None,
+            'world_id': reward.world_id.value,
+            'name': reward.name,
+            'description': reward.description.value,
+            'reward_type': reward.reward_type,
+            'value': reward.value,
+            'duration_hours': reward.duration_hours,
+            'stackable': reward.stackable,
+            'rarity': reward.rarity,
+            'icon_path': reward.icon_path,
+            'created_at': reward.created_at.value.isoformat(),
+            'updated_at': reward.updated_at.value.isoformat(),
+            'version': reward.version.value
+        }
+
+    @staticmethod
+    def _purchase_to_dict(purchase: Purchase) -> Dict:
+        return {
+            'id': purchase.id.value if purchase.id else None,
+            'player_id': purchase.player_id.value,
+            'shop_id': purchase.shop_id.value,
+            'item_id': purchase.item_id.value,
+            'quantity': purchase.quantity,
+            'total_cost': purchase.total_cost,
+            'currency_used': purchase.currency_used,
+            'purchase_timestamp': purchase.purchase_timestamp.value.isoformat(),
+            'used_in_game': purchase.used_in_game,
+            'created_at': purchase.created_at.value.isoformat(),
+            'version': purchase.version.value
+        }
+
+    @staticmethod
+    def _event_chain_to_dict(event_chain: EventChain) -> Dict:
+        return {
+            'id': event_chain.id.value if event_chain.id else None,
+            'world_id': event_chain.world_id.value,
+            'name': event_chain.name,
+            'description': event_chain.description.value,
+            'event_ids': [eid.value for eid in event_chain.event_ids],
+            'trigger_condition': event_chain.trigger_condition,
+            'is_active': event_chain.is_active,
+            'current_event_index': event_chain.current_event_index,
+            'completed': event_chain.completed,
+            'created_at': event_chain.created_at.value.isoformat(),
+            'updated_at': event_chain.updated_at.value.isoformat(),
+            'version': event_chain.version.value
+        }
+
+    @staticmethod
+    def _faction_membership_to_dict(membership: FactionMembership) -> Dict:
+        return {
+            'id': membership.id.value if membership.id else None,
+            'character_id': membership.character_id.value,
+            'faction_id': membership.faction_id.value,
+            'rank': membership.rank,
+            'reputation': membership.reputation,
+            'is_official': membership.is_official,
+            'joined_at': membership.joined_at.value.isoformat(),
+            'last_activity': membership.last_activity.value.isoformat() if membership.last_activity else None,
+            'special_permissions': membership.special_permissions,
+            'created_at': membership.created_at.value.isoformat(),
+            'updated_at': membership.updated_at.value.isoformat(),
+            'version': membership.version.value
+        }

@@ -208,8 +208,8 @@ def test_comprehensive_json_loading():
         shop_names = [shop.name for shop in lore_data.shops]
         assert any("Торговец" in name for name in shop_names)
 
-    # Verify next_id is set correctly (should be 84 based on our sample data)
-    assert lore_data._next_id == 84, f"Expected next_id=84, got {lore_data._next_id}"
+    # Verify next_id is set correctly (should be 88 based on our sample data)
+    assert lore_data._next_id == 88, f"Expected next_id=88, got {lore_data._next_id}"
 
     print(f"✅ Successfully loaded {sum(len(getattr(lore_data, attr)) for attr in dir(lore_data) if not attr.startswith('_') and isinstance(getattr(lore_data, attr), list))} total entities from sample file")
 
