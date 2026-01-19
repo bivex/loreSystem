@@ -110,6 +110,21 @@ from src.presentation.gui.tabs import (
     NoteTab, RequirementTab, SessionTab, TokenboardTab
 )
 from src.presentation.gui.tabs.world_map_tab import WorldMapTab
+from src.presentation.gui.tabs.banner_tab import BannerTab
+from src.presentation.gui.tabs.location_tab import LocationTab
+from src.presentation.gui.tabs.faction_tab import FactionTab
+from src.presentation.gui.tabs.shop_tab import ShopTab
+from src.presentation.gui.tabs.character_relationship_tab import CharacterRelationshipTab
+from src.presentation.gui.tabs.currency_tab import CurrencyTab
+from src.presentation.gui.tabs.event_chain_tab import EventChainTab
+from src.presentation.gui.tabs.reward_tab import RewardTab
+from src.presentation.gui.tabs.music_theme_tab import MusicThemeTab
+from src.presentation.gui.tabs.music_track_tab import MusicTrackTab
+from src.presentation.gui.tabs.purchase_tab import PurchaseTab
+from src.presentation.gui.tabs.faction_membership_tab import FactionMembershipTab
+from src.presentation.gui.tabs.pity_tab import PityTab
+from src.presentation.gui.tabs.player_profile_tab import PlayerProfileTab
+from src.presentation.gui.tabs.pull_tab import PullTab
 
 
 # Import LoreData from separate module
@@ -2179,6 +2194,23 @@ class MainWindow(QMainWindow):
         self.requirements_tab = RequirementTab(self.lore_data)
         self.sessions_tab = SessionTab(self.lore_data)
         self.tokenboards_tab = TokenboardTab(self.lore_data)
+        
+        # New tabs from domain entities
+        self.banner_tab = BannerTab(self.lore_data)
+        self.location_tab = LocationTab(self.lore_data)
+        self.faction_tab = FactionTab(self.lore_data)
+        self.shop_tab = ShopTab(self.lore_data)
+        self.character_relationship_tab = CharacterRelationshipTab(self.lore_data)
+        self.currency_tab = CurrencyTab(self.lore_data)
+        self.event_chain_tab = EventChainTab(self.lore_data)
+        self.reward_tab = RewardTab(self.lore_data)
+        self.music_theme_tab = MusicThemeTab(self.lore_data)
+        self.music_track_tab = MusicTrackTab(self.lore_data)
+        self.purchase_tab = PurchaseTab(self.lore_data)
+        self.faction_membership_tab = FactionMembershipTab(self.lore_data)
+        self.pity_tab = PityTab(self.lore_data)
+        self.player_profile_tab = PlayerProfileTab(self.lore_data)
+        self.pull_tab = PullTab(self.lore_data)
 
         # Add to stacked widget and list with categorical dividers
         # Track mapping between list rows and widget indices (excluding dividers)
@@ -2237,6 +2269,39 @@ class MainWindow(QMainWindow):
         add_tab(self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements"))
         add_tab(self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions"))
         add_tab(self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards"))
+
+        # World Elements
+        add_divider("World Elements")
+        add_tab(self.location_tab, I18N.t('tab.locations', "📍 Locations"))
+        add_tab(self.faction_tab, I18N.t('tab.factions', "⚔️ Factions"))
+        add_tab(self.character_relationship_tab, I18N.t('tab.relationships', "💑 Relationships"))
+        add_tab(self.shop_tab, I18N.t('tab.shops', "🏪 Shops"))
+
+        # Gacha System
+        add_divider("Gacha System")
+        add_tab(self.banner_tab, I18N.t('tab.banners', "🎁 Banners"))
+        add_tab(self.pity_tab, I18N.t('tab.pity', "🎯 Pity Systems"))
+        add_tab(self.pull_tab, I18N.t('tab.pulls', "🎰 Gacha Pulls"))
+        add_tab(self.player_profile_tab, I18N.t('tab.players', "👤 Player Profiles"))
+
+        # Resources & Rewards
+        add_divider("Resources & Rewards")
+        add_tab(self.currency_tab, I18N.t('tab.currencies', "💰 Currencies"))
+        add_tab(self.reward_tab, I18N.t('tab.rewards', "🎁 Rewards"))
+        add_tab(self.purchase_tab, I18N.t('tab.purchases', "💳 Purchases"))
+
+        # Events & Chains
+        add_divider("Events & Chains")
+        add_tab(self.event_chain_tab, I18N.t('tab.event_chains', "⛓️ Event Chains"))
+
+        # Faction Management
+        add_divider("Faction Management")
+        add_tab(self.faction_membership_tab, I18N.t('tab.memberships', "👥 Memberships"))
+
+        # Music System
+        add_divider("Music System")
+        add_tab(self.music_theme_tab, I18N.t('tab.themes', "🎵 Music Themes"))
+        add_tab(self.music_track_tab, I18N.t('tab.tracks', "🎶 Music Tracks"))
 
         # Set initial selection (skip first divider, select Worlds tab)
         self.tab_list.setCurrentRow(1)
