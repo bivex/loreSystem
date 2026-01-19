@@ -984,6 +984,170 @@
       "version": 1
     }
   ],
+  "locations": [
+    {
+      "id": 74,
+      "world_id": 1,
+      "name": "Кровавая Лунная Роща",
+      "description": "Древний лес, где полная луна окрашивает деревья в кроваво-красный цвет. Место силы для вампирских ритуалов.",
+      "location_type": "forest",
+      "parent_location_id": null,
+      "created_at": "2024-03-01T00:00:00+00:00",
+      "updated_at": "2024-03-01T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 75,
+      "world_id": 2,
+      "name": "Тронный Зал Некрополиса",
+      "description": "Центральный зал древнего города мертвецов, где восседает владыка нежити на троне из костей.",
+      "location_type": "dungeon",
+      "parent_location_id": null,
+      "created_at": "2024-03-02T00:00:00+00:00",
+      "updated_at": "2024-03-02T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "banners": [
+    {
+      "id": 76,
+      "name": "Вампирский Баннер",
+      "description": "Специальный баннер с вампирами и кровавыми ритуалами",
+      "banner_type": "limited",
+      "start_date": "2024-03-03T00:00:00+00:00",
+      "end_date": "2024-03-24T00:00:00+00:00",
+      "is_active": true,
+      "featured_character_ids": [3],
+      "featured_item_ids": [],
+      "single_pull_cost": 160,
+      "ten_pull_cost": 1600,
+      "currency_type": "gems",
+      "ssr_rate": 0.6,
+      "sr_rate": 5.1,
+      "r_rate": 94.3,
+      "soft_pity_threshold": 75,
+      "hard_pity_threshold": 90,
+      "featured_guarantee_pity": 180,
+      "featured_rate": 50.0,
+      "banner_image_path": null,
+      "icon_path": null,
+      "total_pulls": 0,
+      "created_at": "2024-03-03T00:00:00+00:00",
+      "updated_at": "2024-03-03T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 77,
+      "name": "Нежить Баннер",
+      "description": "Баннер с различными существами нежити",
+      "banner_type": "limited",
+      "start_date": "2024-03-04T00:00:00+00:00",
+      "end_date": "2024-03-25T00:00:00+00:00",
+      "is_active": true,
+      "featured_character_ids": [5],
+      "featured_item_ids": [],
+      "single_pull_cost": 160,
+      "ten_pull_cost": 1600,
+      "currency_type": "gems",
+      "ssr_rate": 0.6,
+      "sr_rate": 5.1,
+      "r_rate": 94.3,
+      "soft_pity_threshold": 75,
+      "hard_pity_threshold": 90,
+      "featured_guarantee_pity": 180,
+      "featured_rate": 50.0,
+      "banner_image_path": null,
+      "icon_path": null,
+      "total_pulls": 0,
+      "created_at": "2024-03-04T00:00:00+00:00",
+      "updated_at": "2024-03-04T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "character_relationships": [
+    {
+      "id": 78,
+      "world_id": 1,
+      "character1_id": 3,
+      "character2_id": 4,
+      "type": "mentor",
+      "description": "Лира обучает Виктора искусству вампирской магии и контролю над проклятием",
+      "strength": 8,
+      "is_mutual": true,
+      "created_at": "2024-03-05T00:00:00+00:00",
+      "updated_at": "2024-03-05T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 79,
+      "world_id": 2,
+      "character1_id": 5,
+      "character2_id": 4,
+      "type": "ally",
+      "description": "Элиза и Виктор объединены общей целью борьбы с проклятием нежити",
+      "strength": 6,
+      "is_mutual": true,
+      "created_at": "2024-03-06T00:00:00+00:00",
+      "updated_at": "2024-03-06T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "factions": [
+    {
+      "id": 80,
+      "world_id": 1,
+      "name": "Клан Крови",
+      "description": "Древний вампирский клан, правящий Темными Землями Эреба",
+      "type": "political",
+      "alignment": "evil",
+      "reputation": 15,
+      "is_player_faction": false,
+      "created_at": "2024-03-07T00:00:00+00:00",
+      "updated_at": "2024-03-07T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 81,
+      "world_id": 2,
+      "name": "Стражи Мертвых",
+      "description": "Организация, охраняющая баланс между мирами живых и мертвых",
+      "type": "religious",
+      "alignment": "neutral",
+      "reputation": 8,
+      "is_player_faction": true,
+      "created_at": "2024-03-08T00:00:00+00:00",
+      "updated_at": "2024-03-08T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "shops": [
+    {
+      "id": 82,
+      "world_id": 1,
+      "location_id": 74,
+      "name": "Лунный Торговец",
+      "description": "Таинственный торговец, предлагающий артефакты и эликсиры в Кровавой Лунной Роще",
+      "type": "general",
+      "currency_id": null,
+      "is_open": true,
+      "created_at": "2024-03-09T00:00:00+00:00",
+      "updated_at": "2024-03-09T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 83,
+      "world_id": 2,
+      "location_id": 75,
+      "name": "Костяной Торговец",
+      "description": "Торговец в Некрополисе, продающий реликвии мертвых и запрещенные артефакты",
+      "type": "premium",
+      "currency_id": null,
+      "is_open": false,
+      "created_at": "2024-03-10T00:00:00+00:00",
+      "updated_at": "2024-03-10T00:00:00+00:00",
+      "version": 1
+    }
+  ],
   "inspirations": [
     {
       "id": 55,
@@ -1275,5 +1439,5 @@
       "version": 3
     }
   ],
-  "next_id": 73
+  "next_id": 84
 }
