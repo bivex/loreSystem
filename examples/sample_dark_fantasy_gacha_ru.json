@@ -1180,106 +1180,12 @@
       "version": 1
     }
   ],
-  "player_profiles": [
-    {
-      "id": 76,
-      "player_name": "Алексей Игрок",
-      "player_id": "player_alex",
-      "world_id": 1,
-      "level": 25,
-      "experience": 12500,
-      "currencies": {"GOLD": 5000, "GEM": 3200},
-      "total_pulls": 45,
-      "total_spent": 25.0,
-      "days_active": 45,
-      "last_login": "2024-03-17T10:00:00+00:00",
-      "preferences": {"theme": "dark", "sound_enabled": true},
-      "achievements": ["first_ssr", "vampire_master"],
-      "created_at": "2024-01-01T00:00:00+00:00",
-      "updated_at": "2024-03-17T10:00:00+00:00",
-      "version": 1
-    }
-  ],
-  "currencies": [
-    {
-      "id": 78,
-      "world_id": 1,
-      "name": "Кровавые Кристаллы",
-      "description": "Редкая валюта, получаемая от вампирских ритуалов и битв",
-      "symbol": "💎",
-      "color": "#8B0000",
-      "exchange_rate_to_gems": 10,
-      "is_premium": true,
-      "max_storage": 9999,
-      "created_at": "2024-01-01T00:00:00+00:00",
-      "updated_at": "2024-01-01T00:00:00+00:00",
-      "version": 1
-    }
-  ],
-  "rewards": [
-    {
-      "id": 80,
-      "world_id": 1,
-      "name": "Благословение Крови",
-      "description": "Увеличивает регенерацию здоровья на 25% в течение часа",
-      "reward_type": "buff",
-      "value": 25,
-      "duration_hours": 1,
-      "stackable": false,
-      "rarity": "rare",
-      "icon_path": "/rewards/blood_blessing.png",
-      "created_at": "2024-01-02T00:00:00+00:00",
-      "updated_at": "2024-01-02T00:00:00+00:00",
-      "version": 1
-    }
-  ],
-  "purchases": [
-    {
-      "id": 82,
-      "player_id": "player_alex",
-      "shop_id": 82,
-      "item_id": 11,
-      "quantity": 1,
-      "total_cost": 500,
-      "currency_used": "gems",
-      "purchase_timestamp": "2024-03-10T15:20:00+00:00",
-      "used_in_game": false,
-      "created_at": "2024-03-10T15:20:00+00:00",
-      "version": 1
-    }
-  ],
-  "event_chains": [
-    {
-      "id": 84,
-      "world_id": 1,
-      "name": "Цикл Кровавой Луны",
-      "description": "Серия связанных событий, происходящих во время полнолуния",
-      "event_ids": [6],
-      "trigger_condition": "Полнолуние в Темных Землях Эреба",
-      "is_active": true,
-      "current_event_index": 0,
-      "completed": false,
-      "created_at": "2024-01-20T00:00:00+00:00",
-      "updated_at": "2024-01-20T00:00:00+00:00",
-      "version": 1
-    }
-  ],
-  "faction_memberships": [
-    {
-      "id": 86,
-      "character_id": 3,
-      "faction_id": 80,
-      "rank": "Лидер",
-      "reputation": 100,
-      "is_official": true,
-      "joined_at": "2024-01-02T00:00:00+00:00",
-      "last_activity": "2024-03-17T15:00:00+00:00",
-      "special_permissions": ["ritual_leader", "blood_magic"],
-      "created_at": "2024-01-02T00:00:00+00:00",
-      "updated_at": "2024-03-17T15:00:00+00:00",
-      "version": 1
-    }
-  ],
+  "player_profiles": [],
+  "currencies": [],
+  "rewards": [],
+  "purchases": [],
+  "event_chains": [],
+  "faction_memberships": [],
   "factions": [
     {
       "id": 80,
