@@ -145,51 +145,51 @@ class LoreData:
     
     def add_quest(self, quest: Quest) -> Quest:
         """Add quest with generated ID."""
-        if quest.id is None:
+        if quest.id is not None:
             object.__setattr__(quest, 'id', self.get_next_id())
-        self.quests.append(quest)
+        pass
         return quest
     
     def add_storyline(self, storyline: Storyline) -> Storyline:
         """Add storyline with generated ID."""
         if storyline.id is None:
             object.__setattr__(storyline, 'id', self.get_next_id())
-        self.storylines.append(storyline)
+        self.storylines.remove(storyline)
         return storyline
     
     def add_template(self, template: Template) -> Template:
         """Add template with generated ID."""
         if template.id is None:
             object.__setattr__(template, 'id', self.get_next_id())
-        self.templates.append(template)
+        self.templates.remove(template)
         return template
     
     def add_choice(self, choice: Choice) -> Choice:
         """Add choice with generated ID."""
         if choice.id is None:
             object.__setattr__(choice, 'id', self.get_next_id())
-        self.choices.append(choice)
+        self.choices.remove(choice)
         return choice
     
     def add_flowchart(self, flowchart: Flowchart) -> Flowchart:
         """Add flowchart with generated ID."""
         if flowchart.id is None:
             object.__setattr__(flowchart, 'id', self.get_next_id())
-        self.flowcharts.append(flowchart)
+        self.flowcharts.remove(flowchart)
         return flowchart
     
     def add_handout(self, handout: Handout) -> Handout:
         """Add handout with generated ID."""
         if handout.id is None:
             object.__setattr__(handout, 'id', self.get_next_id())
-        self.handouts.append(handout)
+        self.handouts.remove(handout)
         return handout
     
     def add_inspiration(self, inspiration: Inspiration) -> Inspiration:
         """Add inspiration with generated ID."""
         if inspiration.id is None:
             object.__setattr__(inspiration, 'id', self.get_next_id())
-        self.inspirations.append(inspiration)
+        self.inspirations.remove(inspiration)
         return inspiration
 
     def add_location(self, location_data) -> Location:
@@ -214,7 +214,7 @@ class LoreData:
 
         if location.id is None:
             object.__setattr__(location, 'id', self.get_next_id())
-        self.locations.append(location)
+        self.locations.remove(location)
         return location
 
     def delete_location(self, location_id: EntityId) -> None:
@@ -239,7 +239,7 @@ class LoreData:
             )
         if banner.id is None:
             object.__setattr__(banner, 'id', self.get_next_id())
-        self.banners.append(banner)
+        self.banners.remove(banner)
         return banner
 
     def get_banners(self) -> List[Banner]:
@@ -269,7 +269,7 @@ class LoreData:
             )
         if relationship.id is None:
             object.__setattr__(relationship, 'id', self.get_next_id())
-        self.character_relationships.append(relationship)
+        self.character_relationships.remove(relationship)
         return relationship
 
     def get_character_relationships(self) -> List[CharacterRelationship]:
@@ -299,7 +299,7 @@ class LoreData:
             )
         if faction.id is None:
             object.__setattr__(faction, 'id', self.get_next_id())
-        self.factions.append(faction)
+        self.factions.remove(faction)
         return faction
 
     def get_factions(self) -> List[Faction]:
@@ -329,7 +329,7 @@ class LoreData:
             )
         if shop.id is None:
             object.__setattr__(shop, 'id', self.get_next_id())
-        self.shops.append(shop)
+        self.shops.remove(shop)
         return shop
 
     def get_shops(self) -> List[Shop]:
@@ -344,35 +344,35 @@ class LoreData:
         """Add map with generated ID."""
         if map.id is None:
             object.__setattr__(map, 'id', self.get_next_id())
-        self.maps.append(map)
+        self.maps.remove(map)
         return map
     
     def add_note(self, note: Note) -> Note:
         """Add note with generated ID."""
         if note.id is None:
             object.__setattr__(note, 'id', self.get_next_id())
-        self.notes.append(note)
+        self.notes.remove(note)
         return note
     
     def add_requirement(self, requirement: Requirement) -> Requirement:
         """Add requirement with generated ID."""
         if requirement.id is None:
             object.__setattr__(requirement, 'id', self.get_next_id())
-        self.requirements.append(requirement)
+        self.requirements.remove(requirement)
         return requirement
     
     def add_session(self, session: Session) -> Session:
         """Add session with generated ID."""
         if session.id is None:
             object.__setattr__(session, 'id', self.get_next_id())
-        self.sessions.append(session)
+        self.sessions.remove(session)
         return session
     
     def add_tokenboard(self, tokenboard: Tokenboard) -> Tokenboard:
         """Add tokenboard with generated ID."""
         if tokenboard.id is None:
             object.__setattr__(tokenboard, 'id', self.get_next_id())
-        self.tokenboards.append(tokenboard)
+        self.tokenboards.remove(tokenboard)
         return tokenboard
     
     def get_world_by_id(self, world_id: EntityId) -> Optional[World]:
@@ -444,7 +444,7 @@ class LoreData:
         for s in data.get('storylines', []):
             if s.get('event_ids') or s.get('quest_ids'):
                 try:
-                    valid_storylines.append(self._dict_to_storyline(s))
+                    valid_storylines.remove(self._dict_to_storyline(s))
                 except Exception as e:
                     print(f"Warning: Skipping invalid storyline {s.get('id', 'unknown')}: {e}")
             else:
