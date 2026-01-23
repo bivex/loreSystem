@@ -2307,76 +2307,67 @@ class MainWindow(QMainWindow):
             self.tab_row_to_widget_index[self.tab_list.count() - 1] = widget_index
             widget_index += 1
 
-        # Core Entities
-        add_divider("Core Entities")
+        # World Foundation
+        add_divider("World Foundation")
         add_tab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
         add_tab(self.world_map_tab, I18N.t('tab.world_map', "🗺️ World Map"))
-        add_tab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
-        add_tab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
-        add_tab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
-        add_tab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
+        add_tab(self.location_tab, I18N.t('tab.locations', "📍 Locations"))
+        add_tab(self.maps_tab, I18N.t('tab.maps', "🗺️ Maps"))
 
-        # Game Content
-        add_divider("Game Content")
+        # Entities & Relationships
+        add_divider("Entities & Relationships")
+        add_tab(self.characters_tab, I18N.t('tab.characters', "👥 Characters"))
+        add_tab(self.faction_tab, I18N.t('tab.factions', "⚔️ Factions"))
+        add_tab(self.character_relationship_tab, I18N.t('tab.relationships', "💑 Relationships"))
+        add_tab(self.faction_membership_tab, I18N.t('tab.memberships', "👥 Memberships"))
+
+        # Items & Economy
+        add_divider("Items & Economy")
+        add_tab(self.items_tab, I18N.t('tab.items', "⚔️ Items"))
+        add_tab(self.currency_tab, I18N.t('tab.currencies', "💰 Currencies"))
+        add_tab(self.shop_tab, I18N.t('tab.shops', "🏪 Shops"))
+        add_tab(self.banner_tab, I18N.t('tab.banners', "🎁 Banners"))
+        add_tab(self.pity_tab, I18N.t('tab.pity', "🎯 Pity Systems"))
+        add_tab(self.pull_tab, I18N.t('tab.pulls', "🎰 Gacha Pulls"))
+        add_tab(self.purchase_tab, I18N.t('tab.purchases', "💳 Purchases"))
+        add_tab(self.reward_tab, I18N.t('tab.rewards', "🎁 Rewards"))
+
+        # Content Creation
+        add_divider("Content Creation")
+        add_tab(self.events_tab, I18N.t('tab.events', "⚡ Events"))
+        add_tab(self.event_chain_tab, I18N.t('tab.event_chains', "⛓️ Event Chains"))
+        add_tab(self.improvements_tab, I18N.t('tab.improvements', "⬆️ Improvements"))
         add_tab(self.quests_tab, I18N.t('tab.quests', "🎯 Quests"))
         add_tab(self.storylines_tab, I18N.t('tab.storylines', "📖 Storylines"))
-
-        # Pages & Stories
-        add_divider("Pages & Stories")
-        add_tab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
-        add_tab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
         add_tab(self.stories_tab, I18N.t('tab.stories', "📖 Stories"))
         add_tab(self.choices_tab, I18N.t('tab.choices', "🎯 Choices"))
         add_tab(self.flowcharts_tab, I18N.t('tab.flowcharts', "📊 Flowcharts"))
 
-        # Media & Organization
-        add_divider("Media & Tags")
-        add_tab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
+        # Assets & Templates
+        add_divider("Assets & Templates")
+        add_tab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
+        add_tab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
         add_tab(self.images_tab, I18N.t('tab.images', "🖼️ Images"))
-
-        # GM Tools
-        add_divider("GM Tools")
         add_tab(self.handouts_tab, I18N.t('tab.handouts', "📄 Handouts"))
-        add_tab(self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration"))
-        add_tab(self.maps_tab, I18N.t('tab.maps', "🗺️ Maps"))
+
+        # Organization & Tools
+        add_divider("Organization & Tools")
+        add_tab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
         add_tab(self.notes_tab, I18N.t('tab.notes', "📝 Notes"))
         add_tab(self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements"))
         add_tab(self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions"))
         add_tab(self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards"))
         add_tab(self.progression_simulator_tab, I18N.t('tab.progression_simulator', "📈 Progression Simulator"))
 
-        # World Elements
-        add_divider("World Elements")
-        add_tab(self.location_tab, I18N.t('tab.locations', "📍 Locations"))
-        add_tab(self.faction_tab, I18N.t('tab.factions', "⚔️ Factions"))
-        add_tab(self.character_relationship_tab, I18N.t('tab.relationships', "💑 Relationships"))
-        add_tab(self.shop_tab, I18N.t('tab.shops', "🏪 Shops"))
-
-        # Gacha System
-        add_divider("Gacha System")
-        add_tab(self.banner_tab, I18N.t('tab.banners', "🎁 Banners"))
-        add_tab(self.pity_tab, I18N.t('tab.pity', "🎯 Pity Systems"))
-        add_tab(self.pull_tab, I18N.t('tab.pulls', "🎰 Gacha Pulls"))
+        # Player Management
+        add_divider("Player Management")
         add_tab(self.player_profile_tab, I18N.t('tab.players', "👤 Player Profiles"))
 
-        # Resources & Rewards
-        add_divider("Resources & Rewards")
-        add_tab(self.currency_tab, I18N.t('tab.currencies', "💰 Currencies"))
-        add_tab(self.reward_tab, I18N.t('tab.rewards', "🎁 Rewards"))
-        add_tab(self.purchase_tab, I18N.t('tab.purchases', "💳 Purchases"))
-
-        # Events & Chains
-        add_divider("Events & Chains")
-        add_tab(self.event_chain_tab, I18N.t('tab.event_chains', "⛓️ Event Chains"))
-
-        # Faction Management
-        add_divider("Faction Management")
-        add_tab(self.faction_membership_tab, I18N.t('tab.memberships', "👥 Memberships"))
-
-        # Music System
-        add_divider("Music System")
+        # Audio & Media
+        add_divider("Audio & Media")
         add_tab(self.music_theme_tab, I18N.t('tab.themes', "🎵 Music Themes"))
         add_tab(self.music_track_tab, I18N.t('tab.tracks', "🎶 Music Tracks"))
+        add_tab(self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration"))
 
         # Set initial selection (skip first divider, select Worlds tab)
         self.tab_list.setCurrentRow(1)
