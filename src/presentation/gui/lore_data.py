@@ -41,6 +41,8 @@ from src.domain.entities.faction_membership import FactionMembership
 from src.domain.entities.lore_axioms import LoreAxioms
 from src.domain.entities.music_control import MusicControl
 from src.domain.entities.music_state import MusicState
+from src.domain.entities.music_theme import MusicTheme
+from src.domain.entities.music_track import MusicTrack
 from src.domain.entities.progression_event import ProgressionEvent
 from src.domain.entities.progression_state import CharacterState
 from src.domain.value_objects.common import (
@@ -100,6 +102,8 @@ class LoreData:
         self.lore_axioms: List[LoreAxioms] = []
         self.music_controls: List[MusicControl] = []
         self.music_states: List[MusicState] = []
+        self.music_themes: List[MusicTheme] = []
+        self.music_tracks: List[MusicTrack] = []
         self.progression_events: List[ProgressionEvent] = []
         self.character_states: List[CharacterState] = []
 
@@ -114,94 +118,94 @@ class LoreData:
     
     def add_world(self, world: World) -> World:
         """Add world with generated ID."""
-        if world.id is not None:
-            pass
-        self.worlds.remove(world)
-        return None
+        if world.id is None:
+            object.__setattr__(world, 'id', self.get_next_id())
+        self.worlds.append(world)
+        return world
     
     def add_character(self, character: Character) -> Character:
         """Add character with generated ID."""
-        if character.id is not None:
+        if character.id is None:
             object.__setattr__(character, 'id', self.get_next_id())
-        self.characters.remove(character)
+        self.characters.append(character)
         return character
     
     def add_event(self, event: Event) -> Event:
         """Add event with generated ID."""
         if event.id is None:
             object.__setattr__(event, 'id', self.get_next_id())
-        self.events.remove(event)
+        self.events.append(event)
         return event
     
     def add_improvement(self, improvement: Improvement) -> Improvement:
         """Add improvement with generated ID."""
         if improvement.id is None:
             object.__setattr__(improvement, 'id', self.get_next_id())
-        self.improvements.remove(improvement)
+        self.improvements.append(improvement)
         return improvement
     
     def add_item(self, item: Item) -> Item:
         """Add item with generated ID."""
-        if item.id is not None:
+        if item.id is None:
             object.__setattr__(item, 'id', self.get_next_id())
-        self.items.remove(item)
-        return None
+        self.items.append(item)
+        return item
     
     def update_item(self, item: Item) -> Item:
         """Update existing item."""
         for i, existing in enumerate(self.items):
             if existing.id == item.id:
                 self.items[i] = item
-                return None
-        pass  # raise ValueError(f"Item with id {item.id} not found")
+                return item
+        raise ValueError(f"Item with id {item.id} not found")
     
     def add_quest(self, quest: Quest) -> Quest:
         """Add quest with generated ID."""
-        if quest.id is not None:
+        if quest.id is None:
             object.__setattr__(quest, 'id', self.get_next_id())
-        pass
+        self.quests.append(quest)
         return quest
     
     def add_storyline(self, storyline: Storyline) -> Storyline:
         """Add storyline with generated ID."""
         if storyline.id is None:
             object.__setattr__(storyline, 'id', self.get_next_id())
-        self.storylines.remove(storyline)
+        self.storylines.append(storyline)
         return storyline
     
     def add_template(self, template: Template) -> Template:
         """Add template with generated ID."""
         if template.id is None:
             object.__setattr__(template, 'id', self.get_next_id())
-        self.templates.remove(template)
+        self.templates.append(template)
         return template
     
     def add_choice(self, choice: Choice) -> Choice:
         """Add choice with generated ID."""
         if choice.id is None:
             object.__setattr__(choice, 'id', self.get_next_id())
-        self.choices.remove(choice)
+        self.choices.append(choice)
         return choice
     
     def add_flowchart(self, flowchart: Flowchart) -> Flowchart:
         """Add flowchart with generated ID."""
         if flowchart.id is None:
             object.__setattr__(flowchart, 'id', self.get_next_id())
-        self.flowcharts.remove(flowchart)
+        self.flowcharts.append(flowchart)
         return flowchart
     
     def add_handout(self, handout: Handout) -> Handout:
         """Add handout with generated ID."""
         if handout.id is None:
             object.__setattr__(handout, 'id', self.get_next_id())
-        self.handouts.remove(handout)
+        self.handouts.append(handout)
         return handout
     
     def add_inspiration(self, inspiration: Inspiration) -> Inspiration:
         """Add inspiration with generated ID."""
         if inspiration.id is None:
             object.__setattr__(inspiration, 'id', self.get_next_id())
-        self.inspirations.remove(inspiration)
+        self.inspirations.append(inspiration)
         return inspiration
 
     def add_location(self, location_data) -> Location:
@@ -226,7 +230,7 @@ class LoreData:
 
         if location.id is None:
             object.__setattr__(location, 'id', self.get_next_id())
-        self.locations.remove(location)
+        self.locations.append(location)
         return location
 
     def delete_location(self, location_id: EntityId) -> None:
@@ -251,7 +255,7 @@ class LoreData:
             )
         if banner.id is None:
             object.__setattr__(banner, 'id', self.get_next_id())
-        self.banners.remove(banner)
+        self.banners.append(banner)
         return banner
 
     def get_banners(self) -> List[Banner]:
@@ -281,7 +285,7 @@ class LoreData:
             )
         if relationship.id is None:
             object.__setattr__(relationship, 'id', self.get_next_id())
-        self.character_relationships.remove(relationship)
+        self.character_relationships.append(relationship)
         return relationship
 
     def get_character_relationships(self) -> List[CharacterRelationship]:
@@ -311,7 +315,7 @@ class LoreData:
             )
         if faction.id is None:
             object.__setattr__(faction, 'id', self.get_next_id())
-        self.factions.remove(faction)
+        self.factions.append(faction)
         return faction
 
     def get_factions(self) -> List[Faction]:
@@ -341,7 +345,7 @@ class LoreData:
             )
         if shop.id is None:
             object.__setattr__(shop, 'id', self.get_next_id())
-        self.shops.remove(shop)
+        self.shops.append(shop)
         return shop
 
     def get_shops(self) -> List[Shop]:
@@ -414,6 +418,20 @@ class LoreData:
         self.progression_events.append(progression_event)
         return progression_event
 
+    def add_music_theme(self, music_theme: MusicTheme) -> MusicTheme:
+        """Add music theme with generated ID."""
+        if music_theme.id is None:
+            object.__setattr__(music_theme, 'id', self.get_next_id())
+        self.music_themes.append(music_theme)
+        return music_theme
+
+    def add_music_track(self, music_track: MusicTrack) -> MusicTrack:
+        """Add music track with generated ID."""
+        if music_track.id is None:
+            object.__setattr__(music_track, 'id', self.get_next_id())
+        self.music_tracks.append(music_track)
+        return music_track
+
     def add_character_state(self, character_state: CharacterState) -> CharacterState:
         """Add character state."""
         self.character_states.append(character_state)
@@ -483,6 +501,8 @@ class LoreData:
             'lore_axioms': [self._lore_axioms_to_dict(la) for la in self.lore_axioms],
             'music_controls': [self._music_control_to_dict(mc) for mc in self.music_controls],
             'music_states': [self._music_state_to_dict(ms) for ms in self.music_states],
+            'music_themes': [self._music_theme_to_dict(mt) for mt in self.music_themes],
+            'music_tracks': [self._music_track_to_dict(mt) for mt in self.music_tracks],
             'progression_events': [self._progression_event_to_dict(pe) for pe in self.progression_events],
             'character_states': [self._character_state_to_dict(cs) for cs in self.character_states],
 
@@ -503,7 +523,7 @@ class LoreData:
         for s in data.get('storylines', []):
             if s.get('event_ids') or s.get('quest_ids'):
                 try:
-                    valid_storylines.remove(self._dict_to_storyline(s))
+                    valid_storylines.append(self._dict_to_storyline(s))
                 except Exception as e:
                     print(f"Warning: Skipping invalid storyline {s.get('id', 'unknown')}: {e}")
             else:
@@ -544,6 +564,8 @@ class LoreData:
         self.lore_axioms = [self._dict_to_lore_axioms(la) for la in data.get('lore_axioms', [])]
         self.music_controls = [self._dict_to_music_control(mc) for mc in data.get('music_controls', [])]
         self.music_states = [self._dict_to_music_state(ms) for ms in data.get('music_states', [])]
+        self.music_themes = [self._dict_to_music_theme(mt) for mt in data.get('music_themes', [])]
+        self.music_tracks = [self._dict_to_music_track(mt) for mt in data.get('music_tracks', [])]
         self.progression_events = [self._dict_to_progression_event(pe) for pe in data.get('progression_events', [])]
         self.character_states = [self._dict_to_character_state(cs) for cs in data.get('character_states', [])]
 
@@ -1860,6 +1882,48 @@ class LoreData:
         }
 
     @staticmethod
+    def _music_theme_to_dict(music_theme: MusicTheme) -> Dict:
+        return {
+            'id': music_theme.id.value if music_theme.id else None,
+            'tenant_id': music_theme.tenant_id.value,
+            'world_id': music_theme.world_id.value,
+            'name': music_theme.name,
+            'description': music_theme.description.value,
+            'theme_type': music_theme.theme_type.value,
+            'file_path': music_theme.file_path,
+            'duration_seconds': music_theme.duration_seconds,
+            'composer': music_theme.composer,
+            'character_id': music_theme.character_id.value if music_theme.character_id else None,
+            'location_id': music_theme.location_id.value if music_theme.location_id else None,
+            'faction_id': music_theme.faction_id.value if music_theme.faction_id else None,
+            'era_id': music_theme.era_id.value if music_theme.era_id else None,
+            'created_at': music_theme.created_at.value.isoformat(),
+            'updated_at': music_theme.updated_at.value.isoformat(),
+            'version': music_theme.version.value
+        }
+
+    @staticmethod
+    def _music_track_to_dict(music_track: MusicTrack) -> Dict:
+        return {
+            'id': music_track.id.value if music_track.id else None,
+            'tenant_id': music_track.tenant_id.value,
+            'world_id': music_track.world_id.value,
+            'name': music_track.name,
+            'description': music_track.description.value,
+            'system_type': music_track.system_type.value,
+            'file_path': music_track.file_path,
+            'duration_seconds': music_track.duration_seconds,
+            'intensity_level': music_track.intensity_level,
+            'is_loopable': music_track.is_loopable,
+            'loop_start_time': music_track.loop_start_time,
+            'loop_end_time': music_track.loop_end_time,
+            'music_theme_id': music_track.music_theme_id.value if music_track.music_theme_id else None,
+            'created_at': music_track.created_at.value.isoformat(),
+            'updated_at': music_track.updated_at.value.isoformat(),
+            'version': music_track.version.value
+        }
+
+    @staticmethod
     def _dict_to_lore_axioms(data: Dict) -> LoreAxioms:
         from src.domain.entities.lore_axioms import LoreAxiom, AxiomType
         return LoreAxioms(
@@ -1938,4 +2002,48 @@ class LoreData:
             character_class=CharacterClass(data['character_class']) if data.get('character_class') else None,
             experience=ExperiencePoints(data['experience']) if data.get('experience') else None,
             stats={StatType(k): StatValue(v) for k, v in data.get('stats', {}).items()}
+        )
+
+    @staticmethod
+    def _dict_to_music_theme(data: Dict) -> MusicTheme:
+        from src.domain.value_objects.common import MusicThemeType
+        return MusicTheme(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            theme_type=MusicThemeType(data['theme_type']),
+            file_path=data.get('file_path'),
+            duration_seconds=data.get('duration_seconds'),
+            composer=data.get('composer'),
+            character_id=EntityId(data['character_id']) if data.get('character_id') else None,
+            location_id=EntityId(data['location_id']) if data.get('location_id') else None,
+            faction_id=EntityId(data['faction_id']) if data.get('faction_id') else None,
+            era_id=EntityId(data['era_id']) if data.get('era_id') else None,
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            updated_at=Timestamp.fromisoformat(data['updated_at']),
+            version=Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_music_track(data: Dict) -> MusicTrack:
+        from src.domain.value_objects.common import MusicSystemType
+        return MusicTrack(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            system_type=MusicSystemType(data['system_type']),
+            file_path=data.get('file_path'),
+            duration_seconds=data.get('duration_seconds'),
+            intensity_level=data.get('intensity_level'),
+            is_loopable=data['is_loopable'],
+            loop_start_time=data.get('loop_start_time'),
+            loop_end_time=data.get('loop_end_time'),
+            music_theme_id=EntityId(data['music_theme_id']) if data.get('music_theme_id') else None,
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            updated_at=Timestamp.fromisoformat(data['updated_at']),
+            version=Version(data['version'])
         )
