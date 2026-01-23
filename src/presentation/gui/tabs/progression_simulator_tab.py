@@ -38,167 +38,160 @@ class ProgressionSimulatorTab(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup the progression simulator user interface."""
+        """Setup the progression simulator user interface with clear lore development view."""
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(10)
         self.setLayout(layout)
 
-        # Header
-        header_label = QLabel("🎲 Dark Fantasy Progression Simulator")
-        header_label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
-        header_label.setStyleSheet("color: #fff; margin-bottom: 10px;")
+        # Header with clear purpose
+        header_label = QLabel("🎲 Lore Development Simulator")
+        header_label.setFont(QFont("Arial", 18, QFont.Weight.Bold))
+        header_label.setStyleSheet("color: #fff; margin-bottom: 5px;")
         layout.addWidget(header_label)
 
         subtitle_label = QLabel(
-            "Simulate character progression in a dark fantasy world with full observability and formal verification.\n"
-            "All outcomes are derivable from immutable lore axioms using real character data."
+            "🔍 See exactly how your lore rules affect character progression. Every change is traceable to specific axioms."
         )
-        subtitle_label.setStyleSheet("color: #ccc; font-size: 11px;")
+        subtitle_label.setStyleSheet("color: #ccc; font-size: 12px;")
         subtitle_label.setWordWrap(True)
         layout.addWidget(subtitle_label)
 
-        # Main content area - side by side panels
-        content_layout = QHBoxLayout()
-        content_layout.setSpacing(10)
-        layout.addLayout(content_layout)
+        # Main development area - organized in clear sections
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        layout.addWidget(main_splitter)
 
-        # Left panel - Current State
-        left_panel = self._create_state_panel()
-        content_layout.addWidget(left_panel)
+        # Left side - Character State & Progression
+        left_widget = self._create_character_development_panel()
+        main_splitter.addWidget(left_widget)
 
-        # Right panel - Simulation Controls & Logs
-        right_panel = self._create_simulation_panel()
-        content_layout.addWidget(right_panel)
+        # Right side - Lore Rules & Simulation
+        right_widget = self._create_lore_rules_panel()
+        main_splitter.addWidget(right_widget)
 
-        # Bottom panel - Export for Verification
-        export_panel = self._create_export_panel()
+        # Set splitter proportions
+        main_splitter.setSizes([600, 600])
+
+        # Bottom panel - Verification & Export
+        export_panel = self._create_verification_panel()
         layout.addWidget(export_panel)
 
-    def _create_state_panel(self) -> QWidget:
-        """Create the current state display panel."""
+        # Initial refresh after all components are created
+        self._refresh_all_displays()
+
+    def _create_character_development_panel(self) -> QWidget:
+        """Create the character development panel with clear progression visualization."""
         panel = QWidget()
         layout = QVBoxLayout()
+        layout.setSpacing(10)
         panel.setLayout(layout)
 
-        # State group
-        state_group = QGroupBox("📊 Current Character State")
-        state_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #666;
-                border-radius: 5px;
-                margin-top: 1ex;
-                color: #fff;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-        """)
+        # Character Selection
+        char_group = QGroupBox("👤 Character Selection")
+        char_group.setStyleSheet(self._get_group_style())
+        char_layout = QVBoxLayout()
+        char_group.setLayout(char_layout)
 
-        state_layout = QVBoxLayout()
-        state_group.setLayout(state_layout)
-
-        # Character info
-        self.state_display = QTextEdit()
-        self.state_display.setReadOnly(True)
-        self.state_display.setMaximumHeight(200)
-        self.state_display.setStyleSheet("""
-            QTextEdit {
-                background: #1a1a1a;
-                color: #ddd;
-                border: 1px solid #555;
-                border-radius: 3px;
-                font-family: monospace;
-                font-size: 10px;
-            }
-        """)
-        state_layout.addWidget(self.state_display)
-
-        # Refresh button
-        refresh_btn = QPushButton("🔄 Refresh State")
-        refresh_btn.clicked.connect(self._refresh_state_display)
-        state_layout.addWidget(refresh_btn)
-
-        layout.addWidget(state_group)
-
-        # Lore axioms preview
-        axioms_group = QGroupBox("📜 Active Lore Axioms")
-        axioms_group.setStyleSheet(state_group.styleSheet())
-
-        axioms_layout = QVBoxLayout()
-        axioms_group.setLayout(axioms_layout)
-
-        self.axioms_display = QTextEdit()
-        self.axioms_display.setReadOnly(True)
-        self.axioms_display.setMaximumHeight(150)
-        self.axioms_display.setStyleSheet(self.state_display.styleSheet())
-        axioms_layout.addWidget(self.axioms_display)
-
-        layout.addWidget(axioms_group)
-
-        # Initial refresh
-        self._refresh_state_display()
-        self._refresh_axioms_display()
-
-        return panel
-
-    def _create_simulation_panel(self) -> QWidget:
-        """Create the simulation controls and logs panel."""
-        panel = QWidget()
-        layout = QVBoxLayout()
-        panel.setLayout(layout)
-
-        # Simulation controls
-        controls_group = QGroupBox("🎮 Simulation Controls")
-        controls_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #666;
-                border-radius: 5px;
-                margin-top: 1ex;
-                color: #fff;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-        """)
-
-        controls_layout = QFormLayout()
-        controls_group.setLayout(controls_layout)
-
-        # Character selection from simulation data
         self.char_combo = QComboBox()
         for char_id, char_state in self.simulator.current_state.character_states.items():
-            # Try to get character name from lore_data if available
             char_name = f"Character {char_id.value}"
-            # Look for character in lore_data
             for character in self.lore_data.characters:
                 if character.id == char_id:
                     char_name = str(character.name)
                     break
             self.char_combo.addItem(f"{char_name} (ID: {char_id.value})", char_id.value)
-        
-        # Fallback if no characters found
+
         if self.char_combo.count() == 0:
             self.char_combo.addItem("Sample Warrior (ID: 1)", 1)
-        
-        self.char_combo.currentIndexChanged.connect(self._refresh_state_display)
-        controls_layout.addRow("👤 Character:", self.char_combo)
+
+        self.char_combo.currentIndexChanged.connect(self._refresh_all_displays)
+        char_layout.addWidget(self.char_combo)
+
+        layout.addWidget(char_group)
+
+        # Current State Display
+        state_group = QGroupBox("📊 Current State")
+        state_group.setStyleSheet(self._get_group_style())
+        state_layout = QVBoxLayout()
+        state_group.setLayout(state_layout)
+
+        self.state_display = QTextEdit()
+        self.state_display.setReadOnly(True)
+        self.state_display.setMaximumHeight(150)
+        self.state_display.setStyleSheet(self._get_text_display_style())
+        state_layout.addWidget(self.state_display)
+
+        layout.addWidget(state_group)
+
+        # Visual Stats Display
+        stats_group = QGroupBox("⚔️ Stats Overview")
+        stats_group.setStyleSheet(self._get_group_style())
+        stats_layout = QVBoxLayout()
+        stats_group.setLayout(stats_layout)
+
+        self.stats_display = QTextEdit()
+        self.stats_display.setReadOnly(True)
+        self.stats_display.setMaximumHeight(120)
+        self.stats_display.setStyleSheet(self._get_text_display_style())
+        stats_layout.addWidget(self.stats_display)
+
+        layout.addWidget(stats_group)
+
+        # Progression Timeline
+        timeline_group = QGroupBox("📈 Progression Timeline")
+        timeline_group.setStyleSheet(self._get_group_style())
+        timeline_layout = QVBoxLayout()
+        timeline_group.setLayout(timeline_layout)
+
+        self.timeline_display = QTextEdit()
+        self.timeline_display.setReadOnly(True)
+        self.timeline_display.setStyleSheet(self._get_text_display_style())
+        timeline_layout.addWidget(self.timeline_display)
+
+        layout.addWidget(timeline_group)
+
+        return panel
+
+    def _create_lore_rules_panel(self) -> QWidget:
+        """Create the lore rules and simulation panel."""
+        panel = QWidget()
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+        panel.setLayout(layout)
+
+        # Lore Axioms Display
+        axioms_group = QGroupBox("📜 Lore Axioms (Rules)")
+        axioms_group.setStyleSheet(self._get_group_style())
+        axioms_layout = QVBoxLayout()
+        axioms_group.setLayout(axioms_layout)
+
+        axioms_intro = QLabel("These immutable rules govern all progression:")
+        axioms_intro.setStyleSheet("color: #ccc; font-size: 11px; margin-bottom: 5px;")
+        axioms_layout.addWidget(axioms_intro)
+
+        self.axioms_display = QTextEdit()
+        self.axioms_display.setReadOnly(True)
+        self.axioms_display.setMaximumHeight(200)
+        self.axioms_display.setStyleSheet(self._get_text_display_style())
+        axioms_layout.addWidget(self.axioms_display)
+
+        layout.addWidget(axioms_group)
+
+        # Simulation Controls
+        controls_group = QGroupBox("🎮 Simulation Controls")
+        controls_group.setStyleSheet(self._get_group_style())
+        controls_layout = QFormLayout()
+        controls_group.setLayout(controls_layout)
 
         # Action selection
         self.action_combo = QComboBox()
-        self.action_combo.addItem("Level Up", "level_up")
-        self.action_combo.addItem("Gain Experience", "gain_xp")
-        self.action_combo.addItem("Increase Strength", "increase_stat")
-        self.action_combo.addItem("Increase Intellect", "increase_stat")
-        self.action_combo.addItem("Increase Agility", "increase_stat")
+        self.action_combo.addItem("⚔️ Level Up", "level_up")
+        self.action_combo.addItem("💰 Gain Experience", "gain_xp")
+        self.action_combo.addItem("⬆️ Increase Strength", "increase_stat")
+        self.action_combo.addItem("🧠 Increase Intellect", "increase_stat")
+        self.action_combo.addItem("🏃 Increase Agility", "increase_stat")
         self.action_combo.currentTextChanged.connect(self._on_action_changed)
-        controls_layout.addRow("⚡ Action:", self.action_combo)
+        controls_layout.addRow("🎯 Action:", self.action_combo)
 
         # Action parameters
         param_widget = QWidget()
@@ -227,116 +220,71 @@ class ProgressionSimulatorTab(QWidget):
         controls_layout.addRow("📊 Parameters:", param_widget)
 
         # Execute button
-        execute_btn = QPushButton("▶️ Execute Simulation")
-        execute_btn.setStyleSheet("""
-            QPushButton {
-                background: #4a4a4a;
-                color: #fff;
-                border: 2px solid #666;
-                border-radius: 5px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #5a5a5a;
-            }
-            QPushButton:pressed {
-                background: #3a3a3a;
-            }
-        """)
+        execute_btn = QPushButton("▶️ Execute Action")
+        execute_btn.setStyleSheet(self._get_button_style())
         execute_btn.clicked.connect(self._execute_simulation)
         controls_layout.addRow("", execute_btn)
 
         layout.addWidget(controls_group)
 
-        # Observation logs
-        logs_group = QGroupBox("📋 Observation Log")
-        logs_group.setStyleSheet(controls_group.styleSheet())
-
-        logs_layout = QVBoxLayout()
-        logs_group.setLayout(logs_layout)
+        # Simulation Log
+        log_group = QGroupBox("📋 Simulation Log")
+        log_group.setStyleSheet(self._get_group_style())
+        log_layout = QVBoxLayout()
+        log_group.setLayout(log_layout)
 
         self.log_display = QTextEdit()
         self.log_display.setReadOnly(True)
-        self.log_display.setStyleSheet("""
-            QTextEdit {
-                background: #1a1a1a;
-                color: #ddd;
-                border: 1px solid #555;
-                border-radius: 3px;
-                font-family: monospace;
-                font-size: 9px;
-            }
-        """)
-        logs_layout.addWidget(self.log_display)
+        self.log_display.setStyleSheet(self._get_text_display_style())
+        log_layout.addWidget(self.log_display)
 
-        # Clear log button
         clear_btn = QPushButton("🗑️ Clear Log")
         clear_btn.clicked.connect(self.log_display.clear)
-        logs_layout.addWidget(clear_btn)
+        log_layout.addWidget(clear_btn)
 
-        layout.addWidget(logs_group)
+        layout.addWidget(log_group)
 
         return panel
 
-    def _create_export_panel(self) -> QWidget:
-        """Create the export panel for formal verification."""
+    def _create_verification_panel(self) -> QWidget:
+        """Create the verification panel for formal verification."""
         panel = QWidget()
         layout = QHBoxLayout()
         panel.setLayout(layout)
 
-        export_group = QGroupBox("🔍 Formal Verification Export")
-        export_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #666;
-                border-radius: 5px;
-                margin-top: 1ex;
-                color: #fff;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-        """)
+        verification_group = QGroupBox("🔍 Formal Verification")
+        verification_group.setStyleSheet(self._get_group_style())
+        verification_layout = QVBoxLayout()
+        verification_group.setLayout(verification_layout)
 
-        export_layout = QVBoxLayout()
-        export_group.setLayout(export_layout)
-
-        export_desc = QLabel(
-            "Export simulation data to First-Order Logic files for formal verification with Prover9/Mace4.\n"
+        verification_desc = QLabel(
+            "Export simulation data to First-Order Logic files for formal verification.\n"
             "This proves lore consistency and detects unintended progression paths."
         )
-        export_desc.setStyleSheet("color: #ccc; font-size: 10px;")
-        export_desc.setWordWrap(True)
-        export_layout.addWidget(export_desc)
+        verification_desc.setStyleSheet("color: #ccc; font-size: 10px;")
+        verification_desc.setWordWrap(True)
+        verification_layout.addWidget(verification_desc)
 
         export_btn = QPushButton("📤 Export for Verification")
-        export_btn.setStyleSheet("""
-            QPushButton {
-                background: #2a4a2a;
-                color: #fff;
-                border: 2px solid #4a6a4a;
-                border-radius: 5px;
-                padding: 10px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #3a5a3a;
-            }
-        """)
+        export_btn.setStyleSheet(self._get_button_style())
         export_btn.clicked.connect(self._export_for_verification)
-        export_layout.addWidget(export_btn)
+        verification_layout.addWidget(export_btn)
 
         self.export_status = QLabel("")
         self.export_status.setStyleSheet("color: #aaa; font-size: 9px;")
-        export_layout.addWidget(self.export_status)
+        verification_layout.addWidget(self.export_status)
 
-        layout.addWidget(export_group)
+        layout.addWidget(verification_group)
         layout.addStretch()
 
         return panel
+
+    def _refresh_all_displays(self):
+        """Refresh all displays in the progression simulator."""
+        self._refresh_state_display()
+        self._refresh_stats_display()
+        self._refresh_timeline_display()
+        self._refresh_axioms_display()
 
     def _refresh_state_display(self):
         """Refresh the current state display."""
@@ -346,7 +294,7 @@ class ProgressionSimulatorTab(QWidget):
             if selected_char_id is None:
                 self.state_display.setPlainText("No character selected")
                 return
-                
+
             char_id = EntityId(selected_char_id)
             state = self.simulator.current_state.get_character_state(char_id)
 
@@ -357,7 +305,7 @@ class ProgressionSimulatorTab(QWidget):
                     if character.id == char_id:
                         char_name = str(character.name)
                         break
-                
+
                 state_text = f"""Character: {char_name}
 ID: {char_id.value}
 Time Point: {state.time_point}
@@ -376,13 +324,76 @@ Stats:
         except Exception as e:
             self.state_display.setPlainText(f"Error refreshing state: {e}")
 
-    def _refresh_axioms_display(self):
-        """Refresh the lore axioms display."""
+    def _refresh_stats_display(self):
+        """Refresh the visual stats display."""
         try:
-            axioms_text = "Active Lore Axioms:\n\n"
-            for axiom in self.simulator.lore_axioms.axioms:
-                axioms_text += f"• {axiom.predicate}\n"
-                axioms_text += f"  {axiom.description}\n\n"
+            selected_char_id = self.char_combo.currentData()
+            if selected_char_id is None:
+                self.stats_display.setPlainText("No character selected")
+                return
+
+            char_id = EntityId(selected_char_id)
+            state = self.simulator.current_state.get_character_state(char_id)
+
+            if state:
+                stats_text = "📊 STAT BREAKDOWN:\n\n"
+                for stat_type, stat_value in state.stats.items():
+                    stats_text += f"⚔️ {stat_type.value}: {stat_value.value}\n"
+
+                # Add derived stats if available
+                if hasattr(state, 'derived_stats') and state.derived_stats:
+                    stats_text += "\n🔮 DERIVED STATS:\n"
+                    for stat_type, stat_value in state.derived_stats.items():
+                        stats_text += f"✨ {stat_type.value}: {stat_value.value}\n"
+
+                self.stats_display.setPlainText(stats_text.strip())
+            else:
+                self.stats_display.setPlainText("No stats available")
+        except Exception as e:
+            self.stats_display.setPlainText(f"Error refreshing stats: {e}")
+
+    def _refresh_timeline_display(self):
+        """Refresh the progression timeline display."""
+        try:
+            selected_char_id = self.char_combo.currentData()
+            if selected_char_id is None:
+                self.timeline_display.setPlainText("No character selected")
+                return
+
+            char_id = EntityId(selected_char_id)
+            timeline_text = f"📈 PROGRESSION TIMELINE for Character {char_id.value}\n\n"
+
+            # Show current state as starting point
+            state = self.simulator.current_state.get_character_state(char_id)
+            if state:
+                timeline_text += f"🔸 T={state.time_point}: Initial state\n"
+                timeline_text += f"   Level {state.level.value if state.level else 'N/A'}, "
+                timeline_text += f"XP: {state.experience.value if state.experience else 0}\n\n"
+
+            timeline_text += "💡 TIP: Execute actions above to see progression steps!\n"
+            timeline_text += "Each action will be logged here with its effects."
+
+            self.timeline_display.setPlainText(timeline_text)
+        except Exception as e:
+            self.timeline_display.setPlainText(f"Error refreshing timeline: {e}")
+
+    def _refresh_axioms_display(self):
+        """Refresh the lore axioms display with clear explanations."""
+        try:
+            axioms_text = "📜 LORE AXIOMS (Immutable Rules)\n"
+            axioms_text += "=" * 50 + "\n\n"
+
+            if not self.simulator.lore_axioms.axioms:
+                axioms_text += "No axioms loaded. This simulation may not be properly configured.\n"
+            else:
+                axioms_text += f"Found {len(self.simulator.lore_axioms.axioms)} active rules:\n\n"
+
+                for i, axiom in enumerate(self.simulator.lore_axioms.axioms, 1):
+                    axioms_text += f"🔸 Rule {i}: {axiom.predicate}\n"
+                    axioms_text += f"   📝 {axiom.description}\n\n"
+
+            axioms_text += "💡 These rules govern ALL progression mechanics.\n"
+            axioms_text += "   Every stat change must be derivable from these axioms!"
 
             self.axioms_display.setPlainText(axioms_text.strip())
         except Exception as e:
@@ -437,13 +448,16 @@ Stats:
                     new_log = current_log + "\n\n" + "="*50 + "\n\n" + new_log
                 self.log_display.setPlainText(new_log)
 
-                # Refresh state display
-                self._refresh_state_display()
+                # Update timeline with the action
+                self._update_timeline_with_action(char_id, action_type, parameters, response.result)
+
+                # Refresh all displays
+                self._refresh_all_displays()
 
                 QMessageBox.information(
                     self, "Simulation Success",
                     f"✅ {self.action_combo.currentText()} completed successfully!\n\n"
-                    "Check the observation log for full details."
+                    "Check the observation log and timeline for full details."
                 )
             else:
                 QMessageBox.warning(
@@ -456,6 +470,48 @@ Stats:
                 self, "Simulation Error",
                 f"An error occurred during simulation:\n\n{str(e)}"
             )
+
+    def _update_timeline_with_action(self, char_id, action_type, parameters, result):
+        """Update the timeline display with the executed action."""
+        try:
+            current_timeline = self.timeline_display.toPlainText()
+
+            # Get current state for context
+            state = self.simulator.current_state.get_character_state(char_id)
+            if not state:
+                return
+
+            # Create timeline entry
+            timeline_entry = f"🔸 T={state.time_point}: {self.action_combo.currentText()}\n"
+
+            if action_type == "gain_xp":
+                timeline_entry += f"   +{parameters['amount']} XP from {parameters['source']}\n"
+            elif action_type == "increase_stat":
+                timeline_entry += f"   +{parameters['amount']} to {parameters['stat_type']}\n"
+            elif action_type == "level_up":
+                timeline_entry += f"   Character leveled up!\n"
+
+            timeline_entry += f"   Result: Level {state.level.value if state.level else 'N/A'}, "
+            timeline_entry += f"XP: {state.experience.value if state.experience else 0}\n"
+
+            # Add to timeline (insert after the initial state)
+            lines = current_timeline.split('\n')
+            insert_pos = -1
+            for i, line in enumerate(lines):
+                if "TIP:" in line:
+                    insert_pos = i
+                    break
+
+            if insert_pos > 0:
+                lines.insert(insert_pos, timeline_entry)
+                self.timeline_display.setPlainText('\n'.join(lines))
+            else:
+                # Fallback: append to end
+                self.timeline_display.setPlainText(current_timeline + '\n\n' + timeline_entry)
+
+        except Exception as e:
+            # Don't crash if timeline update fails
+            print(f"Timeline update error: {e}")
 
     def _export_for_verification(self):
         """Export simulation data for formal verification."""
@@ -493,6 +549,55 @@ Stats:
             self.export_status.setText(error_msg)
             self.export_status.setStyleSheet("color: #a44; font-size: 9px;")
             QMessageBox.critical(self, "Export Error", error_msg)
+
+    def _get_group_style(self) -> str:
+        """Get consistent styling for group boxes."""
+        return """
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #666;
+                border-radius: 5px;
+                margin-top: 1ex;
+                color: #fff;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }
+        """
+
+    def _get_text_display_style(self) -> str:
+        """Get consistent styling for text displays."""
+        return """
+            QTextEdit {
+                background: #1a1a1a;
+                color: #ddd;
+                border: 1px solid #555;
+                border-radius: 3px;
+                font-family: monospace;
+                font-size: 10px;
+            }
+        """
+
+    def _get_button_style(self) -> str:
+        """Get consistent styling for buttons."""
+        return """
+            QPushButton {
+                background: #4a4a4a;
+                color: #fff;
+                border: 2px solid #666;
+                border-radius: 5px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #5a5a5a;
+            }
+            QPushButton:pressed {
+                background: #3a3a3a;
+            }
+        """
 
     def refresh(self):
         """Refresh the progression simulator tab."""
