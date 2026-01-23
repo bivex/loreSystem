@@ -8,11 +8,11 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Set
 from pathlib import Path
 
-from ..entities.lore_axioms import LoreAxioms
-from ..entities.progression_state import CharacterState, WorldState
-from ..entities.progression_event import ProgressionEvent
-from ..value_objects.common import TenantId, EntityId, Timestamp
-from ..value_objects.progression import (
+from .entities.lore_axioms import LoreAxioms
+from .entities.progression_state import CharacterState, WorldState
+from .entities.progression_event import ProgressionEvent
+from .value_objects.common import TenantId, EntityId, Timestamp
+from .value_objects.progression import (
     CharacterClass,
     StatType,
     CharacterLevel,

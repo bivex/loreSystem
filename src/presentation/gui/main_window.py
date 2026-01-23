@@ -31,6 +31,7 @@ from src.presentation.gui.tabs.stories_tab import StoriesTab
 from src.presentation.gui.tabs.tags_tab import TagsTab
 from src.presentation.gui.tabs.images_tab import ImagesTab
 from src.presentation.gui.tabs.world_map_tab import WorldMapTab
+from src.presentation.gui.tabs.progression_simulator_tab import ProgressionSimulatorTab
 from src.domain.value_objects.common import EntityId
 
 
@@ -355,6 +356,7 @@ class MainWindow(QMainWindow):
         self.stories_tab = StoriesTab(self.lore_data)
         self.tags_tab = TagsTab(self.lore_data)
         self.images_tab = ImagesTab(self.lore_data)
+        self.progression_simulator_tab = ProgressionSimulatorTab(self.lore_data)
         try:
             self.world_map_tab = WorldMapTab(self.lore_data)
         except Exception as e:
@@ -378,6 +380,7 @@ class MainWindow(QMainWindow):
             (self.stories_tab, I18n.t('tab.stories', "📚 Stories")),
             (self.tags_tab, I18n.t('tab.tags', "🏷️ Tags")),
             (self.images_tab, I18n.t('tab.images', "🖼️ Images")),
+            (self.progression_simulator_tab, "🎲 Progression Simulator"),
         ]
 
         for tab, name in tabs:

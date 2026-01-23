@@ -38,15 +38,15 @@ class ProgressionEvent:
     from_time: TimePoint
     to_time: TimePoint
     
+    # Metadata
+    description: str
+    created_at: Timestamp
+    
     # Causal reasons
     reasons: List[RuleReference] = field(default_factory=list)
     
     # Effects (what changed)
     effects: Dict[str, str] = field(default_factory=dict)  # FOL effect predicates
-    
-    # Metadata
-    description: str
-    created_at: Timestamp
     
     def __post_init__(self):
         """Validate event invariants."""

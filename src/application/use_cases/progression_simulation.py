@@ -7,11 +7,11 @@ from dataclasses import dataclass
 from typing import Optional, List
 from pathlib import Path
 
-from ..domain.progression_simulator import ProgressionSimulator, SimulationResult
-from ..domain.entities.lore_axioms import LoreAxioms
-from ..domain.entities.progression_state import WorldState, CharacterState
-from ..value_objects.common import TenantId, EntityId, Timestamp
-from ..value_objects.progression import (
+from ...domain.progression_simulator import ProgressionSimulator, SimulationResult
+from ...domain.entities.lore_axioms import LoreAxioms
+from ...domain.entities.progression_state import WorldState, CharacterState
+from ...domain.value_objects.common import TenantId, EntityId, Timestamp
+from ...domain.value_objects.progression import (
     CharacterClass,
     StatType,
     CharacterLevel,
