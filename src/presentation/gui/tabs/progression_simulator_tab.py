@@ -57,20 +57,20 @@ class ProgressionSimulatorTab(QWidget):
         subtitle_label.setWordWrap(True)
         layout.addWidget(subtitle_label)
 
-        # Main splitter
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        layout.addWidget(splitter)
+        # Main content area - horizontal layout
+        content_widget = QWidget()
+        content_layout = QHBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(10)
+        layout.addWidget(content_widget)
 
         # Left panel - Current State
         left_panel = self._create_state_panel()
-        splitter.addWidget(left_panel)
+        content_layout.addWidget(left_panel)
 
         # Right panel - Simulation Controls & Logs
         right_panel = self._create_simulation_panel()
-        splitter.addWidget(right_panel)
-
-        # Set splitter proportions
-        splitter.setSizes([400, 600])
+        content_layout.addWidget(right_panel)
 
         # Bottom panel - Export for Verification
         export_panel = self._create_export_panel()
@@ -189,27 +189,27 @@ class ProgressionSimulatorTab(QWidget):
 
         # Action parameters
         param_widget = QWidget()
-        self.param_layout = QHBoxLayout(param_widget)
-        self.param_layout.setContentsMargins(0, 0, 0, 0)
+        param_layout = QHBoxLayout(param_widget)
+        param_layout.setContentsMargins(0, 0, 0, 0)
 
         self.xp_amount = QSpinBox()
         self.xp_amount.setRange(1, 10000)
         self.xp_amount.setValue(100)
         self.xp_amount.setPrefix("XP: ")
-        self.param_layout.addWidget(self.xp_amount)
+        param_layout.addWidget(self.xp_amount)
 
         self.xp_source = QComboBox()
         self.xp_source.addItem("defeating_goblin", "defeating_goblin")
         self.xp_source.addItem("completing_quest", "completing_quest")
         self.xp_source.addItem("training", "training")
-        self.param_layout.addWidget(self.xp_source)
+        param_layout.addWidget(self.xp_source)
 
         self.stat_increase = QSpinBox()
         self.stat_increase.setRange(1, 10)
         self.stat_increase.setValue(1)
         self.stat_increase.setPrefix("Increase: ")
         self.stat_increase.hide()
-        self.param_layout.addWidget(self.stat_increase)
+        param_layout.addWidget(self.stat_increase)
 
         controls_layout.addRow("📊 Parameters:", param_widget)
 
@@ -466,3 +466,9 @@ Stats:
             self.export_status.setText(error_msg)
             self.export_status.setStyleSheet("color: #a44; font-size: 9px;")
             QMessageBox.critical(self, "Export Error", error_msg)
+
+    def refresh(self):
+        """Refresh the progression simulator tab."""
+        # The simulator maintains its own state, so just ensure UI is up to date
+        # This could be extended to refresh from lore_data if needed
+        pass

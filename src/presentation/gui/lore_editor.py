@@ -125,6 +125,7 @@ from src.presentation.gui.tabs.faction_membership_tab import FactionMembershipTa
 from src.presentation.gui.tabs.pity_tab import PityTab
 from src.presentation.gui.tabs.player_profile_tab import PlayerProfileTab
 from src.presentation.gui.tabs.pull_tab import PullTab
+from src.presentation.gui.tabs.progression_simulator_tab import ProgressionSimulatorTab
 
 
 # Import LoreData from separate module
@@ -2213,6 +2214,9 @@ class MainWindow(QMainWindow):
         self.player_profile_tab = PlayerProfileTab(self.lore_data)
         self.pull_tab = PullTab(self.lore_data)
 
+        # Progression Simulator
+        self.progression_simulator_tab = ProgressionSimulatorTab(self.lore_data)
+
         # Add to stacked widget and list with categorical dividers
         # Track mapping between list rows and widget indices (excluding dividers)
         self.tab_row_to_widget_index = {}
@@ -2274,6 +2278,7 @@ class MainWindow(QMainWindow):
         add_tab(self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements"))
         add_tab(self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions"))
         add_tab(self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards"))
+        add_tab(self.progression_simulator_tab, I18N.t('tab.progression_simulator', "📈 Progression Simulator"))
 
         # World Elements
         add_divider("World Elements")
@@ -3018,6 +3023,7 @@ class MainWindow(QMainWindow):
         self.requirements_tab.refresh()
         self.sessions_tab.refresh()
         self.tokenboards_tab.refresh()
+        self.progression_simulator_tab.refresh()
 
 
 def main():
