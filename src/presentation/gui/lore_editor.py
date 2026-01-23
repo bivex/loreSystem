@@ -2120,7 +2120,7 @@ class MainWindow(QMainWindow):
 
         title_layout.addWidget(title_label)
         title_layout.addWidget(subtitle_label)
-        title_layout.addStretch()
+        # Removed addStretch() to prevent layout parenting issues
 
         # Center section - Search bar
         search_layout = QHBoxLayout()
@@ -2150,7 +2150,7 @@ class MainWindow(QMainWindow):
 
         search_layout.addWidget(search_icon)
         search_layout.addWidget(self.search_input)
-        search_layout.addStretch()
+        # Removed addStretch() to prevent layout parenting issues
 
         # Right section - Status and quick actions
         status_layout = QHBoxLayout()
