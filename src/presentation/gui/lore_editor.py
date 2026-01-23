@@ -3126,20 +3126,21 @@ class MainWindow(QMainWindow):
         try:
             if hasattr(self, 'current_file') and self.current_file:
                 self._save_file()
-                # Briefly highlight the save button
+                # Briefly highlight the save button (if available)
                 save_btn = self.sender()
-                original_style = save_btn.styleSheet()
-                save_btn.setStyleSheet("""
-                    QPushButton {
-                        background: #4a6a2a;
-                        color: #fff;
-                        border: 1px solid #6a8a4a;
-                        border-radius: 4px;
-                        padding: 2px;
-                        font-size: 10px;
-                    }
-                """)
-                QTimer.singleShot(500, lambda: save_btn.setStyleSheet(original_style))
+                if save_btn and hasattr(save_btn, 'setStyleSheet'):
+                    original_style = save_btn.styleSheet()
+                    save_btn.setStyleSheet("""
+                        QPushButton {
+                            background: #4a6a2a;
+                            color: #fff;
+                            border: 1px solid #6a8a4a;
+                            border-radius: 4px;
+                            padding: 2px;
+                            font-size: 10px;
+                        }
+                    """)
+                    QTimer.singleShot(500, lambda: save_btn.setStyleSheet(original_style))
             else:
                 self._save_file_as()
         except Exception as e:
