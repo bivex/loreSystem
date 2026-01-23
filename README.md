@@ -1,402 +1,272 @@
 # MythWeave Chronicles - Git-Based Lore Management System
 
-A domain-driven, event-sourced lore management system for games using Git version control, SQL for structured data, and safe improvement generation.
+## Front Matter
 
-## Domain Overview
+**Title:** MythWeave Chronicles User Guide  
+**Version:** 1.0  
+**Date:** January 23, 2026  
+**Authors:** MythWeave Development Team  
+**Revision History:**  
+- v1.0 (January 23, 2026): Initial release with comprehensive GUI features and domain modeling.
 
-### Core Business Value
-Manage evolving game lore (worlds, characters, events) with:
-- Version-controlled narrative through Git
-- Structured querying via SQL/Elasticsearch
-- Safe, validated improvements that preserve story integrity
-- Multi-tenant support for different games/campaigns
+## Introduction
 
-### Ubiquitous Language
+### Purpose
+This document provides user guidance for MythWeave Chronicles, a domain-driven, event-sourced lore management system designed for game developers and world-builders. It enables the creation, management, and evolution of complex game lore using Git version control, SQL databases, and Elasticsearch for search capabilities.
 
-**Domain Terms:**
-- **Lore**: The collective narrative, world-building, and story elements of a game
-- **World**: A game universe containing characters, events, and locations
-- **Character**: An actor in the world with backstory, abilities, and relationships
-- **Event**: A significant occurrence in the timeline (quests, battles, story beats)
-- **Ability**: A character's skill or power with defined mechanics
-- **Improvement**: A proposed enhancement to lore that must be validated
-- **Requirement**: A business rule or invariant that must never be violated
-- **Aggregate**: A consistency boundary for related entities
-- **Tenant**: An isolated game or campaign instance
+### Scope
+This guide covers:
+- System overview and capabilities
+- Installation and configuration procedures
+- Basic usage procedures for the GUI editor
+- Troubleshooting common issues
+- Uninstallation steps
 
-**Invariants:**
-- World names must be unique per tenant
-- Character backstories must be >= 100 characters
-- Events must have at least one participant
-- Improvements cannot violate existing requirements
-- All dates stored in UTC
-- Version numbers monotonically increase
+This guide does not cover:
+- Internal architecture details (see IMPLEMENTATION_SUMMARY.md)
+- API development (future feature)
+- Advanced customization or extension development
 
-## Architecture
+### Target Audience
+- **Primary:** Game developers, world-builders, and lore managers who need to create and maintain complex game narratives
+- **Secondary:** Technical writers, QA testers, and project managers involved in lore management workflows
+- **Prerequisites:** Basic familiarity with Python, Git, and database concepts; no advanced programming knowledge required for GUI usage
 
-### Bounded Contexts
-1. **Lore Management** - Core domain for worlds, characters, events
-2. **Improvement Generation** - Procedural/AI enhancement proposals
-3. **Validation** - Requirement checking and invariant enforcement
-4. **Version Control** - Git integration and synchronization
-5. **Search** - Full-text and semantic search via Elasticsearch
+### Referenced Documents
+- [GUI Quick Start Guide](QUICKSTART_GUI.md)
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md)
+- [Project Structure](STRUCTURE.md)
+- [Domain Analysis](LORE_ANALYSIS_AND_TODO.md)
 
-### Layers (Hexagonal Architecture)
-```
-┌─────────────────────────────────────────┐
-│         Presentation Layer              │
-│    (PyQt6 GUI, CLI, API - Future)       │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│      Application Layer (Use Cases)      │
-│  - CreateWorld, AddCharacter            │
-│  - GenerateImprovements, ApplyChanges   │
-│  - SyncWithGit, ValidateRequirements    │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│          Domain Layer (Pure)            │
-│  Entities, Value Objects, Aggregates    │
-│  Domain Services, Events, Invariants    │
-└─────────────────┬───────────────────────┘
-                  │ (depends on abstractions)
-┌─────────────────▼───────────────────────┐
-│    Infrastructure Layer (Adapters)      │
-│  - PostgreSQL Repository                │
-│  - Elasticsearch Repository             │
-│  - Git Service                          │
-│  - LLM Generation Service               │
-└─────────────────────────────────────────┘
-```
+## Concept of Operations
 
-## Technology Stack
+### System Overview
+MythWeave Chronicles operates as a comprehensive lore management platform that integrates:
+- **Domain-Driven Design:** Structured entities (Worlds, Characters, Events) with business rules
+- **Version Control:** Git-based tracking of all lore changes
+- **Search & Persistence:** SQL for transactional data, Elasticsearch for full-text search
+- **GUI Editor:** PyQt6-based interface for intuitive lore creation and management
 
-- **Language**: Python 3.11+
-- **Database**: PostgreSQL 15+ (ACID, constraints, JSON support)
-- **Search**: Elasticsearch 8+ (full-text, aggregations)
-- **Version Control**: Git (libgit2/pygit2)
-- **Migrations**: Alembic (SQL), custom scripts (ES)
-- **Testing**: Pytest, Testcontainers
-- **Validation**: Pydantic for schemas
-- **DI**: dependency-injector
-- **Logging**: structlog
+### Typical Usage Scenarios
+1. **World-Building:** Create game universes with interconnected characters, events, and locations
+2. **Lore Evolution:** Propose and validate improvements to maintain story consistency
+3. **Gacha Game Management:** Design banner systems, pity mechanics, and character collections
+4. **Progression Simulation:** Test player advancement paths and milestone events
+5. **Content Organization:** Manage multimedia assets, templates, and tagged content
 
-## Project Structure
+### Operating Environment
+- **Platforms:** macOS, Windows, Linux
+- **Dependencies:** Python 3.11+, PostgreSQL 15+, Elasticsearch 8+
+- **Hardware Requirements:** Standard desktop/laptop with 4GB+ RAM
+- **Network:** Local operation; optional Git remote for collaboration
 
-```
-loreSystem/
-├── docs/                      # Documentation and ADRs
-│   ├── adr/                   # Architectural Decision Records
-│   ├── domain-model.md        # Domain model documentation
-│   └── api-contracts.md       # API specifications
-├── src/
-│   ├── domain/                # Pure domain layer (no dependencies)
-│   │   ├── entities/          # Entities and aggregates
-│   │   ├── value_objects/     # Immutable value objects
-│   │   ├── events/            # Domain events
-│   │   ├── services/          # Domain services (pure logic)
-│   │   ├── repositories/      # Repository interfaces (ports)
-│   │   └── exceptions/        # Domain exceptions
-│   ├── application/           # Use cases and orchestration
-│   │   ├── use_cases/         # Application use cases
-│   │   ├── dto/               # Data transfer objects
-│   │   ├── validators/        # Input validation
-│   │   └── services/          # Application services
-│   ├── infrastructure/        # External concerns (adapters)
-│   │   ├── persistence/       # SQL and ES implementations
-│   │   ├── git/               # Git integration
-│   │   ├── generation/        # AI/procedural generation
-│   │   ├── config/            # Configuration management
-│   │   └── logging/           # Structured logging
-│   └── presentation/          # Entry points (future: API, CLI)
-│       └── cli/               # Command-line interface
-├── migrations/                # Database migrations
-│   ├── sql/                   # Alembic migrations
-│   └── elasticsearch/         # ES mapping versions
-├── tests/
-│   ├── unit/                  # Fast, isolated tests
-│   ├── integration/           # Repository and adapter tests
-│   └── e2e/                   # End-to-end scenarios
-├── config/                    # Configuration files
-│   ├── config.yaml            # Application config
-│   └── logging.yaml           # Logging configuration
-├── requirements.txt           # Production dependencies
-├── requirements-dev.txt       # Development dependencies
-└── pyproject.toml            # Project metadata and tools
-```
+## Installation and Configuration
 
-## Key Design Decisions
+### System Requirements
+- **Operating System:** macOS 12+, Windows 10+, Ubuntu 20.04+
+- **Python:** Version 3.11 or higher
+- **Database:** PostgreSQL 15+ (with JSON support)
+- **Search Engine:** Elasticsearch 8+
+- **Git:** Version 2.30+ for version control
+- **GUI Framework:** PyQt6 6.6.1+
 
-### 1. Aggregates and Boundaries
-- **World Aggregate**: Root for characters and events (consistency boundary)
-- **Improvement Aggregate**: Separate lifecycle from lore entities
-- **Requirement Aggregate**: Independent validation rules
+### Installation Steps
 
-### 2. Repository Pattern
-- Abstract interfaces in domain layer
-- Concrete implementations in infrastructure
-- Support for both SQL (transactional) and ES (search)
-
-### 3. Domain Events
-- CharacterCreated, EventOccurred, ImprovementProposed
-- Eventually consistent updates to Elasticsearch
-- Audit trail for all changes
-
-### 4. Validation Strategy
-- Domain invariants enforced by entities (e.g., in constructors)
-- Business rules checked by domain services
-- Requirements validated before applying improvements
-- SQL constraints as final safety net
-
-### 5. Git Integration
-- Lore stored as structured files (JSON/YAML)
-- Sync on merge to main branch (CI/CD webhook)
-- Bidirectional sync: Git → SQL ← Application
-
-## Getting Started
-
-```bash
-## Getting Started
-
-### Quick Setup (macOS with Homebrew Python)
-
-```bash
-# Clone or navigate to the project
-cd /path/to/loreSystem
-
-# Create virtual environment (required for externally managed environments)
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies in virtual environment
-pip install "PyQt6>=6.6.1" "pydantic>=2.5.3" dataclasses-json
-
-# Run sample demo (tests domain layer)
-python3 sample_demo.py
-
-# Launch GUI Editor
-python3 run_gui.py
-
-# OR use the convenience script
-./launch_gui.sh
-```
-
-### Alternative: Use the Launcher Script
-
-The project includes a convenience script that handles setup automatically:
-
-```bash
-# Make script executable (first time only)
-chmod +x launch_gui.sh
-
-# Run the launcher (handles venv creation and dependency installation)
-./launch_gui.sh
-```
-
-### Full Development Setup
-
-For complete development environment with all dependencies:
-
-```bash
-# Create and activate virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install all dependencies (may need to adjust Python version constraints)
-# Edit requirements.txt to remove 'python>=3.11,<3.13' if using Python 3.14+
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Run database migrations (requires PostgreSQL)
-alembic upgrade head
-
-# Initialize Elasticsearch indices (requires Elasticsearch)
-python -m src.infrastructure.persistence.elasticsearch.init_indices
-
-# Run tests
-pytest tests/
-
-# Run sample demo
-python3 sample_demo.py
-
-# Start GUI Editor
-python3 run_gui.py
-```
-
-### GUI Quick Start
-
-1. **Launch the GUI**:
+#### Quick Setup (Recommended)
+1. Clone the repository:
    ```bash
-   ./launch_gui.sh
+   git clone <repository-url>
+   cd loreSystem
    ```
 
-2. **Load Sample Data**:
-   - Click "Load" button
-   - Navigate to `examples/sample_lore.json`
-   - Click "Open"
+2. Run the launcher script:
+   ```bash
+   ./launch_gui.sh  # macOS/Linux
+   # OR
+   launch_gui.bat   # Windows
+   ```
+   The script automatically creates a virtual environment and installs dependencies.
 
-3. **Create Your Own Lore**:
-   - **Worlds Tab**: Add game worlds
-   - **Characters Tab**: Create characters with abilities
-   - **Save**: Use "Save As" to create your lore files
+#### Manual Installation
+1. Create virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # Linux/macOS
+   # OR
+   venv\Scripts\activate     # Windows
+   ```
 
-See [GUI Quick Start Guide](QUICKSTART_GUI.md) for detailed tutorial.
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
 
-## System Capabilities
+3. Set up PostgreSQL database:
+   - Install PostgreSQL 15+
+   - Create a database named `mythweave`
+   - Run migrations: `alembic upgrade head`
 
-MythWeave provides comprehensive lore management with:
+4. Configure Elasticsearch:
+   - Install Elasticsearch 8+
+   - Initialize indices: `python -m src.infrastructure.persistence.elasticsearch.init_indices`
 
-### Domain Modeling
-- **Rich Entity Relationships**: Complex interconnections between worlds, characters, events, and factions
-- **Temporal Tracking**: Full timeline management with event sequencing and dependencies
-- **Validation Framework**: Domain-driven validation ensuring lore consistency
-- **Version Control Integration**: Git-based versioning for collaborative lore development
-
-### Advanced Game Mechanics
-- **Gacha Systems**: Complete banner, pity, and pull mechanics for character collection games
-- **Economy Simulation**: Multi-currency systems with shops, purchases, and rewards
-- **Progression Systems**: Character advancement with state tracking and milestone events
-- **Faction Dynamics**: Political systems with reputations, memberships, and relationships
-
-### Content Management
-- **Multimedia Support**: Images, audio tracks, and rich text content
-- **Template System**: Reusable content templates for consistent world-building
-- **Tagging & Organization**: Hierarchical organization with tags and categories
-- **Search & Discovery**: Full-text search across all lore content
-
-### Technical Architecture
-- **Event Sourcing**: All changes tracked as domain events for audit and replay
-- **Multi-tenant Support**: Isolated game worlds and campaigns
-- **Scalable Persistence**: SQL for transactions, Elasticsearch for search
-- **API-Ready Design**: Clean architecture supporting future API development
-
-## GUI Features
-
-MythWeave includes a comprehensive PyQt6-based graphical editor with modern UI/UX:
-
-### Core Lore Management
-- **Worlds Management**: Create, edit, delete game worlds with descriptions and versioning
-- **Characters Management**: Add characters with detailed backstories, abilities, and relationships
-- **Events Management**: Create timeline events with participants, outcomes, and story impact
-- **Items Management**: Manage game items with rarity levels, types, and properties
-- **Quests Management**: Design quests with objectives, rewards, and progression tracking
-- **Storylines Management**: Organize narrative arcs connecting events and quests
-- **Stories Management**: Write and manage individual story entries with rich content
-- **Improvements System**: Propose and manage lore enhancements with validation workflow
-
-### Content Creation Tools
-- **Pages Management**: Create structured content pages for documentation
-- **Templates Management**: Design reusable templates for consistent content creation
-- **Choices Management**: Build interactive choice systems for branching narratives
-- **Flowcharts Management**: Visualize complex story flows and decision trees
-- **Handouts Management**: Create player handouts and reference materials
-- **Inspirations Management**: Collect and organize creative inspiration sources
-- **Notes Management**: Maintain organized notes with categorization
-- **Tags Management**: Tag and categorize all content for easy searching
-- **Images Management**: Manage image assets with metadata and organization
-
-### World Building
-- **Locations Management**: Define geographical locations with descriptions and connections
-- **World Map Integration**: Visual world mapping with location relationships
-- **Factions Management**: Create political factions with reputations and relationships
-- **Character Relationships**: Map complex character interactions and alliances
-- **Faction Memberships**: Track character affiliations and faction dynamics
-
-### Economy & Gacha Systems
-- **Shops Management**: Design in-game shops with inventory and pricing
-- **Currencies Management**: Define multiple currency types and exchange rates
-- **Banners Management**: Create gacha banners with character pools and rates
-- **Pity Systems**: Implement pity timers and guaranteed pulls
-- **Pull Systems**: Manage gacha pull mechanics and probabilities
-- **Purchases Management**: Track player purchases and transaction history
-- **Rewards Management**: Design reward systems and distribution mechanics
-- **Player Profiles**: Manage player accounts and progression data
-
-### Event & Progression Systems
-- **Event Chains**: Create interconnected event sequences with dependencies
-- **Progression Simulator**: Test and simulate player progression paths
-- **Progression Events**: Define milestone events and achievements
-- **Progression States**: Track character state changes and evolution
-
-### Audio & Media Integration
-- **Music Themes**: Organize music by thematic categories and moods
-- **Music Tracks**: Manage individual music files with metadata
-- **Music Controls**: Real-time music playback and control systems
-- **Music States**: Dynamic music state management for adaptive audio
-
-### Advanced Features
-- **Lore Axioms**: Define fundamental rules and constraints for your world
-- **Requirements Management**: Set up validation rules and business constraints
-- **Sessions Management**: Track gaming sessions and campaign progress
-- **Tokenboards**: Visual token management for tabletop gaming integration
-
-### Technical Features
-- **JSON Persistence**: Load/save complete lore systems as JSON files
-- **Real-time Validation**: Immediate feedback on domain rule violations
-- **Search & Filter**: Powerful search across all entities with filtering
-- **Modern UI**: Dark theme with intuitive navigation and tabbed interface
-- **Sample Data**: Pre-loaded examples for quick exploration
-- **Export/Import**: Easy data portability and backup capabilities
-
-See [GUI Quick Start Guide](QUICKSTART_GUI.md) for detailed tutorials and [GUI Documentation](src/presentation/gui/README.md) for technical details.
-
-```bash
-# Linux/macOS: Launch GUI (easiest way)
-./launch_gui.sh
-
-# OR manual setup
-python3 -m venv venv
-source venv/bin/activate
-pip install "PyQt6>=6.6.1" "pydantic>=2.5.3" dataclasses-json
-python3 run_gui.py
+### Configuration
+Create `config/config.yaml` with:
+```yaml
+database:
+  url: postgresql://user:password@localhost/mythweave
+elasticsearch:
+  url: http://localhost:9200
+git:
+  repository_path: /path/to/lore/repo
 ```
 
-```cmd
-REM Windows: Launch GUI (easiest way)
-launch_gui.bat
+### Verification
+After installation:
+1. Run tests: `pytest tests/`
+2. Launch GUI: `python3 run_gui.py`
+3. Load sample data from `examples/sample_lore.json`
 
-REM Windows: Auto-install Python if missing (requires admin)
-launch_gui.bat --auto-install
+## Procedures
 
-REM Windows: Manual setup
-python -m venv venv
-venv\Scripts\activate.bat
-pip install -r requirements.txt
-python run_gui.py
-```
+### Procedure: Launch the GUI Editor
+**Purpose:** Start the main application interface.
 
-## Safety and Non-Breaking Updates
+**Preconditions:**
+- Installation completed successfully
+- Virtual environment activated (if using manual setup)
 
-### Migration Strategy
-1. **Backward-compatible schema changes**
-   - Add columns with defaults
-   - Expand enums, never remove values
-   - Use feature flags for new behavior
+**Steps:**
+1. Navigate to the project directory
+2. Run: `./launch_gui.sh` (macOS/Linux) or `launch_gui.bat` (Windows)
+3. Wait for the PyQt6 window to appear
 
-2. **Zero-downtime deployments**
-   - Blue-green database deployment
-   - Elasticsearch reindexing with aliases
+**Result:** MythWeave GUI opens with tabbed interface.
 
-3. **Validation pipeline**
-   - Pre-commit hooks validate lore files
-   - CI runs requirement checks
-   - Staging environment for integration tests
+### Procedure: Create a New World
+**Purpose:** Set up a new game universe.
 
-4. **Rollback capability**
-   - Git revert for lore changes
-   - Alembic downgrade for schema
-   - Elasticsearch snapshots
+**Preconditions:**
+- GUI is running
+- User has appropriate permissions
 
-## Example: MythWeave Chronicles Game
+**Steps:**
+1. Click the "Worlds" tab
+2. Click "Add World" button
+3. Enter world name and description
+4. Click "Save"
 
-A gacha RPG where:
-- Players collect characters through procedurally-generated narratives
-- Lore evolves weekly with community input (Git PRs)
-- All changes validated against story requirements
-- Dynamic worlds generated from SQL data
-- AI suggests improvements (new quests, character abilities)
+**Result:** New world appears in the worlds list.
 
-## License
+### Procedure: Load Existing Lore
+**Purpose:** Import previously saved lore data.
 
-MIT
+**Preconditions:**
+- JSON lore file exists
+- GUI is running
+
+**Steps:**
+1. Click "File" → "Load"
+2. Navigate to the JSON file (e.g., `examples/sample_lore.json`)
+3. Click "Open"
+
+**Result:** Lore data loads into the interface.
+
+### Procedure: Save Current Lore
+**Purpose:** Export current lore state to file.
+
+**Preconditions:**
+- Lore data exists in the application
+
+**Steps:**
+1. Click "File" → "Save As"
+2. Choose save location and filename
+3. Click "Save"
+
+**Result:** Lore saved as JSON file.
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue:** GUI fails to launch  
+**Symptoms:** Error messages about missing PyQt6 or Python version  
+**Resolution:**
+1. Verify Python version: `python3 --version` (must be 3.11+)
+2. Reinstall PyQt6: `pip install "PyQt6>=6.6.1"`
+3. Check virtual environment activation
+
+**Issue:** Database connection fails  
+**Symptoms:** Errors about PostgreSQL connection  
+**Resolution:**
+1. Verify PostgreSQL is running
+2. Check connection string in `config/config.yaml`
+3. Ensure database exists: `createdb mythweave`
+
+**Issue:** Elasticsearch search not working  
+**Symptoms:** Search features unavailable  
+**Resolution:**
+1. Verify Elasticsearch is running on port 9200
+2. Reinitialize indices: `python -m src.infrastructure.persistence.elasticsearch.init_indices`
+
+**Issue:** Memory corruption in GUI tests  
+**Symptoms:** PyQt6 crashes during testing  
+**Resolution:**
+1. Run tests in isolated environment
+2. Update PyQt6: `pip install --upgrade PyQt6`
+3. Use `pytest --tb=short` for better error reporting
+
+### Error Messages
+- **"LoreData.from_dict() KeyError"**: Missing required fields in JSON. Validate JSON structure against schema.
+- **"PyQt6 memory corruption"**: GUI threading issue. Restart application and avoid concurrent operations.
+
+### Support
+For additional help:
+- Check [GUI Implementation Summary](docs/GUI_IMPLEMENTATION_SUMMARY.md)
+- Review [Mutation Testing Readme](MUTATION_TESTING_README.md)
+- Contact development team via GitHub issues
+
+## Information for Uninstallation
+
+### When to Uninstall
+Uninstall MythWeave when:
+- Removing the application permanently
+- Performing clean reinstall
+- Freeing up system resources
+
+### Uninstallation Steps
+1. Close all running instances of the GUI
+2. Remove the virtual environment: `rm -rf venv`
+3. Delete the project directory: `rm -rf loreSystem`
+4. Drop the database (optional): `dropdb mythweave`
+5. Remove Elasticsearch indices (optional): Use Elasticsearch API to delete indices
+
+### Data Backup
+Before uninstallation:
+1. Export all lore data: Use "Save As" in GUI
+2. Backup configuration: Copy `config/config.yaml`
+3. Backup database: `pg_dump mythweave > backup.sql`
+
+## Appendices
+
+### Glossary
+- **Aggregate:** A consistency boundary for related domain entities
+- **Domain-Driven Design:** An approach to software development focused on business domain
+- **Event Sourcing:** Storing state changes as a sequence of events
+- **Lore:** The collective narrative and world-building elements of a game
+- **Tenant:** An isolated instance for different games or campaigns
+
+### Acronyms
+- GUI: Graphical User Interface
+- SQL: Structured Query Language
+- JSON: JavaScript Object Notation
+- UTC: Coordinated Universal Time
+
+### Index
+- Configuration: See Installation and Configuration
+- Database setup: See Installation and Configuration
+- GUI launch: See Procedures
+- Troubleshooting: See Troubleshooting
+- Uninstallation: See Information for Uninstallation
+- World creation: See Procedures
