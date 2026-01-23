@@ -6,6 +6,7 @@ Orchestrates the progression simulation process.
 from dataclasses import dataclass
 from typing import Optional, List
 from pathlib import Path
+import json
 
 from ...domain.progression_simulator import ProgressionSimulator, SimulationResult
 from ...domain.entities.lore_axioms import LoreAxioms
@@ -149,6 +150,99 @@ def create_sample_simulation() -> ProgressionSimulator:
         world_id=world_id,
         time_point=TimePoint(0),
         character_states={char_id: initial_state},
+        created_at=Timestamp.now(),
+    )
+    
+    return ProgressionSimulator(
+        tenant_id=tenant_id,
+        world_id=world_id,
+        lore_axioms=lore,
+        current_state=world_state,
+    )
+
+
+def create_dark_fantasy_simulation() -> ProgressionSimulator:
+    """
+    Create a simulation using data from the dark fantasy gacha sample.
+    
+    Loads real character data and creates a rich simulation environment.
+    """
+    # Load sample data
+    sample_path = Path(__file__).parent.parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
+    
+    try:
+        with open(sample_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        # Fallback to sample simulation if file not found
+        return create_sample_simulation()
+    
+    tenant_id = TenantId(1)
+    world_id = EntityId(1)  # Use the first world
+    
+    # Create default lore axioms
+    lore = LoreAxioms.create_default(tenant_id, world_id)
+    
+    # Create character states from sample data
+    character_states = {}
+    
+    for char_data in data.get("characters", [])[:3]:  # Limit to first 3 characters for demo
+        char_id = EntityId(char_data["id"])
+        
+        # Map character classes (simplified mapping)
+        name_lower = char_data["name"].lower()
+        if "воин" in name_lower or "warrior" in name_lower or "кулак" in name_lower:
+            char_class = CharacterClass.WARRIOR
+        elif "маг" in name_lower or "wizard" in name_lower or "ведьма" in name_lower:
+            char_class = CharacterClass.MAGE
+        elif "лучник" in name_lower or "archer" in name_lower:
+            char_class = CharacterClass.ARCHER
+        else:
+            char_class = CharacterClass.WARRIOR  # Default
+        
+        # Create stats based on abilities (simplified)
+        stats = {}
+        base_stats = {
+            StatType.STRENGTH: StatValue(8),
+            StatType.AGILITY: StatValue(6),
+            StatType.INTELLECT: StatValue(5),
+        }
+        
+        # Boost stats based on abilities
+        for ability in char_data.get("abilities", []):
+            power = ability.get("power_level", 5)
+            ability_name = ability["name"].lower()
+            
+            if "сила" in ability_name or "strength" in ability_name or "кулак" in ability_name:
+                base_stats[StatType.STRENGTH] = StatValue(base_stats[StatType.STRENGTH].value + power)
+            elif "ловкость" in ability_name or "agility" in ability_name or "скорость" in ability_name:
+                base_stats[StatType.AGILITY] = StatValue(base_stats[StatType.AGILITY].value + power)
+            elif "интеллект" in ability_name or "intellect" in ability_name or "магия" in ability_name:
+                base_stats[StatType.INTELLECT] = StatValue(base_stats[StatType.INTELLECT].value + power)
+        
+        stats.update(base_stats)
+        
+        # Calculate level based on ability power
+        total_power = sum(ability.get("power_level", 5) for ability in char_data.get("abilities", []))
+        level = max(1, min(10, total_power // 3))  # Scale level based on total power
+        
+        character_state = CharacterState(
+            character_id=char_id,
+            time_point=TimePoint(0),
+            level=CharacterLevel(level),
+            character_class=char_class,
+            experience=ExperiencePoints(level * 100),  # Experience based on level
+            stats=stats,
+            created_at=Timestamp.now(),
+        )
+        
+        character_states[char_id] = character_state
+    
+    # Create world state
+    world_state = WorldState(
+        world_id=world_id,
+        time_point=TimePoint(0),
+        character_states=character_states,
         created_at=Timestamp.now(),
     )
     

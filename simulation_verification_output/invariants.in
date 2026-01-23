@@ -1,0 +1,10 @@
+% Stat bounds must not be exceeded
+false :- stat_value(C, S, V, T), max_stat(S, M), V > M.
+% All state changes must be caused by events
+false :-
+    stat_value(C, S, V2, T2),
+    stat_value(C, S, V1, T1),
+    T2 > T1,
+    not exists E (effect(E, stat_value(C, S, V2, T2)), from_time(E, T1), to_time(E, T2)).
+% Mages cannot equip heavy armor
+false :- has_class(C, mage), equip(C, heavy_armor, T).

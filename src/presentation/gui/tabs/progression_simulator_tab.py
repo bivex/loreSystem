@@ -16,6 +16,7 @@ from PyQt6.QtGui import QFont
 from src.presentation.gui.lore_data import LoreData
 from src.application.use_cases.progression_simulation import (
     create_sample_simulation,
+    create_dark_fantasy_simulation,
     RunProgressionSimulationUseCase,
     ExportSimulationForVerificationUseCase,
     SimulationRequest,
@@ -30,7 +31,7 @@ class ProgressionSimulatorTab(QWidget):
     def __init__(self, lore_data: LoreData):
         super().__init__()
         self.lore_data = lore_data
-        self.simulator = create_sample_simulation()
+        self.simulator = create_dark_fantasy_simulation()
         self.simulation_use_case = RunProgressionSimulationUseCase(self.simulator)
         self.export_use_case = ExportSimulationForVerificationUseCase(self.simulator)
 
@@ -44,25 +45,23 @@ class ProgressionSimulatorTab(QWidget):
         self.setLayout(layout)
 
         # Header
-        header_label = QLabel("🎲 Lore-Based Progression Simulator")
+        header_label = QLabel("🎲 Dark Fantasy Progression Simulator")
         header_label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         header_label.setStyleSheet("color: #fff; margin-bottom: 10px;")
         layout.addWidget(header_label)
 
         subtitle_label = QLabel(
-            "Simulate character progression with full observability and formal verification.\n"
-            "All outcomes are derivable from immutable lore axioms."
+            "Simulate character progression in a dark fantasy world with full observability and formal verification.\n"
+            "All outcomes are derivable from immutable lore axioms using real character data."
         )
         subtitle_label.setStyleSheet("color: #ccc; font-size: 11px;")
         subtitle_label.setWordWrap(True)
         layout.addWidget(subtitle_label)
 
-        # Main content area - horizontal layout
-        content_widget = QWidget()
-        content_layout = QHBoxLayout(content_widget)
-        content_layout.setContentsMargins(0, 0, 0, 0)
+        # Main content area - side by side panels
+        content_layout = QHBoxLayout()
         content_layout.setSpacing(10)
-        layout.addWidget(content_widget)
+        layout.addLayout(content_layout)
 
         # Left panel - Current State
         left_panel = self._create_state_panel()
@@ -172,9 +171,23 @@ class ProgressionSimulatorTab(QWidget):
         controls_layout = QFormLayout()
         controls_group.setLayout(controls_layout)
 
-        # Character selection (for now, just the sample character)
+        # Character selection from simulation data
         self.char_combo = QComboBox()
-        self.char_combo.addItem("Sample Warrior (ID: 1)", 1)
+        for char_id, char_state in self.simulator.current_state.character_states.items():
+            # Try to get character name from lore_data if available
+            char_name = f"Character {char_id.value}"
+            # Look for character in lore_data
+            for character in self.lore_data.characters:
+                if character.id == char_id:
+                    char_name = str(character.name)
+                    break
+            self.char_combo.addItem(f"{char_name} (ID: {char_id.value})", char_id.value)
+        
+        # Fallback if no characters found
+        if self.char_combo.count() == 0:
+            self.char_combo.addItem("Sample Warrior (ID: 1)", 1)
+        
+        self.char_combo.currentIndexChanged.connect(self._refresh_state_display)
         controls_layout.addRow("👤 Character:", self.char_combo)
 
         # Action selection
@@ -328,11 +341,25 @@ class ProgressionSimulatorTab(QWidget):
     def _refresh_state_display(self):
         """Refresh the current state display."""
         try:
-            char_id = EntityId(1)  # Sample character
+            # Get currently selected character
+            selected_char_id = self.char_combo.currentData()
+            if selected_char_id is None:
+                self.state_display.setPlainText("No character selected")
+                return
+                
+            char_id = EntityId(selected_char_id)
             state = self.simulator.current_state.get_character_state(char_id)
 
             if state:
-                state_text = f"""Character ID: {char_id.value}
+                # Get character name
+                char_name = f"Character {char_id.value}"
+                for character in self.lore_data.characters:
+                    if character.id == char_id:
+                        char_name = str(character.name)
+                        break
+                
+                state_text = f"""Character: {char_name}
+ID: {char_id.value}
 Time Point: {state.time_point}
 Level: {state.level.value if state.level else 'N/A'}
 Class: {state.character_class.value if state.character_class else 'N/A'}

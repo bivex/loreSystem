@@ -1,0 +1,23 @@
+world(w1).
+time_point(t0).
+character(c3).
+level(c3, 8, t0).
+has_class(c3, warrior).
+experience(c3, 800, t0).
+stat_value(c3, strength, 8, t0).
+stat_value(c3, agility, 6, t0).
+stat_value(c3, intellect, 5, t0).
+character(c4).
+level(c4, 7, t0).
+has_class(c4, warrior).
+experience(c4, 700, t0).
+stat_value(c4, strength, 16, t0).
+stat_value(c4, agility, 6, t0).
+stat_value(c4, intellect, 5, t0).
+character(c5).
+level(c5, 8, t0).
+has_class(c5, mage).
+experience(c5, 800, t0).
+stat_value(c5, strength, 8, t0).
+stat_value(c5, agility, 6, t0).
+stat_value(c5, intellect, 5, t0).

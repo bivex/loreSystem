@@ -1,0 +1,20 @@
+% Lore Axioms - Generated from LoreAxioms entity
+% World ID: 1
+
+class(warrior).
+class(mage).
+class(rogue).
+stat(strength).
+stat(intellect).
+stat(agility).
+max_stat(strength, 100).
+max_stat(intellect, 120).
+max_stat(agility, 90).
+uses_stat(warrior, strength).
+uses_stat(mage, intellect).
+uses_stat(rogue, agility).
+false :- has_class(C, mage), equip(C, heavy_armor, T).
+required_xp(1, 0).
+required_xp(2, 100).
+required_xp(3, 250).
+can_level_up(C, T) :- level(C, L, T), experience(C, XP, T), required_xp(L, R), XP >= R.
