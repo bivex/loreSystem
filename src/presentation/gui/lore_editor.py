@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QLabel, QMessageBox, QFileDialog, QGroupBox, QListWidget, QListWidgetItem,
     QDialog, QDialogButtonBox, QInputDialog, QSplitter, QFrame,
     QStatusBar, QMenuBar, QMenu, QToolBar, QProgressBar,
-    QSystemTrayIcon, QHeaderView, QStackedWidget
+    QSystemTrayIcon, QHeaderView, QStackedWidget, QSizePolicy
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
 from PyQt6.QtGui import (
@@ -2138,7 +2138,9 @@ class MainWindow(QMainWindow):
         tab_layout = QHBoxLayout()
         
         self.tab_list = QListWidget()
-        self.tab_list.setMaximumWidth(220)
+        self.tab_list.setMinimumWidth(180)
+        self.tab_list.setMaximumWidth(280)
+        self.tab_list.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.tab_list.setStyleSheet("""
             QListWidget {
                 background: #2b2b2b;
@@ -2166,6 +2168,7 @@ class MainWindow(QMainWindow):
         """)
         
         self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.stacked_widget.setStyleSheet("""
             QStackedWidget {
                 border: 2px solid #666;
@@ -2316,8 +2319,8 @@ class MainWindow(QMainWindow):
         # Set initial selection (skip first divider, select Worlds tab)
         self.tab_list.setCurrentRow(1)
 
-        tab_layout.addWidget(self.tab_list)
-        tab_layout.addWidget(self.stacked_widget)
+        tab_layout.addWidget(self.tab_list, 0)  # No stretch for tab list
+        tab_layout.addWidget(self.stacked_widget, 1)  # Stretch factor 1 for stacked widget
 
         main_layout.addLayout(tab_layout)
 
