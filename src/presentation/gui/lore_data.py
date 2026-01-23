@@ -38,6 +38,11 @@ from src.domain.entities.reward import Reward
 from src.domain.entities.purchase import Purchase
 from src.domain.entities.event_chain import EventChain
 from src.domain.entities.faction_membership import FactionMembership
+from src.domain.entities.lore_axioms import LoreAxioms
+from src.domain.entities.music_control import MusicControl
+from src.domain.entities.music_state import MusicState
+from src.domain.entities.progression_event import ProgressionEvent
+from src.domain.entities.progression_state import CharacterState
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, Description, CharacterName,
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
@@ -90,6 +95,13 @@ class LoreData:
         self.purchases: List[Purchase] = []
         self.event_chains: List[EventChain] = []
         self.faction_memberships: List[FactionMembership] = []
+
+        # Advanced entities
+        self.lore_axioms: List[LoreAxioms] = []
+        self.music_controls: List[MusicControl] = []
+        self.music_states: List[MusicState] = []
+        self.progression_events: List[ProgressionEvent] = []
+        self.character_states: List[CharacterState] = []
 
         self.tenant_id = TenantId(1)
         self._next_id = 1
@@ -374,7 +386,47 @@ class LoreData:
             object.__setattr__(tokenboard, 'id', self.get_next_id())
         self.tokenboards.remove(tokenboard)
         return tokenboard
-    
+
+    # Advanced entities methods
+    def add_lore_axioms(self, lore_axioms: LoreAxioms) -> LoreAxioms:
+        """Add lore axioms with generated ID."""
+        if lore_axioms.id is None:
+            object.__setattr__(lore_axioms, 'id', self.get_next_id())
+        self.lore_axioms.append(lore_axioms)
+        return lore_axioms
+
+    def add_music_control(self, music_control: MusicControl) -> MusicControl:
+        """Add music control with generated ID."""
+        if music_control.id is None:
+            object.__setattr__(music_control, 'id', self.get_next_id())
+        self.music_controls.append(music_control)
+        return music_control
+
+    def add_music_state(self, music_state: MusicState) -> MusicState:
+        """Add music state with generated ID."""
+        if music_state.id is None:
+            object.__setattr__(music_state, 'id', self.get_next_id())
+        self.music_states.append(music_state)
+        return music_state
+
+    def add_progression_event(self, progression_event: ProgressionEvent) -> ProgressionEvent:
+        """Add progression event."""
+        self.progression_events.append(progression_event)
+        return progression_event
+
+    def add_character_state(self, character_state: CharacterState) -> CharacterState:
+        """Add character state."""
+        self.character_states.append(character_state)
+        return character_state
+
+    def get_lore_axioms_by_world_id(self, world_id: EntityId) -> Optional[LoreAxioms]:
+        """Get lore axioms for a specific world."""
+        return next((la for la in self.lore_axioms if la.world_id == world_id), None)
+
+    def get_character_states(self, character_id: EntityId) -> List[CharacterState]:
+        """Get all states for a character."""
+        return [cs for cs in self.character_states if cs.character_id == character_id]
+
     def get_world_by_id(self, world_id: EntityId) -> Optional[World]:
         """Find world by ID."""
         return next((w for w in self.worlds if w.id == world_id), None)
@@ -426,6 +478,13 @@ class LoreData:
             'purchases': [self._purchase_to_dict(p) for p in self.purchases],
             'event_chains': [self._event_chain_to_dict(e) for e in self.event_chains],
             'faction_memberships': [self._faction_membership_to_dict(f) for f in self.faction_memberships],
+
+            # Advanced entities
+            'lore_axioms': [self._lore_axioms_to_dict(la) for la in self.lore_axioms],
+            'music_controls': [self._music_control_to_dict(mc) for mc in self.music_controls],
+            'music_states': [self._music_state_to_dict(ms) for ms in self.music_states],
+            'progression_events': [self._progression_event_to_dict(pe) for pe in self.progression_events],
+            'character_states': [self._character_state_to_dict(cs) for cs in self.character_states],
 
             'next_id': self._next_id
         }
@@ -480,6 +539,13 @@ class LoreData:
         self.purchases = [self._dict_to_purchase(p) for p in data.get('purchases', [])]
         self.event_chains = [self._dict_to_event_chain(e) for e in data.get('event_chains', [])]
         self.faction_memberships = [self._dict_to_faction_membership(f) for f in data.get('faction_memberships', [])]
+
+        # Advanced entities
+        self.lore_axioms = [self._dict_to_lore_axioms(la) for la in data.get('lore_axioms', [])]
+        self.music_controls = [self._dict_to_music_control(mc) for mc in data.get('music_controls', [])]
+        self.music_states = [self._dict_to_music_state(ms) for ms in data.get('music_states', [])]
+        self.progression_events = [self._dict_to_progression_event(pe) for pe in data.get('progression_events', [])]
+        self.character_states = [self._dict_to_character_state(cs) for cs in data.get('character_states', [])]
 
         self._next_id = data.get('next_id', 1)
     
@@ -1715,3 +1781,161 @@ class LoreData:
             'updated_at': membership.updated_at.value.isoformat(),
             'version': membership.version.value
         }
+
+    @staticmethod
+    def _lore_axioms_to_dict(lore_axioms: LoreAxioms) -> Dict:
+        return {
+            'id': lore_axioms.id.value if lore_axioms.id else None,
+            'tenant_id': lore_axioms.tenant_id.value,
+            'world_id': lore_axioms.world_id.value,
+            'axioms': [{
+                'axiom_type': axiom.axiom_type.value,
+                'predicate': axiom.predicate,
+                'parameters': axiom.parameters,
+                'description': axiom.description
+            } for axiom in lore_axioms.axioms],
+            'created_at': lore_axioms.created_at.value.isoformat(),
+            'updated_at': lore_axioms.updated_at.value.isoformat(),
+            'version': lore_axioms.version.value
+        }
+
+    @staticmethod
+    def _music_control_to_dict(music_control: MusicControl) -> Dict:
+        return {
+            'id': music_control.id.value if music_control.id else None,
+            'tenant_id': music_control.tenant_id.value,
+            'world_id': music_control.world_id.value,
+            'name': music_control.name,
+            'description': music_control.description.value,
+            'lore_state': music_control.lore_state,
+            'narrative_phase': music_control.narrative_phase.value if music_control.narrative_phase else None,
+            'emotional_tone': music_control.emotional_tone.value if music_control.emotional_tone else None,
+            'player_context': music_control.player_context.value if music_control.player_context else None,
+            'trigger_conditions': music_control.trigger_conditions,
+            'priority': music_control.priority
+        }
+
+    @staticmethod
+    def _music_state_to_dict(music_state: MusicState) -> Dict:
+        return {
+            'id': music_state.id.value if music_state.id else None,
+            'tenant_id': music_state.tenant_id.value,
+            'world_id': music_state.world_id.value,
+            'name': music_state.name,
+            'description': music_state.description.value,
+            'is_silence_moment': music_state.is_silence_moment,
+            'default_track_id': music_state.default_track_id.value if music_state.default_track_id else None,
+            'crossfade_duration_seconds': music_state.crossfade_duration_seconds,
+            'allow_interrupts': music_state.allow_interrupts,
+            'priority': music_state.priority,
+            'can_transition_to': music_state.can_transition_to
+        }
+
+    @staticmethod
+    def _progression_event_to_dict(progression_event: ProgressionEvent) -> Dict:
+        return {
+            'id': progression_event.id,
+            'tenant_id': progression_event.tenant_id.value,
+            'world_id': progression_event.world_id.value,
+            'character_id': progression_event.character_id.value,
+            'event_type': progression_event.event_type.value,
+            'from_time': progression_event.from_time,
+            'to_time': progression_event.to_time,
+            'description': progression_event.description,
+            'created_at': progression_event.created_at.value.isoformat(),
+            'reasons': [{'rule_reference': str(r)} for r in progression_event.reasons],
+            'effects': progression_event.effects
+        }
+
+    @staticmethod
+    def _character_state_to_dict(character_state: CharacterState) -> Dict:
+        return {
+            'character_id': character_state.character_id.value,
+            'time_point': character_state.time_point,
+            'created_at': character_state.created_at.value.isoformat(),
+            'level': character_state.level,
+            'character_class': character_state.character_class,
+            'experience': character_state.experience,
+            'stats': {k.value: v for k, v in character_state.stats.items()}
+        }
+
+    @staticmethod
+    def _dict_to_lore_axioms(data: Dict) -> LoreAxioms:
+        from src.domain.entities.lore_axioms import LoreAxiom, AxiomType
+        return LoreAxioms(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            axioms=[LoreAxiom(
+                axiom_type=AxiomType(axiom['axiom_type']),
+                predicate=axiom['predicate'],
+                parameters=axiom['parameters'],
+                description=axiom['description']
+            ) for axiom in data.get('axioms', [])],
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            updated_at=Timestamp.fromisoformat(data['updated_at']),
+            version=Version(data['version'])
+        )
+
+    @staticmethod
+    def _dict_to_music_control(data: Dict) -> MusicControl:
+        from src.domain.value_objects.common import NarrativePhase, EmotionalTone, PlayerContext
+        return MusicControl(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            lore_state=data.get('lore_state'),
+            narrative_phase=NarrativePhase(data['narrative_phase']) if data.get('narrative_phase') else None,
+            emotional_tone=EmotionalTone(data['emotional_tone']) if data.get('emotional_tone') else None,
+            player_context=PlayerContext(data['player_context']) if data.get('player_context') else None,
+            trigger_conditions=data.get('trigger_conditions'),
+            priority=data['priority']
+        )
+
+    @staticmethod
+    def _dict_to_music_state(data: Dict) -> MusicState:
+        return MusicState(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            description=Description(data['description']),
+            is_silence_moment=data['is_silence_moment'],
+            default_track_id=EntityId(data['default_track_id']) if data.get('default_track_id') else None,
+            crossfade_duration_seconds=data['crossfade_duration_seconds'],
+            allow_interrupts=data['allow_interrupts'],
+            priority=data['priority'],
+            can_transition_to=data.get('can_transition_to')
+        )
+
+    @staticmethod
+    def _dict_to_progression_event(data: Dict) -> ProgressionEvent:
+        from src.domain.value_objects.progression import EventType, RuleReference
+        return ProgressionEvent(
+            id=data['id'],
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            character_id=EntityId(data['character_id']),
+            event_type=EventType(data['event_type']),
+            from_time=data['from_time'],
+            to_time=data['to_time'],
+            description=data['description'],
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            reasons=[RuleReference(r['rule_reference']) for r in data.get('reasons', [])],
+            effects=data.get('effects', {})
+        )
+
+    @staticmethod
+    def _dict_to_character_state(data: Dict) -> CharacterState:
+        from src.domain.value_objects.progression import CharacterLevel, CharacterClass, ExperiencePoints, StatType, StatValue
+        return CharacterState(
+            character_id=EntityId(data['character_id']),
+            time_point=data['time_point'],
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            level=CharacterLevel(data['level']) if data.get('level') else None,
+            character_class=CharacterClass(data['character_class']) if data.get('character_class') else None,
+            experience=ExperiencePoints(data['experience']) if data.get('experience') else None,
+            stats={StatType(k): StatValue(v) for k, v in data.get('stats', {}).items()}
+        )

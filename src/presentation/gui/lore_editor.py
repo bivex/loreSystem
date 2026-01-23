@@ -126,6 +126,11 @@ from src.presentation.gui.tabs.pity_tab import PityTab
 from src.presentation.gui.tabs.player_profile_tab import PlayerProfileTab
 from src.presentation.gui.tabs.pull_tab import PullTab
 from src.presentation.gui.tabs.progression_simulator_tab import ProgressionSimulatorTab
+from src.presentation.gui.tabs.lore_axioms_tab import LoreAxiomsTab
+from src.presentation.gui.tabs.music_controls_tab import MusicControlsTab
+from src.presentation.gui.tabs.music_states_tab import MusicStatesTab
+from src.presentation.gui.tabs.progression_events_tab import ProgressionEventsTab
+from src.presentation.gui.tabs.progression_states_tab import ProgressionStatesTab
 
 
 # Import LoreData from separate module
@@ -2282,6 +2287,13 @@ class MainWindow(QMainWindow):
         # Progression Simulator
         self.progression_simulator_tab = ProgressionSimulatorTab(self.lore_data)
 
+        # New advanced tabs
+        self.lore_axioms_tab = LoreAxiomsTab(self.lore_data)
+        self.music_controls_tab = MusicControlsTab(self.lore_data)
+        self.music_states_tab = MusicStatesTab(self.lore_data)
+        self.progression_events_tab = ProgressionEventsTab(self.lore_data)
+        self.progression_states_tab = ProgressionStatesTab(self.lore_data)
+
         # Add to stacked widget and list with categorical dividers
         # Track mapping between list rows and widget indices (excluding dividers)
         self.tab_row_to_widget_index = {}
@@ -2355,9 +2367,12 @@ class MainWindow(QMainWindow):
         add_tab(self.tags_tab, I18N.t('tab.tags', "🏷️ Tags"))
         add_tab(self.notes_tab, I18N.t('tab.notes', "📝 Notes"))
         add_tab(self.requirements_tab, I18N.t('tab.requirements', "📋 Requirements"))
+        add_tab(self.lore_axioms_tab, I18N.t('tab.lore_axioms', "📜 Lore Axioms"))
         add_tab(self.sessions_tab, I18N.t('tab.sessions', "🎲 Sessions"))
         add_tab(self.tokenboards_tab, I18N.t('tab.tokenboards', "🎛️ Tokenboards"))
         add_tab(self.progression_simulator_tab, I18N.t('tab.progression_simulator', "📈 Progression Simulator"))
+        add_tab(self.progression_events_tab, I18N.t('tab.progression_events', "📈 Progression Events"))
+        add_tab(self.progression_states_tab, I18N.t('tab.progression_states', "📊 Progression States"))
 
         # Player Management
         add_divider("Player Management")
@@ -2367,6 +2382,8 @@ class MainWindow(QMainWindow):
         add_divider("Audio & Media")
         add_tab(self.music_theme_tab, I18N.t('tab.themes', "🎵 Music Themes"))
         add_tab(self.music_track_tab, I18N.t('tab.tracks', "🎶 Music Tracks"))
+        add_tab(self.music_controls_tab, I18N.t('tab.music_controls', "🎵 Music Controls"))
+        add_tab(self.music_states_tab, I18N.t('tab.music_states', "🎼 Music States"))
         add_tab(self.inspirations_tab, I18N.t('tab.inspirations', "💡 Inspiration"))
 
         # Set initial selection (skip first divider, select Worlds tab)
