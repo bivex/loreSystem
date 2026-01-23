@@ -243,19 +243,103 @@ python3 run_gui.py
 
 See [GUI Quick Start Guide](QUICKSTART_GUI.md) for detailed tutorial.
 
+## System Capabilities
+
+MythWeave provides comprehensive lore management with:
+
+### Domain Modeling
+- **Rich Entity Relationships**: Complex interconnections between worlds, characters, events, and factions
+- **Temporal Tracking**: Full timeline management with event sequencing and dependencies
+- **Validation Framework**: Domain-driven validation ensuring lore consistency
+- **Version Control Integration**: Git-based versioning for collaborative lore development
+
+### Advanced Game Mechanics
+- **Gacha Systems**: Complete banner, pity, and pull mechanics for character collection games
+- **Economy Simulation**: Multi-currency systems with shops, purchases, and rewards
+- **Progression Systems**: Character advancement with state tracking and milestone events
+- **Faction Dynamics**: Political systems with reputations, memberships, and relationships
+
+### Content Management
+- **Multimedia Support**: Images, audio tracks, and rich text content
+- **Template System**: Reusable content templates for consistent world-building
+- **Tagging & Organization**: Hierarchical organization with tags and categories
+- **Search & Discovery**: Full-text search across all lore content
+
+### Technical Architecture
+- **Event Sourcing**: All changes tracked as domain events for audit and replay
+- **Multi-tenant Support**: Isolated game worlds and campaigns
+- **Scalable Persistence**: SQL for transactions, Elasticsearch for search
+- **API-Ready Design**: Clean architecture supporting future API development
+
 ## GUI Features
 
-MythWeave includes a PyQt6-based graphical editor:
+MythWeave includes a comprehensive PyQt6-based graphical editor with modern UI/UX:
 
-- **Worlds Management**: Create, edit, delete game worlds
-- **Characters Management**: Add characters with abilities and backstories
-- **Events Management**: Create timeline events with participants and outcomes
-- **Improvements System**: Propose and manage lore enhancements with workflow
-- **Abilities System**: Manage character powers with 1-10 power levels
-- **Load/Save**: JSON-based persistence for quick prototyping
-- **Validation**: Real-time enforcement of domain rules
+### Core Lore Management
+- **Worlds Management**: Create, edit, delete game worlds with descriptions and versioning
+- **Characters Management**: Add characters with detailed backstories, abilities, and relationships
+- **Events Management**: Create timeline events with participants, outcomes, and story impact
+- **Items Management**: Manage game items with rarity levels, types, and properties
+- **Quests Management**: Design quests with objectives, rewards, and progression tracking
+- **Storylines Management**: Organize narrative arcs connecting events and quests
+- **Stories Management**: Write and manage individual story entries with rich content
+- **Improvements System**: Propose and manage lore enhancements with validation workflow
 
-See [GUI Documentation](src/presentation/gui/README.md) for details.
+### Content Creation Tools
+- **Pages Management**: Create structured content pages for documentation
+- **Templates Management**: Design reusable templates for consistent content creation
+- **Choices Management**: Build interactive choice systems for branching narratives
+- **Flowcharts Management**: Visualize complex story flows and decision trees
+- **Handouts Management**: Create player handouts and reference materials
+- **Inspirations Management**: Collect and organize creative inspiration sources
+- **Notes Management**: Maintain organized notes with categorization
+- **Tags Management**: Tag and categorize all content for easy searching
+- **Images Management**: Manage image assets with metadata and organization
+
+### World Building
+- **Locations Management**: Define geographical locations with descriptions and connections
+- **World Map Integration**: Visual world mapping with location relationships
+- **Factions Management**: Create political factions with reputations and relationships
+- **Character Relationships**: Map complex character interactions and alliances
+- **Faction Memberships**: Track character affiliations and faction dynamics
+
+### Economy & Gacha Systems
+- **Shops Management**: Design in-game shops with inventory and pricing
+- **Currencies Management**: Define multiple currency types and exchange rates
+- **Banners Management**: Create gacha banners with character pools and rates
+- **Pity Systems**: Implement pity timers and guaranteed pulls
+- **Pull Systems**: Manage gacha pull mechanics and probabilities
+- **Purchases Management**: Track player purchases and transaction history
+- **Rewards Management**: Design reward systems and distribution mechanics
+- **Player Profiles**: Manage player accounts and progression data
+
+### Event & Progression Systems
+- **Event Chains**: Create interconnected event sequences with dependencies
+- **Progression Simulator**: Test and simulate player progression paths
+- **Progression Events**: Define milestone events and achievements
+- **Progression States**: Track character state changes and evolution
+
+### Audio & Media Integration
+- **Music Themes**: Organize music by thematic categories and moods
+- **Music Tracks**: Manage individual music files with metadata
+- **Music Controls**: Real-time music playback and control systems
+- **Music States**: Dynamic music state management for adaptive audio
+
+### Advanced Features
+- **Lore Axioms**: Define fundamental rules and constraints for your world
+- **Requirements Management**: Set up validation rules and business constraints
+- **Sessions Management**: Track gaming sessions and campaign progress
+- **Tokenboards**: Visual token management for tabletop gaming integration
+
+### Technical Features
+- **JSON Persistence**: Load/save complete lore systems as JSON files
+- **Real-time Validation**: Immediate feedback on domain rule violations
+- **Search & Filter**: Powerful search across all entities with filtering
+- **Modern UI**: Dark theme with intuitive navigation and tabbed interface
+- **Sample Data**: Pre-loaded examples for quick exploration
+- **Export/Import**: Easy data portability and backup capabilities
+
+See [GUI Quick Start Guide](QUICKSTART_GUI.md) for detailed tutorials and [GUI Documentation](src/presentation/gui/README.md) for technical details.
 
 ```bash
 # Linux/macOS: Launch GUI (easiest way)
