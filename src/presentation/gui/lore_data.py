@@ -1329,7 +1329,7 @@ class LoreData:
             tenant_id=TenantId(1),
             name=data['name'],
             description=Description(data['description']),
-            shop_type=ShopType(data['type']),
+            shop_type=ShopType(data.get('shop_type', data.get('type', 'general'))),
             items=[],
             is_active=data.get('is_active', True),
             start_date=None,

@@ -4,6 +4,7 @@ PyQt6 GUI Application for MythWeave System
 Main window with tabs for managing worlds, characters, and events.
 Enhanced UI/UX with modern styling, icons, and improved user experience.
 """
+import os
 import sys
 import json
 from pathlib import Path
@@ -1876,10 +1877,13 @@ class MainWindow(QMainWindow):
         self.resize(1400, 900)
         self._setup_shortcuts()
 
-        # Auto-load sample data
-        sample_path = Path(__file__).parent.parent.parent / 'examples' / 'sample_dark_fantasy_gacha_ru.json'
-        if sample_path.exists():
-            self._load_file_by_path(str(sample_path), show_message=False)
+        # Auto-load sample data (skip in test environments)
+        import sys
+        is_testing = 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ
+        if not is_testing:
+            sample_path = Path(__file__).parent.parent.parent / 'examples' / 'sample_dark_fantasy_gacha_ru.json'
+            if sample_path.exists():
+                self._load_file_by_path(str(sample_path), show_message=False)
 
     def _setup_style(self):
         """Setup modern dark theme styling."""
@@ -2413,8 +2417,11 @@ class MainWindow(QMainWindow):
         # Initialize header status
         self._update_header_status()
         
-        # Check for sample data on startup
-        QTimer.singleShot(1000, self._check_for_sample_data)  # Delay to ensure UI is fully loaded
+        # Check for sample data on startup (skip in test environments)
+        import sys
+        is_testing = 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ
+        if not is_testing:
+            QTimer.singleShot(1000, self._check_for_sample_data)  # Delay to ensure UI is fully loaded
 
     def _set_locale(self, locale: str):
         """Set application locale and update UI texts."""
