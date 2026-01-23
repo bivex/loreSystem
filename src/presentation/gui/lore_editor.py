@@ -2091,48 +2091,110 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(10)
         central_widget.setLayout(main_layout)
 
-        # Header with gradient background
+        # Optimized header with integrated search and status
         header_frame = QFrame()
         header_frame.setFrameStyle(QFrame.Shape.NoFrame)
+        header_frame.setMaximumHeight(80)  # Compact height
         header_frame.setStyleSheet("""
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #4a4a4a, stop:0.5 #5a5a5a, stop:1 #4a4a4a);
-            border-radius: 10px;
-            padding: 10px;
+                stop:0 #2a2a2a, stop:0.3 #3a3a3a, stop:0.7 #3a3a3a, stop:1 #2a2a2a);
+            border: 1px solid #555;
+            border-radius: 8px;
         """)
 
-        header_layout = QVBoxLayout()
-        header_layout.setContentsMargins(20, 10, 20, 10)
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(15, 8, 15, 8)
+        header_layout.setSpacing(15)
 
-        title_label = QLabel("🎮 MythWeave Chronicles")
-        title_label.setFont(QFont("Arial", 24, QFont.Weight.Bold))
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("color: #fff; font-weight: bold;")
+        # Left section - Title and subtitle
+        title_layout = QVBoxLayout()
+        title_layout.setSpacing(2)
 
-        subtitle_label = QLabel("Master your world's lore with powerful tools")
-        subtitle_label.setFont(QFont("Arial", 12))
-        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle_label.setStyleSheet("color: #ccc;")
+        title_label = QLabel("🎮 MythWeave")
+        title_label.setFont(QFont("Arial", 18, QFont.Weight.Bold))
+        title_label.setStyleSheet("color: #fff; font-weight: bold; margin: 0px;")
 
-        header_layout.addWidget(title_label)
-        header_layout.addWidget(subtitle_label)
-        header_frame.setLayout(header_layout)
+        subtitle_label = QLabel("Lore Management System")
+        subtitle_label.setFont(QFont("Arial", 9))
+        subtitle_label.setStyleSheet("color: #aaa; margin: 0px;")
 
-        main_layout.addWidget(header_frame)
+        title_layout.addWidget(title_label)
+        title_layout.addWidget(subtitle_label)
+        title_layout.addStretch()
 
-        # Search bar
+        # Center section - Search bar
         search_layout = QHBoxLayout()
-        search_label = QLabel("🔍 Quick Search:")
-        search_label.setStyleSheet("color: #ddd; font-weight: bold;")
+        search_layout.setSpacing(8)
+
+        search_icon = QLabel("🔍")
+        search_icon.setStyleSheet("color: #888; font-size: 12px;")
+
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText(I18N.t('search.placeholder', "Search across all entities..."))
+        self.search_input.setPlaceholderText(I18N.t('search.placeholder', "Search entities..."))
+        self.search_input.setMaximumWidth(300)
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                background: #1a1a1a;
+                color: #ddd;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #777;
+                background: #2a2a2a;
+            }
+        """)
         self.search_input.textChanged.connect(self._on_search_text_changed)
 
-        search_layout.addWidget(search_label)
+        search_layout.addWidget(search_icon)
         search_layout.addWidget(self.search_input)
         search_layout.addStretch()
 
-        main_layout.addLayout(search_layout)
+        # Right section - Status and quick actions
+        status_layout = QHBoxLayout()
+        status_layout.setSpacing(10)
+
+        # World indicator
+        self.world_indicator = QLabel("🌍 No World")
+        self.world_indicator.setStyleSheet("color: #888; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+        self.world_indicator.setMinimumWidth(100)
+
+        # Character count
+        self.char_count_label = QLabel("👥 0")
+        self.char_count_label.setStyleSheet("color: #888; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+
+        # Quick save button
+        save_btn = QPushButton("💾")
+        save_btn.setToolTip("Quick Save")
+        save_btn.setMaximumWidth(30)
+        save_btn.setStyleSheet("""
+            QPushButton {
+                background: #2a4a2a;
+                color: #fff;
+                border: 1px solid #4a6a4a;
+                border-radius: 4px;
+                padding: 2px;
+                font-size: 10px;
+            }
+            QPushButton:hover {
+                background: #3a5a3a;
+            }
+        """)
+        save_btn.clicked.connect(self._quick_save)
+
+        status_layout.addWidget(self.world_indicator)
+        status_layout.addWidget(self.char_count_label)
+        status_layout.addWidget(save_btn)
+
+        # Add sections to header
+        header_layout.addLayout(title_layout)
+        header_layout.addLayout(search_layout, 1)  # Stretch factor 1 for center expansion
+        header_layout.addLayout(status_layout)
+
+        header_frame.setLayout(header_layout)
+        main_layout.addWidget(header_frame)
 
         # Tabs with enhanced styling - using list and stacked widget for better readability
         tab_layout = QHBoxLayout()
@@ -2339,6 +2401,9 @@ class MainWindow(QMainWindow):
 
         # Connect signals
         self.worlds_tab.world_selected.connect(self._on_world_selected)
+        
+        # Initialize header status
+        self._update_header_status()
         
         # Check for sample data on startup
         QTimer.singleShot(1000, self._check_for_sample_data)  # Delay to ensure UI is fully loaded
@@ -2969,6 +3034,9 @@ class MainWindow(QMainWindow):
             # Update window title
             self.setWindowTitle(f"🎮 MythWeave - {Path(file_path).name}")
 
+            # Update header status after loading
+            self._update_header_status()
+
             if show_message:
                 # Build detailed entity report
                 entity_report = '\n'.join([
@@ -3027,7 +3095,59 @@ class MainWindow(QMainWindow):
         self.sessions_tab.refresh()
         self.tokenboards_tab.refresh()
         self.progression_simulator_tab.refresh()
+        self._update_header_status()
 
+    def _update_header_status(self):
+        """Update header status indicators."""
+        try:
+            # Update world indicator
+            if self.lore_data.worlds:
+                current_world = self.lore_data.worlds[0]  # For now, show first world
+                self.world_indicator.setText(f"🌍 {current_world.name.value[:15]}...")
+                self.world_indicator.setStyleSheet("color: #4a9eff; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+            else:
+                self.world_indicator.setText("🌍 No World")
+                self.world_indicator.setStyleSheet("color: #888; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+
+            # Update character count
+            char_count = len(self.lore_data.characters)
+            self.char_count_label.setText(f"👥 {char_count}")
+            if char_count > 0:
+                self.char_count_label.setStyleSheet("color: #4ae54a; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+            else:
+                self.char_count_label.setStyleSheet("color: #888; font-size: 10px; padding: 2px 6px; background: #1a1a1a; border-radius: 3px;")
+
+        except Exception as e:
+            # Silently handle errors in status updates
+            pass
+
+    def _quick_save(self):
+        """Perform a quick save operation."""
+        try:
+            if hasattr(self, 'current_project_path') and self.current_project_path:
+                self._save_project(self.current_project_path, show_message=False)
+                # Briefly highlight the save button
+                save_btn = self.sender()
+                original_style = save_btn.styleSheet()
+                save_btn.setStyleSheet("""
+                    QPushButton {
+                        background: #4a6a2a;
+                        color: #fff;
+                        border: 1px solid #6a8a4a;
+                        border-radius: 4px;
+                        padding: 2px;
+                        font-size: 10px;
+                    }
+                """)
+                QTimer.singleShot(500, lambda: save_btn.setStyleSheet(original_style))
+            else:
+                self._save_project(show_message=True)
+        except Exception as e:
+            QMessageBox.warning(self, "Save Error", f"Failed to save: {e}")
+
+    def _on_world_selected(self, world_id: EntityId):
+        """Handle world selection."""
+        self._update_header_status()
 
 def main():
     """Main entry point."""
