@@ -6,7 +6,7 @@
 **Date:** January 23, 2026  
 **Authors:** MythWeave Development Team  
 **Revision History:**  
-- v1.0 (January 23, 2026): Initial ISO/IEC/IEEE 26514-compliant structure
+- v1.0 (January 23, 2026): Initial structure
 
 ## Introduction
 - **Purpose:** This guide helps users install, configure, use, and troubleshoot MythWeave Chronicles.

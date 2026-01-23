@@ -1,6 +1,6 @@
 # MythWeave Documentation Index
 
-This documentation set is organized according to ISO/IEC/IEEE 26514 for system and software user documentation.
+This documentation set is organized for system and software user documentation.
 
 ## Table of Contents
 
@@ -38,4 +38,4 @@ This documentation set is organized according to ISO/IEC/IEEE 26514 for system a
 
 ---
 
-This structure ensures compliance with ISO/IEC/IEEE 26514 and supports maintainable, user-friendly documentation for all roles.
+This structure supports maintainable, user-friendly documentation for all roles.
