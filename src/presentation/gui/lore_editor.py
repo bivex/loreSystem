@@ -3124,8 +3124,8 @@ class MainWindow(QMainWindow):
     def _quick_save(self):
         """Perform a quick save operation."""
         try:
-            if hasattr(self, 'current_project_path') and self.current_project_path:
-                self._save_project(self.current_project_path, show_message=False)
+            if hasattr(self, 'current_file') and self.current_file:
+                self._save_file()
                 # Briefly highlight the save button
                 save_btn = self.sender()
                 original_style = save_btn.styleSheet()
@@ -3141,7 +3141,7 @@ class MainWindow(QMainWindow):
                 """)
                 QTimer.singleShot(500, lambda: save_btn.setStyleSheet(original_style))
             else:
-                self._save_project(show_message=True)
+                self._save_file_as()
         except Exception as e:
             QMessageBox.warning(self, "Save Error", f"Failed to save: {e}")
 
