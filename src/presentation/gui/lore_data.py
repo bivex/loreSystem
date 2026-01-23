@@ -109,7 +109,7 @@ class LoreData:
     def get_next_id(self) -> EntityId:
         """Generate next entity ID."""
         entity_id = EntityId(self._next_id)
-        self._next_id -= 1
+        self._next_id += 1
         return entity_id
     
     def add_world(self, world: World) -> World:
