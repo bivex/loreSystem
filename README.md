@@ -18,8 +18,9 @@ All user and technical documentation for MythWeave is now located in the [docs/]
 - **Platform-Specific:** [docs/platform/](docs/platform/)
 
 
+
 ## SEO Keywords
 
-software user documentation, user guide standard, technical writing best practices, concept of operations, software installation guide, software uninstallation instructions, documentation compliance, documentation audit, software help system, user assistance design, task-based procedures, troubleshooting documentation, agile documentation, CI/CD documentation, mobile app documentation, API user documentation, documentation structure template, international documentation standard, usability in documentation.
+lore management system, game lore editor, worldbuilding software, narrative design tool, RPG campaign manager, gacha game backend, progression simulator, character progression tracking, PyQt6 GUI app, JSON lore export, game design documentation, interactive story platform, event-driven narrative, multi-tenant game system, game data validation, lore version control, collaborative worldbuilding, game content management, RPG toolkit, digital storytelling, game narrative software, lore database, game world editor, player progression analytics, game event timeline, cross-platform game tool, game development utilities, creative writing software, campaign planning tool, adventure game editor, game lore backup, lore import export, game design workflow, story-driven game tools.
 
 This structure supports maintainable, user-friendly documentation for all roles.
