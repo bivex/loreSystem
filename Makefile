@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e lint format type-check clean db-init db-migrate db-downgrade es-init run-tests
+.PHONY: help install install-dev test test-unit test-integration test-e2e mutation-test lint format type-check clean db-init db-migrate db-downgrade es-init run-tests
 
 # Colors for output
 BLUE=\033[0;34m
@@ -41,6 +41,11 @@ test-e2e: ## Run end-to-end tests only
 	@echo "$(BLUE)Running E2E tests...$(NC)"
 	pytest tests/e2e/ -v -m e2e
 	@echo "$(GREEN)✓ E2E tests complete$(NC)"
+
+mutation-test: ## Run mutation testing to find test coverage gaps
+	@echo "$(BLUE)Running mutation tests...$(NC)"
+	python mutation_tester.py
+	@echo "$(GREEN)✓ Mutation testing complete$(NC)"
 
 lint: ## Run linters
 	@echo "$(BLUE)Running linters...$(NC)"

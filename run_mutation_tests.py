@@ -65,9 +65,14 @@ def main():
     subprocess.run([sys.executable, "-m", "mutmut", "results"])
     
     print("\n✅ Mutation testing complete!")
-    print("\nTo investigate specific mutations:")
-    print("  python -m mutmut show <mutation_id>")
-    print("  python -m mutmut apply <mutation_id>  # Apply mutation to see the change")
+    print("\nNext steps:")
+    print("  - Run 'python mutation_tester.py' for detailed analysis")
+    print("  - Check mutation score and review any surviving mutations")
+    print("  - Strengthen tests for any gaps found")
+    print("\nFor other modules:")
+    print("  - Update mutation_tester.py to test different files")
+    print("  - Add more comprehensive test suites first")
+    print("  - Focus on critical business logic modules")
 
 if __name__ == "__main__":
     main()

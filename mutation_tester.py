@@ -180,24 +180,54 @@ class MutationTester:
         self.print_summary()
     
     def print_summary(self):
-        """Print mutation testing summary."""
-        print("\n" + "=" * 60)
+        """Print mutation testing summary with mutation score."""
+        total = len(self.mutations_found)
+        caught = len(self.mutations_caught)
+        survived = len(self.mutations_survived)
+
+        # Calculate mutation score (industry standard metric)
+        mutation_score = (caught / total * 100) if total > 0 else 0
+
+        print("\n" + "=" * 70)
         print("MUTATION TESTING SUMMARY")
-        print("=" * 60)
-        print(f"Total mutations tested: {len(self.mutations_found)}")
-        print(f"Mutations caught by tests: {len(self.mutations_caught)}")
-        print(f"Mutations that survived: {len(self.mutations_survived)}")
-        
+        print("=" * 70)
+        print(f"Total mutations tested: {total}")
+        print(f"Mutations caught by tests: {caught}")
+        print(f"Mutations survived: {survived}")
+        print(f"Mutation Score: {mutation_score:.1f}%")
+        if mutation_score >= 90:
+            print("Grade: A (Excellent test coverage)")
+        elif mutation_score >= 75:
+            print("Grade: B (Good test coverage)")
+        elif mutation_score >= 60:
+            print("Grade: C (Adequate test coverage)")
+        else:
+            print("Grade: D/F (Poor test coverage - needs improvement)")
+
         if self.mutations_survived:
-            print("\n[WARNING] GAPS IN TEST COVERAGE FOUND:")
-            print("-" * 60)
+            print("\n[CRITICAL] TEST COVERAGE GAPS FOUND:")
+            print("-" * 70)
+            print("These mutations survived, indicating missing or weak tests:")
             for mut_id in self.mutations_survived:
                 mut = next(m for m in self.mutations_found if m['id'] == mut_id)
                 print(f"\nMutation {mut_id}: {mut['description']}")
                 print(f"  Line {mut['line']}: {mut['old']} -> {mut['new']}")
-                print(f"  [WARNING] This mutation was NOT caught by tests!")
+                print(f"  [CRITICAL] This mutation was NOT caught by tests!")
+                print("  -> Add tests that would fail with this change")
         else:
             print("\n[SUCCESS] All mutations were caught by tests!")
+            print("  -> Test suite has excellent behavioral coverage")
+
+        print(f"\n{'=' * 70}")
+        print("RECOMMENDATIONS:")
+        if mutation_score < 90:
+            print("- Review surviving mutations and strengthen tests")
+            print("- Consider assertion amplification for better coverage")
+            print("- Add edge case tests for uncovered scenarios")
+        else:
+            print("- Excellent mutation score! Consider testing other modules")
+            print("- Review periodically to maintain high coverage")
+        print(f"{'=' * 70}")
         
         print("\n" + "=" * 60)
 

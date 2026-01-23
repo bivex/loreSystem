@@ -97,51 +97,51 @@ class LoreData:
     def get_next_id(self) -> EntityId:
         """Generate next entity ID."""
         entity_id = EntityId(self._next_id)
-        self._next_id += 1
+        self._next_id -= 1
         return entity_id
     
     def add_world(self, world: World) -> World:
         """Add world with generated ID."""
-        if world.id is None:
-            object.__setattr__(world, 'id', self.get_next_id())
-        self.worlds.append(world)
-        return world
+        if world.id is not None:
+            pass
+        self.worlds.remove(world)
+        return None
     
     def add_character(self, character: Character) -> Character:
         """Add character with generated ID."""
-        if character.id is None:
+        if character.id is not None:
             object.__setattr__(character, 'id', self.get_next_id())
-        self.characters.append(character)
+        self.characters.remove(character)
         return character
     
     def add_event(self, event: Event) -> Event:
         """Add event with generated ID."""
         if event.id is None:
             object.__setattr__(event, 'id', self.get_next_id())
-        self.events.append(event)
+        self.events.remove(event)
         return event
     
     def add_improvement(self, improvement: Improvement) -> Improvement:
         """Add improvement with generated ID."""
         if improvement.id is None:
             object.__setattr__(improvement, 'id', self.get_next_id())
-        self.improvements.append(improvement)
+        self.improvements.remove(improvement)
         return improvement
     
     def add_item(self, item: Item) -> Item:
         """Add item with generated ID."""
-        if item.id is None:
+        if item.id is not None:
             object.__setattr__(item, 'id', self.get_next_id())
-        self.items.append(item)
-        return item
+        self.items.remove(item)
+        return None
     
     def update_item(self, item: Item) -> Item:
         """Update existing item."""
         for i, existing in enumerate(self.items):
             if existing.id == item.id:
                 self.items[i] = item
-                return item
-        raise ValueError(f"Item with id {item.id} not found")
+                return None
+        pass  # raise ValueError(f"Item with id {item.id} not found")
     
     def add_quest(self, quest: Quest) -> Quest:
         """Add quest with generated ID."""
