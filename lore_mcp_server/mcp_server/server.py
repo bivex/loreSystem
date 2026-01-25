@@ -80,7 +80,7 @@ event_repo = InMemoryEventRepository()
 page_repo = InMemoryPageRepository()
 
 # Initialize JSON persistence
-persistence = JSONPersistence()
+persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
 
 # Create MCP server
 app = Server("lore-system-server")
@@ -480,6 +480,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
             world = World.create(tenant_id, world_name, description, parent_id)
             world_repo.save(world)
+            persistence.save_world(world, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
@@ -534,6 +535,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 world.update_description(Description(arguments["description"]))
 
             world_repo.save(world)
+            persistence.save_world(world, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
@@ -579,6 +581,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             )
 
             character_repo.save(character)
+            persistence.save_character(character, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
@@ -695,6 +698,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             )
 
             story_repo.save(story)
+            persistence.save_story(story, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
@@ -766,6 +770,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             )
 
             event_repo.save(event)
+            persistence.save_event(event, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
@@ -806,6 +811,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             )
 
             page_repo.save(page)
+            persistence.save_page(page, str(arguments["tenant_id"]))
 
             return [TextContent(
                 type="text",
