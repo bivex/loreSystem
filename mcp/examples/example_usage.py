@@ -11,11 +11,12 @@ import asyncio
 from pathlib import Path
 import sys
 
-# Add parent to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path (loreSystem directory)
+# __file__ is mcp/examples/example_usage.py, so parent.parent.parent is loreSystem/
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import the server
-from mcp.server import call_tool
+from mcp.src.server import call_tool
 
 
 async def demo_lore_system():

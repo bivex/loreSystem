@@ -15,8 +15,9 @@ from typing import Any, Optional
 from datetime import datetime
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path for imports (loreSystem directory)
+# __file__ is mcp/src/server.py, so parent.parent.parent is loreSystem/
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -63,7 +64,7 @@ from src.infrastructure.in_memory_repositories import (
 )
 
 # Import persistence layer
-from persistence import JSONPersistence
+from mcp.src.persistence import JSONPersistence
 
 # Initialize repositories (in production, use PostgreSQL repositories)
 world_repo = InMemoryWorldRepository()

@@ -8,8 +8,9 @@ This tests basic functionality without needing an MCP client.
 import sys
 from pathlib import Path
 
-# Add parent to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path (loreSystem directory)
+# __file__ is mcp/tests/test_server.py, so parent.parent.parent is loreSystem/
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 def test_imports():
     """Test that all required modules can be imported."""
