@@ -8,27 +8,33 @@ Provides MCP tools and resources for managing game lore including:
 - Multi-tenant support
 """
 
-import asyncio
-import json
-import sys
-from typing import Any, Optional
-from datetime import datetime
-from pathlib import Path
-
-# Add project root to path for imports (loreSystem directory)
-# __file__ is mcp/src/server.py, so parent.parent.parent is loreSystem/
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
+# CRITICAL: Import MCP library FIRST before manipulating sys.path
+# This ensures we get the pip package, not the local 'mcp' folder
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
     Tool,
     TextContent,
     ImageContent,
+    ImageContent,
     EmbeddedResource,
     INVALID_PARAMS,
     INTERNAL_ERROR,
 )
+
+# NOW we can add loreSystem to path for domain imports
+import sys
+from pathlib import Path
+
+lore_system_root = str(Path(__file__).parent.parent.parent)
+if lore_system_root not in sys.path:
+    sys.path.insert(0, lore_system_root)  # Insert at beginning for priority
+
+# Import standard libraries
+import asyncio
+import json
+from typing import Any, Optional
+from datetime import datetime
 
 # Import domain entities and value objects
 from src.domain.entities.world import World
