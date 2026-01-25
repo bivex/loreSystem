@@ -211,3 +211,159 @@ class InMemoryCharacterRepository(ICharacterRepository):
 
     def exists(self, tenant_id: TenantId, world_id: EntityId, name: CharacterName) -> bool:
         return (tenant_id, world_id, name) in self._names
+
+
+class InMemoryStoryRepository:
+    """In-memory implementation of Story repository for testing."""
+
+    def __init__(self):
+        self._stories: Dict[Tuple[TenantId, EntityId], "Story"] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, story: "Story") -> "Story":
+        from src.domain.entities.story import Story
+
+        if story.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(story, 'id', new_id)
+
+        key = (story.tenant_id, story.id)
+        self._stories[key] = story
+
+        world_key = (story.tenant_id, story.world_id)
+        if story.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(story.id)
+
+        return story
+
+    def find_by_id(self, tenant_id: TenantId, story_id: EntityId) -> Optional["Story"]:
+        return self._stories.get((tenant_id, story_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List["Story"]:
+        world_key = (tenant_id, world_id)
+        story_ids = self._by_world.get(world_key, [])
+        stories = []
+        for story_id in story_ids[offset:offset + limit]:
+            story = self._stories.get((tenant_id, story_id))
+            if story:
+                stories.append(story)
+        return stories
+
+    def delete(self, tenant_id: TenantId, story_id: EntityId) -> bool:
+        key = (tenant_id, story_id)
+        if key not in self._stories:
+            return False
+
+        story = self._stories[key]
+        world_key = (tenant_id, story.world_id)
+        if story_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(story_id)
+
+        del self._stories[key]
+        return True
+
+
+class InMemoryEventRepository:
+    """In-memory implementation of Event repository for testing."""
+
+    def __init__(self):
+        self._events: Dict[Tuple[TenantId, EntityId], "Event"] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, event: "Event") -> "Event":
+        from src.domain.entities.event import Event
+
+        if event.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(event, 'id', new_id)
+
+        key = (event.tenant_id, event.id)
+        self._events[key] = event
+
+        world_key = (event.tenant_id, event.world_id)
+        if event.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(event.id)
+
+        return event
+
+    def find_by_id(self, tenant_id: TenantId, event_id: EntityId) -> Optional["Event"]:
+        return self._events.get((tenant_id, event_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List["Event"]:
+        world_key = (tenant_id, world_id)
+        event_ids = self._by_world.get(world_key, [])
+        events = []
+        for event_id in event_ids[offset:offset + limit]:
+            event = self._events.get((tenant_id, event_id))
+            if event:
+                events.append(event)
+        return events
+
+    def delete(self, tenant_id: TenantId, event_id: EntityId) -> bool:
+        key = (tenant_id, event_id)
+        if key not in self._events:
+            return False
+
+        event = self._events[key]
+        world_key = (event.tenant_id, event.world_id)
+        if event_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(event_id)
+
+        del self._events[key]
+        return True
+
+
+class InMemoryPageRepository:
+    """In-memory implementation of Page repository for testing."""
+
+    def __init__(self):
+        self._pages: Dict[Tuple[TenantId, EntityId], "Page"] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, page: "Page") -> "Page":
+        from src.domain.entities.page import Page
+
+        if page.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(page, 'id', new_id)
+
+        key = (page.tenant_id, page.id)
+        self._pages[key] = page
+
+        world_key = (page.tenant_id, page.world_id)
+        if page.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(page.id)
+
+        return page
+
+    def find_by_id(self, tenant_id: TenantId, page_id: EntityId) -> Optional["Page"]:
+        return self._pages.get((tenant_id, page_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List["Page"]:
+        world_key = (tenant_id, world_id)
+        page_ids = self._by_world.get(world_key, [])
+        pages = []
+        for page_id in page_ids[offset:offset + limit]:
+            page = self._pages.get((tenant_id, page_id))
+            if page:
+                pages.append(page)
+        return pages
+
+    def delete(self, tenant_id: TenantId, page_id: EntityId) -> bool:
+        key = (tenant_id, page_id)
+        if key not in self._pages:
+            return False
+
+        page = self._pages[key]
+        world_key = (page.tenant_id, page.world_id)
+        if page_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(page_id)
+
+        del self._pages[key]
+        return True
