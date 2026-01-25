@@ -5,14 +5,13 @@ Organized structure for the Lore System MCP Server.
 ## 📁 Directory Layout
 
 ```
-mcp/
-├── 📄 server.py                 # Main entry point
+lore_mcp_server/
+├── 📄 run_server.py             # Main entry point
 ├── 📄 config.json               # Configuration
 ├── 📄 requirements.txt          # Python dependencies
 ├── 📄 README.md                 # Project overview
-├── 📄 __init__.py               # Package marker
 │
-├── 📂 src/                      # Source code
+├── 📂 mcp_server/               # Source code
 │   ├── __init__.py
 │   ├── server.py               # MCP server implementation (22 tools)
 │   └── persistence.py          # JSON persistence layer
@@ -48,9 +47,9 @@ mcp/
 
 ### Root Level
 
-**server.py** - Main entry point that imports and runs `src.server.main()`
-- Run with: `python3 server.py`
-- Configured in Claude Desktop config
+**run_server.py** - Main entry point that imports and runs `mcp_server.server.main()`
+- Run with: `python3 run_server.py`
+- Configured in Claude Desktop / VS Code config
 
 **config.json** - Server configuration
 - Limits (max entities, pagination)
@@ -64,12 +63,9 @@ mcp/
 - Features summary
 - Links to detailed docs
 
-**__init__.py** - Makes mcp a Python package
-- Allows `from mcp.src import ...`
+### mcp_server/ - Source Code
 
-### src/ - Source Code
-
-**src/server.py** (34KB) - MCP server implementation
+**mcp_server/server.py** (34KB) - MCP server implementation
 - 22 MCP tools for CRUD operations
 - Worlds (5 tools)
 - Characters (6 tools)
@@ -78,7 +74,7 @@ mcp/
 - Pages (2 tools)
 - Persistence (4 tools)
 
-**src/persistence.py** (12KB) - JSON persistence
+**mcp_server/persistence.py** (12KB) - JSON persistence
 - Save/load to individual files
 - Export to single file
 - Storage statistics
@@ -165,14 +161,15 @@ The project uses a clear import hierarchy:
 ```python
 # From loreSystem root:
 from src.domain.entities.world import World              # Domain code
-from mcp.src.server import app                           # MCP server
-from mcp.src.persistence import JSONPersistence          # Persistence
+from mcp_server.server import app                        # MCP server
+from mcp_server.persistence import JSONPersistence       # Persistence
 
 # Path setup in each file:
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-# This adds loreSystem/ to path, enabling imports from both:
-# - src.domain.*  (loreSystem/src/domain)
-# - mcp.src.*     (loreSystem/mcp/src)
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # loreSystem/
+sys.path.insert(0, str(Path(__file__).parent.parent))        # lore_mcp_server/
+# This enables imports from both:
+# - src.domain.*     (loreSystem/src/domain)
+# - mcp_server.*     (loreSystem/lore_mcp_server/mcp_server)
 ```
 
 ## 🚀 Running Commands

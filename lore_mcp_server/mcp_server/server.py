@@ -70,7 +70,7 @@ from src.infrastructure.in_memory_repositories import (
 )
 
 # Import persistence layer
-from mcp.src.persistence import JSONPersistence
+from mcp_server.persistence import JSONPersistence
 
 # Initialize repositories (in production, use PostgreSQL repositories)
 world_repo = InMemoryWorldRepository()

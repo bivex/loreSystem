@@ -9,10 +9,12 @@ import shutil
 from pathlib import Path
 
 # Add project root to path (loreSystem directory)
-# __file__ is mcp/tests/test_persistence.py, so parent.parent.parent is loreSystem/
+# __file__ is lore_mcp_server/tests/test_persistence.py
+# parent.parent = loreSystem/lore_mcp_server, parent.parent.parent = loreSystem/
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mcp.src.persistence import JSONPersistence
+from mcp_server.persistence import JSONPersistence
 from src.domain.entities.world import World
 from src.domain.entities.character import Character, CharacterElement, CharacterRole
 from src.domain.value_objects.common import (

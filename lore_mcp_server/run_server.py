@@ -8,21 +8,19 @@ Run this file to start the MCP server.
 import sys
 from pathlib import Path
 
-# Setup paths to avoid 'mcp' folder/package conflict
-mcp_folder = str(Path(__file__).parent)  # loreSystem/mcp/
+# Setup paths for imports
+# Add loreSystem root for domain imports (src.domain.*)
+lore_system_root = str(Path(__file__).parent.parent)
+if lore_system_root not in sys.path:
+    sys.path.insert(0, lore_system_root)
 
-# Remove auto-added paths that might interfere
-paths_to_remove = ['', '.', str(Path(__file__).parent.parent)]
-for p in paths_to_remove:
-    while p in sys.path:
-        sys.path.remove(p)
-
-# Add ONLY the mcp folder for now (to import src.server)
-# src/server.py will handle adding loreSystem root AFTER importing mcp library
-sys.path.insert(0, mcp_folder)
+# Add lore_mcp_server folder for MCP server imports (mcp_server.*)
+mcp_server_folder = str(Path(__file__).parent)
+if mcp_server_folder not in sys.path:
+    sys.path.insert(0, mcp_server_folder)
 
 # Import and run the server
 if __name__ == "__main__":
-    from src.server import main
+    from mcp_server.server import main
     import asyncio
     asyncio.run(main())

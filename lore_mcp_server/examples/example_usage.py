@@ -12,11 +12,13 @@ from pathlib import Path
 import sys
 
 # Add project root to path (loreSystem directory)
-# __file__ is mcp/examples/example_usage.py, so parent.parent.parent is loreSystem/
+# __file__ is lore_mcp_server/examples/example_usage.py
+# parent.parent = loreSystem/lore_mcp_server, parent.parent.parent = loreSystem/
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the server
-from mcp.src.server import call_tool
+from mcp_server.server import call_tool
 
 
 async def demo_lore_system():
