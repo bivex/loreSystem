@@ -1,0 +1,22 @@
+{
+  "id": 4,
+  "tenant_id": 966465554,
+  "world_id": 3,
+  "name": "The Fierce One",
+  "backstory": "A fierce, red-haired orc from the Northern Tribe, known for his aggression and speed. He chased the survivor through the cliffs but met his end at the hands of the Silver Moon Order.",
+  "status": "active",
+  "abilities": [],
+  "parent_id": null,
+  "location_id": null,
+  "rarity": "rare",
+  "element": "fire",
+  "role": "dps",
+  "base_hp": 1000,
+  "base_atk": 200,
+  "base_def": 150,
+  "base_speed": 150,
+  "energy_cost": 90,
+  "created_at": "2026-01-25T23:54:22.260937+00:00",
+  "updated_at": "2026-01-25T23:54:22.260937+00:00",
+  "version": 1
+}

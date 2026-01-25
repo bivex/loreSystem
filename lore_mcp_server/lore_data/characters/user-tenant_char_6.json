@@ -1,0 +1,22 @@
+{
+  "id": 6,
+  "tenant_id": 966465554,
+  "world_id": 3,
+  "name": "Silver Moon Assassin",
+  "backstory": "A stealthy and agile member of the Silver Moon Order, armed with dual short swords. She silently eliminated the Fierce One and provided backup in the battle.",
+  "status": "active",
+  "abilities": [],
+  "parent_id": null,
+  "location_id": null,
+  "rarity": "epic",
+  "element": "wind",
+  "role": "dps",
+  "base_hp": 800,
+  "base_atk": 250,
+  "base_def": 120,
+  "base_speed": 180,
+  "energy_cost": 100,
+  "created_at": "2026-01-25T23:54:25.848213+00:00",
+  "updated_at": "2026-01-25T23:54:25.848213+00:00",
+  "version": 1
+}

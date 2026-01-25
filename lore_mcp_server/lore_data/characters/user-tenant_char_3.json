@@ -1,0 +1,22 @@
+{
+  "id": 3,
+  "tenant_id": 966465554,
+  "world_id": 3,
+  "name": "The Brute",
+  "backstory": "A massive, dim-witted orc from the Northern Tribe, known for his immense strength and lack of intelligence. He was the first to fall in the battle against the Silver Moon Order hunters.",
+  "status": "active",
+  "abilities": [],
+  "parent_id": null,
+  "location_id": null,
+  "rarity": "epic",
+  "element": "earth",
+  "role": "tank",
+  "base_hp": 1500,
+  "base_atk": 180,
+  "base_def": 250,
+  "base_speed": 50,
+  "energy_cost": 80,
+  "created_at": "2026-01-25T23:54:20.429730+00:00",
+  "updated_at": "2026-01-25T23:54:20.429730+00:00",
+  "version": 1
+}

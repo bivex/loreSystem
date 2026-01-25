@@ -1,0 +1,22 @@
+{
+  "id": 5,
+  "tenant_id": 966465554,
+  "world_id": 3,
+  "name": "Silver Moon Hunter",
+  "backstory": "A skilled hunter from the Silver Moon Order, wielding a massive two-handed sword. He single-handedly defeated two orcs and saved the survivor from the chieftain.",
+  "status": "active",
+  "abilities": [],
+  "parent_id": null,
+  "location_id": null,
+  "rarity": "legendary",
+  "element": "physical",
+  "role": "dps",
+  "base_hp": 1000,
+  "base_atk": 300,
+  "base_def": 180,
+  "base_speed": 120,
+  "energy_cost": 110,
+  "created_at": "2026-01-25T23:54:24.093612+00:00",
+  "updated_at": "2026-01-25T23:54:24.093612+00:00",
+  "version": 1
+}

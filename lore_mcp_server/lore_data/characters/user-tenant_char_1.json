@@ -1,0 +1,22 @@
+{
+  "id": 1,
+  "tenant_id": 966465554,
+  "world_id": 3,
+  "name": "The Survivor",
+  "backstory": "A young man captured by orcs, who managed to escape through cunning and luck, only to find himself in the middle of a larger conflict involving the Silver Moon Order and the Northern Orc Tribe.",
+  "status": "active",
+  "abilities": [],
+  "parent_id": null,
+  "location_id": null,
+  "rarity": "uncommon",
+  "element": null,
+  "role": "dps",
+  "base_hp": null,
+  "base_atk": null,
+  "base_def": null,
+  "base_speed": null,
+  "energy_cost": null,
+  "created_at": "2026-01-25T23:54:16.727093+00:00",
+  "updated_at": "2026-01-25T23:54:16.727093+00:00",
+  "version": 1
+}
