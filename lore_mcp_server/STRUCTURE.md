@@ -178,7 +178,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))        # lore_mcp_server/
 
 ```bash
 # Run server
-python3 server.py
+python3 run_server.py
 
 # Run tests
 python3 tests/test_server.py
@@ -195,7 +195,7 @@ python3 examples/example_usage.py
 
 ```bash
 cd mcp
-python3 server.py
+python3 run_server.py
 ```
 
 ## 📊 File Statistics
