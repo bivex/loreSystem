@@ -11,6 +11,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
+# Import domain value objects for proper serialization
+from src.domain.value_objects.common import Timestamp, DateRange
+
 
 class JSONPersistence:
     """Handles JSON serialization and persistence of lore entities."""
@@ -53,6 +56,15 @@ class JSONPersistence:
         for field_name, field_value in entity.__dict__.items():
             if field_value is None:
                 result[field_name] = None
+            elif isinstance(field_value, DateRange):
+                # Special handling for DateRange
+                result[field_name] = {
+                    'start_date': field_value.start_date.value.isoformat(),
+                    'end_date': field_value.end_date.value.isoformat() if field_value.end_date else None
+                }
+            elif isinstance(field_value, Timestamp):
+                # Special handling for Timestamp
+                result[field_name] = field_value.value.isoformat()
             elif hasattr(field_value, 'value'):
                 # Value object - need to serialize the inner value
                 inner_value = field_value.value
