@@ -101,7 +101,11 @@ def serialize_entity(entity: Any) -> dict:
             result[field_name] = None
         elif hasattr(field_value, 'value'):
             # Value object
-            result[field_name] = field_value.value
+            val = field_value.value
+            if isinstance(val, datetime):
+                result[field_name] = val.isoformat()
+            else:
+                result[field_name] = val
         elif isinstance(field_value, (str, int, float, bool)):
             result[field_name] = field_value
         elif isinstance(field_value, datetime):
@@ -109,6 +113,7 @@ def serialize_entity(entity: Any) -> dict:
         elif isinstance(field_value, list):
             result[field_name] = [
                 serialize_entity(item) if hasattr(item, '__dict__')
+                else item.value.isoformat() if hasattr(item, 'value') and isinstance(item.value, datetime)
                 else item.value if hasattr(item, 'value')
                 else str(item)
                 for item in field_value
