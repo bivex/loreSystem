@@ -27,6 +27,7 @@ class Item:
     - Version increases monotonically
     - Can optionally be located in a specific Location
     - Level and enhancement stats must be non-negative
+    - Can optionally have 3D model and textures for visualization
     """
     
     id: Optional[EntityId]
@@ -47,6 +48,10 @@ class Item:
     base_def: Optional[int]  # Defense bonus
     special_stat: Optional[str]  # Special stat name (e.g., "crit_rate")
     special_stat_value: Optional[float]  # Special stat value
+    
+    # 3D Visualization
+    model_3d_id: Optional[EntityId]  # Reference to 3D model for rendering
+    texture_ids: Optional[List[EntityId]]  # List of texture IDs for the model
     
     created_at: Timestamp
     updated_at: Timestamp
@@ -106,6 +111,8 @@ class Item:
         base_def: Optional[int] = None,
         special_stat: Optional[str] = None,
         special_stat_value: Optional[float] = None,
+        model_3d_id: Optional[EntityId] = None,
+        texture_ids: Optional[List[EntityId]] = None,
     ) -> 'Item':
         """
         Factory method for creating a new Item.
@@ -128,6 +135,8 @@ class Item:
             base_def=base_def,
             special_stat=special_stat,
             special_stat_value=special_stat_value,
+            model_3d_id=model_3d_id,
+            texture_ids=texture_ids,
             created_at=now,
             updated_at=now,
             version=Version(1),

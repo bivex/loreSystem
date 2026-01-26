@@ -16,6 +16,7 @@ from .improvement import Improvement
 from .inspiration import Inspiration
 from .item import Item
 from .map import Map
+from .model3d import Model3D
 from .music_control import MusicControl
 from .music_state import MusicState
 from .music_theme import MusicTheme
@@ -35,6 +36,7 @@ from .story import Story
 from .storyline import Storyline
 from .tag import Tag
 from .template import Template
+from .texture import Texture
 from .tokenboard import Tokenboard
 from .world import World
 
@@ -57,6 +59,7 @@ __all__ = [
     "Inspiration",
     "Item",
     "Map",
+    "Model3D",
     "MusicControl",
     "MusicState",
     "MusicTheme",
@@ -76,6 +79,7 @@ __all__ = [
     "Storyline",
     "Tag",
     "Template",
+    "Texture",
     "Tokenboard",
     "World",
 ]
