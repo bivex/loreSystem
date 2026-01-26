@@ -1,11 +1,14 @@
 {
   "id": 1,
-  "tenant_id": 966465554,
+  "tenant_id": 709079840,
   "world_id": 3,
-  "name": "Orcs' Escape and the Silver Moon Order",
-  "description": "A dramatic escape and battle where a captured human flees from three orcs of the Northern Tribe, only to encounter hunters from the Silver Moon Order who defeat the orcs and save him, but awaken the wrath of the entire tribe.",
-  "date_range": "DateRange(start_date=Timestamp(value=datetime.datetime(2026, 1, 25, 0, 0, tzinfo=datetime.timezone.utc)), end_date=None)",
-  "outcome": "success",
+  "name": "Пробуждение Северного Орчьего Племени",
+  "description": "Ключевой конфликт, где побег орков приводит к их пробуждению и столкновению с охотниками Ордена Серебряной Луны.",
+  "date_range": {
+    "start_date": "2026-01-26T00:00:00+00:00",
+    "end_date": null
+  },
+  "outcome": "ongoing",
   "participant_ids": [
     {
       "value": 1
@@ -27,7 +30,7 @@
     }
   ],
   "location_id": null,
-  "created_at": "2026-01-25T23:54:28.274563+00:00",
-  "updated_at": "2026-01-25T23:54:28.274563+00:00",
+  "created_at": "2026-01-26T00:00:25.047829+00:00",
+  "updated_at": "2026-01-26T00:00:25.047829+00:00",
   "version": 1
 }
