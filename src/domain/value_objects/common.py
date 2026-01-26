@@ -290,6 +290,30 @@ class PlayerContext(str, Enum):
     TRAVELING = "traveling"
 
 
+class TimeOfDay(str, Enum):
+    """Time of day for environment description."""
+    DAY = "day"
+    NIGHT = "night"
+    DAWN = "dawn"
+    DUSK = "dusk"
+
+
+class Weather(str, Enum):
+    """Weather conditions for environment description."""
+    CLEAR = "clear"
+    RAINY = "rainy"
+    STORMY = "stormy"
+    FOGGY = "foggy"
+
+
+class Lighting(str, Enum):
+    """Lighting conditions for environment description."""
+    BRIGHT = "bright"
+    DIM = "dim"
+    DARK = "dark"
+    MAGICAL = "magical"
+
+
 @dataclass(frozen=True)
 class TenantId:
     """Tenant identifier for multi-tenancy isolation."""

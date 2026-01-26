@@ -44,6 +44,7 @@ from src.domain.entities.event import Event, EventOutcome
 from src.domain.entities.page import Page
 from src.domain.entities.item import Item
 from src.domain.entities.location import Location
+from src.domain.entities.environment import Environment
 from src.domain.value_objects.common import (
     TenantId,
     EntityId,
@@ -61,6 +62,9 @@ from src.domain.value_objects.common import (
     DateRange,
     ItemType,
     LocationType,
+    TimeOfDay,
+    Weather,
+    Lighting,
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 
@@ -73,6 +77,7 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryPageRepository,
     InMemoryItemRepository,
     InMemoryLocationRepository,
+    InMemoryEnvironmentRepository,
 )
 
 # Import persistence layer
@@ -86,6 +91,7 @@ event_repo = InMemoryEventRepository()
 page_repo = InMemoryPageRepository()
 item_repo = InMemoryItemRepository()
 location_repo = InMemoryLocationRepository()
+environment_repo = InMemoryEnvironmentRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
@@ -631,6 +637,144 @@ async def list_tools() -> list[Tool]:
                     "location_id": {"type": "string"},
                 },
                 "required": ["tenant_id", "location_id"],
+            },
+        ),
+
+        # Environment operations
+        Tool(
+            name="create_environment",
+            description="Create a new environment for a location",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                    "name": {"type": "string", "description": "Environment preset name (e.g., 'Stormy Night')"},
+                    "description": {"type": "string", "description": "Detailed environment description"},
+                    "time_of_day": {"type": "string", "enum": ["day", "night", "dawn", "dusk"], "description": "Time of day"},
+                    "weather": {"type": "string", "enum": ["clear", "rainy", "stormy", "foggy"], "description": "Weather conditions"},
+                    "lighting": {"type": "string", "enum": ["bright", "dim", "dark", "magical"], "description": "Lighting conditions"},
+                    "temperature": {"type": "string", "description": "Temperature description (optional)"},
+                    "sounds": {"type": "string", "description": "Ambient sounds (optional)"},
+                    "smells": {"type": "string", "description": "Ambient smells (optional)"},
+                    "is_active": {"type": "boolean", "description": "Whether this environment is currently active", "default": true},
+                },
+                "required": ["tenant_id", "world_id", "location_id", "name", "time_of_day", "weather", "lighting"],
+            },
+        ),
+        Tool(
+            name="get_environment",
+            description="Get an environment by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "environment_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "environment_id"],
+            },
+        ),
+        Tool(
+            name="list_environments",
+            description="List environments in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 50},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+        Tool(
+            name="list_environments_by_location",
+            description="List all environments for a specific location",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 20},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "location_id"],
+            },
+        ),
+        Tool(
+            name="search_environments",
+            description="Search environments by name",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "search_term": {"type": "string", "description": "Term to search for in environment names"},
+                    "limit": {"type": "integer", "default": 20},
+                },
+                "required": ["tenant_id", "search_term"],
+            },
+        ),
+        Tool(
+            name="find_environments_by_conditions",
+            description="Find environments by atmospheric conditions",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "time_of_day": {"type": "string", "enum": ["day", "night", "dawn", "dusk"], "description": "Filter by time of day"},
+                    "weather": {"type": "string", "enum": ["clear", "rainy", "stormy", "foggy"], "description": "Filter by weather"},
+                    "lighting": {"type": "string", "enum": ["bright", "dim", "dark", "magical"], "description": "Filter by lighting"},
+                    "limit": {"type": "integer", "default": 50},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+        Tool(
+            name="get_active_environment",
+            description="Get the currently active environment for a location",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "location_id"],
+            },
+        ),
+        Tool(
+            name="update_environment",
+            description="Update environment details",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "environment_id": {"type": "string"},
+                    "name": {"type": "string", "description": "New environment name"},
+                    "description": {"type": "string", "description": "New environment description"},
+                    "time_of_day": {"type": "string", "enum": ["day", "night", "dawn", "dusk"]},
+                    "weather": {"type": "string", "enum": ["clear", "rainy", "stormy", "foggy"]},
+                    "lighting": {"type": "string", "enum": ["bright", "dim", "dark", "magical"]},
+                    "temperature": {"type": "string", "description": "New temperature description"},
+                    "sounds": {"type": "string", "description": "New ambient sounds"},
+                    "smells": {"type": "string", "description": "New ambient smells"},
+                    "is_active": {"type": "boolean", "description": "Whether this environment should be active"},
+                },
+                "required": ["tenant_id", "environment_id"],
+            },
+        ),
+        Tool(
+            name="delete_environment",
+            description="Delete an environment",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "environment_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "environment_id"],
             },
         ),
 
@@ -1358,6 +1502,223 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 }, indent=2)
             )]
 
+        # Environment operations
+        elif name == "create_environment":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+            name = arguments["name"]
+            time_of_day = TimeOfDay(arguments["time_of_day"])
+            weather = Weather(arguments["weather"])
+            lighting = Lighting(arguments["lighting"])
+            description = arguments.get("description")
+            temperature = arguments.get("temperature")
+            sounds = arguments.get("sounds")
+            smells = arguments.get("smells")
+            is_active = arguments.get("is_active", True)
+
+            # Check if world exists
+            world = world_repo.find_by_id(tenant_id, world_id)
+            if not world:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "World not found"}))]
+
+            # Check if location exists
+            location = location_repo.find_by_id(tenant_id, location_id)
+            if not location:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Location not found"}))]
+
+            # Check for duplicate name for this location
+            if environment_repo.exists(tenant_id, location_id, name):
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": f"Environment with name '{name}' already exists for this location"}))]
+
+            environment = Environment.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                location_id=location_id,
+                name=name,
+                time_of_day=time_of_day,
+                weather=weather,
+                lighting=lighting,
+                description=Description(description) if description else None,
+                temperature=temperature,
+                sounds=sounds,
+                smells=smells,
+                is_active=is_active,
+            )
+
+            saved_environment = environment_repo.save(environment)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "environment": serialize_entity(saved_environment),
+                    "message": "Environment created successfully"
+                }, indent=2)
+            )]
+
+        elif name == "get_environment":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            environment_id = parse_entity_id(arguments["environment_id"])
+
+            environment = environment_repo.find_by_id(tenant_id, environment_id)
+            if not environment:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Environment not found"}))]
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "environment": serialize_entity(environment)
+                }, indent=2)
+            )]
+
+        elif name == "list_environments":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            limit = arguments.get("limit", 50)
+            offset = arguments.get("offset", 0)
+
+            environments = environment_repo.list_by_world(tenant_id, world_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(environments),
+                    "environments": [serialize_entity(e) for e in environments]
+                }, indent=2)
+            )]
+
+        elif name == "list_environments_by_location":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+            limit = arguments.get("limit", 20)
+            offset = arguments.get("offset", 0)
+
+            environments = environment_repo.list_by_location(tenant_id, location_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(environments),
+                    "environments": [serialize_entity(e) for e in environments]
+                }, indent=2)
+            )]
+
+        elif name == "search_environments":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            search_term = arguments["search_term"]
+            limit = arguments.get("limit", 20)
+
+            environments = environment_repo.search_by_name(tenant_id, search_term, limit)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(environments),
+                    "environments": [serialize_entity(e) for e in environments]
+                }, indent=2)
+            )]
+
+        elif name == "find_environments_by_conditions":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            time_of_day = TimeOfDay(arguments["time_of_day"]) if arguments.get("time_of_day") else None
+            weather = Weather(arguments["weather"]) if arguments.get("weather") else None
+            lighting = Lighting(arguments["lighting"]) if arguments.get("lighting") else None
+            limit = arguments.get("limit", 50)
+
+            environments = environment_repo.find_by_conditions(
+                tenant_id, world_id, time_of_day, weather, lighting, limit
+            )
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(environments),
+                    "environments": [serialize_entity(e) for e in environments]
+                }, indent=2)
+            )]
+
+        elif name == "get_active_environment":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+
+            environment = environment_repo.find_active_by_location(tenant_id, location_id)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "environment": serialize_entity(environment) if environment else None
+                }, indent=2)
+            )]
+
+        elif name == "update_environment":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            environment_id = parse_entity_id(arguments["environment_id"])
+
+            environment = environment_repo.find_by_id(tenant_id, environment_id)
+            if not environment:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Environment not found"}))]
+
+            # Update fields if provided
+            if "name" in arguments:
+                environment.rename(arguments["name"])
+            if "description" in arguments:
+                environment.update_description(
+                    Description(arguments["description"]) if arguments["description"] else None
+                )
+            if any(k in arguments for k in ["time_of_day", "weather", "lighting", "temperature", "sounds", "smells"]):
+                environment.change_conditions(
+                    time_of_day=TimeOfDay(arguments["time_of_day"]) if arguments.get("time_of_day") else None,
+                    weather=Weather(arguments["weather"]) if arguments.get("weather") else None,
+                    lighting=Lighting(arguments["lighting"]) if arguments.get("lighting") else None,
+                    temperature=arguments.get("temperature"),
+                    sounds=arguments.get("sounds"),
+                    smells=arguments.get("smells"),
+                )
+            if "is_active" in arguments:
+                if arguments["is_active"]:
+                    environment.activate()
+                else:
+                    environment.deactivate()
+
+            saved_environment = environment_repo.save(environment)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "environment": serialize_entity(saved_environment),
+                    "message": "Environment updated successfully"
+                }, indent=2)
+            )]
+
+        elif name == "delete_environment":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            environment_id = parse_entity_id(arguments["environment_id"])
+
+            environment = environment_repo.find_by_id(tenant_id, environment_id)
+            if not environment:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Environment not found"}))]
+
+            deleted = environment_repo.delete(tenant_id, environment_id)
+            if deleted:
+                persistence.delete_environment(str(arguments["tenant_id"]), str(environment_id))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": deleted,
+                    "message": "Environment deleted successfully" if deleted else "Environment not found"
+                }, indent=2)
+            )]
+
         # Persistence operations
         elif name == "save_to_json":
             tenant_id = arguments["tenant_id"]
@@ -1370,6 +1731,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 page_repo,
                 item_repo,
                 location_repo,
+                environment_repo,
                 tenant_id
             )
 
@@ -1387,6 +1749,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                         "pages": counts["pages"],
                         "items": counts["items"],
                         "locations": counts["locations"],
+                        "environments": counts["environments"],
                         "total_files": len(counts["files"])
                     },
                     "data_directory": str(persistence.data_dir.absolute()),

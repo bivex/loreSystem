@@ -36,9 +36,11 @@ class JSONPersistence:
         self.pages_dir = self.data_dir / "pages"
         self.items_dir = self.data_dir / "items"
         self.locations_dir = self.data_dir / "locations"
+        self.environments_dir = self.data_dir / "environments"
 
         for dir_path in [self.worlds_dir, self.characters_dir, self.stories_dir,
-                         self.events_dir, self.pages_dir, self.items_dir, self.locations_dir]:
+                         self.events_dir, self.pages_dir, self.items_dir, self.locations_dir,
+                         self.environments_dir]:
             dir_path.mkdir(exist_ok=True)
 
     def _serialize_entity(self, entity: Any) -> dict:
@@ -189,8 +191,29 @@ class JSONPersistence:
             return True
         return False
 
+    def save_environment(self, environment: Any, tenant_id: str) -> str:
+        """Save an environment to JSON file."""
+        environment_data = self._serialize_entity(environment)
+        filename = f"{tenant_id}_environment_{environment_data['id']}.json"
+        filepath = self.environments_dir / filename
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(environment_data, f, indent=2, ensure_ascii=False)
+
+        return str(filepath)
+
+    def delete_environment(self, tenant_id: str, environment_id: str) -> bool:
+        """Delete an environment JSON file."""
+        filename = f"{tenant_id}_environment_{environment_id}.json"
+        filepath = self.environments_dir / filename
+
+        if filepath.exists():
+            filepath.unlink()
+            return True
+        return False
+
     def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo, item_repo, location_repo,
-                 tenant_id: str) -> Dict[str, int]:
+                 environment_repo, tenant_id: str) -> Dict[str, int]:
         """
         Save all entities from repositories to JSON files.
 
@@ -202,6 +225,7 @@ class JSONPersistence:
             page_repo: Page repository
             item_repo: Item repository
             location_repo: Location repository
+            environment_repo: Environment repository
             tenant_id: Tenant ID to save data for
 
         Returns:
@@ -219,6 +243,7 @@ class JSONPersistence:
             "pages": 0,
             "items": 0,
             "locations": 0,
+            "environments": 0,
             "files": []
         }
 
@@ -276,6 +301,14 @@ class JSONPersistence:
                 counts["locations"] += 1
                 counts["files"].append(filepath)
 
+        # Save environments
+        for world in worlds:
+            environments = environment_repo.list_by_world(tid, world.id, limit=10000)
+            for environment in environments:
+                filepath = self.save_environment(environment, tenant_id)
+                counts["environments"] += 1
+                counts["files"].append(filepath)
+
         return counts
 
     def load_world(self, filepath: str) -> dict:
@@ -303,6 +336,11 @@ class JSONPersistence:
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
 
+    def load_environment(self, filepath: str) -> dict:
+        """Load an environment from JSON file."""
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
     def load_all(self, tenant_id: str) -> Dict[str, List[dict]]:
         """
         Load all entities for a tenant from JSON files.
@@ -318,7 +356,8 @@ class JSONPersistence:
             "characters": [],
             "stories": [],
             "events": [],
-            "pages": []
+            "pages": [],
+            "environments": []
         }
 
         # Load worlds
@@ -340,6 +379,10 @@ class JSONPersistence:
         # Load pages
         for filepath in self.pages_dir.glob(f"{tenant_id}_page_*.json"):
             data["pages"].append(self.load_page(filepath))
+
+        # Load environments
+        for filepath in self.environments_dir.glob(f"{tenant_id}_environment_*.json"):
+            data["environments"].append(self.load_environment(filepath))
 
         return data
 

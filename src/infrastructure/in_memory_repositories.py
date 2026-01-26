@@ -14,10 +14,12 @@ from src.domain.entities.world import World
 from src.domain.entities.character import Character
 from src.domain.entities.item import Item
 from src.domain.entities.location import Location
+from src.domain.entities.environment import Environment
 from src.domain.repositories.world_repository import IWorldRepository
 from src.domain.repositories.character_repository import ICharacterRepository
 from src.domain.repositories.item_repository import IItemRepository
 from src.domain.repositories.location_repository import ILocationRepository
+from src.domain.repositories.environment_repository import IEnvironmentRepository
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, CharacterName
 )
@@ -605,5 +607,214 @@ class InMemoryLocationRepository(ILocationRepository):
     def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
         return (tenant_id, world_id, name) in self._names
 
-    def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
-        return (tenant_id, world_id, name) in self._names
+
+class InMemoryEnvironmentRepository(IEnvironmentRepository):
+    """
+    In-memory implementation of Environment repository for testing.
+
+    Stores environments in memory with proper indexing for fast access.
+    """
+
+    def __init__(self):
+        # Storage: (tenant_id, environment_id) -> Environment
+        self._environments: Dict[Tuple[TenantId, EntityId], Environment] = {}
+        # Index: (tenant_id, location_id, environment_name) -> environment_id
+        self._names: Dict[Tuple[TenantId, EntityId, str], EntityId] = {}
+        # Index: (tenant_id, world_id) -> list of environment_ids
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        # Index: (tenant_id, location_id) -> list of environment_ids
+        self._by_location: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        # Index: (tenant_id, world_id, time_of_day, weather, lighting) -> list of environment_ids
+        self._by_conditions: Dict[Tuple[TenantId, EntityId, str, str, str], List[EntityId]] = defaultdict(list)
+        # Index: (tenant_id, location_id) -> active environment_id
+        self._active_by_location: Dict[Tuple[TenantId, EntityId], EntityId] = {}
+        # Index: tenant_id -> list of environment_ids
+        self._by_tenant: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        # ID counter for generating new IDs
+        self._next_id = 1
+
+    def save(self, environment: Environment) -> Environment:
+        # Assign ID if this is a new environment
+        if environment.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(environment, 'id', new_id)
+
+        key = (environment.tenant_id, environment.id)
+        name_key = (environment.tenant_id, environment.location_id, environment.name)
+
+        # Check for duplicate name for location
+        if name_key in self._names and self._names[name_key] != environment.id:
+            raise DuplicateEntity(f"Environment with name '{environment.name}' already exists for this location")
+
+        # Store the environment
+        self._environments[key] = environment
+        self._names[name_key] = environment.id
+
+        # Add to world index if not already there
+        world_key = (environment.tenant_id, environment.world_id)
+        if environment.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(environment.id)
+
+        # Add to location index if not already there
+        location_key = (environment.tenant_id, environment.location_id)
+        if environment.id not in self._by_location[location_key]:
+            self._by_location[location_key].append(environment.id)
+
+        # Add to conditions index
+        conditions_key = (
+            environment.tenant_id,
+            environment.world_id,
+            environment.time_of_day.value,
+            environment.weather.value,
+            environment.lighting.value
+        )
+        if environment.id not in self._by_conditions[conditions_key]:
+            self._by_conditions[conditions_key].append(environment.id)
+
+        # Handle active environment for location
+        if environment.is_active:
+            self._active_by_location[location_key] = environment.id
+        elif self._active_by_location.get(location_key) == environment.id:
+            # If this was active but now inactive, remove from active index
+            del self._active_by_location[location_key]
+
+        # Add to tenant index if not already there
+        if environment.id not in self._by_tenant[environment.tenant_id]:
+            self._by_tenant[environment.tenant_id].append(environment.id)
+
+        return environment
+
+    def find_by_id(self, tenant_id: TenantId, environment_id: EntityId) -> Optional[Environment]:
+        return self._environments.get((tenant_id, environment_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Environment]:
+        world_key = (tenant_id, world_id)
+        environment_ids = self._by_world.get(world_key, [])
+        environments = []
+        for environment_id in environment_ids[offset:offset + limit]:
+            environment = self._environments.get((tenant_id, environment_id))
+            if environment:
+                environments.append(environment)
+        return environments
+
+    def list_by_location(self, tenant_id: TenantId, location_id: EntityId, limit: int = 20, offset: int = 0) -> List[Environment]:
+        location_key = (tenant_id, location_id)
+        environment_ids = self._by_location.get(location_key, [])
+        environments = []
+        for environment_id in environment_ids[offset:offset + limit]:
+            environment = self._environments.get((tenant_id, environment_id))
+            if environment:
+                environments.append(environment)
+        return environments
+
+    def list_by_tenant(self, tenant_id: TenantId, limit: int = 100, offset: int = 0) -> List[Environment]:
+        environment_ids = self._by_tenant.get(tenant_id, [])
+        environments = []
+        for environment_id in environment_ids[offset:offset + limit]:
+            environment = self._environments.get((tenant_id, environment_id))
+            if environment:
+                environments.append(environment)
+        return environments
+
+    def search_by_name(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[Environment]:
+        """Simple substring search in environment names."""
+        results = []
+        for environment in self._environments.values():
+            if environment.tenant_id == tenant_id and search_term.lower() in environment.name.lower():
+                results.append(environment)
+                if len(results) >= limit:
+                    break
+        return results
+
+    def find_by_conditions(
+        self,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        time_of_day: Optional[TimeOfDay] = None,
+        weather: Optional[Weather] = None,
+        lighting: Optional[Lighting] = None,
+        limit: int = 50,
+    ) -> List[Environment]:
+        # If no conditions specified, return all environments in world
+        if time_of_day is None and weather is None and lighting is None:
+            return self.list_by_world(tenant_id, world_id, limit, 0)
+
+        # Build conditions key with wildcards for unspecified conditions
+        tod_value = time_of_day.value if time_of_day else "*"
+        weather_value = weather.value if weather else "*"
+        lighting_value = lighting.value if lighting else "*"
+
+        # Find all matching condition combinations
+        results = []
+        for conditions_key, environment_ids in self._by_conditions.items():
+            key_tenant, key_world, key_tod, key_weather, key_lighting = conditions_key
+            if key_tenant != tenant_id or key_world != world_id:
+                continue
+
+            # Check if conditions match (using * as wildcard)
+            tod_match = tod_value == "*" or key_tod == tod_value
+            weather_match = weather_value == "*" or key_weather == weather_value
+            lighting_match = lighting_value == "*" or key_lighting == lighting_value
+
+            if tod_match and weather_match and lighting_match:
+                for environment_id in environment_ids[:limit - len(results)]:
+                    environment = self._environments.get((tenant_id, environment_id))
+                    if environment:
+                        results.append(environment)
+                        if len(results) >= limit:
+                            break
+                if len(results) >= limit:
+                    break
+
+        return results
+
+    def find_active_by_location(self, tenant_id: TenantId, location_id: EntityId) -> Optional[Environment]:
+        location_key = (tenant_id, location_id)
+        active_id = self._active_by_location.get(location_key)
+        if active_id:
+            return self._environments.get((tenant_id, active_id))
+        return None
+
+    def delete(self, tenant_id: TenantId, environment_id: EntityId) -> bool:
+        key = (tenant_id, environment_id)
+        if key not in self._environments:
+            return False
+
+        environment = self._environments[key]
+
+        # Remove from all indexes
+        name_key = (tenant_id, environment.location_id, environment.name)
+        if name_key in self._names:
+            del self._names[name_key]
+
+        world_key = (tenant_id, environment.world_id)
+        if environment_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(environment_id)
+
+        location_key = (tenant_id, environment.location_id)
+        if environment_id in self._by_location[location_key]:
+            self._by_location[location_key].remove(environment_id)
+
+        conditions_key = (
+            tenant_id,
+            environment.world_id,
+            environment.time_of_day.value,
+            environment.weather.value,
+            environment.lighting.value
+        )
+        if environment_id in self._by_conditions[conditions_key]:
+            self._by_conditions[conditions_key].remove(environment_id)
+
+        # Remove from active index if it was active
+        if self._active_by_location.get(location_key) == environment_id:
+            del self._active_by_location[location_key]
+
+        if environment_id in self._by_tenant[tenant_id]:
+            self._by_tenant[tenant_id].remove(environment_id)
+
+        del self._environments[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, location_id: EntityId, name: str) -> bool:
+        return (tenant_id, location_id, name) in self._names
