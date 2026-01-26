@@ -21,6 +21,7 @@ from src.domain.entities.flowchart import Flowchart
 from src.domain.entities.handout import Handout
 from src.domain.entities.inspiration import Inspiration
 from src.domain.entities.location import Location
+from src.domain.entities.environment import Environment
 from src.domain.entities.banner import Banner
 from src.domain.entities.character_relationship import CharacterRelationship
 from src.domain.entities.faction import Faction
@@ -52,7 +53,8 @@ from src.domain.value_objects.common import (
     PageName, Content, TemplateName, TemplateType, StoryName, StoryType,
     TagName, TagType, ImagePath, ImageType, ChoiceType, SessionStatus,
     NoteTitle, MapName, HandoutName, InspirationName, TokenboardName,
-    FlowchartName, Version, GitCommitHash, ImprovementStatus, SessionName
+    FlowchartName, Version, GitCommitHash, ImprovementStatus, SessionName,
+    TimeOfDay, Weather, Lighting
 )
 from src.domain.value_objects.ability import Ability
 
@@ -78,6 +80,7 @@ class LoreData:
         self.handouts: List[Handout] = []
         self.inspirations: List[Inspiration] = []
         self.locations: List[Location] = []
+        self.environments: List[Environment] = []
         self.banners: List[Banner] = []
         self.character_relationships: List[CharacterRelationship] = []
         self.factions: List[Faction] = []
@@ -453,6 +456,66 @@ class LoreData:
         """Get all locations."""
         return self.locations
 
+    def add_environment(self, environment_data: dict) -> Environment:
+        """Add environment from dictionary data."""
+        environment = Environment(
+            id=None,
+            tenant_id=self.tenant_id,
+            world_id=EntityId(environment_data['world_id']),
+            location_id=EntityId(environment_data['location_id']),
+            name=environment_data['name'],
+            description=Description(environment_data['description']) if environment_data.get('description') else None,
+            time_of_day=TimeOfDay(environment_data['time_of_day']),
+            weather=Weather(environment_data['weather']),
+            lighting=Lighting(environment_data['lighting']),
+            temperature=environment_data.get('temperature'),
+            sounds=environment_data.get('sounds'),
+            smells=environment_data.get('smells'),
+            is_active=environment_data.get('is_active', True),
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+        )
+        if environment.id is None:
+            object.__setattr__(environment, 'id', self.get_next_id())
+        self.environments.append(environment)
+        return environment
+
+    def update_environment(self, environment_id: EntityId, environment_data: dict) -> Environment:
+        """Update existing environment."""
+        for i, existing in enumerate(self.environments):
+            if existing.id == environment_id:
+                # Update the environment
+                updated_environment = Environment(
+                    id=existing.id,
+                    tenant_id=existing.tenant_id,
+                    world_id=EntityId(environment_data['world_id']),
+                    location_id=EntityId(environment_data['location_id']),
+                    name=environment_data['name'],
+                    description=Description(environment_data['description']) if environment_data.get('description') else None,
+                    time_of_day=TimeOfDay(environment_data['time_of_day']),
+                    weather=Weather(environment_data['weather']),
+                    lighting=Lighting(environment_data['lighting']),
+                    temperature=environment_data.get('temperature'),
+                    sounds=environment_data.get('sounds'),
+                    smells=environment_data.get('smells'),
+                    is_active=environment_data.get('is_active', True),
+                    created_at=existing.created_at,
+                    updated_at=Timestamp.now(),
+                    version=existing.version.increment()
+                )
+                self.environments[i] = updated_environment
+                return updated_environment
+        raise ValueError(f"Environment with id {environment_id} not found")
+
+    def get_environments(self) -> List[Environment]:
+        """Get all environments."""
+        return self.environments
+
+    def delete_environment(self, environment_id: EntityId) -> None:
+        """Delete environment by ID."""
+        self.environments = [e for e in self.environments if e.id != environment_id]
+
     def get_characters_by_world(self, world_id: EntityId) -> List[Character]:
         """Get all characters in a world."""
         return [c for c in self.characters if c.world_id == world_id]
@@ -477,6 +540,7 @@ class LoreData:
             'handouts': [self._handout_to_dict(h) for h in self.handouts],
             'inspirations': [self._inspiration_to_dict(i) for i in self.inspirations],
             'locations': [self._location_to_dict(l) for l in self.locations],
+            'environments': [self._environment_to_dict(e) for e in self.environments],
             'banners': [self._banner_to_dict(b) for b in self.banners],
             'character_relationships': [self._character_relationship_to_dict(r) for r in self.character_relationships],
             'factions': [self._faction_to_dict(f) for f in self.factions],
@@ -540,6 +604,7 @@ class LoreData:
         self.handouts = [self._dict_to_handout(h) for h in data.get('handouts', [])]
         self.inspirations = [self._dict_to_inspiration(i) for i in data.get('inspirations', [])]
         self.locations = [self._dict_to_location(l) for l in data.get('locations', [])]
+        self.environments = [self._dict_to_environment(e) for e in data.get('environments', [])]
         self.banners = [self._dict_to_banner(b) for b in data.get('banners', [])]
         self.character_relationships = [self._dict_to_character_relationship(r) for r in data.get('character_relationships', [])]
         self.factions = [self._dict_to_faction(f) for f in data.get('factions', [])]
@@ -1122,6 +1187,48 @@ class LoreData:
             description=Description(data['description']),
             location_type=__import__('src.domain.value_objects.common', fromlist=['LocationType']).LocationType(data['location_type']),
             parent_location_id=EntityId(data['parent_location_id']) if data.get('parent_location_id') else None,
+            created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+        )
+
+    @staticmethod
+    def _environment_to_dict(environment: Environment) -> Dict:
+        return {
+            'id': environment.id.value if environment.id else None,
+            'tenant_id': environment.tenant_id.value,
+            'world_id': environment.world_id.value,
+            'location_id': environment.location_id.value,
+            'name': environment.name,
+            'description': str(environment.description) if environment.description else None,
+            'time_of_day': environment.time_of_day.value,
+            'weather': environment.weather.value,
+            'lighting': environment.lighting.value,
+            'temperature': environment.temperature,
+            'sounds': environment.sounds,
+            'smells': environment.smells,
+            'is_active': environment.is_active,
+            'created_at': environment.created_at.value.isoformat(),
+            'updated_at': environment.updated_at.value.isoformat(),
+            'version': environment.version.value
+        }
+
+    @staticmethod
+    def _dict_to_environment(data: Dict) -> Environment:
+        return Environment(
+            id=EntityId(data['id']) if data['id'] else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            location_id=EntityId(data['location_id']),
+            name=data['name'],
+            description=Description(data['description']) if data.get('description') else None,
+            time_of_day=TimeOfDay(data['time_of_day']),
+            weather=Weather(data['weather']),
+            lighting=Lighting(data['lighting']),
+            temperature=data.get('temperature'),
+            sounds=data.get('sounds'),
+            smells=data.get('smells'),
+            is_active=data.get('is_active', True),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])

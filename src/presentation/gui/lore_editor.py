@@ -113,6 +113,7 @@ from src.presentation.gui.tabs import (
 from src.presentation.gui.tabs.world_map_tab import WorldMapTab
 from src.presentation.gui.tabs.banner_tab import BannerTab
 from src.presentation.gui.tabs.location_tab import LocationTab
+from src.presentation.gui.tabs.environment_tab import EnvironmentTab
 from src.presentation.gui.tabs.faction_tab import FactionTab
 from src.presentation.gui.tabs.shop_tab import ShopTab
 from src.presentation.gui.tabs.character_relationship_tab import CharacterRelationshipTab
@@ -2274,6 +2275,7 @@ class MainWindow(QMainWindow):
         # New tabs from domain entities
         self.banner_tab = BannerTab(self.lore_data)
         self.location_tab = LocationTab(self.lore_data)
+        self.environment_tab = EnvironmentTab(self.lore_data)
         self.faction_tab = FactionTab(self.lore_data)
         self.shop_tab = ShopTab(self.lore_data)
         self.character_relationship_tab = CharacterRelationshipTab(self.lore_data)
@@ -2328,6 +2330,7 @@ class MainWindow(QMainWindow):
         add_tab(self.worlds_tab, I18N.t('tab.worlds', "🌍 Worlds"))
         add_tab(self.world_map_tab, I18N.t('tab.world_map', "🗺️ World Map"))
         add_tab(self.location_tab, I18N.t('tab.locations', "📍 Locations"))
+        add_tab(self.environment_tab, I18N.t('tab.environments', "🌤️ Environments"))
         add_tab(self.maps_tab, I18N.t('tab.maps', "🗺️ Maps"))
 
         # Entities & Relationships
