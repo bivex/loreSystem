@@ -34,9 +34,10 @@ class JSONPersistence:
         self.stories_dir = self.data_dir / "stories"
         self.events_dir = self.data_dir / "events"
         self.pages_dir = self.data_dir / "pages"
+        self.items_dir = self.data_dir / "items"
 
         for dir_path in [self.worlds_dir, self.characters_dir, self.stories_dir,
-                         self.events_dir, self.pages_dir]:
+                         self.events_dir, self.pages_dir, self.items_dir]:
             dir_path.mkdir(exist_ok=True)
 
     def _serialize_entity(self, entity: Any) -> dict:
@@ -145,7 +146,28 @@ class JSONPersistence:
 
         return str(filepath)
 
-    def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo,
+    def save_item(self, item: Any, tenant_id: str) -> str:
+        """Save an item to JSON file."""
+        item_data = self._serialize_entity(item)
+        filename = f"{tenant_id}_item_{item_data['id']}.json"
+        filepath = self.items_dir / filename
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(item_data, f, indent=2, ensure_ascii=False)
+
+        return str(filepath)
+
+    def delete_item(self, tenant_id: str, item_id: str) -> bool:
+        """Delete an item JSON file."""
+        filename = f"{tenant_id}_item_{item_id}.json"
+        filepath = self.items_dir / filename
+
+        if filepath.exists():
+            filepath.unlink()
+            return True
+        return False
+
+    def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo, item_repo,
                  tenant_id: str) -> Dict[str, int]:
         """
         Save all entities from repositories to JSON files.
@@ -156,6 +178,7 @@ class JSONPersistence:
             story_repo: Story repository
             event_repo: Event repository
             page_repo: Page repository
+            item_repo: Item repository
             tenant_id: Tenant ID to save data for
 
         Returns:
@@ -171,6 +194,7 @@ class JSONPersistence:
             "stories": 0,
             "events": 0,
             "pages": 0,
+            "items": 0,
             "files": []
         }
 
@@ -210,6 +234,14 @@ class JSONPersistence:
             for page in pages:
                 filepath = self.save_page(page, tenant_id)
                 counts["pages"] += 1
+                counts["files"].append(filepath)
+
+        # Save items
+        for world in worlds:
+            items = item_repo.list_by_world(tid, world.id, limit=10000)
+            for item in items:
+                filepath = self.save_item(item, tenant_id)
+                counts["items"] += 1
                 counts["files"].append(filepath)
 
         return counts
@@ -348,7 +380,8 @@ class JSONPersistence:
             ("characters", self.characters_dir),
             ("stories", self.stories_dir),
             ("events", self.events_dir),
-            ("pages", self.pages_dir)
+            ("pages", self.pages_dir),
+            ("items", self.items_dir)
         ]:
             files = list(directory.glob("*.json"))
             file_count = len(files)

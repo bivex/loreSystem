@@ -12,8 +12,10 @@ from collections import defaultdict
 
 from src.domain.entities.world import World
 from src.domain.entities.character import Character
+from src.domain.entities.item import Item
 from src.domain.repositories.world_repository import IWorldRepository
 from src.domain.repositories.character_repository import ICharacterRepository
+from src.domain.repositories.item_repository import IItemRepository
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, CharacterName
 )
@@ -367,3 +369,109 @@ class InMemoryPageRepository:
 
         del self._pages[key]
         return True
+
+
+class InMemoryItemRepository(IItemRepository):
+    """
+    In-memory implementation of Item repository for testing.
+
+    Stores items in memory with proper indexing for fast access.
+    """
+
+    def __init__(self):
+        # Storage: (tenant_id, item_id) -> Item
+        self._items: Dict[Tuple[TenantId, EntityId], Item] = {}
+        # Index: (tenant_id, world_id, item_name) -> item_id
+        self._names: Dict[Tuple[TenantId, EntityId, str], EntityId] = {}
+        # Index: (tenant_id, world_id) -> list of item_ids
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        # Index: tenant_id -> list of item_ids
+        self._by_tenant: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        # ID counter for generating new IDs
+        self._next_id = 1
+
+    def save(self, item: Item) -> Item:
+        # Assign ID if this is a new item
+        if item.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(item, 'id', new_id)
+
+        key = (item.tenant_id, item.id)
+        name_key = (item.tenant_id, item.world_id, item.name)
+
+        # Check for duplicate name in world
+        if name_key in self._names and self._names[name_key] != item.id:
+            raise DuplicateEntity(f"Item with name '{item.name}' already exists in this world")
+
+        # Store the item
+        self._items[key] = item
+        self._names[name_key] = item.id
+
+        # Add to world index if not already there
+        world_key = (item.tenant_id, item.world_id)
+        if item.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(item.id)
+
+        # Add to tenant index if not already there
+        if item.id not in self._by_tenant[item.tenant_id]:
+            self._by_tenant[item.tenant_id].append(item.id)
+
+        return item
+
+    def find_by_id(self, tenant_id: TenantId, item_id: EntityId) -> Optional[Item]:
+        return self._items.get((tenant_id, item_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Item]:
+        world_key = (tenant_id, world_id)
+        item_ids = self._by_world.get(world_key, [])
+        items = []
+        for item_id in item_ids[offset:offset + limit]:
+            item = self._items.get((tenant_id, item_id))
+            if item:
+                items.append(item)
+        return items
+
+    def list_by_tenant(self, tenant_id: TenantId, limit: int = 100, offset: int = 0) -> List[Item]:
+        item_ids = self._by_tenant.get(tenant_id, [])
+        items = []
+        for item_id in item_ids[offset:offset + limit]:
+            item = self._items.get((tenant_id, item_id))
+            if item:
+                items.append(item)
+        return items
+
+    def search_by_name(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[Item]:
+        """Simple substring search in item names."""
+        results = []
+        for item in self._items.values():
+            if item.tenant_id == tenant_id and search_term.lower() in item.name.lower():
+                results.append(item)
+                if len(results) >= limit:
+                    break
+        return results
+
+    def delete(self, tenant_id: TenantId, item_id: EntityId) -> bool:
+        key = (tenant_id, item_id)
+        if key not in self._items:
+            return False
+
+        item = self._items[key]
+
+        # Remove from all indexes
+        name_key = (tenant_id, item.world_id, item.name)
+        if name_key in self._names:
+            del self._names[name_key]
+
+        world_key = (tenant_id, item.world_id)
+        if item_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(item_id)
+
+        if item_id in self._by_tenant[tenant_id]:
+            self._by_tenant[tenant_id].remove(item_id)
+
+        del self._items[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
+        return (tenant_id, world_id, name) in self._names

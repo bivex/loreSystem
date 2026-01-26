@@ -42,6 +42,7 @@ from src.domain.entities.character import Character, CharacterElement, Character
 from src.domain.entities.story import Story, StoryType
 from src.domain.entities.event import Event, EventOutcome
 from src.domain.entities.page import Page
+from src.domain.entities.item import Item
 from src.domain.value_objects.common import (
     TenantId,
     EntityId,
@@ -57,6 +58,7 @@ from src.domain.value_objects.common import (
     PageName,
     Content,
     DateRange,
+    ItemType,
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 
@@ -67,6 +69,7 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryStoryRepository,
     InMemoryEventRepository,
     InMemoryPageRepository,
+    InMemoryItemRepository,
 )
 
 # Import persistence layer
@@ -78,6 +81,7 @@ character_repo = InMemoryCharacterRepository()
 story_repo = InMemoryStoryRepository()
 event_repo = InMemoryEventRepository()
 page_repo = InMemoryPageRepository()
+item_repo = InMemoryItemRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
@@ -418,6 +422,113 @@ async def list_tools() -> list[Tool]:
                     "offset": {"type": "integer", "default": 0},
                 },
                 "required": ["tenant_id", "world_id"],
+            },
+        ),
+
+        # Item operations
+        Tool(
+            name="create_item",
+            description="Create a new item in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "name": {"type": "string", "description": "Item name"},
+                    "description": {"type": "string", "description": "Item description"},
+                    "item_type": {"type": "string", "enum": ["weapon", "armor", "artifact", "consumable", "tool", "other"]},
+                    "rarity": {"type": "string", "enum": ["common", "uncommon", "rare", "epic", "legendary", "mythic"]},
+                    "location_id": {"type": "string", "description": "Location ID where item is found (optional)"},
+                    "level": {"type": "integer", "description": "Item level (1-100)", "minimum": 1, "maximum": 100},
+                    "enhancement": {"type": "integer", "description": "Enhancement level (0+)", "minimum": 0},
+                    "max_enhancement": {"type": "integer", "description": "Maximum enhancement level", "minimum": 0},
+                    "base_atk": {"type": "integer", "description": "Base attack bonus", "minimum": 0},
+                    "base_hp": {"type": "integer", "description": "Base HP bonus", "minimum": 0},
+                    "base_def": {"type": "integer", "description": "Base defense bonus", "minimum": 0},
+                    "special_stat": {"type": "string", "description": "Special stat name (e.g., 'crit_rate')"},
+                    "special_stat_value": {"type": "number", "description": "Special stat value"},
+                },
+                "required": ["tenant_id", "world_id", "name", "description", "item_type"],
+            },
+        ),
+        Tool(
+            name="get_item",
+            description="Get an item by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "item_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "item_id"],
+            },
+        ),
+        Tool(
+            name="list_items",
+            description="List items in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 50},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+        Tool(
+            name="search_items",
+            description="Search items by name",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "search_term": {"type": "string", "description": "Term to search for in item names"},
+                    "limit": {"type": "integer", "default": 20},
+                },
+                "required": ["tenant_id", "search_term"],
+            },
+        ),
+        Tool(
+            name="update_item",
+            description="Update item details",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "item_id": {"type": "string"},
+                    "name": {"type": "string", "description": "New item name"},
+                    "description": {"type": "string", "description": "New item description"},
+                    "rarity": {"type": "string", "enum": ["common", "uncommon", "rare", "epic", "legendary", "mythic"]},
+                    "location_id": {"type": "string", "description": "New location ID"},
+                    "level": {"type": "integer", "description": "New item level (1-100)", "minimum": 1, "maximum": 100},
+                },
+                "required": ["tenant_id", "item_id"],
+            },
+        ),
+        Tool(
+            name="enhance_item",
+            description="Enhance an item (increase enhancement level)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "item_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "item_id"],
+            },
+        ),
+        Tool(
+            name="delete_item",
+            description="Delete an item",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "item_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "item_id"],
             },
         ),
 
@@ -839,6 +950,170 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 }, indent=2)
             )]
 
+        # Item operations
+        elif name == "create_item":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+
+            item = Item.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=arguments["name"],
+                description=Description(arguments["description"]),
+                item_type=ItemType[arguments["item_type"].upper()],
+                rarity=Rarity[arguments["rarity"].upper()] if arguments.get("rarity") else None,
+                location_id=parse_entity_id(arguments["location_id"]) if arguments.get("location_id") else None,
+                level=arguments.get("level"),
+                enhancement=arguments.get("enhancement"),
+                max_enhancement=arguments.get("max_enhancement"),
+                base_atk=arguments.get("base_atk"),
+                base_hp=arguments.get("base_hp"),
+                base_def=arguments.get("base_def"),
+                special_stat=arguments.get("special_stat"),
+                special_stat_value=arguments.get("special_stat_value"),
+            )
+
+            item_repo.save(item)
+            persistence.save_item(item, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "item": serialize_entity(item),
+                    "message": "Item created successfully"
+                }, indent=2)
+            )]
+
+        elif name == "get_item":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            item_id = parse_entity_id(arguments["item_id"])
+
+            item = item_repo.find_by_id(tenant_id, item_id)
+            if not item:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Item not found"}))]
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({"success": True, "item": serialize_entity(item)}, indent=2)
+            )]
+
+        elif name == "list_items":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            limit = arguments.get("limit", 50)
+            offset = arguments.get("offset", 0)
+
+            items = item_repo.list_by_world(tenant_id, world_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(items),
+                    "items": [serialize_entity(i) for i in items]
+                }, indent=2)
+            )]
+
+        elif name == "search_items":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            search_term = arguments["search_term"]
+            limit = arguments.get("limit", 20)
+
+            items = item_repo.search_by_name(tenant_id, search_term, limit)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(items),
+                    "search_term": search_term,
+                    "items": [serialize_entity(i) for i in items]
+                }, indent=2)
+            )]
+
+        elif name == "update_item":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            item_id = parse_entity_id(arguments["item_id"])
+
+            item = item_repo.find_by_id(tenant_id, item_id)
+            if not item:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Item not found"}))]
+
+            # Update fields
+            if "name" in arguments:
+                item.rename(arguments["name"])
+            if "description" in arguments:
+                item.update_description(Description(arguments["description"]))
+            if "rarity" in arguments:
+                item.set_rarity(Rarity[arguments["rarity"].upper()] if arguments["rarity"] else None)
+            if "location_id" in arguments:
+                item.move_to_location(parse_entity_id(arguments["location_id"]) if arguments["location_id"] else None)
+            if "level" in arguments:
+                item.set_level(arguments["level"])
+
+            item_repo.save(item)
+            persistence.save_item(item, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "item": serialize_entity(item),
+                    "message": "Item updated successfully"
+                }, indent=2)
+            )]
+
+        elif name == "enhance_item":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            item_id = parse_entity_id(arguments["item_id"])
+
+            item = item_repo.find_by_id(tenant_id, item_id)
+            if not item:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Item not found"}))]
+
+            try:
+                item.enhance()
+                item_repo.save(item)
+                persistence.save_item(item, str(arguments["tenant_id"]))
+
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": True,
+                        "item": serialize_entity(item),
+                        "message": "Item enhanced successfully"
+                    }, indent=2)
+                )]
+            except Exception as e:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": False,
+                        "error": str(e)
+                    }, indent=2)
+                )]
+
+        elif name == "delete_item":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            item_id = parse_entity_id(arguments["item_id"])
+
+            item = item_repo.find_by_id(tenant_id, item_id)
+            if not item:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Item not found"}))]
+
+            deleted = item_repo.delete(tenant_id, item_id)
+            if deleted:
+                persistence.delete_item(str(arguments["tenant_id"]), str(item_id))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": deleted,
+                    "message": "Item deleted successfully" if deleted else "Item not found"
+                }, indent=2)
+            )]
+
         # Persistence operations
         elif name == "save_to_json":
             tenant_id = arguments["tenant_id"]
@@ -849,6 +1124,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 story_repo,
                 event_repo,
                 page_repo,
+                item_repo,
                 tenant_id
             )
 
@@ -864,6 +1140,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                         "stories": counts["stories"],
                         "events": counts["events"],
                         "pages": counts["pages"],
+                        "items": counts["items"],
                         "total_files": len(counts["files"])
                     },
                     "data_directory": str(persistence.data_dir.absolute()),
