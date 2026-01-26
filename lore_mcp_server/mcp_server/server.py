@@ -30,6 +30,11 @@ lore_system_root = str(Path(__file__).parent.parent.parent)
 if lore_system_root not in sys.path:
     sys.path.insert(0, lore_system_root)  # Insert at beginning for priority
 
+# Add mcp_server directory to path for local imports
+mcp_server_root = str(Path(__file__).parent)
+if mcp_server_root not in sys.path:
+    sys.path.insert(0, mcp_server_root)
+
 # Import standard libraries
 import asyncio
 import json
@@ -81,7 +86,7 @@ from src.infrastructure.in_memory_repositories import (
 )
 
 # Import persistence layer
-from mcp_server.persistence import JSONPersistence
+from .persistence import JSONPersistence
 
 # Initialize repositories (in production, use PostgreSQL repositories)
 world_repo = InMemoryWorldRepository()
@@ -658,7 +663,7 @@ async def list_tools() -> list[Tool]:
                     "temperature": {"type": "string", "description": "Temperature description (optional)"},
                     "sounds": {"type": "string", "description": "Ambient sounds (optional)"},
                     "smells": {"type": "string", "description": "Ambient smells (optional)"},
-                    "is_active": {"type": "boolean", "description": "Whether this environment is currently active", "default": true},
+                    "is_active": {"type": "boolean", "description": "Whether this environment is currently active", "default": True},
                 },
                 "required": ["tenant_id", "world_id", "location_id", "name", "time_of_day", "weather", "lighting"],
             },
