@@ -13,9 +13,11 @@ from collections import defaultdict
 from src.domain.entities.world import World
 from src.domain.entities.character import Character
 from src.domain.entities.item import Item
+from src.domain.entities.location import Location
 from src.domain.repositories.world_repository import IWorldRepository
 from src.domain.repositories.character_repository import ICharacterRepository
 from src.domain.repositories.item_repository import IItemRepository
+from src.domain.repositories.location_repository import ILocationRepository
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, CharacterName
 )
@@ -472,6 +474,136 @@ class InMemoryItemRepository(IItemRepository):
 
         del self._items[key]
         return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
+        return (tenant_id, world_id, name) in self._names
+
+
+class InMemoryLocationRepository(ILocationRepository):
+    """
+    In-memory implementation of Location repository for testing.
+
+    Stores locations in memory with proper indexing for fast access.
+    """
+
+    def __init__(self):
+        # Storage: (tenant_id, location_id) -> Location
+        self._locations: Dict[Tuple[TenantId, EntityId], Location] = {}
+        # Index: (tenant_id, world_id, location_name) -> location_id
+        self._names: Dict[Tuple[TenantId, EntityId, str], EntityId] = {}
+        # Index: (tenant_id, world_id) -> list of location_ids
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        # Index: (tenant_id, world_id, location_type) -> list of location_ids
+        self._by_type: Dict[Tuple[TenantId, EntityId, str], List[EntityId]] = defaultdict(list)
+        # Index: tenant_id -> list of location_ids
+        self._by_tenant: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        # ID counter for generating new IDs
+        self._next_id = 1
+
+    def save(self, location: Location) -> Location:
+        # Assign ID if this is a new location
+        if location.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(location, 'id', new_id)
+
+        key = (location.tenant_id, location.id)
+        name_key = (location.tenant_id, location.world_id, location.name)
+
+        # Check for duplicate name in world
+        if name_key in self._names and self._names[name_key] != location.id:
+            raise DuplicateEntity(f"Location with name '{location.name}' already exists in this world")
+
+        # Store the location
+        self._locations[key] = location
+        self._names[name_key] = location.id
+
+        # Add to world index if not already there
+        world_key = (location.tenant_id, location.world_id)
+        if location.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(location.id)
+
+        # Add to type index
+        type_key = (location.tenant_id, location.world_id, location.location_type.value)
+        if location.id not in self._by_type[type_key]:
+            self._by_type[type_key].append(location.id)
+
+        # Add to tenant index if not already there
+        if location.id not in self._by_tenant[location.tenant_id]:
+            self._by_tenant[location.tenant_id].append(location.id)
+
+        return location
+
+    def find_by_id(self, tenant_id: TenantId, location_id: EntityId) -> Optional[Location]:
+        return self._locations.get((tenant_id, location_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Location]:
+        world_key = (tenant_id, world_id)
+        location_ids = self._by_world.get(world_key, [])
+        locations = []
+        for location_id in location_ids[offset:offset + limit]:
+            location = self._locations.get((tenant_id, location_id))
+            if location:
+                locations.append(location)
+        return locations
+
+    def list_by_tenant(self, tenant_id: TenantId, limit: int = 100, offset: int = 0) -> List[Location]:
+        location_ids = self._by_tenant.get(tenant_id, [])
+        locations = []
+        for location_id in location_ids[offset:offset + limit]:
+            location = self._locations.get((tenant_id, location_id))
+            if location:
+                locations.append(location)
+        return locations
+
+    def search_by_name(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[Location]:
+        """Simple substring search in location names."""
+        results = []
+        for location in self._locations.values():
+            if location.tenant_id == tenant_id and search_term.lower() in location.name.lower():
+                results.append(location)
+                if len(results) >= limit:
+                    break
+        return results
+
+    def find_by_type(self, tenant_id: TenantId, world_id: EntityId, location_type: str, limit: int = 50) -> List[Location]:
+        type_key = (tenant_id, world_id, location_type)
+        location_ids = self._by_type.get(type_key, [])
+        locations = []
+        for location_id in location_ids[:limit]:
+            location = self._locations.get((tenant_id, location_id))
+            if location:
+                locations.append(location)
+        return locations
+
+    def delete(self, tenant_id: TenantId, location_id: EntityId) -> bool:
+        key = (tenant_id, location_id)
+        if key not in self._locations:
+            return False
+
+        location = self._locations[key]
+
+        # Remove from all indexes
+        name_key = (tenant_id, location.world_id, location.name)
+        if name_key in self._names:
+            del self._names[name_key]
+
+        world_key = (tenant_id, location.world_id)
+        if location_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(location_id)
+
+        type_key = (tenant_id, location.world_id, location.location_type.value)
+        if location_id in self._by_type[type_key]:
+            self._by_type[type_key].remove(location_id)
+
+        if location_id in self._by_tenant[tenant_id]:
+            self._by_tenant[tenant_id].remove(location_id)
+
+        del self._locations[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
+        return (tenant_id, world_id, name) in self._names
 
     def exists(self, tenant_id: TenantId, world_id: EntityId, name: str) -> bool:
         return (tenant_id, world_id, name) in self._names

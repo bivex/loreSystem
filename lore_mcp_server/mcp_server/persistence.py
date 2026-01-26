@@ -35,9 +35,10 @@ class JSONPersistence:
         self.events_dir = self.data_dir / "events"
         self.pages_dir = self.data_dir / "pages"
         self.items_dir = self.data_dir / "items"
+        self.locations_dir = self.data_dir / "locations"
 
         for dir_path in [self.worlds_dir, self.characters_dir, self.stories_dir,
-                         self.events_dir, self.pages_dir, self.items_dir]:
+                         self.events_dir, self.pages_dir, self.items_dir, self.locations_dir]:
             dir_path.mkdir(exist_ok=True)
 
     def _serialize_entity(self, entity: Any) -> dict:
@@ -167,7 +168,28 @@ class JSONPersistence:
             return True
         return False
 
-    def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo, item_repo,
+    def save_location(self, location: Any, tenant_id: str) -> str:
+        """Save a location to JSON file."""
+        location_data = self._serialize_entity(location)
+        filename = f"{tenant_id}_location_{location_data['id']}.json"
+        filepath = self.locations_dir / filename
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(location_data, f, indent=2, ensure_ascii=False)
+
+        return str(filepath)
+
+    def delete_location(self, tenant_id: str, location_id: str) -> bool:
+        """Delete a location JSON file."""
+        filename = f"{tenant_id}_location_{location_id}.json"
+        filepath = self.locations_dir / filename
+
+        if filepath.exists():
+            filepath.unlink()
+            return True
+        return False
+
+    def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo, item_repo, location_repo,
                  tenant_id: str) -> Dict[str, int]:
         """
         Save all entities from repositories to JSON files.
@@ -179,6 +201,7 @@ class JSONPersistence:
             event_repo: Event repository
             page_repo: Page repository
             item_repo: Item repository
+            location_repo: Location repository
             tenant_id: Tenant ID to save data for
 
         Returns:
@@ -195,6 +218,7 @@ class JSONPersistence:
             "events": 0,
             "pages": 0,
             "items": 0,
+            "locations": 0,
             "files": []
         }
 
@@ -242,6 +266,14 @@ class JSONPersistence:
             for item in items:
                 filepath = self.save_item(item, tenant_id)
                 counts["items"] += 1
+                counts["files"].append(filepath)
+
+        # Save locations
+        for world in worlds:
+            locations = location_repo.list_by_world(tid, world.id, limit=10000)
+            for location in locations:
+                filepath = self.save_location(location, tenant_id)
+                counts["locations"] += 1
                 counts["files"].append(filepath)
 
         return counts
@@ -381,7 +413,8 @@ class JSONPersistence:
             ("stories", self.stories_dir),
             ("events", self.events_dir),
             ("pages", self.pages_dir),
-            ("items", self.items_dir)
+            ("items", self.items_dir),
+            ("locations", self.locations_dir)
         ]:
             files = list(directory.glob("*.json"))
             file_count = len(files)

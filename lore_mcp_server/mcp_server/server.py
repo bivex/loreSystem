@@ -43,6 +43,7 @@ from src.domain.entities.story import Story, StoryType
 from src.domain.entities.event import Event, EventOutcome
 from src.domain.entities.page import Page
 from src.domain.entities.item import Item
+from src.domain.entities.location import Location
 from src.domain.value_objects.common import (
     TenantId,
     EntityId,
@@ -59,6 +60,7 @@ from src.domain.value_objects.common import (
     Content,
     DateRange,
     ItemType,
+    LocationType,
 )
 from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 
@@ -70,6 +72,7 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryEventRepository,
     InMemoryPageRepository,
     InMemoryItemRepository,
+    InMemoryLocationRepository,
 )
 
 # Import persistence layer
@@ -82,6 +85,7 @@ story_repo = InMemoryStoryRepository()
 event_repo = InMemoryEventRepository()
 page_repo = InMemoryPageRepository()
 item_repo = InMemoryItemRepository()
+location_repo = InMemoryLocationRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
@@ -529,6 +533,104 @@ async def list_tools() -> list[Tool]:
                     "item_id": {"type": "string"},
                 },
                 "required": ["tenant_id", "item_id"],
+            },
+        ),
+
+        # Location operations
+        Tool(
+            name="create_location",
+            description="Create a new location in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "name": {"type": "string", "description": "Location name"},
+                    "description": {"type": "string", "description": "Location description"},
+                    "location_type": {"type": "string", "enum": ["building", "house", "barn", "temple", "castle", "dungeon", "cave", "forest", "mountain", "city", "village", "shop", "tavern", "ruins", "landmark", "other"]},
+                    "parent_location_id": {"type": "string", "description": "Parent location ID for hierarchical locations (optional)"},
+                },
+                "required": ["tenant_id", "world_id", "name", "description", "location_type"],
+            },
+        ),
+        Tool(
+            name="get_location",
+            description="Get a location by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "location_id"],
+            },
+        ),
+        Tool(
+            name="list_locations",
+            description="List locations in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 50},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+        Tool(
+            name="search_locations",
+            description="Search locations by name",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "search_term": {"type": "string", "description": "Term to search for in location names"},
+                    "limit": {"type": "integer", "default": 20},
+                },
+                "required": ["tenant_id", "search_term"],
+            },
+        ),
+        Tool(
+            name="find_locations_by_type",
+            description="Find locations by type in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "location_type": {"type": "string", "description": "Type of location to find"},
+                    "limit": {"type": "integer", "default": 50},
+                },
+                "required": ["tenant_id", "world_id", "location_type"],
+            },
+        ),
+        Tool(
+            name="update_location",
+            description="Update location details",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                    "name": {"type": "string", "description": "New location name"},
+                    "description": {"type": "string", "description": "New location description"},
+                    "location_type": {"type": "string", "enum": ["building", "house", "barn", "temple", "castle", "dungeon", "cave", "forest", "mountain", "city", "village", "shop", "tavern", "ruins", "landmark", "other"]},
+                },
+                "required": ["tenant_id", "location_id"],
+            },
+        ),
+        Tool(
+            name="delete_location",
+            description="Delete a location",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "location_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "location_id"],
             },
         ),
 
@@ -1114,6 +1216,148 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 }, indent=2)
             )]
 
+        # Location operations
+        elif name == "create_location":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+
+            location = Location.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=arguments["name"],
+                description=Description(arguments["description"]),
+                location_type=LocationType[arguments["location_type"].upper()],
+                parent_location_id=parse_entity_id(arguments["parent_location_id"]) if arguments.get("parent_location_id") else None,
+            )
+
+            location_repo.save(location)
+            persistence.save_location(location, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "location": serialize_entity(location),
+                    "message": "Location created successfully"
+                }, indent=2)
+            )]
+
+        elif name == "get_location":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+
+            location = location_repo.find_by_id(tenant_id, location_id)
+            if not location:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Location not found"}))]
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({"success": True, "location": serialize_entity(location)}, indent=2)
+            )]
+
+        elif name == "list_locations":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            limit = arguments.get("limit", 50)
+            offset = arguments.get("offset", 0)
+
+            locations = location_repo.list_by_world(tenant_id, world_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(locations),
+                    "locations": [serialize_entity(l) for l in locations]
+                }, indent=2)
+            )]
+
+        elif name == "search_locations":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            search_term = arguments["search_term"]
+            limit = arguments.get("limit", 20)
+
+            locations = location_repo.search_by_name(tenant_id, search_term, limit)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(locations),
+                    "search_term": search_term,
+                    "locations": [serialize_entity(l) for l in locations]
+                }, indent=2)
+            )]
+
+        elif name == "find_locations_by_type":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+            location_type = arguments["location_type"]
+            limit = arguments.get("limit", 50)
+
+            locations = location_repo.find_by_type(tenant_id, world_id, location_type, limit)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(locations),
+                    "location_type": location_type,
+                    "locations": [serialize_entity(l) for l in locations]
+                }, indent=2)
+            )]
+
+        elif name == "update_location":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+
+            location = location_repo.find_by_id(tenant_id, location_id)
+            if not location:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Location not found"}))]
+
+            # Update fields
+            if "name" in arguments:
+                location.rename(arguments["name"])
+            if "description" in arguments:
+                location.update_description(Description(arguments["description"]))
+            if "location_type" in arguments:
+                # Note: changing type would require updating indexes, for now just update the field
+                object.__setattr__(location, 'location_type', LocationType[arguments["location_type"].upper()])
+                object.__setattr__(location, 'updated_at', Timestamp.now())
+                object.__setattr__(location, 'version', location.version.increment())
+
+            location_repo.save(location)
+            persistence.save_location(location, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "location": serialize_entity(location),
+                    "message": "Location updated successfully"
+                }, indent=2)
+            )]
+
+        elif name == "delete_location":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            location_id = parse_entity_id(arguments["location_id"])
+
+            location = location_repo.find_by_id(tenant_id, location_id)
+            if not location:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Location not found"}))]
+
+            deleted = location_repo.delete(tenant_id, location_id)
+            if deleted:
+                persistence.delete_location(str(arguments["tenant_id"]), str(location_id))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": deleted,
+                    "message": "Location deleted successfully" if deleted else "Location not found"
+                }, indent=2)
+            )]
+
         # Persistence operations
         elif name == "save_to_json":
             tenant_id = arguments["tenant_id"]
@@ -1125,6 +1369,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 event_repo,
                 page_repo,
                 item_repo,
+                location_repo,
                 tenant_id
             )
 
@@ -1141,6 +1386,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                         "events": counts["events"],
                         "pages": counts["pages"],
                         "items": counts["items"],
+                        "locations": counts["locations"],
                         "total_files": len(counts["files"])
                     },
                     "data_directory": str(persistence.data_dir.absolute()),
