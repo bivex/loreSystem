@@ -1,0 +1,21 @@
+{
+  "id": 31,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Сыпучие камни",
+  "description": "Сыпучие камни, покрывающие склон. Могут использоваться как метательные снаряды или для создания баррикад.",
+  "item_type": "other",
+  "rarity": "common",
+  "location_id": 4,
+  "level": 1,
+  "enhancement": 0,
+  "max_enhancement": 3,
+  "base_atk": 2,
+  "base_hp": 0,
+  "base_def": 0,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:10:20.632590+00:00",
+  "updated_at": "2026-01-26T11:10:20.632590+00:00",
+  "version": 1
+}
