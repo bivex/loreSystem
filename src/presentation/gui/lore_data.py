@@ -46,6 +46,8 @@ from src.domain.entities.music_theme import MusicTheme
 from src.domain.entities.music_track import MusicTrack
 from src.domain.entities.progression_event import ProgressionEvent
 from src.domain.entities.progression_state import CharacterState
+from src.domain.entities.texture import Texture
+from src.domain.entities.model3d import Model3D
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, Description, CharacterName,
     Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
@@ -98,6 +100,8 @@ class LoreData:
         self.currencies: List[Currency] = []
         self.rewards: List[Reward] = []
         self.purchases: List[Purchase] = []
+        self.textures: List[Texture] = []
+        self.models: List[Model3D] = []
         self.event_chains: List[EventChain] = []
         self.faction_memberships: List[FactionMembership] = []
 
@@ -440,6 +444,20 @@ class LoreData:
         self.character_states.append(character_state)
         return character_state
 
+    def add_texture(self, texture: Texture) -> Texture:
+        """Add texture with generated ID."""
+        if texture.id is None:
+            object.__setattr__(texture, 'id', self.get_next_id())
+        self.textures.append(texture)
+        return texture
+
+    def add_model(self, model: Model3D) -> Model3D:
+        """Add 3D model with generated ID."""
+        if model.id is None:
+            object.__setattr__(model, 'id', self.get_next_id())
+        self.models.append(model)
+        return model
+
     def get_lore_axioms_by_world_id(self, world_id: EntityId) -> Optional[LoreAxioms]:
         """Get lore axioms for a specific world."""
         return next((la for la in self.lore_axioms if la.world_id == world_id), None)
@@ -569,6 +587,8 @@ class LoreData:
             'music_tracks': [self._music_track_to_dict(mt) for mt in self.music_tracks],
             'progression_events': [self._progression_event_to_dict(pe) for pe in self.progression_events],
             'character_states': [self._character_state_to_dict(cs) for cs in self.character_states],
+            'textures': [self._texture_to_dict(t) for t in self.textures],
+            'models': [self._model_to_dict(m) for m in self.models],
 
             'next_id': self._next_id
         }
@@ -633,6 +653,8 @@ class LoreData:
         self.music_tracks = [self._dict_to_music_track(mt) for mt in data.get('music_tracks', [])]
         self.progression_events = [self._dict_to_progression_event(pe) for pe in data.get('progression_events', [])]
         self.character_states = [self._dict_to_character_state(cs) for cs in data.get('character_states', [])]
+        self.textures = [self._dict_to_texture(t) for t in data.get('textures', [])]
+        self.models = [self._dict_to_model(m) for m in data.get('models', [])]
 
         self._next_id = data.get('next_id', 1)
     
@@ -2150,6 +2172,82 @@ class LoreData:
             loop_start_time=data.get('loop_start_time'),
             loop_end_time=data.get('loop_end_time'),
             music_theme_id=EntityId(data['music_theme_id']) if data.get('music_theme_id') else None,
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            updated_at=Timestamp.fromisoformat(data['updated_at']),
+            version=Version(data['version'])
+        )
+
+    @staticmethod
+    def _texture_to_dict(texture: Texture) -> Dict:
+        return {
+            'id': texture.id.value if texture.id else None,
+            'tenant_id': texture.tenant_id.value,
+            'world_id': texture.world_id.value,
+            'name': texture.name,
+            'path': texture.path,
+            'texture_type': texture.texture_type,
+            'description': texture.description,
+            'file_size': texture.file_size,
+            'dimensions': texture.dimensions,
+            'color_space': texture.color_space,
+            'created_at': texture.created_at.value.isoformat(),
+            'updated_at': texture.updated_at.value.isoformat(),
+            'version': texture.version.value
+        }
+
+    @staticmethod
+    def _dict_to_texture(data: Dict) -> Texture:
+        return Texture(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            path=data['path'],
+            texture_type=data['texture_type'],
+            description=data.get('description'),
+            file_size=data['file_size'],
+            dimensions=data.get('dimensions'),
+            color_space=data.get('color_space', 'sRGB'),
+            created_at=Timestamp.fromisoformat(data['created_at']),
+            updated_at=Timestamp.fromisoformat(data['updated_at']),
+            version=Version(data['version'])
+        )
+
+    @staticmethod
+    def _model_to_dict(model: Model3D) -> Dict:
+        return {
+            'id': model.id.value if model.id else None,
+            'tenant_id': model.tenant_id.value,
+            'world_id': model.world_id.value,
+            'name': model.name,
+            'path': model.path,
+            'model_type': model.model_type,
+            'description': model.description,
+            'file_size': model.file_size,
+            'poly_count': model.poly_count,
+            'dimensions': model.dimensions,
+            'textures': [tid.value for tid in model.textures] if model.textures else [],
+            'animations': model.animations,
+            'created_at': model.created_at.value.isoformat(),
+            'updated_at': model.updated_at.value.isoformat(),
+            'version': model.version.value
+        }
+
+    @staticmethod
+    def _dict_to_model(data: Dict) -> Model3D:
+        return Model3D(
+            id=EntityId(data['id']) if data.get('id') else None,
+            tenant_id=TenantId(data['tenant_id']),
+            world_id=EntityId(data['world_id']),
+            name=data['name'],
+            path=data['path'],
+            model_type=data['model_type'],
+            description=data.get('description'),
+            file_size=data['file_size'],
+            poly_count=data.get('poly_count'),
+            dimensions=data.get('dimensions'),
+            textures=[EntityId(tid) for tid in data.get('textures', [])],
+            animations=data.get('animations', []),
             created_at=Timestamp.fromisoformat(data['created_at']),
             updated_at=Timestamp.fromisoformat(data['updated_at']),
             version=Version(data['version'])

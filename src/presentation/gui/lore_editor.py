@@ -133,6 +133,8 @@ from src.presentation.gui.tabs.music_controls_tab import MusicControlsTab
 from src.presentation.gui.tabs.music_states_tab import MusicStatesTab
 from src.presentation.gui.tabs.progression_events_tab import ProgressionEventsTab
 from src.presentation.gui.tabs.progression_states_tab import ProgressionStatesTab
+from src.presentation.gui.tabs.texture_tab import TextureTab
+from src.presentation.gui.tabs.model3d_tab import Model3DTab
 
 
 # Import LoreData from separate module

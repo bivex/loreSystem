@@ -37,10 +37,12 @@ class JSONPersistence:
         self.items_dir = self.data_dir / "items"
         self.locations_dir = self.data_dir / "locations"
         self.environments_dir = self.data_dir / "environments"
+        self.textures_dir = self.data_dir / "textures"
+        self.models_dir = self.data_dir / "models"
 
         for dir_path in [self.worlds_dir, self.characters_dir, self.stories_dir,
                          self.events_dir, self.pages_dir, self.items_dir, self.locations_dir,
-                         self.environments_dir]:
+                         self.environments_dir, self.textures_dir, self.models_dir]:
             dir_path.mkdir(exist_ok=True)
 
     def _serialize_entity(self, entity: Any) -> dict:
@@ -212,8 +214,50 @@ class JSONPersistence:
             return True
         return False
 
+    def save_texture(self, texture: Any, tenant_id: str) -> str:
+        """Save a texture to JSON file."""
+        texture_data = self._serialize_entity(texture)
+        filename = f"{tenant_id}_texture_{texture_data['id']}.json"
+        filepath = self.textures_dir / filename
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(texture_data, f, indent=2, ensure_ascii=False)
+
+        return str(filepath)
+
+    def delete_texture(self, tenant_id: str, texture_id: str) -> bool:
+        """Delete a texture JSON file."""
+        filename = f"{tenant_id}_texture_{texture_id}.json"
+        filepath = self.textures_dir / filename
+
+        if filepath.exists():
+            filepath.unlink()
+            return True
+        return False
+
+    def save_3d_model(self, model: Any, tenant_id: str) -> str:
+        """Save a 3D model to JSON file."""
+        model_data = self._serialize_entity(model)
+        filename = f"{tenant_id}_model_{model_data['id']}.json"
+        filepath = self.models_dir / filename
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(model_data, f, indent=2, ensure_ascii=False)
+
+        return str(filepath)
+
+    def delete_3d_model(self, tenant_id: str, model_id: str) -> bool:
+        """Delete a 3D model JSON file."""
+        filename = f"{tenant_id}_model_{model_id}.json"
+        filepath = self.models_dir / filename
+
+        if filepath.exists():
+            filepath.unlink()
+            return True
+        return False
+
     def save_all(self, world_repo, character_repo, story_repo, event_repo, page_repo, item_repo, location_repo,
-                 environment_repo, tenant_id: str) -> Dict[str, int]:
+                 environment_repo, texture_repo, model3d_repo, tenant_id: str) -> Dict[str, int]:
         """
         Save all entities from repositories to JSON files.
 
@@ -244,6 +288,8 @@ class JSONPersistence:
             "items": 0,
             "locations": 0,
             "environments": 0,
+            "textures": 0,
+            "models": 0,
             "files": []
         }
 
@@ -308,6 +354,20 @@ class JSONPersistence:
                 filepath = self.save_environment(environment, tenant_id)
                 counts["environments"] += 1
                 counts["files"].append(filepath)
+
+        # Save textures
+        textures = texture_repo.list_by_world(tid, limit=10000)
+        for texture in textures:
+            filepath = self.save_texture(texture, tenant_id)
+            counts["textures"] += 1
+            counts["files"].append(filepath)
+
+        # Save 3D models
+        models = model3d_repo.list_by_world(tid, limit=10000)
+        for model in models:
+            filepath = self.save_3d_model(model, tenant_id)
+            counts["models"] += 1
+            counts["files"].append(filepath)
 
         return counts
 

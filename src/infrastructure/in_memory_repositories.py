@@ -15,6 +15,8 @@ from src.domain.entities.character import Character
 from src.domain.entities.item import Item
 from src.domain.entities.location import Location
 from src.domain.entities.environment import Environment
+from src.domain.entities.texture import Texture
+from src.domain.entities.model3d import Model3D
 from src.domain.repositories.world_repository import IWorldRepository
 from src.domain.repositories.character_repository import ICharacterRepository
 from src.domain.repositories.item_repository import IItemRepository
@@ -818,3 +820,141 @@ class InMemoryEnvironmentRepository(IEnvironmentRepository):
 
     def exists(self, tenant_id: TenantId, location_id: EntityId, name: str) -> bool:
         return (tenant_id, location_id, name) in self._names
+
+
+class InMemoryTextureRepository:
+    """
+    In-memory implementation of Texture repository.
+    """
+
+    def __init__(self):
+        self._textures: Dict[Tuple[TenantId, EntityId], Texture] = {}
+        self._names: Dict[Tuple[TenantId, str], EntityId] = {}
+        self._by_world: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, texture: Texture) -> Texture:
+        if texture.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            texture = texture.__class__(
+                id=new_id,
+                tenant_id=texture.tenant_id,
+                world_id=texture.world_id,
+                name=texture.name,
+                path=texture.path,
+                texture_type=texture.texture_type,
+                description=texture.description,
+                file_size=texture.file_size,
+                dimensions=texture.dimensions,
+                color_space=texture.color_space,
+                created_at=texture.created_at,
+                updated_at=texture.updated_at,
+                version=texture.version,
+            )
+        
+        key = (texture.tenant_id, texture.id)
+        name_key = (texture.tenant_id, texture.name)
+        
+        if name_key in self._names and self._names[name_key] != texture.id:
+            raise DuplicateEntity(f"Texture with name '{texture.name}' already exists")
+        
+        self._textures[key] = texture
+        self._names[name_key] = texture.id
+        if texture.id not in self._by_world[texture.tenant_id]:
+            self._by_world[texture.tenant_id].append(texture.id)
+        
+        return texture
+
+    def get_by_id(self, tenant_id: TenantId, texture_id: EntityId) -> Optional[Texture]:
+        return self._textures.get((tenant_id, texture_id))
+
+    def list_by_world(self, tenant_id: TenantId, limit: int = 100, offset: int = 0) -> List[Texture]:
+        texture_ids = self._by_world.get(tenant_id, [])[offset:offset + limit]
+        return [self._textures[(tenant_id, tid)] for tid in texture_ids if (tenant_id, tid) in self._textures]
+
+    def delete(self, tenant_id: TenantId, texture_id: EntityId) -> bool:
+        key = (tenant_id, texture_id)
+        if key not in self._textures:
+            return False
+        
+        texture = self._textures[key]
+        name_key = (tenant_id, texture.name)
+        
+        del self._textures[key]
+        if name_key in self._names:
+            del self._names[name_key]
+        if texture_id in self._by_world[tenant_id]:
+            self._by_world[tenant_id].remove(texture_id)
+        
+        return True
+
+
+class InMemoryModel3DRepository:
+    """
+    In-memory implementation of 3D Model repository.
+    """
+
+    def __init__(self):
+        self._models: Dict[Tuple[TenantId, EntityId], Model3D] = {}
+        self._names: Dict[Tuple[TenantId, str], EntityId] = {}
+        self._by_world: Dict[TenantId, List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, model: Model3D) -> Model3D:
+        if model.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            model = model.__class__(
+                id=new_id,
+                tenant_id=model.tenant_id,
+                world_id=model.world_id,
+                name=model.name,
+                path=model.path,
+                model_type=model.model_type,
+                description=model.description,
+                file_size=model.file_size,
+                poly_count=model.poly_count,
+                dimensions=model.dimensions,
+                textures=model.textures,
+                animations=model.animations,
+                created_at=model.created_at,
+                updated_at=model.updated_at,
+                version=model.version,
+            )
+        
+        key = (model.tenant_id, model.id)
+        name_key = (model.tenant_id, model.name)
+        
+        if name_key in self._names and self._names[name_key] != model.id:
+            raise DuplicateEntity(f"3D Model with name '{model.name}' already exists")
+        
+        self._models[key] = model
+        self._names[name_key] = model.id
+        if model.id not in self._by_world[model.tenant_id]:
+            self._by_world[model.tenant_id].append(model.id)
+        
+        return model
+
+    def get_by_id(self, tenant_id: TenantId, model_id: EntityId) -> Optional[Model3D]:
+        return self._models.get((tenant_id, model_id))
+
+    def list_by_world(self, tenant_id: TenantId, limit: int = 100, offset: int = 0) -> List[Model3D]:
+        model_ids = self._by_world.get(tenant_id, [])[offset:offset + limit]
+        return [self._models[(tenant_id, mid)] for mid in model_ids if (tenant_id, mid) in self._models]
+
+    def delete(self, tenant_id: TenantId, model_id: EntityId) -> bool:
+        key = (tenant_id, model_id)
+        if key not in self._models:
+            return False
+        
+        model = self._models[key]
+        name_key = (tenant_id, model.name)
+        
+        del self._models[key]
+        if name_key in self._names:
+            del self._names[name_key]
+        if model_id in self._by_world[tenant_id]:
+            self._by_world[tenant_id].remove(model_id)
+        
+        return True

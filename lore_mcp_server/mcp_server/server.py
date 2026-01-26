@@ -50,6 +50,8 @@ from src.domain.entities.page import Page
 from src.domain.entities.item import Item
 from src.domain.entities.location import Location
 from src.domain.entities.environment import Environment
+from src.domain.entities.texture import Texture
+from src.domain.entities.model3d import Model3D
 from src.domain.value_objects.common import (
     TenantId,
     EntityId,
@@ -83,6 +85,8 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryItemRepository,
     InMemoryLocationRepository,
     InMemoryEnvironmentRepository,
+    InMemoryTextureRepository,
+    InMemoryModel3DRepository,
 )
 
 # Import persistence layer
@@ -97,6 +101,8 @@ page_repo = InMemoryPageRepository()
 item_repo = InMemoryItemRepository()
 location_repo = InMemoryLocationRepository()
 environment_repo = InMemoryEnvironmentRepository()
+texture_repo = InMemoryTextureRepository()
+model3d_repo = InMemoryModel3DRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
@@ -487,6 +493,102 @@ async def list_tools() -> list[Tool]:
                     "tenant_id": {"type": "string"},
                     "world_id": {"type": "string"},
                     "limit": {"type": "integer", "default": 50},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+
+        # Texture operations
+        Tool(
+            name="create_texture",
+            description="Create a new texture for 3D models",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "name": {"type": "string", "description": "Texture name"},
+                    "path": {"type": "string", "description": "Path to texture file"},
+                    "texture_type": {"type": "string", "enum": ["diffuse", "normal", "specular", "emissive", "roughness", "metallic"]},
+                    "file_size": {"type": "integer", "description": "File size in bytes"},
+                    "dimensions": {"type": "string", "description": "Dimensions (e.g., '1024x1024')"},
+                    "color_space": {"type": "string", "description": "Color space (e.g., 'sRGB')"},
+                    "description": {"type": "string"},
+                },
+                "required": ["tenant_id", "world_id", "name", "path", "texture_type", "file_size"],
+            },
+        ),
+        Tool(
+            name="get_texture",
+            description="Get a texture by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "texture_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "texture_id"],
+            },
+        ),
+        Tool(
+            name="list_textures",
+            description="List textures in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 100},
+                    "offset": {"type": "integer", "default": 0},
+                },
+                "required": ["tenant_id", "world_id"],
+            },
+        ),
+
+        # 3D Model operations
+        Tool(
+            name="create_3d_model",
+            description="Create a new 3D model",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "name": {"type": "string", "description": "3D model name"},
+                    "path": {"type": "string", "description": "Path to 3D model file"},
+                    "model_type": {"type": "string", "enum": ["item", "location", "character", "environment"]},
+                    "file_size": {"type": "integer", "description": "File size in bytes"},
+                    "poly_count": {"type": "integer", "description": "Number of polygons"},
+                    "dimensions": {"type": "string", "description": "Dimensions (e.g., '1x1x1')"},
+                    "textures": {"type": "array", "items": {"type": "string"}, "description": "List of texture IDs"},
+                    "animations": {"type": "array", "items": {"type": "string"}, "description": "List of animation names"},
+                    "description": {"type": "string"},
+                },
+                "required": ["tenant_id", "world_id", "name", "path", "model_type", "file_size"],
+            },
+        ),
+        Tool(
+            name="get_3d_model",
+            description="Get a 3D model by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "model_id": {"type": "string"},
+                },
+                "required": ["tenant_id", "model_id"],
+            },
+        ),
+        Tool(
+            name="list_3d_models",
+            description="List 3D models in a world",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tenant_id": {"type": "string"},
+                    "world_id": {"type": "string"},
+                    "limit": {"type": "integer", "default": 100},
                     "offset": {"type": "integer", "default": 0},
                 },
                 "required": ["tenant_id", "world_id"],
@@ -1365,6 +1467,124 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 }, indent=2)
             )]
 
+        # Texture operations
+        elif name == "create_texture":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+
+            texture = Texture.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=arguments["name"],
+                path=arguments["path"],
+                texture_type=arguments["texture_type"],
+                file_size=arguments["file_size"],
+                dimensions=arguments.get("dimensions"),
+                color_space=arguments.get("color_space", "sRGB"),
+                description=arguments.get("description"),
+            )
+
+            texture_repo.save(texture)
+            persistence.save_texture(texture, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "texture": serialize_entity(texture),
+                    "message": "Texture created successfully"
+                }, indent=2)
+            )]
+
+        elif name == "get_texture":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            texture_id = parse_entity_id(arguments["texture_id"])
+
+            texture = texture_repo.get_by_id(tenant_id, texture_id)
+            if not texture:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "Texture not found"}))]
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({"success": True, "texture": serialize_entity(texture)}, indent=2)
+            )]
+
+        elif name == "list_textures":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            limit = arguments.get("limit", 100)
+            offset = arguments.get("offset", 0)
+
+            textures = texture_repo.list_by_world(tenant_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(textures),
+                    "textures": [serialize_entity(t) for t in textures]
+                }, indent=2)
+            )]
+
+        # 3D Model operations
+        elif name == "create_3d_model":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            world_id = parse_entity_id(arguments["world_id"])
+
+            model = Model3D.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=arguments["name"],
+                path=arguments["path"],
+                model_type=arguments["model_type"],
+                file_size=arguments["file_size"],
+                poly_count=arguments.get("poly_count"),
+                dimensions=arguments.get("dimensions"),
+                textures=[parse_entity_id(tid) for tid in arguments.get("textures", [])],
+                animations=arguments.get("animations", []),
+                description=arguments.get("description"),
+            )
+
+            model3d_repo.save(model)
+            persistence.save_3d_model(model, str(arguments["tenant_id"]))
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "model": serialize_entity(model),
+                    "message": "3D Model created successfully"
+                }, indent=2)
+            )]
+
+        elif name == "get_3d_model":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            model_id = parse_entity_id(arguments["model_id"])
+
+            model = model3d_repo.get_by_id(tenant_id, model_id)
+            if not model:
+                return [TextContent(type="text", text=json.dumps({"success": False, "error": "3D Model not found"}))]
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({"success": True, "model": serialize_entity(model)}, indent=2)
+            )]
+
+        elif name == "list_3d_models":
+            tenant_id = parse_tenant_id(arguments["tenant_id"])
+            limit = arguments.get("limit", 100)
+            offset = arguments.get("offset", 0)
+
+            models = model3d_repo.list_by_world(tenant_id, limit, offset)
+
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "count": len(models),
+                    "models": [serialize_entity(m) for m in models]
+                }, indent=2)
+            )]
+
         # Location operations
         elif name == "create_location":
             tenant_id = parse_tenant_id(arguments["tenant_id"])
@@ -1737,6 +1957,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 item_repo,
                 location_repo,
                 environment_repo,
+                texture_repo,
+                model3d_repo,
                 tenant_id
             )
 
