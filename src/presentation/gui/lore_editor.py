@@ -2301,6 +2301,8 @@ class MainWindow(QMainWindow):
         self.music_states_tab = MusicStatesTab(self.lore_data)
         self.progression_events_tab = ProgressionEventsTab(self.lore_data)
         self.progression_states_tab = ProgressionStatesTab(self.lore_data)
+        self.texture_tab = TextureTab(self.lore_data)
+        self.model3d_tab = Model3DTab(self.lore_data)
 
         # Add to stacked widget and list with categorical dividers
         # Track mapping between list rows and widget indices (excluding dividers)
@@ -2369,6 +2371,8 @@ class MainWindow(QMainWindow):
         add_tab(self.templates_tab, I18N.t('tab.templates', "📐 Templates"))
         add_tab(self.pages_tab, I18N.t('tab.pages', "📄 Pages"))
         add_tab(self.images_tab, I18N.t('tab.images', "🖼️ Images"))
+        add_tab(self.texture_tab, I18N.t('tab.textures', "🎨 Textures"))
+        add_tab(self.model3d_tab, I18N.t('tab.models', "🎲 3D Models"))
         add_tab(self.handouts_tab, I18N.t('tab.handouts', "📄 Handouts"))
 
         # Organization & Tools
@@ -3098,6 +3102,8 @@ class MainWindow(QMainWindow):
         self.events_tab.refresh()
         self.improvements_tab.refresh()
         self.items_tab.refresh()
+        self.texture_tab.refresh()
+        self.model3d_tab.refresh()
         self.quests_tab.refresh()
         self.storylines_tab.refresh()
         self.pages_tab.refresh()
