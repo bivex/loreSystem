@@ -1,0 +1,21 @@
+{
+  "id": 8,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Изогнутый клинок",
+  "description": "Древний изогнутый клинок, похожий на большой серп, потемневший от копоти и вековой ржавчины. Мощное оружие, wielded by orc leaders.",
+  "item_type": "weapon",
+  "rarity": "rare",
+  "location_id": 3,
+  "level": 3,
+  "enhancement": 0,
+  "max_enhancement": 10,
+  "base_atk": 5,
+  "base_hp": 0,
+  "base_def": 0,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:02:27.349207+00:00",
+  "updated_at": "2026-01-26T11:02:27.349207+00:00",
+  "version": 1
+}

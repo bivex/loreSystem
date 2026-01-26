@@ -1,0 +1,21 @@
+{
+  "id": 9,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Толстые веревки",
+  "description": "Прочные веревки, сплетённые из прочной шкуры животных, способные связывать даже сильных пленников. Используются орками для сдерживания пленников.",
+  "item_type": "tool",
+  "rarity": "common",
+  "location_id": 3,
+  "level": 1,
+  "enhancement": 0,
+  "max_enhancement": 3,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 0,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:02:29.400356+00:00",
+  "updated_at": "2026-01-26T11:02:29.400356+00:00",
+  "version": 1
+}

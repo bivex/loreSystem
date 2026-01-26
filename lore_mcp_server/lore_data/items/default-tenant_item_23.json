@@ -1,0 +1,21 @@
+{
+  "id": 23,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Ржавая цепь",
+  "description": "Ржавая цепь, висящая на стене пещеры. Может использоваться для связывания или как оружие.",
+  "item_type": "tool",
+  "rarity": "uncommon",
+  "location_id": 3,
+  "level": 2,
+  "enhancement": 0,
+  "max_enhancement": 5,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 1,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:04:01.272903+00:00",
+  "updated_at": "2026-01-26T11:04:01.272903+00:00",
+  "version": 1
+}

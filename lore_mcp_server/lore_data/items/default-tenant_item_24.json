@@ -1,0 +1,21 @@
+{
+  "id": 24,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Шкура орка",
+  "description": "Шкура орка, снятая с тела. Толстая и прочная, может использоваться как броня или для изготовления одежды.",
+  "item_type": "armor",
+  "rarity": "rare",
+  "location_id": 3,
+  "level": 2,
+  "enhancement": 0,
+  "max_enhancement": 8,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 3,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:04:02.991874+00:00",
+  "updated_at": "2026-01-26T11:04:02.991874+00:00",
+  "version": 1
+}
