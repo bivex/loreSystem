@@ -5,7 +5,7 @@ Represents the complete state of a character at a specific time point.
 All facts are time-indexed for formal verification.
 """
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from ..value_objects.common import (
     TenantId,

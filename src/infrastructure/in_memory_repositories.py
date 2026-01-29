@@ -23,7 +23,7 @@ from src.domain.repositories.item_repository import IItemRepository
 from src.domain.repositories.location_repository import ILocationRepository
 from src.domain.repositories.environment_repository import IEnvironmentRepository
 from src.domain.value_objects.common import (
-    TenantId, EntityId, WorldName, CharacterName
+    TenantId, EntityId, WorldName, CharacterName, TimeOfDay, Weather, Lighting
 )
 from src.domain.exceptions import DuplicateEntity, EntityNotFound
 

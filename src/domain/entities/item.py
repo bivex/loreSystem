@@ -4,7 +4,7 @@ Item Entity
 An Item represents a tangible object in the lore world.
 """
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 from ..value_objects.common import (
     TenantId,
