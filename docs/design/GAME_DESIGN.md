@@ -1,33 +1,30 @@
 # Game Design Document: Dark Fantasy Gacha RPG
-## Документ Игрового Дизайна: Тёмное Фэнтези Гача РПГ
 
-> **Vision**: Создать глубокую gacha RPG с мрачной атмосферой, где каждый персонаж имеет драматическую историю, а выборы игрока влияют на судьбу мира.
->
 > **Vision**: Create a deep gacha RPG with dark atmosphere, where every character has a dramatic story, and player choices affect the fate of the world.
 
 ---
 
-## 🎮 CORE GAMEPLAY LOOP / Основной Игровой Цикл
+## 🎮 CORE GAMEPLAY LOOP
 
-### Ежедневная Сессия (15-30 минут):
+### Daily Session (15-30 minutes):
 
 ```
-1. Login → Daily Rewards (2 минуты)
+1. Login → Daily Rewards (2 minutes)
    ├── Day 1-7: Escalating rewards
    ├── Streak bonus (consecutive days)
    └── Special reward on Day 7
 
-2. Daily Quests (10 минут)
+2. Daily Quests (10 minutes)
    ├── Kill 20 enemies → 50 Gems
    ├── Complete 3 stages → 100 Gems
    └── Use 40 energy → Resource pack
 
-3. Energy Consumption (10-15 минут)
+3. Energy Consumption (10-15 minutes)
    ├── Story stages (10 energy each)
    ├── Material farming (15 energy each)
    └── Boss fights (25 energy each)
 
-4. Character Development (5 минут)
+4. Character Development (5 minutes)
    ├── Level up characters
    ├── Upgrade equipment
    └── Unlock talents
@@ -38,7 +35,7 @@
    └── Check collection progress
 ```
 
-### Недельная Прогрессия:
+### Weekly Progression:
 
 ```
 Monday: New weekly quests unlock
@@ -54,31 +51,31 @@ Guild War: Weekend competitive event
 
 ---
 
-## 💰 MONETIZATION DESIGN / Дизайн Монетизации
+## 💰 MONETIZATION DESIGN
 
-### Валюты / Currencies:
+### Currencies:
 
-#### 1. Gold (Мягкая Валюта)
-- **Получение**: Квесты, farming stages, selling items
-- **Расход**: Character leveling, equipment enhancement, shop purchases
-- **Баланс**: 1000-5000 per stage, player needs ~50,000 daily at endgame
+#### 1. Gold (Soft Currency)
+- **Source**: Quests, farming stages, selling items
+- **Spending**: Character leveling, equipment enhancement, shop purchases
+- **Balance**: 1000-5000 per stage, player needs ~50,000 daily at endgame
 
-#### 2. Gems (Твёрдая Валюта)
-- **Получение**: Quests, achievements, dailies, events, purchases
-- **Расход**: Gacha pulls, energy refills, premium items
-- **Баланс**: 
+#### 2. Gems (Hard Currency)
+- **Source**: Quests, achievements, dailies, events, purchases
+- **Spending**: Gacha pulls, energy refills, premium items
+- **Balance**:
   - Free: ~3000 gems/month (10 pulls)
   - Light spender: +6000 gems/month (20 pulls total)
   - Whale: Unlimited
 
-#### 3. Premium Currency (Платиновые Монеты)
-- **Получение**: ONLY через покупки за фиат
-- **Расход**: Exclusive banners, limited skins, season pass
+#### 3. Premium Currency (Platinum Coins)
+- **Source**: ONLY through fiat purchases
+- **Spending**: Exclusive banners, limited skins, season pass
 - **Conversion**: $1 = 60 platinum coins
 
 ### Gacha System:
 
-#### Standard Banner (Постоянный)
+#### Standard Banner (Permanent)
 ```
 Pull Cost: 160 Gems (single) | 1600 Gems (10-pull)
 Rates:
@@ -93,13 +90,13 @@ Pity System:
 - Guaranteed featured: After losing 50/50
 ```
 
-#### Limited Banner (2-3 недели)
+#### Limited Banner (2-3 weeks)
 ```
 Pull Cost: 160 Gems
 Rates: Same as standard
 Featured Character Rate: 50% (first), 100% (after losing)
 
-Special: 
+Special:
 - Weapon banner (75 pity)
 - Rerun banners (old limited characters)
 ```
@@ -158,7 +155,7 @@ Monthly Card ($4.99):
 
 Battle Pass ($9.99):
 - Free tier: Basic rewards
-- Premium tier: 
+- Premium tier:
   - 1680 Gems over season
   - 1 guaranteed SR character
   - Exclusive weapon
@@ -167,7 +164,7 @@ Battle Pass ($9.99):
 
 ---
 
-## 📊 PROGRESSION SYSTEM / Система Прогрессии
+## 📊 PROGRESSION SYSTEM
 
 ### Player Account Level (1-100):
 ```
@@ -279,7 +276,7 @@ Whale Protection:
 
 ---
 
-## 🎭 CHARACTER DESIGN / Дизайн Персонажей
+## 🎭 CHARACTER DESIGN
 
 ### Rarity Distribution:
 
@@ -371,13 +368,13 @@ Support:
 
 ```
 Elements: 7 types
-- Fire (Огонь): High damage, burning DoT
-- Water (Вода): Healing, cleansing
-- Earth (Земля): Defense, shields
-- Wind (Ветер): Speed, mobility
-- Lightning (Молния): Burst damage, stun
-- Light (Свет): Healing, purification
-- Dark (Тьма): Damage over time, life steal
+- Fire: High damage, burning DoT
+- Water: Healing, cleansing
+- Earth: Defense, shields
+- Wind: Speed, mobility
+- Lightning: Burst damage, stun
+- Light: Healing, purification
+- Dark: Damage over time, life steal
 
 Reactions:
 - Fire + Wind = Amplified damage (+50%)
@@ -388,9 +385,9 @@ Reactions:
 
 ---
 
-## 🗺️ CONTENT STRUCTURE / Структура Контента
+## 🗺️ CONTENT STRUCTURE
 
-### Story Mode (Основная История):
+### Story Mode (Main Story):
 
 ```
 Chapters: 12 (at launch) → 20+ (over 2 years)
@@ -453,7 +450,7 @@ Try featured SSR character
 Fight special boss for exclusive rewards
 - Solo or Co-op
 - Leaderboard for top damage
-- Rewards: 
+- Rewards:
   - Top 100: SSR Selector Ticket
   - Top 1000: 1600 Gems (10 pulls)
   - All participants: Event currency for shop
@@ -469,9 +466,9 @@ Limited story chapters
 
 ---
 
-## 🏆 RETENTION MECHANICS / Механики Удержания
+## 🏆 RETENTION MECHANICS
 
-### Daily Engagement (15-30 минут):
+### Daily Engagement (15-30 minutes):
 
 ```
 1. Daily Login (2 min)
@@ -537,7 +534,7 @@ Achievement System:
 
 ---
 
-## 👥 SOCIAL SYSTEMS / Социальные Системы
+## 👥 SOCIAL SYSTEMS
 
 ### Guild System (Level 20+):
 
@@ -582,7 +579,7 @@ Friend Points Shop:
 ```
 2-4 players cooperative bosses
 Energy Cost: 25 per player
-Rewards: 
+Rewards:
 - Shared loot pool
 - Bonus for playing with friends
 - Leaderboard for fastest clears
@@ -610,7 +607,7 @@ Rewards:
 
 ---
 
-## ⚔️ COMBAT SYSTEM / Боевая Система
+## ⚔️ COMBAT SYSTEM
 
 ### Team Composition:
 
@@ -683,7 +680,7 @@ Speed Options:
 
 ---
 
-## 🎨 UI/UX FLOW / Поток Интерфейса
+## 🎨 UI/UX FLOW
 
 ### Onboarding (First 10 minutes):
 
@@ -756,7 +753,7 @@ Login → Check shop for new packs → Purchase → Pull on banner
 
 ---
 
-## 📈 MONETIZATION PSYCHOLOGY / Психология Монетизации
+## 📈 MONETIZATION PSYCHOLOGY
 
 ### FOMO (Fear of Missing Out):
 
@@ -836,7 +833,7 @@ Variable Interval (Events):
 
 ---
 
-## 🎯 KPI TARGETS / Целевые Показатели
+## 🎯 KPI TARGETS
 
 ### Retention:
 ```
@@ -870,7 +867,7 @@ Banner Conversion: 15-20% try new banner
 
 ---
 
-## 🚀 LAUNCH PLAN / План Запуска
+## 🚀 LAUNCH PLAN
 
 ### Soft Launch (Month 1):
 ```
@@ -922,7 +919,7 @@ Seasonal Events:
 
 ---
 
-## ✅ SUCCESS CRITERIA / Критерии Успеха
+## ✅ SUCCESS CRITERIA
 
 ### Technical:
 - [ ] All entities have game value (stats, rewards, etc.)

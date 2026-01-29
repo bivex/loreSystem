@@ -8,9 +8,7 @@
 
 ## 📋 Task
 
-> "Проверь домен и составь edge cases сущности чтобы наш лор не рассыпался в процессе, в продакшн не, и был понятен игрокам"
-
-**Translation**: Verify the domain model and create edge case tests for all entities to ensure the lore system is stable in production and understandable to players.
+Verify the domain model and create edge case tests for all entities to ensure the lore system is stable in production and understandable to players.
 
 ---
 

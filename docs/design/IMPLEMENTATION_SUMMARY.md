@@ -1,5 +1,4 @@
 # Implementation Summary: Lore System Improvements
-## Резюме Реализации: Улучшения Лор-Системы
 
 **Date**: 2026-01-18  
 **Status**: ✅ Analysis Complete, Implementation Ready  
@@ -7,9 +6,9 @@
 
 ---
 
-## 📊 Анализ Завершён / Analysis Complete
+## 📊 Analysis Complete
 
-### Документы созданы / Documents Created:
+### Documents Created:
 
 1. **LORE_ANALYSIS_AND_TODO.md** (26,515 chars)
    - Comprehensive analysis of missing features
@@ -31,7 +30,7 @@
    - Event chains and consequences
    - Complete monetization model
 
-### Entities Implemented / Сущности Реализованы:
+### Entities Implemented:
 
 1. **Currency** (`src/domain/entities/currency.py`)
    - Multiple currency types (Gold, Gems, Premium)
@@ -61,7 +60,7 @@
 
 ---
 
-## 🔴 Критические Проблемы Выявлены / Critical Issues Identified
+## 🔴 Critical Issues Identified
 
 ### 1. ❌ Missing Game Economy (CRITICAL)
 **Impact**: Cannot monetize game  
@@ -89,7 +88,7 @@
 
 ---
 
-## 📋 TODO Список / TODO List
+## 📋 TODO List
 
 ### Phase 1: Game Economy (Week 1-2) - 🔴 PRIORITY
 
@@ -170,7 +169,7 @@
 
 ---
 
-## 📈 Ожидаемые Метрики / Expected Metrics
+## 📈 Expected Metrics
 
 ### Before Improvements:
 ```
@@ -289,7 +288,7 @@ ARPU: $9.40
 
 ## 🎮 Example: Deep Interconnection
 
-### Character: Лира Кровавый Шёпот
+### Character: Lira Bloody Whisper
 
 **Before (Isolated)**:
 ```
@@ -303,8 +302,8 @@ ARPU: $9.40
 **After (Interconnected)**:
 ```
 Relationships:
-├── Enemy → Виктор (-95) [+15% dmg when fighting]
-├── Lover → Элиза (+85) [+20% dmg, combo ability]
+├── Enemy → Viktor (-95) [+15% dmg when fighting]
+├── Lover → Eliza (+85) [+20% dmg, combo ability]
 └── Mentor → Ancient Vampire
 
 Faction:
@@ -331,7 +330,7 @@ Events:
 └── Triggers quest "Lira's Revenge"
 
 Unlocks:
-├── Special dialogue with Элиза
+├── Special dialogue with Eliza
 ├── Combo ability "Cursed Union"
 └── Faction shop items
 ```
