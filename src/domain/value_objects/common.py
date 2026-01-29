@@ -333,7 +333,7 @@ class EntityId:
     value: int
 
     def __post_init__(self):
-        if self.value <= 0:
+        if not isinstance(self.value, int) or self.value <= 0:
             raise ValueError("EntityId must be positive")
 
     def __str__(self) -> str:

@@ -1598,8 +1598,10 @@ def main(demo: bool = False):
         )
         storage.save_note(note)
         
-        print_success("Sample data loaded successfully!")
-        console.print()
+            print_success("Sample data loaded successfully!")
+        
+        if not demo:
+            main_menu()
     
     # Run the main menu
     try:
