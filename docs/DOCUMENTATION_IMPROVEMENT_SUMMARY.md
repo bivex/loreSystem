@@ -107,7 +107,7 @@ Successfully reviewed all user-facing documentation and identified critical issu
 
 ### 4. Rewrote USER_GUIDE.md
 
-**File:** `lore/loreSystem/docs/USER_GUIDE_NEW.md` (24,225 bytes)
+**File:** `lore/loreSystem/docs/USER_GUIDE.md` (24,225 bytes)
 
 **Major Improvements:**
 - **Added introduction** - Explains what MythWeave is and who it's for
@@ -253,12 +253,12 @@ docs/
 ✅ DOCUMENTATION_IMPROVEMENT_REPORT.md - Full analysis and recommendations
 ✅ FAQ.md - 38 frequently asked questions
 ✅ GLOSSARY.md - 47 terms explained
-✅ USER_GUIDE_NEW.md - Complete rewrite
+✅ USER_GUIDE.md - Complete rewrite
 ✅ QUICK_REFERENCE.md - One-page cheat sheets
 ✅ README_NEW.md - Enhanced index with navigation
 
 ### Ready for Review (Replace Existing Files):
-📋 USER_GUIDE.md → Replace with USER_GUIDE_NEW.md
+📋 USER_GUIDE.md → Replace with USER_GUIDE.md
 📋 README.md → Replace with README_NEW.md
 
 ### Not Yet Created (Future Enhancements):
@@ -271,7 +271,7 @@ docs/
 ## Estimated Effort to Complete Remaining Work
 
 ### High Priority (Do First):
-1. Replace USER_GUIDE.md with USER_GUIDE_NEW.md
+1. Replace USER_GUIDE.md with USER_GUIDE.md
 2. Replace README.md with README_NEW.md
 3. Move FAQ.md, GLOSSARY.md, and QUICK_REFERENCE.md to docs/
 4. Review and test all new documentation
@@ -438,7 +438,7 @@ The MythWeave documentation has been significantly improved with a focus on non-
 1. `DOCUMENTATION_IMPROVEMENT_REPORT.md` (32,739 bytes)
 2. `FAQ.md` (14,582 bytes)
 3. `GLOSSARY.md` (18,148 bytes)
-4. `USER_GUIDE_NEW.md` (24,225 bytes)
+4. `USER_GUIDE.md` (24,225 bytes)
 5. `QUICK_REFERENCE.md` (7,664 bytes)
 6. `README_NEW.md` (12,633 bytes)
 

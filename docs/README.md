@@ -36,7 +36,7 @@ Track lore development progress, manage content across teams, and review propose
 
 ### New to MythWeave? Start Here:
 
-1. **Read the [User Guide](USER_GUIDE_NEW.md)** - Installation, usage, troubleshooting
+1. **Read the [User Guide](USER_GUIDE.md)** - Installation, usage, troubleshooting
 2. **Follow the [GUI Quick Start](gui/QUICKSTART_GUI.md)** - 5-minute walkthrough
 3. **Check the [FAQ](FAQ.md)** - Common questions answered
 4. **Use [Quick Reference Cards](QUICK_REFERENCE.md)** - Cheat sheets for common tasks
@@ -44,7 +44,7 @@ Track lore development progress, manage content across teams, and review propose
 ### Already Using MythWeave?
 
 - **Need help?** Check [FAQ](FAQ.md) or [Glossary](GLOSSARY.md)
-- **Want to upgrade?** See [Advanced Configuration](USER_GUIDE_NEW.md#advanced-configuration-optional)
+- **Want to upgrade?** See [Advanced Configuration](USER_GUIDE.md#advanced-configuration)
 - **Building a game?** Read [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md)
 - **Testing progression?** See [PROGRESSION_SIMULATOR_README.md](features/PROGRESSION_SIMULATOR_README.md)
 
@@ -56,7 +56,7 @@ Track lore development progress, manage content across teams, and review propose
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [USER_GUIDE.md](USER_GUIDE_NEW.md) | Complete guide: install, use, troubleshoot | All users |
+| [USER_GUIDE.md](USER_GUIDE.md) | Complete guide: install, use, troubleshoot | All users |
 | [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md) | 5-minute walkthrough for the GUI | New users |
 | [WINDOWS_SETUP.md](platform/WINDOWS_SETUP.md) | Windows-specific setup instructions | Windows users |
 | [FAQ.md](FAQ.md) | Frequently asked questions | All users |
@@ -97,7 +97,7 @@ Track lore development progress, manage content across teams, and review propose
 ### I Want To...
 
 **Get started with MythWeave**
-→ [USER_GUIDE.md](USER_GUIDE_NEW.md) → Start with "Quick Start" section
+→ [USER_GUIDE.md](USER_GUIDE.md) → Start with "Quick Start" section
 
 **Launch the GUI and create my first world**
 → [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md) → Follow step-by-step tutorial
@@ -124,7 +124,7 @@ Track lore development progress, manage content across teams, and review propose
 → [PROJECT_SUMMARY.md](design/PROJECT_SUMMARY.md) → Read the overview
 
 **Troubleshoot a problem**
-→ [USER_GUIDE.md](USER_GUIDE_NEW.md#troubleshooting) → Find your error in the list
+→ [USER_GUIDE.md](USER_GUIDE.md#troubleshooting) → Find your error in the list
 
 ---
 
@@ -133,7 +133,7 @@ Track lore development progress, manage content across teams, and review propose
 ### For Non-Technical Users (Writers, Designers, QA)
 
 **Start here:**
-1. [USER_GUIDE.md](USER_GUIDE_NEW.md) - Main guide, easy to follow
+1. [USER_GUIDE.md](USER_GUIDE.md) - Main guide, easy to follow
 2. [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md) - Hands-on tutorial
 3. [FAQ.md](FAQ.md) - Answers to common questions
 
@@ -160,7 +160,7 @@ Track lore development progress, manage content across teams, and review propose
 ### For Game Designers
 
 **Start here:**
-1. [USER_GUIDE.md](USER_GUIDE_NEW.md) - Learn to use the system
+1. [USER_GUIDE.md](USER_GUIDE.md) - Learn to use the system
 2. [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md) - Rules and constraints
 3. [PROGRESSION_SIMULATOR_README.md](features/PROGRESSION_SIMULATOR_README.md) - Test progression
 
@@ -173,7 +173,7 @@ Track lore development progress, manage content across teams, and review propose
 ### For QA Testers
 
 **Start here:**
-1. [USER_GUIDE.md](USER_GUIDE_NEW.md) - Learn the system
+1. [USER_GUIDE.md](USER_GUIDE.md) - Learn the system
 2. [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md) - Rules to verify
 3. [DOMAIN_EDGE_CASES_RU.md](validation/DOMAIN_EDGE_CASES_RU.md) - Test edge cases
 
@@ -187,11 +187,11 @@ Track lore development progress, manage content across teams, and review propose
 
 ### By Topic
 
-- **Installation:** [USER_GUIDE.md](USER_GUIDE_NEW.md#installation-and-configuration), [WINDOWS_SETUP.md](platform/WINDOWS_SETUP.md)
-- **Creating Worlds:** [USER_GUIDE.md](USER_GUIDE_NEW.md#creating-your-first-world), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#create-your-first-world)
-- **Managing Characters:** [USER_GUIDE.md](USER_GUIDE_NEW.md#managing-characters), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#create-your-first-character)
-- **Validation Rules:** [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md), [USER_GUIDE_NEW.md#appendix-quick-reference)
-- **Troubleshooting:** [USER_GUIDE.md](USER_GUIDE_NEW.md#troubleshooting), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#troubleshooting), [FAQ.md](FAQ.md#troubleshooting)
+- **Installation:** [USER_GUIDE.md](USER_GUIDE.md#installation-and-configuration), [WINDOWS_SETUP.md](platform/WINDOWS_SETUP.md)
+- **Creating Worlds:** [USER_GUIDE.md](USER_GUIDE.md#creating-your-first-world), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#create-your-first-world)
+- **Managing Characters:** [USER_GUIDE.md](USER_GUIDE.md#managing-characters), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#create-your-first-character)
+- **Validation Rules:** [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md), [USER_GUIDE.md#appendix-quick-reference)
+- **Troubleshooting:** [USER_GUIDE.md](USER_GUIDE.md#troubleshooting), [QUICKSTART_GUI.md](gui/QUICKSTART_GUI.md#troubleshooting), [FAQ.md](FAQ.md#troubleshooting)
 
 ### By Difficulty
 
@@ -327,7 +327,7 @@ Track every change with **Git integration**. Revert mistakes, compare versions, 
 
 ---
 
-**Ready to start?** Jump to [USER_GUIDE.md](USER_GUIDE_NEW.md) and begin your lore-building journey! 📚✨
+**Ready to start?** Jump to [USER_GUIDE.md](USER_GUIDE.md) and begin your lore-building journey! 📚✨
 
 ---
 
