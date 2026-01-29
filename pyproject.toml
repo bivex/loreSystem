@@ -8,6 +8,11 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+colorama = "^0.4.6"
+tqdm = "^4.66.0"
+
+[tool.poetry.scripts]
+lore-cli = "cli:main"
 
 [build-system]
 requires = ["poetry-core"]
