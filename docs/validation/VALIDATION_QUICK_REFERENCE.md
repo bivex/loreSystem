@@ -200,8 +200,8 @@ Pity(..., pulls_since_last_ssr=-5)
 
 ## Documentation
 
-- **Comprehensive guide**: `docs/DOMAIN_EDGE_CASES_RU.md`
-- **Player guarantees**: `docs/PLAYER_GUARANTEES_RU.md`
+- **Comprehensive guide**: `docs/DOMAIN_EDGE_CASES.md`
+- **Player guarantees**: `docs/PLAYER_GUARANTEES.md`
 - **Test suite**: `tests/test_domain_edge_cases_comprehensive.py`
 - **Domain verification**: `docs/DATABASE_DOMAIN_VERIFICATION.md`
 

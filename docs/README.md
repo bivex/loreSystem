@@ -68,9 +68,9 @@ Track lore development progress, manage content across teams, and review propose
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [Validation Rules](validation/VALIDATION_QUICK_REFERENCE.md) | All domain rules and validation logic | Designers, QA |
-| [Player Guarantees](validation/PLAYER_GUARANTEES_RU.md) | What players can expect | Designers, QA |
+| [Player Guarantees](validation/PLAYER_GUARANTEES.md) | What players can expect | Designers, QA |
 | [Database Verification](validation/DATABASE_DOMAIN_VERIFICATION.md) | SQL constraints and rules | Developers |
-| [Edge Cases](validation/DOMAIN_EDGE_CASES_RU.md) | Testing edge cases and boundaries | Developers, QA |
+| [Edge Cases](validation/DOMAIN_EDGE_CASES.md) | Testing edge cases and boundaries | Developers, QA |
 
 ### Features
 
@@ -166,7 +166,7 @@ Track lore development progress, manage content across teams, and review propose
 
 **When you're ready:**
 4. [GAME_DESIGN.md](design/GAME_DESIGN.md) - Game mechanics
-5. [PLAYER_GUARANTEES_RU.md](validation/PLAYER_GUARANTEES_RU.md) - Player-facing rules
+5. [PLAYER_GUARANTEES.md](validation/PLAYER_GUARANTEES.md) - Player-facing rules
 
 ---
 
@@ -175,7 +175,7 @@ Track lore development progress, manage content across teams, and review propose
 **Start here:**
 1. [USER_GUIDE.md](USER_GUIDE.md) - Learn the system
 2. [VALIDATION_QUICK_REFERENCE.md](validation/VALIDATION_QUICK_REFERENCE.md) - Rules to verify
-3. [DOMAIN_EDGE_CASES_RU.md](validation/DOMAIN_EDGE_CASES_RU.md) - Test edge cases
+3. [DOMAIN_EDGE_CASES.md](validation/DOMAIN_EDGE_CASES.md) - Test edge cases
 
 **When you're ready:**
 4. [PROGRESSION_SIMULATOR_README.md](features/PROGRESSION_SIMULATOR_README.md) - Test progression
@@ -198,7 +198,7 @@ Track lore development progress, manage content across teams, and review propose
 | Level | Documents |
 |-------|-----------|
 | **Beginner** | USER_GUIDE.md, QUICKSTART_GUI.md, FAQ.md, QUICK_REFERENCE.md |
-| **Intermediate** | VALIDATION_QUICK_REFERENCE.md, PLAYER_GUARANTEES_RU.md, PROGRESSION_SIMULATOR_README.md |
+| **Intermediate** | VALIDATION_QUICK_REFERENCE.md, PLAYER_GUARANTEES.md, PROGRESSION_SIMULATOR_README.md |
 | **Advanced** | PROJECT_SUMMARY.md, IMPLEMENTATION_GUIDE.md, DATABASE_DOMAIN_VERIFICATION.md, ADRs |
 
 ### By File Type
@@ -209,7 +209,7 @@ Track lore development progress, manage content across teams, and review propose
 | **Reference** | FAQ.md, GLOSSARY.md, QUICK_REFERENCE.md, VALIDATION_QUICK_REFERENCE.md |
 | **Features** | PROGRESSION_SIMULATOR_README.md, MUSIC_SYSTEM.md, MUTATION_TESTING_README.md |
 | **Architecture** | PROJECT_SUMMARY.md, IMPLEMENTATION_GUIDE.md, STRUCTURE.md |
-| **Validation** | VALIDATION_QUICK_REFERENCE.md, DATABASE_DOMAIN_VERIFICATION.md, DOMAIN_EDGE_CASES_RU.md |
+| **Validation** | VALIDATION_QUICK_REFERENCE.md, DATABASE_DOMAIN_VERIFICATION.md, DOMAIN_EDGE_CASES.md |
 
 ---
 
@@ -234,9 +234,9 @@ docs/
 │
 ├── validation/ - Domain validation and rules
 │   ├── VALIDATION_QUICK_REFERENCE.md - All business rules
-│   ├── PLAYER_GUARANTEES_RU.md - Player-facing guarantees
+│   ├── PLAYER_GUARANTEES.md - Player-facing guarantees
 │   ├── DATABASE_DOMAIN_VERIFICATION.md - SQL constraints
-│   └── DOMAIN_EDGE_CASES_RU.md - Edge case testing
+│   └── DOMAIN_EDGE_CASES.md - Edge case testing
 │
 ├── design/ - Architecture and design
 │   ├── PROJECT_SUMMARY.md - System overview
