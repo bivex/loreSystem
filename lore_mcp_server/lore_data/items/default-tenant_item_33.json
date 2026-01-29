@@ -1,0 +1,21 @@
+{
+  "id": 33,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Сосновые деревья",
+  "description": "Высокие сосновые деревья, растущие на склоне. Могут использоваться как опора или источник древесины.",
+  "item_type": "other",
+  "rarity": "common",
+  "location_id": 4,
+  "level": 1,
+  "enhancement": 0,
+  "max_enhancement": 5,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 3,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:10:24.234377+00:00",
+  "updated_at": "2026-01-26T11:10:24.234377+00:00",
+  "version": 1
+}

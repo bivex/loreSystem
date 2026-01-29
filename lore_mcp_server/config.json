@@ -1,0 +1,39 @@
+{
+  "name": "lore-system-server",
+  "version": "1.0.0",
+  "description": "MCP server for managing game lore with CRUD operations",
+  "repository": {
+    "connection_type": "in_memory",
+    "comment": "Switch to 'postgresql' for production use"
+  },
+  "default_tenant": "default-tenant",
+  "features": {
+    "worlds": true,
+    "characters": true,
+    "stories": true,
+    "events": true,
+    "pages": true,
+    "abilities": true,
+    "relationships": false,
+    "sessions": false,
+    "choices": false
+  },
+  "limits": {
+    "max_worlds_per_tenant": 100,
+    "max_characters_per_world": 1000,
+    "max_stories_per_world": 500,
+    "max_events_per_world": 1000,
+    "max_pages_per_world": 5000,
+    "max_abilities_per_character": 20,
+    "default_list_limit": 100,
+    "max_list_limit": 1000
+  },
+  "validation": {
+    "world_name_max_length": 100,
+    "character_name_max_length": 100,
+    "backstory_min_length": 100,
+    "description_max_length": 1000,
+    "power_level_min": 1,
+    "power_level_max": 10
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": 29,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Кожаный пояс",
+  "description": "Кожаный пояс, носимый орками. Может использоваться для ношения инструментов или как ремень.",
+  "item_type": "armor",
+  "rarity": "common",
+  "location_id": 3,
+  "level": 1,
+  "enhancement": 0,
+  "max_enhancement": 4,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 1,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:04:14.559051+00:00",
+  "updated_at": "2026-01-26T11:04:14.559051+00:00",
+  "version": 1
+}

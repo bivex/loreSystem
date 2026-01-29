@@ -1,0 +1,21 @@
+{
+  "id": 10,
+  "tenant_id": 931440686,
+  "world_id": 1,
+  "name": "Кости животных",
+  "description": "Разбросанные кости от предыдущих трапез, устилающие пол пещеры. Хрустят под ногами и напоминают о жестокости орков.",
+  "item_type": "other",
+  "rarity": "common",
+  "location_id": 3,
+  "level": 1,
+  "enhancement": 0,
+  "max_enhancement": 0,
+  "base_atk": 0,
+  "base_hp": 0,
+  "base_def": 0,
+  "special_stat": null,
+  "special_stat_value": null,
+  "created_at": "2026-01-26T11:02:52.967023+00:00",
+  "updated_at": "2026-01-26T11:02:52.967023+00:00",
+  "version": 1
+}
