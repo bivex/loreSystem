@@ -45,7 +45,7 @@ class Eclipse:
         celestial_body_id: UUID,
         start_time: datetime,
         duration_minutes: float,
-        visibility_region: UUID,
+        visibility_region: Optional[UUID] = None,
         magnitude: float = 1.0,
     ) -> "Eclipse":
         """Factory method to create an eclipse event."""

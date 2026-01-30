@@ -14,8 +14,8 @@ class StarSystem:
         tenant_id: UUID,
         name: str,
         star_type: str,
-        star_count: int,
         galaxy_id: UUID,
+        star_count: int,
         planet_count: int,
         age_billion_years: float,
         habitable_planets: int,
@@ -27,8 +27,8 @@ class StarSystem:
         self.tenant_id = tenant_id
         self.name = name
         self.star_type = star_type
-        self.star_count = star_count
         self.galaxy_id = galaxy_id
+        self.star_count = star_count
         self.planet_count = planet_count
         self.age_billion_years = age_billion_years
         self.habitable_planets = habitable_planets
@@ -42,7 +42,7 @@ class StarSystem:
         tenant_id: UUID,
         name: str,
         star_type: str = "g_type",
-        galaxy_id: UUID,
+        galaxy_id: Optional[UUID] = None,
         star_count: int = 1,
         planet_count: int = 8,
         age_billion_years: float = 4.6,
@@ -59,8 +59,8 @@ class StarSystem:
             tenant_id=tenant_id,
             name=name.strip(),
             star_type=star_type,
-            star_count=star_count,
             galaxy_id=galaxy_id,
+            star_count=star_count,
             planet_count=planet_count,
             age_billion_years=age_billion_years,
             habitable_planets=habitable_planets,
@@ -77,4 +77,4 @@ class StarSystem:
         )
 
     def __repr__(self) -> str:
-        return f"<StarSystem {self.name}: {self.star_count} {self.star_type} star(s), {self.planet_count} planets>"
+        return f"<StarSystem {self.name}: {self.star_count} stars, {self.planet_count} planets>"
