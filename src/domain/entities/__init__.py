@@ -252,6 +252,13 @@ from .music_state import MusicState
 from .music_theme import MusicTheme
 from .music_track import MusicTrack
 from .note import Note
+
+# Music & Audio
+from .soundtrack import Soundtrack, SoundtrackType, Mood
+from .voice_line import VoiceLine, VoiceLineType, Emotion
+from .sound_effect import SoundEffect, SoundEffectType, Priority
+from .ambient import Ambient, AmbientType, LayerType
+from .silence import Silence, SilencePurpose, FadeStyle
 from .page import Page
 from .pity import Pity
 from .player_profile import PlayerProfile
@@ -503,6 +510,23 @@ __all__ = [
     "MusicTheme",
     "MusicTrack",
     "Note",
+
+    # Music & Audio
+    "Soundtrack",
+    "SoundtrackType",
+    "Mood",
+    "VoiceLine",
+    "VoiceLineType",
+    "Emotion",
+    "SoundEffect",
+    "SoundEffectType",
+    "Priority",
+    "Ambient",
+    "AmbientType",
+    "LayerType",
+    "Silence",
+    "SilencePurpose",
+    "FadeStyle",
     "Page",
     "Pity",
     "PlayerProfile",
