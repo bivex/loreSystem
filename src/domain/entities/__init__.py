@@ -84,6 +84,14 @@ from .material import Material
 from .rune import Rune
 from .socket import Socket
 
+# Legendary Items
+from .artifact_set import ArtifactSet
+from .cursed_item import CursedItem
+from .divine_item import DivineItem
+from .legendary_weapon import LegendaryWeapon
+from .mythical_armor import MythicalArmor
+from .relic_collection import RelicCollection
+
 # History & Time
 from .alliance import Alliance
 from .calendar import Calendar
@@ -347,6 +355,14 @@ __all__ = [
     "Material",
     "Rune",
     "Socket",
+
+    # Legendary Items
+    "ArtifactSet",
+    "CursedItem",
+    "DivineItem",
+    "LegendaryWeapon",
+    "MythicalArmor",
+    "RelicCollection",
 
     # History & Time
     "Alliance",
