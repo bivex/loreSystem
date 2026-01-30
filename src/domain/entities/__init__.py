@@ -1,9 +1,25 @@
 """Domain Entities - Objects with identity and lifecycle."""
 
+from .act import Act
+from .alternate_reality import AlternateReality
 from .banner import Banner
+from .branch_point import BranchPoint
+from .campaign import Campaign
+from .chapter import Chapter
 from .character import Character, CharacterElement, CharacterRole
+from .character_evolution import CharacterEvolution
 from .character_relationship import CharacterRelationship
+from .character_variant import CharacterVariant
 from .choice import Choice
+from .consequence import Consequence
+from .ending import Ending
+from .epilogue import Epilogue
+from .episode import Episode
+from .moral_choice import MoralChoice
+from .motion_capture import MotionCapture
+from .plot_branch import PlotBranch
+from .prologue import Prologue
+from .voice_actor import VoiceActor
 from .currency import Currency
 from .event import Event
 from .event_chain import EventChain
@@ -57,19 +73,30 @@ from .treaty import Treaty
 from .world import World
 
 __all__ = [
+    "Act",
+    "AlternateReality",
     "Alliance",
     "Banner",
+    "BranchPoint",
     "Calendar",
+    "Campaign",
+    "Chapter",
     "Character",
     "CharacterElement",
+    "CharacterEvolution",
     "CharacterRelationship",
     "CharacterRole",
+    "CharacterVariant",
     "Choice",
+    "Consequence",
     "Constitution",
     "Currency",
     "Era",
     "EraTransition",
+    "Ending",
     "Empire",
+    "Epilogue",
+    "Episode",
     "Event",
     "EventChain",
     "Faction",
@@ -86,7 +113,9 @@ __all__ = [
     "Law",
     "LegalSystem",
     "Map",
+    "MoralChoice",
     "Model3D",
+    "MotionCapture",
     "MusicControl",
     "MusicState",
     "MusicTheme",
@@ -96,6 +125,8 @@ __all__ = [
     "Page",
     "Pity",
     "PlayerProfile",
+    "PlotBranch",
+    "Prologue",
     "Pull",
     "Purchase",
     "Quest",
@@ -113,5 +144,6 @@ __all__ = [
     "Timeline",
     "Tokenboard",
     "Treaty",
+    "VoiceActor",
     "World",
 ]
