@@ -215,6 +215,13 @@ from .patent import Patent
 from .prototype import Prototype
 from .research import Research
 
+# Education
+from .academy import Academy
+from .archive import Archive
+from .library import Library
+from .school import School
+from .university import University
+
 # Existing entities (alphabetical)
 from .banner import Banner
 from .choice import Choice
@@ -450,6 +457,13 @@ __all__ = [
     "Patent",
     "Prototype",
     "Research",
+
+    # Education
+    "Academy",
+    "Archive",
+    "Library",
+    "School",
+    "University",
 
     # Existing entities
     "Banner",
