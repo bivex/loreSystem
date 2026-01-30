@@ -22,13 +22,19 @@ class EndingType(str, Enum):
     """Types of endings."""
     GOOD = "good"  # Positive outcome
     BAD = "bad"  # Negative outcome
-    NEUTRAL = "neutral"  = "true"  = "secret"  = "default"  = "canon"  = "multiple"  # Different endings for different characters
+    NEUTRAL = "neutral"  # Mixed outcome
+    SECRET = "secret"  # Hidden ending
+    CANON = "canon"  # Main story ending
+    MULTIPLE = "multiple"  # Different possible endings
 
 
 class EndingRarity(str, Enum):
     """Rarity of endings."""
     COMMON = "common"  # Easy to achieve
-    UNCOMMON = "uncommon"  = "rare"  = "epic"  = "legendary"  # Requires specific conditions
+    UNCOMMON = "uncommon"  # Requires some effort
+    RARE = "rare"  # Requires significant effort
+    EPIC = "epic"  # Major achievement
+    MYTHIC = "mythic"  # Extremely hard to find
     MYTHIC = "mythic"  # Extremely hard to find
 
 

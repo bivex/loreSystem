@@ -21,8 +21,9 @@ class BranchPointType(str, Enum):
     """Types of branch points."""
     CHOICE = "choice"  # Player makes a decision
     CONDITION = "condition"  # Based on state/stats
-    RANDOM = "random"  = "skill_check"  # Based on player skill
-    TRIGGER = "trigger"  = "branch_point"
+    RANDOM = "random"  # Random chance
+    SKILL_CHECK = "skill_check"  # Based on player skill
+    TRIGGER = "trigger"  # Triggered by event
 
 
 @dataclass

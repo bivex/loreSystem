@@ -1,9 +1,10 @@
 """
 AlternateReality Entity
 
-An AlternateReality is a different version of the world/timeline.
+An AlternateReality is a different version of a world/timeline.
 Often used in games with multiverse or time travel mechanics.
 """
+
 from dataclasses import dataclass, field
 from typing import Optional, List
 from enum import Enum
@@ -21,137 +22,139 @@ from ..exceptions import InvariantViolation, InvalidState
 class RealityType(str, Enum):
     """Types of alternate realities."""
     PARALLEL_UNIVERSE = "parallel_universe"  # Coexisting timeline
-    TIME_DIVERGENCE = "time_divergence"  = "dreamscape"  = "simulation"  = "afterlife"  = "premonition"  = "alternate_possibility"
+    TIME_DIVERGENCE = "time_divergence"  # Alternate timeline branch
+    DREAMSCAPE = "dreamscape"  # Dream world
+    SIMULATION = "simulation"  # Virtual reality
+    AFTERLIFE = "afterlife"  # Afterlife plane
+    PREMONITION = "premonition"  # Vision of the future
+    ALTERNATE_POSSIBILITY = "alternate_possibility"  # What could have been
 
 
 class RealityAccess(str, Enum):
-    """How players can access the reality."""
-    STORY_EVENT = "story_event"  = "item"  = "location"  = "ability"  = "choice"  = "quest"  = "unlockable"
+    """How players can access to reality."""
+    STORY_EVENT = "story_event"  # Triggered by story
+    ITEM = "item"  # Requires special item
+    LOCATION = "location"  # Requires being at specific location
+    ABILITY = "ability"  # Requires specific ability
+    CHOICE = "choice"  # Based on player choice
+    QUEST = "quest"  # Unlocked by quest completion
+    UNLOCKABLE = "unlockable"  # Can be unlocked directly
 
 
 @dataclass
 class AlternateReality:
-    """
-    AlternateReality entity representing a different timeline/reality.
-    
-    Invariants:
-    - Must have a name and description
-    - Must belong to a world
-    - Version increases monotonically
-    """
-    
-    id: Optional[EntityId]
+    """An alternate version of reality - could be a parallel timeline, dream world, or simulation."""
+
     tenant_id: TenantId
-    world_id: EntityId
+    id: Optional[EntityId] = field(default=None, compare=False)
     name: str
     description: Description
     reality_type: RealityType
-    access_type: RealityAccess
-    is_accessible: bool
-    is_permanent: bool  # Or temporary visit
-    access_condition: Optional[str]  # How to enter
-    exit_condition: Optional[str]  # How to leave
-    duration_minutes: Optional[int]  # None = indefinite
-    character_variations: List[EntityId]  # Alternate character versions
-    location_changes: List[EntityId]  # Modified locations
-    story_differences: List[str]  # Narrative changes
-    parent_reality_id: Optional[EntityId]  # Source reality
-    child_reality_ids: List[EntityId]  # Realities branching from this
-    aesthetic_theme: Optional[str]  # Visual/audio theme
-    
+    access_method: Optional[RealityAccess] = None
+    parent_world_id: Optional[EntityId] = None
+    divergence_point: Optional[str] = None  # When/where it diverged
+    is_canon: bool = False  # Whether this is the main timeline
+    stability: float = 1.0  # How stable the reality is
+    entry_points: List[str] = field(default_factory=list)  # How players enter
+    exit_points: List[str] = field(default_factory=list)  # How players leave
     created_at: Timestamp
     updated_at: Timestamp
-    version: Version
-    
+    version: Version = Version(1, 0, 0)
+
     def __post_init__(self):
-        """Validate invariants after construction."""
-        self._validate_invariants()
-    
-    def _validate_invariants(self):
-        """Check all invariants are satisfied."""
+        """Validate invariants."""
         if not self.name or len(self.name.strip()) == 0:
-            raise InvariantViolation("Reality name cannot be empty")
-        
-        if self.updated_at.value < self.created_at.value:
+            raise InvariantViolation("AlternateReality name cannot be empty")
+
+        if self.stability <= 0 or self.stability > 10:
+            raise InvariantViolation("Stability must be between 0 and 10")
+
+        if self.is_canon and not self.parent_world_id:
+            raise InvariantViolation("Canon reality must have a parent world")
+
+        if self.divergence_point and not self.parent_world_id:
             raise InvariantViolation(
-                "Updated timestamp must be >= created timestamp"
+                "Divergence point requires a parent world to reference"
             )
-        
-        if self.duration_minutes is not None and self.duration_minutes < 0:
-            raise InvariantViolation("Duration cannot be negative")
-    
+
     @classmethod
     def create(
         cls,
         tenant_id: TenantId,
-        world_id: EntityId,
         name: str,
-        description: Description,
+        description: str,
         reality_type: RealityType,
-        access_type: RealityAccess = RealityAccess.STORY_EVENT,
-        access_condition: Optional[str] = None,
-        exit_condition: Optional[str] = None,
-        duration_minutes: Optional[int] = None,
-        character_variations: Optional[List[EntityId]] = None,
-        location_changes: Optional[List[EntityId]] = None,
-        story_differences: Optional[List[str]] = None,
-        parent_reality_id: Optional[EntityId] = None,
-        child_reality_ids: Optional[List[EntityId]] = None,
-        aesthetic_theme: Optional[str] = None,
-    ) -> 'AlternateReality':
-        """Factory method for creating a new AlternateReality."""
+        access_method: Optional[RealityAccess] = None,
+        parent_world_id: Optional[EntityId] = None,
+        divergence_point: Optional[str] = None,
+        is_canon: bool = False,
+        stability: float = 1.0,
+        entry_points: Optional[List[str]] = None,
+        exit_points: Optional[List[str]] = None,
+    ) -> "AlternateReality":
+        """Factory method to create a valid AlternateReality."""
         now = Timestamp.now()
+
         return cls(
-            id=None,
             tenant_id=tenant_id,
-            world_id=world_id,
             name=name,
-            description=description,
+            description=Description(description),
             reality_type=reality_type,
-            access_type=access_type,
-            is_accessible=False,
-            is_permanent=False,
-            access_condition=access_condition,
-            exit_condition=exit_condition,
-            duration_minutes=duration_minutes,
-            character_variations=character_variations or [],
-            location_changes=location_changes or [],
-            story_differences=story_differences or [],
-            parent_reality_id=parent_reality_id,
-            child_reality_ids=child_reality_ids or [],
-            aesthetic_theme=aesthetic_theme,
+            access_method=access_method,
+            parent_world_id=parent_world_id,
+            divergence_point=divergence_point,
+            is_canon=is_canon,
+            stability=stability,
+            entry_points=entry_points or [],
+            exit_points=exit_points or [],
             created_at=now,
             updated_at=now,
-            version=Version(1),
         )
-    
-    def make_accessible(self) -> None:
-        """Make reality accessible to players."""
-        if self.is_accessible:
-            return
-        
-        object.__setattr__(self, 'is_accessible', True)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def add_child_reality(self, reality_id: EntityId) -> None:
-        """Add a reality that branches from this one."""
-        if reality_id in self.child_reality_ids:
-            raise InvalidState(f"Reality {reality_id} already a child")
-        
-        self.child_reality_ids.append(reality_id)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def is_temporary(self) -> bool:
-        """Check if reality visit is temporary."""
-        return not self.is_permanent and self.duration_minutes is not None
-    
-    def __str__(self) -> str:
-        return f"AlternateReality({self.name}, {self.reality_type})"
-    
-    def __repr__(self) -> str:
-        return (
-            f"AlternateReality(id={self.id}, world_id={self.world_id}, "
-            f"name='{self.name}', type={self.reality_type})"
-        )
+
+    def update_description(self, description: str) -> "AlternateReality":
+        """Update the alternate reality description."""
+        self.description = Description(description)
+        self.updated_at = Timestamp.now()
+        self.version = self.version.bump_minor()
+        return self
+
+    def set_canon(self, is_canon: bool) -> "AlternateReality":
+        """Mark this reality as canon (or non-canon)."""
+        self.is_canon = is_canon
+        self.updated_at = Timestamp.now()
+        self.version = self.version.bump_minor()
+        return self
+
+    def add_entry_point(self, entry_point: str) -> "AlternateReality":
+        """Add a way for players to enter this reality."""
+        if entry_point not in self.entry_points:
+            self.entry_points.append(entry_point)
+            self.updated_at = Timestamp.now()
+        return self
+
+    def add_exit_point(self, exit_point: str) -> "AlternateReality":
+        """Add a way for players to leave this reality."""
+        if exit_point not in self.exit_points:
+            self.exit_points.append(exit_point)
+            self.updated_at = Timestamp.now()
+        return self
+
+    def is_accessible(self) -> bool:
+        """Check if players can currently access this reality."""
+        if self.access_method in (RealityAccess.UNLOCKABLE, RealityAccess.STORY_EVENT):
+            return True
+
+        # Other access methods require specific conditions
+        return False
+
+    def get_instability_factor(self) -> float:
+        """Get how unstable this reality is (affects gameplay)."""
+        # Higher divergence and lower stability = more unstable
+        return (10 - self.stability) / 10.0
+
+    def collapse(self) -> "AlternateReality":
+        """Mark this reality as collapsed/destroyed."""
+        self.stability = 0
+        self.updated_at = Timestamp.now()
+        self.version = self.version.bump_minor()
+        return self

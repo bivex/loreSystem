@@ -31,7 +31,11 @@ class EvolutionStage(str, Enum):
 class EvolutionType(str, Enum):
     """Types of character evolution."""
     LEVEL_UP = "level_up"  # Standard leveling
-    TRANSFORMATION = "transformation"  = "awakening"  = "class_change"  = "skill_mastery"  = "story_unlocked"  = "quest_completed"
+    TRANSFORMATION = "transformation"  # Form change or awakening
+    CLASS_CHANGE = "class_change"  # Job or role change
+    SKILL_MASTERY = "skill_mastery"  # Mastering a skill tree
+    STORY_UNLOCKED = "story_unlocked"  # Progressed through story
+    QUEST_COMPLETED = "quest_completed"  # Finished a quest
 
 
 @dataclass

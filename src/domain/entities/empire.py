@@ -55,10 +55,10 @@ class Empire:
     capital_province_id: Optional[EntityId]
     expansion_type: str
     expansion_goals: List[str]
-    
+
     # Administration
     administrative_divisions: List[str]  # e.g., "Prefectures", "Governorates"
-    imperial bureaucracy: Optional[str]  # Description of bureaucracy
+    imperial_bureaucracy: Optional[str]  # Description of bureaucracy
     tax_system: Optional[str]
     
     # Military
