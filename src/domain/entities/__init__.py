@@ -276,6 +276,13 @@ from .template import Template
 from .texture import Texture
 from .tokenboard import Tokenboard
 
+# Visual Effects
+from .visual_effect import VisualEffect
+from .particle import Particle
+from .shader import Shader
+from .lighting import Lighting
+from .color_palette import ColorPalette
+
 __all__ = [
     # Campaign & Story
     "Act",
@@ -543,4 +550,11 @@ __all__ = [
     "Template",
     "Texture",
     "Tokenboard",
+
+    # Visual Effects
+    "VisualEffect",
+    "Particle",
+    "Shader",
+    "Lighting",
+    "ColorPalette",
 ]
