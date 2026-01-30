@@ -84,14 +84,6 @@ from .material import Material
 from .rune import Rune
 from .socket import Socket
 
-# Legendary Items
-from .artifact_set import ArtifactSet
-from .cursed_item import CursedItem
-from .divine_item import DivineItem
-from .legendary_weapon import LegendaryWeapon
-from .mythical_armor import MythicalArmor
-from .relic_collection import RelicCollection
-
 # History & Time
 from .alliance import Alliance
 from .calendar import Calendar
@@ -158,35 +150,6 @@ from .fortification import Fortification
 from .siege_engine import SiegeEngine
 from .weapon_system import WeaponSystem
 
-# Art & Culture
-from .tournament import Tournament
-
-# Weather & Climate
-from .weather_pattern import WeatherPattern
-from .cataclysm import Cataclysm
-from .disaster import Disaster
-from .miracle import Miracle
-from .phenomenon import Phenomenon
-
-# Legal System
-from .witness import Witness
-from .court import Court
-from .crime import Crime
-from .judge import Judge
-from .jury import Jury
-from .lawyer import Lawyer
-from .punishment import Punishment
-from .evidence import Evidence
-
-# Art & Culture
-from .tournament import Tournament
-from .festival import Festival
-from .celebration import Celebration
-from .ceremony import Ceremony
-from .concert import Concert
-from .exhibition import Exhibition
-from .competition import Competition
-
 # Architecture Detail
 from .district import District
 from .market_square import MarketSquare
@@ -215,81 +178,131 @@ from .solstice import Solstice
 from .star_system import StarSystem
 from .wormhole import Wormhole
 
-# Technology
-from .atmosphere import Atmosphere
-from .discovery import Discovery
-from .invention import Invention
-from .patent import Patent
-from .prototype import Prototype
-from .research import Research
+# Art & Culture
+from .celebration import Celebration
+from .ceremony import Ceremony
+from .concert import Concert
+from .competition import Competition
+from .exhibition import Exhibition
+from .festival import Festival
+from .tournament import Tournament
+from .weather_pattern import WeatherPattern
+
+# Legal System
+from .court import Court
+from .crime import Crime
+from .evidence import Evidence
+from .judge import Judge
+from .jury import Jury
+from .lawyer import Lawyer
+from .punishment import Punishment
+from .witness import Witness
 
 # Education
 from .academy import Academy
 from .archive import Archive
 from .library import Library
+from .museum import Museum
+from .research_center import ResearchCenter
 from .school import School
 from .university import University
 
-# Existing entities (alphabetical)
-from .banner import Banner
-from .choice import Choice
-from .currency import Currency
-from .dimension import Dimension
-from .event import Event
-from .event_chain import EventChain
-from .faction import Faction
-from .faction_membership import FactionMembership
-from .flowchart import Flowchart
-from .handout import Handout
-from .image import Image
-from .improvement import Improvement
-from .inspiration import Inspiration
-from .item import Item
-from .map import Map
-from .model3d import Model3D
-from .music_control import MusicControl
-from .music_state import MusicState
-from .music_theme import MusicTheme
-from .music_track import MusicTrack
-from .note import Note
+# Media
+from .internet import Internet
+from .newspaper import Newspaper
+from .propaganda import Propaganda
+from .radio import Radio
+from .social_media import SocialMedia
+from .rumor import Rumor
+from .television import Television
+
+# Secrets
+from .easter_egg import EasterEgg
+from .enigma import Enigma
+from .hidden_path import HiddenPath
+from .mystery import Mystery
+from .puzzle import Puzzle
+from .riddle import Riddle
+from .secret_area import SecretArea
+from .trap import Trap
+
+# Legendary Items
+from .artifact_set import ArtifactSet
+from .cursed_item import CursedItem
+from .divine_item import DivineItem
+from .legendary_weapon import LegendaryWeapon
+from .mythical_armor import MythicalArmor
+from .relic_collection import RelicCollection
 
 # Music & Audio
-from .soundtrack import Soundtrack, SoundtrackType, Mood
-from .voice_line import VoiceLine, VoiceLineType, Emotion
-from .sound_effect import SoundEffect, SoundEffectType, Priority
-from .ambient import Ambient, AmbientType, LayerType
-from .silence import Silence, SilencePurpose, FadeStyle
-from .page import Page
-from .pity import Pity
-from .player_profile import PlayerProfile
-from .pull import Pull
-from .purchase import Purchase
-from .quest import Quest
-from .requirement import Requirement
-from .reward import Reward
-from .session import Session
-from .shop import Shop
-from .story import Story
-from .storyline import Storyline
-from .tag import Tag
-from .template import Template
-from .texture import Texture
-from .tokenboard import Tokenboard
+from .ambient import Ambient
+from .motif import Motif
+from .score import Score
+from .silence import Silence
+from .sound_effect import SoundEffect
+from .soundtrack import Soundtrack
+from .theme import Theme
+from .voice_line import VoiceLine
 
 # Visual Effects
-from .visual_effect import VisualEffect
+from .color_palette import ColorPalette
+from .lighting import Lighting
 from .particle import Particle
 from .shader import Shader
-from .lighting import Lighting
-from .color_palette import ColorPalette
+from .visual_effect import VisualEffect
 
-# Gameplay Mechanics (Lore)
-from .fast_travel_point import FastTravelPoint
-from .waypoint import Waypoint
-from .save_point import SavePoint
-from .checkpoint import Checkpoint
+# Narrative Devices
+from .chekhovs_gun import ChekhovsGun
+from .deus_ex_machina import DeusExMachina
+from .flashforward import FlashForward
+from .foreshadowing import Foreshadowing
+from .plot_device import PlotDevice
+from .redherring import RedHerring
+
+# Global Events
+from .famine import Famine
+from .invasion import Invasion
+from .plague import Plague
+from .revolution import Revolution
+from .seasonal_event import SeasonalEvent
+from .war import War
+from .world_event import WorldEvent
+
+# Gameplay Mechanics
 from .autosave import Autosave
+from .checkpoint import Checkpoint
+from .fast_travel_point import FastTravelPoint
+from .save_point import SavePoint
 from .spawn_point import SpawnPoint
+from .waypoint import Waypoint
+
+# Achievements
+from .achievement import Achievement
+from .badge import Badge
+from .leaderboard import Leaderboard
+from .rank import Rank
+from .trophy import Trophy
+
+# UGC & Localization
+from .custom_map import CustomMap
+from .localization import Localization
+from .mod import Mod
+from .share_code import ShareCode
+from .subtitle import Subtitle
+from .translation import Translation
+from .user_scenario import UserScenario
+from .voiceover import VoiceOver
+from .workshop_entry import WorkshopEntry
+
+# Analytics & Balance
+from .balance_entities import EconomyBalance, PvPBalance, PvEBalance
+from .conversion_rate import ConversionRate
+from .difficulty_curve import DifficultyCurve
+from .drop_rate import DropRate
+from .heatmap import Heatmap
+from .loot_table_weight import LootTableWeight
+from .player_metric import PlayerMetric
+from .session_data import SessionData
 
 __all__ = [
     # Campaign & Story
@@ -378,14 +391,6 @@ __all__ = [
     "Rune",
     "Socket",
 
-    # Legendary Items
-    "ArtifactSet",
-    "CursedItem",
-    "DivineItem",
-    "LegendaryWeapon",
-    "MythicalArmor",
-    "RelicCollection",
-
     # History & Time
     "Alliance",
     "Calendar",
@@ -399,6 +404,7 @@ __all__ = [
     "Law",
     "LegalSystem",
     "Nation",
+    "Season",
     "TimePeriod",
     "Timeline",
     "Treaty",
@@ -451,15 +457,6 @@ __all__ = [
     "SiegeEngine",
     "WeaponSystem",
 
-    # Art & Culture
-    "Tournament",
-
-    # Weather & Climate
-    "WeatherPattern",
-
-    # Legal System
-    "Witness",
-
     # Architecture Detail
     "District",
     "MarketSquare",
@@ -488,89 +485,129 @@ __all__ = [
     "StarSystem",
     "Wormhole",
 
-    # Technology
-    "Atmosphere",
-    "Discovery",
-    "Invention",
-    "Patent",
-    "Prototype",
-    "Research",
+    # Art & Culture
+    "Celebration",
+    "Ceremony",
+    "Concert",
+    "Competition",
+    "Exhibition",
+    "Festival",
+    "Tournament",
+    "WeatherPattern",
+
+    # Legal System
+    "Court",
+    "Crime",
+    "Evidence",
+    "Judge",
+    "Jury",
+    "Lawyer",
+    "Punishment",
+    "Witness",
 
     # Education
     "Academy",
     "Archive",
     "Library",
+    "Museum",
+    "ResearchCenter",
     "School",
     "University",
 
-    # Existing entities
-    "Banner",
-    "Choice",
-    "Currency",
-    "Dimension",
-    "Event",
-    "EventChain",
-    "Faction",
-    "FactionMembership",
-    "Flowchart",
-    "Handout",
-    "Image",
-    "Improvement",
-    "Inspiration",
-    "Item",
-    "Map",
-    "Model3D",
-    "MusicControl",
-    "MusicState",
-    "MusicTheme",
-    "MusicTrack",
-    "Note",
+    # Media
+    "Internet",
+    "Newspaper",
+    "Propaganda",
+    "Radio",
+    "SocialMedia",
+    "Rumor",
+    "Television",
+
+    # Secrets
+    "EasterEgg",
+    "Enigma",
+    "HiddenPath",
+    "Mystery",
+    "Puzzle",
+    "Riddle",
+    "SecretArea",
+    "Trap",
+
+    # Legendary Items
+    "ArtifactSet",
+    "CursedItem",
+    "DivineItem",
+    "LegendaryWeapon",
+    "MythicalArmor",
+    "RelicCollection",
 
     # Music & Audio
-    "Soundtrack",
-    "SoundtrackType",
-    "Mood",
-    "VoiceLine",
-    "VoiceLineType",
-    "Emotion",
-    "SoundEffect",
-    "SoundEffectType",
-    "Priority",
     "Ambient",
-    "AmbientType",
-    "LayerType",
+    "Motif",
+    "Score",
     "Silence",
-    "SilencePurpose",
-    "FadeStyle",
-    "Page",
-    "Pity",
-    "PlayerProfile",
-    "Pull",
-    "Purchase",
-    "Quest",
-    "Requirement",
-    "Reward",
-    "Session",
-    "Shop",
-    "Story",
-    "Storyline",
-    "Tag",
-    "Template",
-    "Texture",
-    "Tokenboard",
+    "SoundEffect",
+    "Soundtrack",
+    "Theme",
+    "VoiceLine",
 
     # Visual Effects
-    "VisualEffect",
+    "ColorPalette",
+    "Lighting",
     "Particle",
     "Shader",
-    "Lighting",
-    "ColorPalette",
+    "VisualEffect",
 
-    # Gameplay Mechanics (Lore)
-    "FastTravelPoint",
-    "Waypoint",
-    "SavePoint",
-    "Checkpoint",
+    # Narrative Devices
+    "ChekhovsGun",
+    "DeusExMachina",
+    "FlashForward",
+    "Foreshadowing",
+    "PlotDevice",
+    "RedHerring",
+
+    # Global Events
+    "Famine",
+    "Invasion",
+    "Plague",
+    "Revolution",
+    "SeasonalEvent",
+    "War",
+    "WorldEvent",
+
+    # Gameplay Mechanics
     "Autosave",
+    "Checkpoint",
+    "FastTravelPoint",
+    "SavePoint",
     "SpawnPoint",
+    "Waypoint",
+
+    # Achievements
+    "Achievement",
+    "Badge",
+    "Leaderboard",
+    "Rank",
+    "Trophy",
+
+    # UGC & Localization
+    "CustomMap",
+    "Localization",
+    "Mod",
+    "ShareCode",
+    "Subtitle",
+    "Translation",
+    "UserScenario",
+    "VoiceOver",
+    "WorkshopEntry",
+
+    # Analytics & Balance
+    "BalanceEntities",
+    "ConversionRate",
+    "DifficultyCurve",
+    "DropRate",
+    "Heatmap",
+    "LootTableWeight",
+    "PlayerMetric",
+    "SessionData",
 ]
