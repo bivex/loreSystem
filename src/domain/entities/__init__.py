@@ -131,6 +131,53 @@ from .scripture import Scripture
 from .sect import Sect
 from .summon import Summon
 
+# Economy
+from .barter import Barter
+from .demand import Demand
+from .inflation import Inflation
+from .price import Price
+from .supply import Supply
+from .tariff import Tariff
+from .tax import Tax
+from .trade import Trade
+
+# Military Systems
+from .army import Army
+from .battalion import Battalion
+from .defense import Defense
+from .fleet import Fleet
+from .fortification import Fortification
+from .siege_engine import SiegeEngine
+from .weapon_system import WeaponSystem
+
+# Architecture Detail
+from .district import District
+from .market_square import MarketSquare
+from .noble_district import NobleDistrict
+from .plaza import Plaza
+from .port_district import PortDistrict
+from .quarter import Quarter
+from .slums import Slums
+from .ward import Ward
+
+# Biology & Ecology
+from .evolution import Evolution
+from .extinction import Extinction
+from .food_chain import FoodChain
+from .hibernation import Hibernation
+from .migration import Migration
+from .reproduction import Reproduction
+
+# Astronomy
+from .black_hole import BlackHole
+from .eclipse import Eclipse
+from .galaxy import Galaxy
+from .moon import Moon
+from .nebula import Nebula
+from .solstice import Solstice
+from .star_system import StarSystem
+from .wormhole import Wormhole
+
 # Existing entities (alphabetical)
 from .banner import Banner
 from .choice import Choice
@@ -302,6 +349,53 @@ __all__ = [
     "Scripture",
     "Sect",
     "Summon",
+
+    # Economy
+    "Barter",
+    "Demand",
+    "Inflation",
+    "Price",
+    "Supply",
+    "Tariff",
+    "Tax",
+    "Trade",
+
+    # Military Systems
+    "Army",
+    "Battalion",
+    "Defense",
+    "Fleet",
+    "Fortification",
+    "SiegeEngine",
+    "WeaponSystem",
+
+    # Architecture Detail
+    "District",
+    "MarketSquare",
+    "NobleDistrict",
+    "Plaza",
+    "PortDistrict",
+    "Quarter",
+    "Slums",
+    "Ward",
+
+    # Biology & Ecology
+    "Evolution",
+    "Extinction",
+    "FoodChain",
+    "Hibernation",
+    "Migration",
+    "Reproduction",
+
+    # Astronomy
+    "BlackHole",
+    "Eclipse",
+    "Galaxy",
+    "Moon",
+    "Nebula",
+    "Solstice",
+    "StarSystem",
+    "Wormhole",
 
     # Existing entities
     "Banner",
