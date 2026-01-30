@@ -101,6 +101,35 @@ from .season import Season
 from .time_period import TimePeriod
 from .timeline import Timeline
 from .treaty import Treaty
+from .world import World
+
+# Social Systems
+from .affinity import Affinity
+from .disposition import Disposition
+from .honor import Honor
+from .karma import Karma
+from .reputation import Reputation
+from .social_class import SocialClass
+from .social_mobility import SocialMobility
+
+# Faction Depth
+from .faction_hierarchy import FactionHierarchy
+from .faction_ideology import FactionIdeology
+from .faction_leader import FactionLeader
+from .faction_resource import FactionResource
+from .faction_territory import FactionTerritory
+
+# Religion & Mysticism
+from .blessing import Blessing
+from .cult import Cult
+from .curse import Curse
+from .holy_site import HolySite
+from .oath import Oath
+from .pact import Pact
+from .ritual import Ritual
+from .scripture import Scripture
+from .sect import Sect
+from .summon import Summon
 
 # Existing entities (alphabetical)
 from .banner import Banner
@@ -140,7 +169,6 @@ from .tag import Tag
 from .template import Template
 from .texture import Texture
 from .tokenboard import Tokenboard
-from .world import World
 
 __all__ = [
     # Campaign & Story
@@ -242,10 +270,38 @@ __all__ = [
     "Law",
     "LegalSystem",
     "Nation",
-    "Season",
     "TimePeriod",
     "Timeline",
     "Treaty",
+    "World",
+
+    # Social Systems
+    "Affinity",
+    "Disposition",
+    "Honor",
+    "Karma",
+    "Reputation",
+    "SocialClass",
+    "SocialMobility",
+
+    # Faction Depth
+    "FactionHierarchy",
+    "FactionIdeology",
+    "FactionLeader",
+    "FactionResource",
+    "FactionTerritory",
+
+    # Religion & Mysticism
+    "Blessing",
+    "Cult",
+    "Curse",
+    "HolySite",
+    "Oath",
+    "Pact",
+    "Ritual",
+    "Scripture",
+    "Sect",
+    "Summon",
 
     # Existing entities
     "Banner",
@@ -285,5 +341,4 @@ __all__ = [
     "Template",
     "Texture",
     "Tokenboard",
-    "World",
 ]
