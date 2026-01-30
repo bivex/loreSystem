@@ -187,6 +187,14 @@ from .solstice import Solstice
 from .star_system import StarSystem
 from .wormhole import Wormhole
 
+# Technology
+from .atmosphere import Atmosphere
+from .discovery import Discovery
+from .invention import Invention
+from .patent import Patent
+from .prototype import Prototype
+from .research import Research
+
 # Existing entities (alphabetical)
 from .banner import Banner
 from .choice import Choice
@@ -414,6 +422,14 @@ __all__ = [
     "Solstice",
     "StarSystem",
     "Wormhole",
+
+    # Technology
+    "Atmosphere",
+    "Discovery",
+    "Invention",
+    "Patent",
+    "Prototype",
+    "Research",
 
     # Existing entities
     "Banner",
