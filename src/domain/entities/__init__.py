@@ -283,6 +283,14 @@ from .shader import Shader
 from .lighting import Lighting
 from .color_palette import ColorPalette
 
+# Gameplay Mechanics (Lore)
+from .fast_travel_point import FastTravelPoint
+from .waypoint import Waypoint
+from .save_point import SavePoint
+from .checkpoint import Checkpoint
+from .autosave import Autosave
+from .spawn_point import SpawnPoint
+
 __all__ = [
     # Campaign & Story
     "Act",
@@ -557,4 +565,12 @@ __all__ = [
     "Shader",
     "Lighting",
     "ColorPalette",
+
+    # Gameplay Mechanics (Lore)
+    "FastTravelPoint",
+    "Waypoint",
+    "SavePoint",
+    "Checkpoint",
+    "Autosave",
+    "SpawnPoint",
 ]
