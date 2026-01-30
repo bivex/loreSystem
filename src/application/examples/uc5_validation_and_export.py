@@ -32,6 +32,7 @@ class Campaign:
         self.chapters = []
         self.plot_branches = []
         self.endings = []
+        self.quests = []
     
     def validate(self) -> List[str]:
         """Validate campaign and return list of errors."""

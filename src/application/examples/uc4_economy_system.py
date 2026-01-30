@@ -221,7 +221,7 @@ if __name__ == "__main__":
     
     print("✅ Economic system created:")
     print(f"💰 Currencies: {len(economy_data['currencies'])}")
-    print(f"📊 Trade Routes: {economy_data['trade_routes']['total_routes']}")
+    print(f"📊 Trade Routes: {economy_data['statistics']['total_routes']}")
     print(f"💸 Barter Commission: {economy_data['barter_market']['commission']}")
     print(f"📈 Inflation: {economy_data['inflation']['rate']}")
     

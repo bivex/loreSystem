@@ -86,7 +86,7 @@ def create_war_of_three_kingdoms_campaign(tenant_id: str, world_id: str) -> Camp
         id=None,
         name="Prologue: Three Kingdoms United",
         type="prologue",
-        number=0
+        number=0,
         campaign_id=None
     )
     prologue.description = "Long ago, three kingdoms - Solaris, Lunaris, and Terratia - lived in harmony beneath the Three Moons. Peace and prosperity reigned throughout the realm..."
@@ -138,7 +138,7 @@ def create_war_of_three_kingdoms_campaign(tenant_id: str, world_id: str) -> Camp
         branch_type="choice",
         description="Player chooses the fate of the three kingdoms - unite them, conquer them, or remain neutral",
         condition_id=None,
-        consequences=[]
+        consequences=None  # Will add moral_choice later
     )
     final_act.created_at = datetime.now()
     final_act.updated_at = datetime.now()
@@ -200,6 +200,9 @@ def create_war_of_three_kingdoms_campaign(tenant_id: str, world_id: str) -> Camp
     )
     moral_choice.created_at = datetime.now()
     moral_choice.updated_at = datetime.now()
+
+    # Link moral_choice to final_act
+    final_act.consequences = [moral_choice]
     
     # 6. Create campaign entity
     campaign = Campaign(
@@ -227,9 +230,9 @@ def create_war_of_three_kingdoms_campaign(tenant_id: str, world_id: str) -> Camp
     
     moral_choice.campaign_id = final_act.id
     
-    campaign.chapters = [prologue.id, chapter_1.id, chapter_2.id, chapter_3.id]
-    campaign.plot_branches = [final_act.id]
-    campaign.endings = [good_ending.id, evil_ending.id, neutral_ending.id]
+    campaign.chapters = [prologue, chapter_1, chapter_2, chapter_3]
+    campaign.plot_branches = [final_act]
+    campaign.endings = [good_ending, evil_ending, neutral_ending]
     
     # 8. Add metadata
     campaign.metadata = {
@@ -302,7 +305,7 @@ def export_campaign_to_json(campaign: Campaign, output_path: str) -> None:
                     "id": branch.id,
                     "type": branch.branch_type,
                     "description": branch.description,
-                    "moral_choice": campaign.plot_branches[0].consequences[0].prompt if branch.branch_type == "choice"
+                    "moral_choice": branch.consequences[0].prompt if branch.consequences and branch.branch_type == "choice" else None
                 } for branch in campaign.plot_branches
             ],
             "endings": [

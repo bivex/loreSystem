@@ -6,6 +6,7 @@ MythWeave's domain model to create and manage complex quest chains
 with rewards, prerequisites and progress tracking.
 """
 
+import sys
 import json
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
@@ -84,6 +85,7 @@ def create_ancient_artifact_quest_chain(tenant_id: str, world_id: str, campaign_
         location_id=f"{world_id}:location_ruins",
         dialogue="Магистр! Я нашла древний свиток..."
     )
+    quest_giver.id = f"{world_id}:npc_dr_vance"  # Assign ID
     
     # 2. Create main quest (find artifact)
     main_quest = QuestNode(
@@ -115,7 +117,6 @@ def create_ancient_artifact_quest_chain(tenant_id: str, world_id: str, campaign_
         description="Bring the artifact to Dr. Vance",
         objective_type="item_delivery",
         target_entity_id=quest_giver.id,
-        target_item_id=f"{world_id}:item_ancient_artifact",
         is_required=True
     )
     
@@ -253,12 +254,7 @@ def export_quest_chain_to_json(quest_chain: QuestChain, output_path: str) -> Non
             "campaign_id": quest_chain.campaign_id,
             "difficulty": quest_chain.difficulty,
             "estimated_playtime_hours": quest_chain.estimated_playtime_hours,
-            "quest_giver": {
-                "id": quest_chain.quest_giver_id,
-                "name": quest_chain.quests[0].quest_giver.name,
-                "location_id": quest_chain.quests[0].quest_giver.location_id,
-                "dialogue": quest_chain.quests[0].quest_giver.dialogue
-            },
+            "quest_giver_id": quest_chain.quest_giver_id,
             "quests": [
                 {
                     "id": str(quest.id),
@@ -275,7 +271,6 @@ def export_quest_chain_to_json(quest_chain: QuestChain, output_path: str) -> Non
                             "description": obj.description,
                             "type": obj.objective_type,
                             "target_entity_id": obj.target_entity_id if obj.target_entity_id else None,
-                            "target_item_id": obj.target_item_id if obj.target_item_id else None,
                             "is_required": obj.is_required
                         } for obj in quest.objectives
                     ],

@@ -14,7 +14,7 @@ from typing import Optional, List, Dict, Any
 # For this example, we'll define minimal stubs
 class Faction:
     """Faction entity stub for example."""
-    def __init__(self, tenant_id, name, world_id, ideology_id, alignment, is_player_joinable, relations, territories, is_player_joinable, leaders, member_count, resources, ideology_id, leader_id, relations, territories, leaders, member_count, resources, ideology_id, leader_id, relations, territories, leaders, member_count, resources):
+    def __init__(self, tenant_id, name, world_id, alignment, is_player_joinable, relations, territories, leaders, member_count, resources):
         self.tenant_id = tenant_id
         self.id = None
         self.name = name
@@ -24,15 +24,10 @@ class Faction:
         self.relations = relations or {}
         self.territories = territories or []
         self.leaders = leaders or []
-        self.member_count = member_count
-        self.resources = resources
-        self.ideology_id = ideology_id
-        self.leader_id = leader_id
-        self.relations = relations
-        self.territories = territories
-        self.leaders = leaders
-        self.member_count = member_count
-        self.resources = resources
+        self.member_count = member_count or 0
+        self.resources = resources or {}
+        self.ideology_id = None
+        self.leader_id = None
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
 
@@ -90,16 +85,8 @@ def create_order_vs_chaos_factions(tenant_id: str, world_id: str) -> tuple[Facti
         tenant_id=tenant_id,
         world_id=world_id,
         name="Order of Silver Hand",
-        ideology_id=order_ideology.id,
         alignment="lawful_good",
         is_player_joinable=True,
-        relations={"chaos": "hostile", "neutral": "neutral"},
-        territories=[f"{world_id}:location_silver_capital"],
-        member_count=10000,
-        resources=[f"{world_id}:currency_gold"],
-        ideology_id=order_ideology.id,
-        leader_id=None,
-        leaders=[],
         relations={"chaos": "hostile", "neutral": "neutral"},
         territories=[f"{world_id}:location_silver_capital"],
         leaders=[],
@@ -142,16 +129,8 @@ def create_order_vs_chaos_factions(tenant_id: str, world_id: str) -> tuple[Facti
         tenant_id=tenant_id,
         world_id=world_id,
         name="Chaos of Broken Chain",
-        ideology_id=chaos_ideology.id,
         alignment="chaotic_neutral",
         is_player_joinable=True,
-        relations={"order": "hostile", "neutral": "neutral"},
-        territories=[f"{world_id}:location_chaos_camp"],
-        member_count=5000,
-        resources=[f"{world_id}:currency_silver"],
-        ideology_id=chaos_ideology.id,
-        leader_id=None,
-        leaders=[],
         relations={"order": "hostile", "neutral": "neutral"},
         territories=[f"{world_id}:location_chaos_camp"],
         leaders=[],
@@ -231,4 +210,3 @@ if __name__ == "__main__":
     print(f"📊 Member counts: {order_faction.member_count} (Order) vs {chaos_faction.member_count} (Chaos)")
     print(f"🎯 Alignment: {order_faction.alignment}")
     print(f"🏷️ Hierarchies: {len(order_faction.leaders)} (Order) vs {len(chaos_faction.leaders)} (Chaos)")
-    print(f"🎬 Diplomatic relations: Truce ({treaty['duration_days']} days), Alliance ({alliance['type']})")
