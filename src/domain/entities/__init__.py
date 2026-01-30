@@ -150,6 +150,15 @@ from .fortification import Fortification
 from .siege_engine import SiegeEngine
 from .weapon_system import WeaponSystem
 
+# Art & Culture
+from .tournament import Tournament
+
+# Weather & Climate
+from .weather_pattern import WeatherPattern
+
+# Legal System
+from .witness import Witness
+
 # Architecture Detail
 from .district import District
 from .market_square import MarketSquare
@@ -368,6 +377,15 @@ __all__ = [
     "Fortification",
     "SiegeEngine",
     "WeaponSystem",
+
+    # Art & Culture
+    "Tournament",
+
+    # Weather & Climate
+    "WeatherPattern",
+
+    # Legal System
+    "Witness",
 
     # Architecture Detail
     "District",
