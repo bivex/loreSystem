@@ -73,39 +73,56 @@ from .skill import Skill
 from .talent_tree import TalentTree
 from .trait import Trait
 
-# Existing entities (alphabetical)
+# Inventory & Crafting
+from .blueprint import Blueprint
+from .component import Component
+from .crafting_recipe import CraftingRecipe
+from .enchantment import Enchantment
+from .glyph import Glyph
+from .inventory import Inventory
+from .material import Material
+from .rune import Rune
+from .socket import Socket
+
+# History & Time
 from .alliance import Alliance
-from .banner import Banner
 from .calendar import Calendar
-from .choice import Choice
 from .constitution import Constitution
-from .currency import Currency
-from .dimension import Dimension
 from .empire import Empire
 from .era import Era
 from .era_transition import EraTransition
+from .government import Government
+from .holiday import Holiday
+from .kingdom import Kingdom
+from .law import Law
+from .legal_system import LegalSystem
+from .nation import Nation
+from .season import Season
+from .time_period import TimePeriod
+from .timeline import Timeline
+from .treaty import Treaty
+
+# Existing entities (alphabetical)
+from .banner import Banner
+from .choice import Choice
+from .currency import Currency
+from .dimension import Dimension
 from .event import Event
 from .event_chain import EventChain
 from .faction import Faction
 from .faction_membership import FactionMembership
 from .flowchart import Flowchart
-from .government import Government
 from .handout import Handout
-from .holiday import Holiday
 from .image import Image
 from .improvement import Improvement
 from .inspiration import Inspiration
 from .item import Item
-from .kingdom import Kingdom
-from .law import Law
-from .legal_system import LegalSystem
 from .map import Map
 from .model3d import Model3D
 from .music_control import MusicControl
 from .music_state import MusicState
 from .music_theme import MusicTheme
 from .music_track import MusicTrack
-from .nation import Nation
 from .note import Note
 from .page import Page
 from .pity import Pity
@@ -115,7 +132,6 @@ from .purchase import Purchase
 from .quest import Quest
 from .requirement import Requirement
 from .reward import Reward
-from .season import Season
 from .session import Session
 from .shop import Shop
 from .story import Story
@@ -123,10 +139,7 @@ from .storyline import Storyline
 from .tag import Tag
 from .template import Template
 from .texture import Texture
-from .time_period import TimePeriod
-from .timeline import Timeline
 from .tokenboard import Tokenboard
-from .treaty import Treaty
 from .world import World
 
 __all__ = [
@@ -205,39 +218,56 @@ __all__ = [
     "TalentTree",
     "Trait",
 
-    # Existing entities
+    # Inventory & Crafting
+    "Blueprint",
+    "Component",
+    "CraftingRecipe",
+    "Enchantment",
+    "Glyph",
+    "Inventory",
+    "Material",
+    "Rune",
+    "Socket",
+
+    # History & Time
     "Alliance",
-    "Banner",
     "Calendar",
-    "Choice",
     "Constitution",
-    "Currency",
-    "Dimension",
+    "Empire",
     "Era",
     "EraTransition",
-    "Empire",
+    "Government",
+    "Holiday",
+    "Kingdom",
+    "Law",
+    "LegalSystem",
+    "Nation",
+    "Season",
+    "TimePeriod",
+    "Timeline",
+    "Treaty",
+
+    # Existing entities
+    "Banner",
+    "Choice",
+    "Currency",
+    "Dimension",
     "Event",
     "EventChain",
     "Faction",
     "FactionMembership",
     "Flowchart",
-    "Government",
     "Handout",
-    "Holiday",
     "Image",
     "Improvement",
     "Inspiration",
     "Item",
-    "Kingdom",
-    "Law",
-    "LegalSystem",
     "Map",
     "Model3D",
     "MusicControl",
     "MusicState",
     "MusicTheme",
     "MusicTrack",
-    "Nation",
     "Note",
     "Page",
     "Pity",
@@ -247,7 +277,6 @@ __all__ = [
     "Quest",
     "Requirement",
     "Reward",
-    "Season",
     "Session",
     "Shop",
     "Story",
@@ -255,9 +284,6 @@ __all__ = [
     "Tag",
     "Template",
     "Texture",
-    "TimePeriod",
-    "Timeline",
     "Tokenboard",
-    "Treaty",
     "World",
 ]
