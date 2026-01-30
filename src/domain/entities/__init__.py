@@ -63,6 +63,16 @@ from .quest_prerequisite import QuestPrerequisite
 from .quest_reward_tier import QuestRewardTier
 from .quest_tracker import QuestTracker
 
+# Skills & Development
+from .attribute import Attribute
+from .experience import Experience
+from .level_up import LevelUp
+from .mastery import Mastery
+from .perk import Perk
+from .skill import Skill
+from .talent_tree import TalentTree
+from .trait import Trait
+
 # Existing entities (alphabetical)
 from .alliance import Alliance
 from .banner import Banner
@@ -184,6 +194,16 @@ __all__ = [
     "QuestPrerequisite",
     "QuestRewardTier",
     "QuestTracker",
+
+    # Skills & Development
+    "Attribute",
+    "Experience",
+    "LevelUp",
+    "Mastery",
+    "Perk",
+    "Skill",
+    "TalentTree",
+    "Trait",
 
     # Existing entities
     "Alliance",
