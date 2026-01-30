@@ -1,309 +1,245 @@
 """
-WorkshopEntry Entity
-
-A WorkshopEntry represents content published to the game workshop/store.
+WorkshopEntry entity for user-generated content.
+Part of AAA game development domain entities.
 """
-from dataclasses import dataclass
-from typing import Optional
 
-from ..value_objects.common import (
-    TenantId,
-    EntityId,
-    Description,
-    Version,
-    Timestamp,
-    WorkshopStatus,
-    ContentType,
-)
+from datetime import datetime
+from typing import Optional, List
+from dataclasses import dataclass, field
+import uuid
 
 
 @dataclass
 class WorkshopEntry:
     """
-    WorkshopEntry entity representing published workshop content.
-    
-    Invariants:
-    - Must belong to exactly one tenant
-    - Version increases monotonically
-    - Title must be non-empty
-    - View count, download count, subscription count must be non-negative
-    - Rating must be between 0 and 5
+    Represents user-generated content entry in a game workshop.
+    Workshop entries are mods, maps, items, etc. created by players.
     """
-    
-    id: Optional[EntityId]
-    tenant_id: TenantId
-    author_id: EntityId
+
+    id: str
+    tenant_id: str
     title: str
-    description: Description
-    content_type: ContentType
-    status: WorkshopStatus
-    
-    # Content references
-    content_id: EntityId  # Reference to actual content (mod, map, scenario, etc.)
-    content_version: Optional[str]
-    
-    # Workshop metadata
-    tags: list[str]
-    visibility: str  # "public", "friends_only", "private"
-    
-    # Stats
-    view_count: int
-    download_count: int
-    subscription_count: int
-    favorite_count: int
-    rating: float  # Average rating (0.0-5.0)
-    rating_count: int
-    
-    # Content metrics
-    file_size_bytes: Optional[int]
-    last_updated_content: Optional[Timestamp]
-    
-    # Moderation
-    is_featured: bool
-    is_verified: bool
-    moderation_notes: Optional[str]
-    
-    created_at: Timestamp
-    updated_at: Timestamp
-    version: Version
-    
-    def __post_init__(self):
-        """Validate invariants after construction."""
-        self._validate_invariants()
-    
-    def _validate_invariants(self):
-        """Check all invariants are satisfied."""
-        if self.updated_at.value < self.created_at.value:
-            raise ValueError(
-                "Updated timestamp must be >= created timestamp"
-            )
-        
-        if not self.title or len(self.title.strip()) == 0:
-            raise ValueError("Workshop entry title cannot be empty")
-        
-        if len(self.title) > 255:
-            raise ValueError("Workshop entry title must be <= 255 characters")
-        
-        if len(self.tags) > 20:
-            raise ValueError("Cannot have more than 20 tags")
-        
-        for tag in self.tags:
-            if len(tag) > 50:
-                raise ValueError(f"Tag '{tag}' exceeds maximum length of 50 characters")
-        
-        valid_visibility = ["public", "friends_only", "private"]
-        if self.visibility not in valid_visibility:
-            raise ValueError(f"Visibility must be one of: {valid_visibility}")
-        
-        if self.view_count < 0:
-            raise ValueError("View count cannot be negative")
-        
-        if self.download_count < 0:
-            raise ValueError("Download count cannot be negative")
-        
-        if self.subscription_count < 0:
-            raise ValueError("Subscription count cannot be negative")
-        
-        if self.favorite_count < 0:
-            raise ValueError("Favorite count cannot be negative")
-        
-        if self.rating < 0.0 or self.rating > 5.0:
-            raise ValueError("Rating must be between 0.0 and 5.0")
-        
-        if self.rating_count < 0:
-            raise ValueError("Rating count cannot be negative")
-        
-        if self.file_size_bytes is not None and self.file_size_bytes < 0:
-            raise ValueError("File size cannot be negative")
-    
+    author_id: str
+    content_type: str
+    created_at: datetime
+    updated_at: datetime
+
+    # Optional fields
+    description: Optional[str] = None
+    content_asset_id: Optional[str] = None
+    thumbnail_id: Optional[str] = None
+    version: str = "1.0.0"
+    tags: List[str] = field(default_factory=list)
+    download_count: int = 0
+    rating: float = 0.0
+    rating_count: int = 0
+    is_featured: bool = False
+    is_approved: bool = False
+    is_public: bool = True
+    maturity_rating: str = "everyone"
+    metadata: dict = field(default_factory=dict)
+
     @classmethod
     def create(
         cls,
-        tenant_id: TenantId,
-        author_id: EntityId,
+        tenant_id: str,
         title: str,
-        description: Description,
-        content_type: ContentType,
-        content_id: EntityId,
-        tags: list[str],
-        visibility: str = "public",
-        status: WorkshopStatus = WorkshopStatus.PENDING_REVIEW,
-        content_version: Optional[str] = None,
-        view_count: int = 0,
-        download_count: int = 0,
-        subscription_count: int = 0,
-        favorite_count: int = 0,
-        rating: float = 0.0,
-        rating_count: int = 0,
-        file_size_bytes: Optional[int] = None,
-    ) -> 'WorkshopEntry':
+        author_id: str,
+        content_type: str,
+        description: Optional[str] = None,
+        content_asset_id: Optional[str] = None,
+        thumbnail_id: Optional[str] = None,
+        version: str = "1.0.0",
+        tags: Optional[List[str]] = None,
+        is_featured: bool = False,
+        is_approved: bool = False,
+        is_public: bool = True,
+        maturity_rating: str = "everyone",
+        metadata: Optional[dict] = None,
+    ) -> "WorkshopEntry":
         """
-        Factory method for creating a new WorkshopEntry.
+        Factory method to create a new WorkshopEntry.
+
+        Args:
+            tenant_id: Tenant identifier
+            title: Entry title
+            author_id: Creator's user ID
+            content_type: Type of content (mod, map, skin, etc.)
+            description: Optional description
+            content_asset_id: Main content asset ID
+            thumbnail_id: Thumbnail image ID
+            version: Version string
+            tags: List of tags for discovery
+            is_featured: Whether featured by curator
+            is_approved: Whether approved for public display
+            is_public: Whether publicly visible
+            maturity_rating: Maturity rating (everyone, teen, mature)
+            metadata: Additional metadata
+
+        Returns:
+            New WorkshopEntry instance
+
+        Raises:
+            ValueError: If validation fails
         """
-        now = Timestamp.now()
+        now = datetime.utcnow()
+
+        # Validation
+        if not tenant_id or not tenant_id.strip():
+            raise ValueError("tenant_id cannot be empty")
+
+        if not title or not title.strip():
+            raise ValueError("title cannot be empty")
+
+        if not author_id or not author_id.strip():
+            raise ValueError("author_id cannot be empty")
+
+        valid_types = [
+            "mod", "map", "skin", "model", "texture",
+            "sound", "script", "ui", "campaign", "character", "item"
+        ]
+        if content_type not in valid_types:
+            raise ValueError(f"content_type must be one of: {', '.join(valid_types)}")
+
+        valid_ratings = ["everyone", "teen", "mature", "adult"]
+        if maturity_rating not in valid_ratings:
+            raise ValueError(f"maturity_rating must be one of: {', '.join(valid_ratings)}")
+
         return cls(
-            id=None,
-            tenant_id=tenant_id,
-            author_id=author_id,
-            title=title,
-            description=description,
+            id=str(uuid.uuid4()),
+            tenant_id=tenant_id.strip(),
+            title=title.strip(),
+            author_id=author_id.strip(),
             content_type=content_type,
-            status=status,
-            content_id=content_id,
-            content_version=content_version,
-            tags=tags,
-            visibility=visibility,
-            view_count=view_count,
-            download_count=download_count,
-            subscription_count=subscription_count,
-            favorite_count=favorite_count,
-            rating=rating,
-            rating_count=rating_count,
-            file_size_bytes=file_size_bytes,
-            last_updated_content=None,
-            is_featured=False,
-            is_verified=False,
-            moderation_notes=None,
             created_at=now,
             updated_at=now,
-            version=Version(1),
+            description=description.strip() if description else None,
+            content_asset_id=content_asset_id.strip() if content_asset_id else None,
+            thumbnail_id=thumbnail_id.strip() if thumbnail_id else None,
+            version=version,
+            tags=tags or [],
+            download_count=0,
+            rating=0.0,
+            rating_count=0,
+            is_featured=is_featured,
+            is_approved=is_approved,
+            is_public=is_public,
+            maturity_rating=maturity_rating,
+            metadata=metadata or {},
         )
-    
-    def update_description(self, new_description: Description) -> None:
-        """Update workshop entry description."""
-        if str(self.description) == str(new_description):
-            return
-        
-        object.__setattr__(self, 'description', new_description)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def update_title(self, new_title: str) -> None:
-        """Update workshop entry title."""
-        if self.title == new_title:
-            return
-        
-        if not new_title or len(new_title.strip()) == 0:
-            raise ValueError("Title cannot be empty")
-        
-        if len(new_title) > 255:
-            raise ValueError("Title must be <= 255 characters")
-        
-        object.__setattr__(self, 'title', new_title)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def change_status(self, new_status: WorkshopStatus) -> None:
-        """Change workshop entry status (e.g., approve or reject)."""
-        if self.status == new_status:
-            return
-        
-        object.__setattr__(self, 'status', new_status)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def change_visibility(self, new_visibility: str) -> None:
-        """Change visibility setting."""
-        valid_visibility = ["public", "friends_only", "private"]
-        if new_visibility not in valid_visibility:
-            raise ValueError(f"Visibility must be one of: {valid_visibility}")
-        
-        if self.visibility == new_visibility:
-            return
-        
-        object.__setattr__(self, 'visibility', new_visibility)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def add_tags(self, new_tags: list[str]) -> None:
-        """Add tags to the workshop entry."""
-        if len(self.tags) + len(new_tags) > 20:
-            raise ValueError("Cannot have more than 20 tags total")
-        
-        combined = list(set(self.tags + new_tags))
-        object.__setattr__(self, 'tags', combined)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def remove_tags(self, tags_to_remove: list[str]) -> None:
-        """Remove tags from the workshop entry."""
-        new_tags = [t for t in self.tags if t not in tags_to_remove]
-        
-        if len(new_tags) == len(self.tags):
-            return
-        
-        object.__setattr__(self, 'tags', new_tags)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def increment_views(self) -> None:
-        """Increment view count."""
-        object.__setattr__(self, 'view_count', self.view_count + 1)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-    
+
+    def update(
+        self,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        content_asset_id: Optional[str] = None,
+        thumbnail_id: Optional[str] = None,
+        version: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        is_featured: Optional[bool] = None,
+        is_approved: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+        maturity_rating: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> None:
+        """
+        Update workshop entry properties.
+
+        Args:
+            title: New title
+            description: New description
+            content_asset_id: New content asset ID
+            thumbnail_id: New thumbnail ID
+            version: New version
+            tags: New list of tags
+            is_featured: New featured status
+            is_approved: New approval status
+            is_public: New public visibility
+            maturity_rating: New maturity rating
+            metadata: New metadata
+
+        Raises:
+            ValueError: If validation fails
+        """
+        if title is not None:
+            if not title or not title.strip():
+                raise ValueError("title cannot be empty")
+            self.title = title.strip()
+
+        if description is not None:
+            self.description = description.strip() if description else None
+
+        if content_asset_id is not None:
+            self.content_asset_id = content_asset_id.strip() if content_asset_id else None
+
+        if thumbnail_id is not None:
+            self.thumbnail_id = thumbnail_id.strip() if thumbnail_id else None
+
+        if version is not None:
+            self.version = version
+
+        if tags is not None:
+            self.tags = tags
+
+        if is_featured is not None:
+            self.is_featured = is_featured
+
+        if is_approved is not None:
+            self.is_approved = is_approved
+
+        if is_public is not None:
+            self.is_public = is_public
+
+        if maturity_rating is not None:
+            valid_ratings = ["everyone", "teen", "mature", "adult"]
+            if maturity_rating not in valid_ratings:
+                raise ValueError(f"maturity_rating must be one of: {', '.join(valid_ratings)}")
+            self.maturity_rating = maturity_rating
+
+        if metadata is not None:
+            self.metadata = metadata
+
+        self.updated_at = datetime.utcnow()
+
+    def add_tag(self, tag: str) -> None:
+        """Add a tag to the entry."""
+        if tag and tag.strip() and tag.strip() not in self.tags:
+            self.tags.append(tag.strip())
+            self.updated_at = datetime.utcnow()
+
+    def remove_tag(self, tag: str) -> None:
+        """Remove a tag from the entry."""
+        if tag and tag.strip() in self.tags:
+            self.tags.remove(tag.strip())
+            self.updated_at = datetime.utcnow()
+
     def increment_downloads(self) -> None:
         """Increment download count."""
-        object.__setattr__(self, 'download_count', self.download_count + 1)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-    
-    def increment_subscriptions(self) -> None:
-        """Increment subscription count."""
-        object.__setattr__(self, 'subscription_count', self.subscription_count + 1)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-    
-    def add_rating(self, rating: float) -> None:
+        self.download_count += 1
+        self.updated_at = datetime.utcnow()
+
+    def update_rating(self, new_rating: float) -> None:
         """
-        Add a user rating and recalculate average.
-        
+        Update the average rating.
+
         Args:
-            rating: Rating value (0.0-5.0)
+            new_rating: New rating value (0.0 to 5.0)
         """
-        if rating < 0.0 or rating > 5.0:
-            raise ValueError("Rating must be between 0.0 and 5.0")
-        
-        total_score = self.rating * self.rating_count + rating
-        object.__setattr__(self, 'rating_count', self.rating_count + 1)
-        object.__setattr__(self, 'rating', total_score / self.rating_count)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-    
-    def set_featured(self, is_featured: bool) -> None:
-        """Set featured status."""
-        if self.is_featured == is_featured:
-            return
-        
-        object.__setattr__(self, 'is_featured', is_featured)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def set_verified(self, is_verified: bool) -> None:
-        """Set verified status."""
-        if self.is_verified == is_verified:
-            return
-        
-        object.__setattr__(self, 'is_verified', is_verified)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def update_content_version(self, new_version: str, file_size: Optional[int] = None) -> None:
-        """Update the content version."""
-        if self.content_version == new_version:
-            return
-        
-        object.__setattr__(self, 'content_version', new_version)
-        object.__setattr__(self, 'last_updated_content', Timestamp.now())
-        if file_size is not None:
-            object.__setattr__(self, 'file_size_bytes', file_size)
-        object.__setattr__(self, 'updated_at', Timestamp.now())
-        object.__setattr__(self, 'version', self.version.increment())
-    
-    def __str__(self) -> str:
-        badge = "⭐" if self.is_featured else ""
-        verified = "✓" if self.is_verified else ""
-        status_str = f" [{self.status.value}]" if self.status != WorkshopStatus.PUBLISHED else ""
-        return f"WorkshopEntry({badge}{self.title}{verified}{status_str}, ⭐{self.rating:.1f})"
-    
-    def __repr__(self) -> str:
-        return (
-            f"WorkshopEntry(id={self.id}, title='{self.title}', "
-            f"type={self.content_type.value}, status={self.status})"
-        )
+        if not 0.0 <= new_rating <= 5.0:
+            raise ValueError("rating must be between 0.0 and 5.0")
+
+        self.rating_count += 1
+        # Running average
+        total = self.rating * (self.rating_count - 1) + new_rating
+        self.rating = total / self.rating_count
+        self.updated_at = datetime.utcnow()
+
+    def approve(self) -> None:
+        """Mark the entry as approved."""
+        self.is_approved = True
+        self.updated_at = datetime.utcnow()
+
+    def reject(self) -> None:
+        """Mark the entry as not approved."""
+        self.is_approved = False
+        self.updated_at = datetime.utcnow()

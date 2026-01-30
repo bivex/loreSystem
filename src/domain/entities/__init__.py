@@ -251,6 +251,14 @@ from .particle import Particle
 from .shader import Shader
 from .visual_effect import VisualEffect
 
+# Cinematography
+from .camera_path import CameraPath
+from .cinematic import Cinematic
+from .cutscene import Cutscene
+from .fade import Fade
+from .flashback import Flashback
+from .transition import Transition
+
 # Narrative Devices
 from .chekhovs_gun import ChekhovsGun
 from .deus_ex_machina import DeusExMachina
@@ -285,13 +293,14 @@ from .trophy import Trophy
 
 # UGC & Localization
 from .custom_map import CustomMap
+from .dubbing import Dubbing
 from .localization import Localization
 from .mod import Mod
 from .share_code import ShareCode
 from .subtitle import Subtitle
 from .translation import Translation
 from .user_scenario import UserScenario
-from .voiceover import VoiceOver
+from .voice_over import VoiceOver
 from .workshop_entry import WorkshopEntry
 
 # Analytics & Balance
@@ -558,6 +567,14 @@ __all__ = [
     "Shader",
     "VisualEffect",
 
+    # Cinematography
+    "CameraPath",
+    "Cinematic",
+    "Cutscene",
+    "Fade",
+    "Flashback",
+    "Transition",
+
     # Narrative Devices
     "ChekhovsGun",
     "DeusExMachina",
@@ -592,6 +609,7 @@ __all__ = [
 
     # UGC & Localization
     "CustomMap",
+    "Dubbing",
     "Localization",
     "Mod",
     "ShareCode",
