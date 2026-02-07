@@ -775,7 +775,10 @@ disposition_repo = SQLiteDispositionRepository(sqlite_db)
 jury_repo = InMemoryJuryRepository()
 jury_repo = SQLiteJuryRepository(sqlite_db)
 ceremony_repo = InMemoryCeremonyRepository()
-ceremony_repo = SQLiteCeremonyRepository(sqlite_db)
+ceremony_repo = SQLiteCeremonyRepository(sqlite_db)# Placeholder repositories
+
+
+
 
 
 

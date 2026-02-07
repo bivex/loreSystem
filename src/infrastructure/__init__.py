@@ -1415,3 +1415,7 @@ from src.infrastructure.sqlite_repositories import SQLiteCeremonyRepository
     'SQLiteDispositionRepository',
     'SQLiteJuryRepository',
     'SQLiteCeremonyRepository',
+
+
+# Placeholder repositories
+

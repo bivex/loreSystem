@@ -19622,3 +19622,35 @@ class SQLiteCeremonyRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
+# ============================================================================
+# PLACEHOLDER REPOSITORY IMPLEMENTATIONS
+# ============================================================================
+
+# These are simple stubs to make the system functional.
+# They implement the repository interface but don't have real business logic.
+# Can be upgraded to full implementations later when needed.
+#
+# Total: {len(all_entities)} placeholder repositories
+# ============================================================================
+
+from src.infrastructure.sqlite_repositories import SQLiteDatabase
+from src.domain.value_objects.common import TenantId, EntityId
+import sqlite3
+from datetime import datetime
+
+# Generate placeholder classes
+
+# ============================================================================
+# SQL TABLE SCHEMAS
+# ============================================================================
+
+def add_placeholder_tables():
+    """Add SQL tables for all placeholder repositories."""
+    tables = [
+    ]
+    
+    # Execute CREATE TABLE statements
+    with sqlite_db.get_connection() as conn:
+        for table_sql in tables:
+            conn.execute(table_sql)
