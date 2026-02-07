@@ -958,3 +958,306 @@ class InMemoryModel3DRepository:
             self._by_world[tenant_id].remove(model_id)
         
         return True
+
+class InMemorySessionRepository:
+    """In-memory implementation of Session repository for testing."""
+
+    def __init__(self):
+        self._sessions: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._by_story: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, session: object) -> object:
+        if session.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(session, 'id', new_id)
+
+        key = (session.tenant_id, session.id)
+        self._sessions[key] = session
+
+        world_key = (session.tenant_id, session.world_id)
+        if session.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(session.id)
+
+        if hasattr(session, 'story_id') and session.story_id:
+            story_key = (session.tenant_id, session.story_id)
+            if session.id not in self._by_story[story_key]:
+                self._by_story[story_key].append(session.id)
+
+        return session
+
+    def find_by_id(self, tenant_id: TenantId, session_id: EntityId) -> Optional[object]:
+        return self._sessions.get((tenant_id, session_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        session_ids = self._by_world.get(world_key, [])
+        sessions = []
+        for session_id in session_ids[offset:offset + limit]:
+            session = self._sessions.get((tenant_id, session_id))
+            if session:
+                sessions.append(session)
+        return sessions
+
+    def list_by_story(self, tenant_id: TenantId, story_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        story_key = (tenant_id, story_id)
+        session_ids = self._by_story.get(story_key, [])
+        sessions = []
+        for session_id in session_ids[offset:offset + limit]:
+            session = self._sessions.get((tenant_id, session_id))
+            if session:
+                sessions.append(session)
+        return sessions
+
+    def list_active(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        all_sessions = self.list_by_world(tenant_id, world_id, limit=limit, offset=offset)
+        return [s for s in all_sessions if getattr(s, 'is_active', True)]
+
+    def delete(self, tenant_id: TenantId, session_id: EntityId) -> bool:
+        key = (tenant_id, session_id)
+        if key not in self._sessions:
+            return False
+
+        session = self._sessions[key]
+
+        world_key = (session.tenant_id, session.world_id)
+        if session_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(session_id)
+
+        if hasattr(session, 'story_id') and session.story_id:
+            story_key = (session.tenant_id, session.story_id)
+            if session_id in self._by_story[story_key]:
+                self._by_story[story_key].remove(session_id)
+
+        del self._sessions[key]
+        return True
+
+
+from src.domain.entities.tag import Tag
+from src.domain.repositories.tag_repository import ITagRepository
+from src.domain.entities.note import Note
+from src.domain.repositories.note_repository import INoteRepository
+from src.domain.entities.template import Template
+from src.domain.repositories.template_repository import ITemplateRepository
+
+
+class InMemoryTagRepository(ITagRepository):
+    """In-memory implementation of Tag repository for testing."""
+
+    def __init__(self):
+        self._tags: Dict[Tuple[TenantId, EntityId], Tag] = {}
+        self._names: Dict[Tuple[TenantId, EntityId, str, str], EntityId] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, tag: Tag) -> Tag:
+        if tag.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(tag, 'id', new_id)
+
+        key = (tag.tenant_id, tag.id)
+        name_key = (tag.tenant_id, tag.world_id, tag.name.value, tag.tag_type.value)
+
+        if name_key in self._names and self._names[name_key] != tag.id:
+            raise DuplicateEntity(f"Tag with name '{tag.name}' already exists in this world")
+
+        self._tags[key] = tag
+        self._names[name_key] = tag.id
+
+        world_key = (tag.tenant_id, tag.world_id)
+        if tag.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(tag.id)
+
+        return tag
+
+    def find_by_id(self, tenant_id: TenantId, tag_id: EntityId) -> Optional[Tag]:
+        return self._tags.get((tenant_id, tag_id))
+
+    def find_by_name(self, tenant_id: TenantId, world_id: EntityId, name: "TagName") -> Optional[Tag]:
+        for key, tag_id in self._names.items():
+            if key[0] == tenant_id and key[1] == world_id and key[2] == name.value:
+                return self._tags.get((tenant_id, tag_id))
+        return None
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Tag]:
+        world_key = (tenant_id, world_id)
+        tag_ids = self._by_world.get(world_key, [])
+        tags = []
+        for tag_id in tag_ids[offset:offset + limit]:
+            tag = self._tags.get((tenant_id, tag_id))
+            if tag:
+                tags.append(tag)
+        return tags
+
+    def list_by_type(self, tenant_id: TenantId, world_id: EntityId, tag_type: "TagType", limit: int = 50, offset: int = 0) -> List[Tag]:
+        all_tags = self.list_by_world(tenant_id, world_id)
+        return [t for t in all_tags if t.tag_type.value == tag_type.value][offset:offset + limit]
+
+    def delete(self, tenant_id: TenantId, tag_id: EntityId) -> bool:
+        key = (tenant_id, tag_id)
+        if key not in self._tags:
+            return False
+
+        tag = self._tags[key]
+        name_key = (tag.tenant_id, tag.world_id, tag.name.value, tag.tag_type.value)
+
+        if name_key in self._names:
+            del self._names[name_key]
+
+        world_key = (tag.tenant_id, tag.world_id)
+        if tag_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(tag_id)
+
+        del self._tags[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, name: "TagName", tag_type: "TagType") -> bool:
+        name_key = (tenant_id, world_id, name.value, tag_type.value)
+        return name_key in self._names
+
+
+class InMemoryNoteRepository(INoteRepository):
+    """In-memory implementation of Note repository for testing."""
+
+    def __init__(self):
+        self._notes: Dict[Tuple[TenantId, EntityId], Note] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, note: Note) -> Note:
+        if note.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(note, 'id', new_id)
+
+        key = (note.tenant_id, note.id)
+        self._notes[key] = note
+
+        world_key = (note.tenant_id, note.world_id)
+        if note.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(note.id)
+
+        return note
+
+    def find_by_id(self, tenant_id: TenantId, note_id: EntityId) -> Optional[Note]:
+        return self._notes.get((tenant_id, note_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Note]:
+        world_key = (tenant_id, world_id)
+        note_ids = self._by_world.get(world_key, [])
+        notes = []
+        for note_id in note_ids[offset:offset + limit]:
+            note = self._notes.get((tenant_id, note_id))
+            if note:
+                notes.append(note)
+        return notes
+
+    def list_pinned(self, tenant_id: TenantId, world_id: EntityId, limit: int = 20, offset: int = 0) -> List[Note]:
+        all_notes = self.list_by_world(tenant_id, world_id)
+        return [n for n in all_notes if n.is_pinned][offset:offset + limit]
+
+    def search_by_content(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[Note]:
+        results = []
+        for note in self._notes.values():
+            if note.tenant_id == tenant_id:
+                if search_term.lower() in note.content.lower() or search_term.lower() in note.title.lower():
+                    results.append(note)
+                    if len(results) >= limit:
+                        break
+        return results
+
+    def delete(self, tenant_id: TenantId, note_id: EntityId) -> bool:
+        key = (tenant_id, note_id)
+        if key not in self._notes:
+            return False
+
+        note = self._notes[key]
+        world_key = (note.tenant_id, note.world_id)
+        if note_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(note_id)
+
+        del self._notes[key]
+        return True
+
+
+class InMemoryTemplateRepository(ITemplateRepository):
+    """In-memory implementation of Template repository for testing."""
+
+    def __init__(self):
+        self._templates: Dict[Tuple[TenantId, EntityId], Template] = {}
+        self._names: Dict[Tuple[TenantId, EntityId, str], EntityId] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, template: Template) -> Template:
+        if template.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(template, 'id', new_id)
+
+        key = (template.tenant_id, template.id)
+        name_key = (template.tenant_id, template.world_id, template.name.value)
+
+        if name_key in self._names and self._names[name_key] != template.id:
+            raise DuplicateEntity(f"Template with name '{template.name}' already exists in this world")
+
+        self._templates[key] = template
+        self._names[name_key] = template.id
+
+        world_key = (template.tenant_id, template.world_id)
+        if template.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(template.id)
+
+        return template
+
+    def find_by_id(self, tenant_id: TenantId, template_id: EntityId) -> Optional[Template]:
+        return self._templates.get((tenant_id, template_id))
+
+    def find_by_name(self, tenant_id: TenantId, world_id: EntityId, name: "TemplateName") -> Optional[Template]:
+        template_id = self._names.get((tenant_id, world_id, name.value))
+        if template_id:
+            return self._templates.get((tenant_id, template_id))
+        return None
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[Template]:
+        world_key = (tenant_id, world_id)
+        template_ids = self._by_world.get(world_key, [])
+        templates = []
+        for template_id in template_ids[offset:offset + limit]:
+            template = self._templates.get((tenant_id, template_id))
+            if template:
+                templates.append(template)
+        return templates
+
+    def list_by_type(self, tenant_id: TenantId, world_id: EntityId, template_type: "TemplateType", limit: int = 50, offset: int = 0) -> List[Template]:
+        all_templates = self.list_by_world(tenant_id, world_id)
+        return [t for t in all_templates if t.template_type.value == template_type.value][offset:offset + limit]
+
+    def list_runes(self, tenant_id: TenantId, parent_template_id: EntityId, limit: int = 50, offset: int = 0) -> List[Template]:
+        all_templates = [t for t in self._templates.values() if t.tenant_id == tenant_id]
+        return [t for t in all_templates if t.parent_template_id == parent_template_id][offset:offset + limit]
+
+    def delete(self, tenant_id: TenantId, template_id: EntityId) -> bool:
+        key = (tenant_id, template_id)
+        if key not in self._templates:
+            return False
+
+        template = self._templates[key]
+        name_key = (template.tenant_id, template.world_id, template.name.value)
+
+        if name_key in self._names:
+            del self._names[name_key]
+
+        world_key = (template.tenant_id, template.world_id)
+        if template_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(template_id)
+
+        del self._templates[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, name: "TemplateName") -> bool:
+        name_key = (tenant_id, world_id, name.value)
+        return name_key in self._names

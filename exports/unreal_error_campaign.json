@@ -1,0 +1,27 @@
+{
+  "campaign": {
+    "id": "error_campaign_001",
+    "name": "",
+    "description": "Test error campaign",
+    "type": "invalid_type",
+    "difficulty": "invalid_difficulty",
+    "recommended_level_range": [
+      10,
+      50
+    ]
+  },
+  "structure": {
+    "chapters": [],
+    "endings": []
+  },
+  "assets": {
+    "campaign_icon": "campaign_error_campaign_001_icon",
+    "campaign_bg": "bg_error_campaign_001_main",
+    "music_theme": "theme_error_campaign_001_main"
+  },
+  "unreal_specific": {
+    "use_as_level": true,
+    "max_players": 4,
+    "is_persistent": false
+  }
+}

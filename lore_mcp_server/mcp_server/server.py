@@ -87,6 +87,10 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryEnvironmentRepository,
     InMemoryTextureRepository,
     InMemoryModel3DRepository,
+    InMemorySessionRepository,
+    InMemoryTagRepository,
+    InMemoryNoteRepository,
+    InMemoryTemplateRepository,
 )
 
 # Import SQLite repositories for production
@@ -102,6 +106,10 @@ from src.infrastructure.sqlite_repositories import (
     SQLitePageRepository,
     SQLiteTextureRepository,
     SQLiteModel3DRepository,
+    SQLiteSessionRepository,
+    SQLiteTagRepository,
+    SQLiteNoteRepository,
+    SQLiteTemplateRepository,
 )
 
 # Import persistence layer
@@ -133,6 +141,10 @@ if connection_type == "sqlite":
     environment_repo = SQLiteEnvironmentRepository(sqlite_db)
     texture_repo = SQLiteTextureRepository(sqlite_db)
     model3d_repo = SQLiteModel3DRepository(sqlite_db)
+    session_repo = SQLiteSessionRepository(sqlite_db)
+    tag_repo = SQLiteTagRepository(sqlite_db)
+    note_repo = SQLiteNoteRepository(sqlite_db)
+    template_repo = SQLiteTemplateRepository(sqlite_db)
 else:
     # Default to in-memory repositories
     world_repo = InMemoryWorldRepository()
@@ -145,6 +157,10 @@ else:
     environment_repo = InMemoryEnvironmentRepository()
     texture_repo = InMemoryTextureRepository()
     model3d_repo = InMemoryModel3DRepository()
+    session_repo = InMemorySessionRepository()
+    tag_repo = InMemoryTagRepository()
+    note_repo = InMemoryNoteRepository()
+    template_repo = InMemoryTemplateRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir=str(Path(__file__).parent / "lore_data"))

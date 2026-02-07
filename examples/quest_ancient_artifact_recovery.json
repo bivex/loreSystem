@@ -1,0 +1,90 @@
+{
+  "quest_chain": {
+    "id": "None",
+    "name": "Ancient Artifact Recovery",
+    "campaign_id": "campaign_001",
+    "difficulty": "hard",
+    "estimated_playtime_hours": 4,
+    "quest_giver_id": "world_001:npc_dr_vance",
+    "quests": [
+      {
+        "id": "None",
+        "name": "Find the Ancient Artifact",
+        "description": "Dr. Vance discovered an artifact in the Ruins. Retrieve it.",
+        "type": "main",
+        "difficulty": "hard",
+        "is_repeatable": false,
+        "is_hidden": false,
+        "estimated_time_minutes": 60,
+        "objectives": [
+          {
+            "id": "None",
+            "description": "Find the artifact in the Ruins",
+            "type": "interaction",
+            "target_entity_id": "world_001:location_ruins",
+            "is_required": true
+          },
+          {
+            "id": "None",
+            "description": "Bring the artifact to Dr. Vance",
+            "type": "item_delivery",
+            "target_entity_id": "world_001:npc_dr_vance",
+            "is_required": true
+          }
+        ],
+        "prerequisites": [
+          {
+            "type": "level",
+            "value": 30,
+            "description": "Requires level 30 to access Ruins"
+          }
+        ]
+      },
+      {
+        "id": "None",
+        "name": "Translate Artifact Text",
+        "description": "Dr. Vance needs help translating ancient text on the artifact.",
+        "type": "side",
+        "difficulty": "easy",
+        "is_repeatable": false,
+        "is_hidden": false,
+        "estimated_time_minutes": 30,
+        "objectives": [
+          {
+            "id": "None",
+            "description": "Translate all text from the artifact",
+            "type": "interaction",
+            "target_entity_id": "world_001:item_ancient_artifact",
+            "is_required": true
+          }
+        ],
+        "prerequisites": []
+      },
+      {
+        "id": "None",
+        "name": "Discover Hidden Passage",
+        "description": "Behind the artifact lies a secret passage to ancient ruins.",
+        "type": "hidden",
+        "difficulty": "medium",
+        "is_repeatable": false,
+        "is_hidden": true,
+        "estimated_time_minutes": 45,
+        "objectives": [
+          {
+            "id": "None",
+            "description": "Find the hidden passage behind the artifact",
+            "type": "interaction",
+            "target_entity_id": "world_001:location_secret_passage",
+            "is_required": true
+          }
+        ],
+        "prerequisites": []
+      }
+    ]
+  },
+  "metadata": {
+    "export_date": "2026-01-30T21:14:50.975442",
+    "export_tool": "MythWeave v1.0",
+    "author": "MythWeave Chronicles"
+  }
+}

@@ -30,6 +30,10 @@ from .sqlite_repositories import (
     SQLiteEnvironmentRepository,
     SQLiteTextureRepository,
     SQLiteModel3DRepository,
+    SQLiteSessionRepository,
+    SQLiteTagRepository,
+    SQLiteNoteRepository,
+    SQLiteTemplateRepository,
 )
 
 __all__ = [
@@ -44,6 +48,10 @@ __all__ = [
     'InMemoryEnvironmentRepository',
     'InMemoryTextureRepository',
     'InMemoryModel3DRepository',
+    'InMemorySessionRepository',
+    'InMemoryTagRepository',
+    'InMemoryNoteRepository',
+    'InMemoryTemplateRepository',
 
     # SQLite repositories (for production)
     'SQLiteDatabase',
@@ -57,6 +65,10 @@ __all__ = [
     'SQLiteEnvironmentRepository',
     'SQLiteTextureRepository',
     'SQLiteModel3DRepository',
+    'SQLiteSessionRepository',
+    'SQLiteTagRepository',
+    'SQLiteNoteRepository',
+    'SQLiteTemplateRepository',
 ]
 
 
