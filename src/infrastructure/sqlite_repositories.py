@@ -391,6 +391,191 @@ class SQLiteDatabase:
 class SQLiteWorldRepository(IWorldRepository):
     """SQLite implementation of World repository."""
 
+            # Progression tables
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS skills (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS perks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS traits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS attributes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS experiences (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS level_ups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS talent_trees (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS masteries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Faction tables
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_hierarchys (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_ideologys (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_leaders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_memberships (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_resources (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS faction_territorys (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+
     def __init__(self, db: SQLiteDatabase):
         self.db = db
             # Quest chains table
@@ -5416,6 +5601,1000 @@ class SQLiteQuestRewardTierRepository:
         from src.domain.entities.quest_reward_tier import QuestRewardTier
         from src.domain.value_objects.common import Description, Timestamp
         return QuestRewardTier(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteSkillRepository:
+    """SQLite implementation of Skill repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO skills (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE skills SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM skills WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM skills WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM skills WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.skill import Skill
+        from src.domain.value_objects.common import Description, Timestamp
+        return Skill(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLitePerkRepository:
+    """SQLite implementation of Perk repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO perks (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE perks SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM perks WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM perks WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM perks WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.perk import Perk
+        from src.domain.value_objects.common import Description, Timestamp
+        return Perk(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteTraitRepository:
+    """SQLite implementation of Trait repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO traits (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE traits SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM traits WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM traits WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM traits WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.trait import Trait
+        from src.domain.value_objects.common import Description, Timestamp
+        return Trait(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteAttributeRepository:
+    """SQLite implementation of Attribute repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO attributes (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE attributes SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM attributes WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM attributes WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM attributes WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.attribute import Attribute
+        from src.domain.value_objects.common import Description, Timestamp
+        return Attribute(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteExperienceRepository:
+    """SQLite implementation of Experience repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO experiences (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE experiences SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM experiences WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM experiences WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM experiences WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.experience import Experience
+        from src.domain.value_objects.common import Description, Timestamp
+        return Experience(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteLevelUpRepository:
+    """SQLite implementation of LevelUp repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO level_ups (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE level_ups SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM level_ups WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM level_ups WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM level_ups WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.level_up import LevelUp
+        from src.domain.value_objects.common import Description, Timestamp
+        return LevelUp(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteTalentTreeRepository:
+    """SQLite implementation of TalentTree repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO talent_trees (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE talent_trees SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM talent_trees WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM talent_trees WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM talent_trees WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.talent_tree import TalentTree
+        from src.domain.value_objects.common import Description, Timestamp
+        return TalentTree(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteMasteryRepository:
+    """SQLite implementation of Mastery repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO masterys (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE masterys SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM masterys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM masterys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM masterys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.mastery import Mastery
+        from src.domain.value_objects.common import Description, Timestamp
+        return Mastery(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionHierarchyRepository:
+    """SQLite implementation of FactionHierarchy repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_hierarchys (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_hierarchys SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_hierarchys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_hierarchys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_hierarchys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_hierarchy import FactionHierarchy
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionHierarchy(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionIdeologyRepository:
+    """SQLite implementation of FactionIdeology repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_ideologys (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_ideologys SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_ideologys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_ideologys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_ideologys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_ideology import FactionIdeology
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionIdeology(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionLeaderRepository:
+    """SQLite implementation of FactionLeader repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_leaders (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_leaders SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_leaders WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_leaders WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_leaders WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_leader import FactionLeader
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionLeader(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionMembershipRepository:
+    """SQLite implementation of FactionMembership repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_memberships (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_memberships SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_memberships WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_memberships WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_memberships WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_membership import FactionMembership
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionMembership(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionResourceRepository:
+    """SQLite implementation of FactionResource repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_resources (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_resources SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_resources WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_resources WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_resources WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_resource import FactionResource
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionResource(
+            tenant_id=TenantId(row['tenant_id']),
+            world_id=EntityId(row['world_id']) if row['world_id'] else None,
+            name=row['name'],
+            description=Description(row['description']) if row['description'] else None,
+            created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
+            updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
+            id=EntityId(row['id'])
+        )
+
+class SQLiteFactionTerritoryRepository:
+    """SQLite implementation of FactionTerritory repository."""
+    def __init__(self, db: SQLiteDatabase):
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO faction_territorys (tenant_id, world_id, name, description, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    entity.tenant_id.value,
+                    entity.world_id.value if hasattr(entity, "world_id") else None,
+                    entity.name,
+                    getattr(entity, "description", None),
+                    now, now
+                ))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE faction_territorys SET name = ?, description = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    entity.name,
+                    getattr(entity, "description", None),
+                    entity.id.value,
+                    entity.tenant_id.value
+                ))
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM faction_territorys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM faction_territorys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM faction_territorys WHERE id = ? AND tenant_id = ?
+            """, (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        from src.domain.entities.faction_territory import FactionTerritory
+        from src.domain.value_objects.common import Description, Timestamp
+        return FactionTerritory(
             tenant_id=TenantId(row['tenant_id']),
             world_id=EntityId(row['world_id']) if row['world_id'] else None,
             name=row['name'],

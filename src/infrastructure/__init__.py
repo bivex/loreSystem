@@ -137,3 +137,66 @@ from src.infrastructure.sqlite_repositories import SQLiteQuestRewardTier (for pr
     SQLiteQuestGiver,
     SQLiteQuestReward,
     SQLiteQuestRewardTier,
+
+from src.infrastructure.in_memory_repositories import Skill
+from src.infrastructure.in_memory_repositories import Perk
+from src.infrastructure.in_memory_repositories import Trait
+from src.infrastructure.in_memory_repositories import Attribute
+from src.infrastructure.in_memory_repositories import Experience
+from src.infrastructure.in_memory_repositories import LevelUp
+from src.infrastructure.in_memory_repositories import TalentTree
+from src.infrastructure.in_memory_repositories import Mastery
+from src.infrastructure.in_memory_repositories import FactionHierarchy
+from src.infrastructure.in_memory_repositories import FactionIdeology
+from src.infrastructure.in_memory_repositories import FactionLeader
+from src.infrastructure.in_memory_repositories import FactionMembership
+from src.infrastructure.in_memory_repositories import FactionResource
+from src.infrastructure.in_memory_repositories import FactionTerritory
+from src.infrastructure.sqlite_repositories import SQLiteSkill
+from src.infrastructure.sqlite_repositories import SQLitePerk
+from src.infrastructure.sqlite_repositories import SQLiteTrait
+from src.infrastructure.sqlite_repositories import SQLiteAttribute
+from src.infrastructure.sqlite_repositories import SQLiteExperience
+from src.infrastructure.sqlite_repositories import SQLiteLevelUp
+from src.infrastructure.sqlite_repositories import SQLiteTalentTree
+from src.infrastructure.sqlite_repositories import SQLiteMastery
+from src.infrastructure.sqlite_repositories import SQLiteFactionHierarchy
+from src.infrastructure.sqlite_repositories import SQLiteFactionIdeology
+from src.infrastructure.sqlite_repositories import SQLiteFactionLeader
+from src.infrastructure.sqlite_repositories import SQLiteFactionMembership
+from src.infrastructure.sqlite_repositories import SQLiteFactionResource
+from src.infrastructure.sqlite_repositories import SQLiteFactionTerritory
+# Progression repositories
+    Skill,
+    Perk,
+    Trait,
+    Attribute,
+    Experience,
+    LevelUp,
+    TalentTree,
+    Mastery,
+
+# Faction repositories
+    FactionHierarchy,
+    FactionIdeology,
+    FactionLeader,
+    FactionMembership,
+    FactionResource,
+    FactionTerritory,
+# Progression repositories
+    SQLiteSkill,
+    SQLitePerk,
+    SQLiteTrait,
+    SQLiteAttribute,
+    SQLiteExperience,
+    SQLiteLevelUp,
+    SQLiteTalentTree,
+    SQLiteMastery,
+
+# Faction repositories
+    SQLiteFactionHierarchy,
+    SQLiteFactionIdeology,
+    SQLiteFactionLeader,
+    SQLiteFactionMembership,
+    SQLiteFactionResource,
+    SQLiteFactionTerritory,

@@ -1,41 +1,49 @@
 """
-Faction_leader Repository Interface
+FactionLeader Repository Interface
 
-Port for persisting and retrieving Faction_leader entities.
+Port for persisting and retrieving FactionLeader entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.faction_leader import Faction_leader
+from ..entities.faction_leader import FactionLeader
 from ..value_objects.common import TenantId, EntityId
 
 
-class IFaction_leaderRepository(ABC):
+class IFactionLeaderRepository(ABC):
     """
-    Repository interface for Faction_leader entity.
+    Repository interface for FactionLeader entity.
     
-    Faction_leaders belong to Worlds (aggregate boundary).
+    FactionLeaders belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Faction_leader) -> Faction_leader:
+    def save(self, entity: FactionLeader) -> FactionLeader:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: FactionLeader to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Faction_leader]:
+    ) -> Optional[FactionLeader]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IFaction_leaderRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Faction_leader]:
+    ) -> List[FactionLeader]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

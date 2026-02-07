@@ -1,41 +1,49 @@
 """
-Faction_hierarchy Repository Interface
+FactionHierarchy Repository Interface
 
-Port for persisting and retrieving Faction_hierarchy entities.
+Port for persisting and retrieving FactionHierarchy entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.faction_hierarchy import Faction_hierarchy
+from ..entities.faction_hierarchy import FactionHierarchy
 from ..value_objects.common import TenantId, EntityId
 
 
-class IFaction_hierarchyRepository(ABC):
+class IFactionHierarchyRepository(ABC):
     """
-    Repository interface for Faction_hierarchy entity.
+    Repository interface for FactionHierarchy entity.
     
-    Faction_hierarchys belong to Worlds (aggregate boundary).
+    FactionHierarchys belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Faction_hierarchy) -> Faction_hierarchy:
+    def save(self, entity: FactionHierarchy) -> FactionHierarchy:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: FactionHierarchy to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Faction_hierarchy]:
+    ) -> Optional[FactionHierarchy]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IFaction_hierarchyRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Faction_hierarchy]:
+    ) -> List[FactionHierarchy]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,
