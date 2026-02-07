@@ -2295,3 +2295,8316 @@ class InMemoryFactionTerritoryRepository:
             del self._territories[(tenant_id, territory_id)]
             return True
         return False
+
+# In-Memory implementations for remaining repositories
+
+
+class InMemoryMiracleRepository:
+    """In-memory implementation of Miracle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCourtRepository:
+    """In-memory implementation of Court repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryVoice_overRepository:
+    """In-memory implementation of Voice_over repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFestivalRepository:
+    """In-memory implementation of Festival repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCataclysmRepository:
+    """In-memory implementation of Cataclysm repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryProgression_stateRepository:
+    """In-memory implementation of Progression_state repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryChapterRepository:
+    """In-memory implementation of Chapter repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryNationRepository:
+    """In-memory implementation of Nation repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEvidenceRepository:
+    """In-memory implementation of Evidence repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryImprovementRepository:
+    """In-memory implementation of Improvement repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLore_fragmentRepository:
+    """In-memory implementation of Lore_fragment repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFactionRepository:
+    """In-memory implementation of Faction repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryConcertRepository:
+    """In-memory implementation of Concert repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAllianceRepository:
+    """In-memory implementation of Alliance repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCinematicRepository:
+    """In-memory implementation of Cinematic repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDemandRepository:
+    """In-memory implementation of Demand repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDeus_ex_machinaRepository:
+    """In-memory implementation of Deus_ex_machina repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySeasonRepository:
+    """In-memory implementation of Season repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFlash_forwardRepository:
+    """In-memory implementation of Flash_forward repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTalent_treeRepository:
+    """In-memory implementation of Talent_tree repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuestRepository:
+    """In-memory implementation of Quest repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLegendary_weaponRepository:
+    """In-memory implementation of Legendary_weapon repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryGlyphRepository:
+    """In-memory implementation of Glyph repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRelic_collectionRepository:
+    """In-memory implementation of Relic_collection repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryArtifact_setRepository:
+    """In-memory implementation of Artifact_set repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDifficulty_curveRepository:
+    """In-memory implementation of Difficulty_curve repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRequirementRepository:
+    """In-memory implementation of Requirement repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlot_deviceRepository:
+    """In-memory implementation of Plot_device repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBannerRepository:
+    """In-memory implementation of Banner repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_rewardRepository:
+    """In-memory implementation of Quest_reward repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryJudgeRepository:
+    """In-memory implementation of Judge repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryNightmareRepository:
+    """In-memory implementation of Nightmare repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySecret_areaRepository:
+    """In-memory implementation of Secret_area repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPactRepository:
+    """In-memory implementation of Pact repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWarRepository:
+    """In-memory implementation of War repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryUser_scenarioRepository:
+    """In-memory implementation of User_scenario repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryVisual_effectRepository:
+    """In-memory implementation of Visual_effect repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMaterialRepository:
+    """In-memory implementation of Material repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySave_pointRepository:
+    """In-memory implementation of Save_point repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPropagandaRepository:
+    """In-memory implementation of Propaganda repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLeaderboardRepository:
+    """In-memory implementation of Leaderboard repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEclipseRepository:
+    """In-memory implementation of Eclipse repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBalance_entitiesRepository:
+    """In-memory implementation of Balance_entities repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPunishmentRepository:
+    """In-memory implementation of Punishment repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryUndergroundRepository:
+    """In-memory implementation of Underground repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRadioRepository:
+    """In-memory implementation of Radio repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBestiary_entryRepository:
+    """In-memory implementation of Bestiary_entry repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryOpen_world_zoneRepository:
+    """In-memory implementation of Open_world_zone repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRewardRepository:
+    """In-memory implementation of Reward repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDrop_rateRepository:
+    """In-memory implementation of Drop_rate repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMusic_themeRepository:
+    """In-memory implementation of Music_theme repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryConstitutionRepository:
+    """In-memory implementation of Constitution repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDefenseRepository:
+    """In-memory implementation of Defense repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInvasionRepository:
+    """In-memory implementation of Invasion repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLoot_table_weightRepository:
+    """In-memory implementation of Loot_table_weight repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDiscoveryRepository:
+    """In-memory implementation of Discovery repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMountRepository:
+    """In-memory implementation of Mount repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWormholeRepository:
+    """In-memory implementation of Wormhole repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPocket_dimensionRepository:
+    """In-memory implementation of Pocket_dimension repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEvent_chainRepository:
+    """In-memory implementation of Event_chain repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPrologueRepository:
+    """In-memory implementation of Prologue repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFadeRepository:
+    """In-memory implementation of Fade repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAutosaveRepository:
+    """In-memory implementation of Autosave repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySocial_mobilityRepository:
+    """In-memory implementation of Social_mobility repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCharacter_profile_entryRepository:
+    """In-memory implementation of Character_profile_entry repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryModel3dRepository:
+    """In-memory implementation of Model3d repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySoundtrackRepository:
+    """In-memory implementation of Soundtrack repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInflationRepository:
+    """In-memory implementation of Inflation repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryStar_systemRepository:
+    """In-memory implementation of Star_system repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuarterRepository:
+    """In-memory implementation of Quarter repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPurchaseRepository:
+    """In-memory implementation of Purchase repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCharacter_relationshipRepository:
+    """In-memory implementation of Character_relationship repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryGovernmentRepository:
+    """In-memory implementation of Government repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCampaignRepository:
+    """In-memory implementation of Campaign repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPityRepository:
+    """In-memory implementation of Pity repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTranslationRepository:
+    """In-memory implementation of Translation repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryColor_paletteRepository:
+    """In-memory implementation of Color_palette repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySeasonal_eventRepository:
+    """In-memory implementation of Seasonal_event repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryArmyRepository:
+    """In-memory implementation of Army repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryModRepository:
+    """In-memory implementation of Mod repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBlueprintRepository:
+    """In-memory implementation of Blueprint repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_trackerRepository:
+    """In-memory implementation of Quest_tracker repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRankRepository:
+    """In-memory implementation of Rank repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCelebrationRepository:
+    """In-memory implementation of Celebration repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCurseRepository:
+    """In-memory implementation of Curse repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHub_areaRepository:
+    """In-memory implementation of Hub_area repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRevolutionRepository:
+    """In-memory implementation of Revolution repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_resourceRepository:
+    """In-memory implementation of Faction_resource repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTreatyRepository:
+    """In-memory implementation of Treaty repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAirshipRepository:
+    """In-memory implementation of Airship repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCultRepository:
+    """In-memory implementation of Cult repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEnchantmentRepository:
+    """In-memory implementation of Enchantment repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInstanceRepository:
+    """In-memory implementation of Instance repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAcademyRepository:
+    """In-memory implementation of Academy repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySilenceRepository:
+    """In-memory implementation of Silence repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLore_axiomsRepository:
+    """In-memory implementation of Lore_axioms repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySupplyRepository:
+    """In-memory implementation of Supply repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_membershipRepository:
+    """In-memory implementation of Faction_membership repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMusic_stateRepository:
+    """In-memory implementation of Music_state repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBlessingRepository:
+    """In-memory implementation of Blessing repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPrototypeRepository:
+    """In-memory implementation of Prototype repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_ideologyRepository:
+    """In-memory implementation of Faction_ideology repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryKarmaRepository:
+    """In-memory implementation of Karma repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCharacter_variantRepository:
+    """In-memory implementation of Character_variant repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLegal_systemRepository:
+    """In-memory implementation of Legal_system repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_objectiveRepository:
+    """In-memory implementation of Quest_objective repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlot_branchRepository:
+    """In-memory implementation of Plot_branch repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWaypointRepository:
+    """In-memory implementation of Waypoint repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryProgression_eventRepository:
+    """In-memory implementation of Progression_event repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryNewspaperRepository:
+    """In-memory implementation of Newspaper repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWardRepository:
+    """In-memory implementation of Ward repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMemoryRepository:
+    """In-memory implementation of Memory repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPullRepository:
+    """In-memory implementation of Pull repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBranch_pointRepository:
+    """In-memory implementation of Branch_point repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWorld_eventRepository:
+    """In-memory implementation of World_event repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySectRepository:
+    """In-memory implementation of Sect repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEmpireRepository:
+    """In-memory implementation of Empire repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_chainRepository:
+    """In-memory implementation of Quest_chain repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRuneRepository:
+    """In-memory implementation of Rune repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHolidayRepository:
+    """In-memory implementation of Holiday repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryShaderRepository:
+    """In-memory implementation of Shader repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTitleRepository:
+    """In-memory implementation of Title repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlayer_metricRepository:
+    """In-memory implementation of Player_metric repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEpilogueRepository:
+    """In-memory implementation of Epilogue repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMysteryRepository:
+    """In-memory implementation of Mystery repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWeather_patternRepository:
+    """In-memory implementation of Weather_pattern repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryActRepository:
+    """In-memory implementation of Act repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEpisodeRepository:
+    """In-memory implementation of Episode repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTelevisionRepository:
+    """In-memory implementation of Television repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySiege_engineRepository:
+    """In-memory implementation of Siege_engine repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCustom_mapRepository:
+    """In-memory implementation of Custom_map repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryThemeRepository:
+    """In-memory implementation of Theme repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCrafting_recipeRepository:
+    """In-memory implementation of Crafting_recipe repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySocial_classRepository:
+    """In-memory implementation of Social_class repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_leaderRepository:
+    """In-memory implementation of Faction_leader repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRiddleRepository:
+    """In-memory implementation of Riddle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFast_travel_pointRepository:
+    """In-memory implementation of Fast_travel_point repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMuseumRepository:
+    """In-memory implementation of Museum repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFamiliarRepository:
+    """In-memory implementation of Familiar repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEra_transitionRepository:
+    """In-memory implementation of Era_transition repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTariffRepository:
+    """In-memory implementation of Tariff repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_nodeRepository:
+    """In-memory implementation of Quest_node repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDreamRepository:
+    """In-memory implementation of Dream repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHoly_siteRepository:
+    """In-memory implementation of Holy_site repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInventoryRepository:
+    """In-memory implementation of Inventory repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAffinityRepository:
+    """In-memory implementation of Affinity repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAlternate_realityRepository:
+    """In-memory implementation of Alternate_reality repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMount_equipmentRepository:
+    """In-memory implementation of Mount_equipment repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySound_effectRepository:
+    """In-memory implementation of Sound_effect repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInternetRepository:
+    """In-memory implementation of Internet repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTime_periodRepository:
+    """In-memory implementation of Time_period repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPuzzleRepository:
+    """In-memory implementation of Puzzle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMotion_captureRepository:
+    """In-memory implementation of Motion_capture repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFortificationRepository:
+    """In-memory implementation of Fortification repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryVoice_actorRepository:
+    """In-memory implementation of Voice_actor repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDimensionRepository:
+    """In-memory implementation of Dimension repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMusic_controlRepository:
+    """In-memory implementation of Music_control repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDubbingRepository:
+    """In-memory implementation of Dubbing repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHidden_pathRepository:
+    """In-memory implementation of Hidden_path repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFleetRepository:
+    """In-memory implementation of Fleet repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySocial_mediaRepository:
+    """In-memory implementation of Social_media repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBarterRepository:
+    """In-memory implementation of Barter repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCalendarRepository:
+    """In-memory implementation of Calendar repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySolsticeRepository:
+    """In-memory implementation of Solstice repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySchoolRepository:
+    """In-memory implementation of School repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySlumsRepository:
+    """In-memory implementation of Slums repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDisasterRepository:
+    """In-memory implementation of Disaster repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMotifRepository:
+    """In-memory implementation of Motif repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySpawn_pointRepository:
+    """In-memory implementation of Spawn_point repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWorkshop_entryRepository:
+    """In-memory implementation of Workshop_entry repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMoral_choiceRepository:
+    """In-memory implementation of Moral_choice repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryVoice_lineRepository:
+    """In-memory implementation of Voice_line repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFamineRepository:
+    """In-memory implementation of Famine repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySession_dataRepository:
+    """In-memory implementation of Session_data repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPatentRepository:
+    """In-memory implementation of Patent repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryArchiveRepository:
+    """In-memory implementation of Archive repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryConversion_rateRepository:
+    """In-memory implementation of Conversion_rate repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryScriptureRepository:
+    """In-memory implementation of Scripture repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySpaceshipRepository:
+    """In-memory implementation of Spaceship repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBattalionRepository:
+    """In-memory implementation of Battalion repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPhenomenonRepository:
+    """In-memory implementation of Phenomenon repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCompetitionRepository:
+    """In-memory implementation of Competition repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlagueRepository:
+    """In-memory implementation of Plague repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBlack_holeRepository:
+    """In-memory implementation of Black_hole repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWitnessRepository:
+    """In-memory implementation of Witness repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCursed_itemRepository:
+    """In-memory implementation of Cursed_item repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTimelineRepository:
+    """In-memory implementation of Timeline repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryComponentRepository:
+    """In-memory implementation of Component repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCutsceneRepository:
+    """In-memory implementation of Cutscene repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_hierarchyRepository:
+    """In-memory implementation of Faction_hierarchy repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMusic_trackRepository:
+    """In-memory implementation of Music_track repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTrapRepository:
+    """In-memory implementation of Trap repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCrimeRepository:
+    """In-memory implementation of Crime repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFood_chainRepository:
+    """In-memory implementation of Food_chain repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryReproductionRepository:
+    """In-memory implementation of Reproduction repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRaidRepository:
+    """In-memory implementation of Raid repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryScoreRepository:
+    """In-memory implementation of Score repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHonorRepository:
+    """In-memory implementation of Honor repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryStorylineRepository:
+    """In-memory implementation of Storyline repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLevel_upRepository:
+    """In-memory implementation of Level_up repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryNebulaRepository:
+    """In-memory implementation of Nebula repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCodex_entryRepository:
+    """In-memory implementation of Codex_entry repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySubtitleRepository:
+    """In-memory implementation of Subtitle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDistrictRepository:
+    """In-memory implementation of District repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_prerequisiteRepository:
+    """In-memory implementation of Quest_prerequisite repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMythical_armorRepository:
+    """In-memory implementation of Mythical_armor repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRitualRepository:
+    """In-memory implementation of Ritual repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRed_herringRepository:
+    """In-memory implementation of Red_herring repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPetRepository:
+    """In-memory implementation of Pet repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAtmosphereRepository:
+    """In-memory implementation of Atmosphere repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySocketRepository:
+    """In-memory implementation of Socket repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFlashbackRepository:
+    """In-memory implementation of Flashback repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryBadgeRepository:
+    """In-memory implementation of Badge repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlazaRepository:
+    """In-memory implementation of Plaza repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEraRepository:
+    """In-memory implementation of Era repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTournamentRepository:
+    """In-memory implementation of Tournament repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryShare_codeRepository:
+    """In-memory implementation of Share_code repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLocalizationRepository:
+    """In-memory implementation of Localization repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMarket_squareRepository:
+    """In-memory implementation of Market_square repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryResearch_centerRepository:
+    """In-memory implementation of Research_center repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHeatmapRepository:
+    """In-memory implementation of Heatmap repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryResearchRepository:
+    """In-memory implementation of Research repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryRumorRepository:
+    """In-memory implementation of Rumor repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryInventionRepository:
+    """In-memory implementation of Invention repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCamera_pathRepository:
+    """In-memory implementation of Camera_path repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEnigmaRepository:
+    """In-memory implementation of Enigma repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryChekhovs_gunRepository:
+    """In-memory implementation of Chekhovs_gun repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryReputationRepository:
+    """In-memory implementation of Reputation repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryParticleRepository:
+    """In-memory implementation of Particle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryFaction_territoryRepository:
+    """In-memory implementation of Faction_territory repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCharacter_evolutionRepository:
+    """In-memory implementation of Character_evolution repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTeleporterRepository:
+    """In-memory implementation of Teleporter repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryShopRepository:
+    """In-memory implementation of Shop repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryArenaRepository:
+    """In-memory implementation of Arena repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCurrencyRepository:
+    """In-memory implementation of Currency repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryExhibitionRepository:
+    """In-memory implementation of Exhibition repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMigrationRepository:
+    """In-memory implementation of Migration repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryForeshadowingRepository:
+    """In-memory implementation of Foreshadowing repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySkyboxRepository:
+    """In-memory implementation of Skybox repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_reward_tierRepository:
+    """In-memory implementation of Quest_reward_tier repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEvolutionRepository:
+    """In-memory implementation of Evolution repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryHibernationRepository:
+    """In-memory implementation of Hibernation repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryConsequenceRepository:
+    """In-memory implementation of Consequence repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDivine_itemRepository:
+    """In-memory implementation of Divine_item repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEaster_eggRepository:
+    """In-memory implementation of Easter_egg repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryVehicleRepository:
+    """In-memory implementation of Vehicle repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryWeapon_systemRepository:
+    """In-memory implementation of Weapon_system repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPort_districtRepository:
+    """In-memory implementation of Port_district repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLibraryRepository:
+    """In-memory implementation of Library repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLightingRepository:
+    """In-memory implementation of Lighting repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCheckpointRepository:
+    """In-memory implementation of Checkpoint repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryUniversityRepository:
+    """In-memory implementation of University repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTrophyRepository:
+    """In-memory implementation of Trophy repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemorySummonRepository:
+    """In-memory implementation of Summon repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryKingdomRepository:
+    """In-memory implementation of Kingdom repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLawRepository:
+    """In-memory implementation of Law repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAchievementRepository:
+    """In-memory implementation of Achievement repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTransitionRepository:
+    """In-memory implementation of Transition repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTaxRepository:
+    """In-memory implementation of Tax repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryLawyerRepository:
+    """In-memory implementation of Lawyer repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryQuest_giverRepository:
+    """In-memory implementation of Quest_giver repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPriceRepository:
+    """In-memory implementation of Price repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryEndingRepository:
+    """In-memory implementation of Ending repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPortalRepository:
+    """In-memory implementation of Portal repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryTradeRepository:
+    """In-memory implementation of Trade repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryOathRepository:
+    """In-memory implementation of Oath repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryAmbientRepository:
+    """In-memory implementation of Ambient repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryMoonRepository:
+    """In-memory implementation of Moon repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryExtinctionRepository:
+    """In-memory implementation of Extinction repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDungeonRepository:
+    """In-memory implementation of Dungeon repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryJournal_pageRepository:
+    """In-memory implementation of Journal_page repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryGalaxyRepository:
+    """In-memory implementation of Galaxy repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryPlayer_profileRepository:
+    """In-memory implementation of Player_profile repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryNoble_districtRepository:
+    """In-memory implementation of Noble_district repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryDispositionRepository:
+    """In-memory implementation of Disposition repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryJuryRepository:
+    """In-memory implementation of Jury repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
+
+class InMemoryCeremonyRepository:
+    """In-memory implementation of Ceremony repository."""
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(entity, 'id', new_id)
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() 
+                if hasattr(e, 'tenant_id') and hasattr(e, 'world_id') 
+                and e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+
+    def delete(self, tenant_id, entity_id):
+        key = (tenant_id, entity_id)
+        if key in self._entities:
+            del self._entities[key]
+            return True
+        return False
