@@ -59,7 +59,7 @@ class AlternateReality:
     exit_points: List[str] = field(default_factory=list)  # How players leave
     created_at: Timestamp
     updated_at: Timestamp
-    version: Version = Version(1, 0, 0)
+    version: Version = field(default_factory=Version)
 
     def __post_init__(self):
         """Validate invariants."""

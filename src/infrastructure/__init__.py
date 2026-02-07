@@ -1,8 +1,62 @@
-"""Infrastructure layer - not yet implemented.
+"""Infrastructure layer - concrete repository implementations.
 
-This is where concrete implementations will go:
-- SqlWorldRepository (PostgreSQL)
-- EsWorldRepository (Elasticsearch)
-- GitLoreService
-- LLMGenerationService
+Available repositories:
+- InMemoryWorldRepository, InMemoryCharacterRepository, etc. (in_memory_repositories.py)
+- SQLiteWorldRepository, SQLiteCharacterRepository, etc. (sqlite_repositories.py)
 """
+
+from .in_memory_repositories import (
+    InMemoryWorldRepository,
+    InMemoryCharacterRepository,
+    InMemoryStoryRepository,
+    InMemoryEventRepository,
+    InMemoryPageRepository,
+    InMemoryItemRepository,
+    InMemoryLocationRepository,
+    InMemoryEnvironmentRepository,
+    InMemoryTextureRepository,
+    InMemoryModel3DRepository,
+)
+
+from .sqlite_repositories import (
+    SQLiteDatabase,
+    SQLiteWorldRepository,
+    SQLiteCharacterRepository,
+    SQLiteStoryRepository,
+    SQLiteEventRepository,
+    SQLitePageRepository,
+    SQLiteItemRepository,
+    SQLiteLocationRepository,
+    SQLiteEnvironmentRepository,
+    SQLiteTextureRepository,
+    SQLiteModel3DRepository,
+)
+
+__all__ = [
+    # In-memory repositories (for testing)
+    'InMemoryWorldRepository',
+    'InMemoryCharacterRepository',
+    'InMemoryStoryRepository',
+    'InMemoryEventRepository',
+    'InMemoryPageRepository',
+    'InMemoryItemRepository',
+    'InMemoryLocationRepository',
+    'InMemoryEnvironmentRepository',
+    'InMemoryTextureRepository',
+    'InMemoryModel3DRepository',
+
+    # SQLite repositories (for production)
+    'SQLiteDatabase',
+    'SQLiteWorldRepository',
+    'SQLiteCharacterRepository',
+    'SQLiteStoryRepository',
+    'SQLiteEventRepository',
+    'SQLitePageRepository',
+    'SQLiteItemRepository',
+    'SQLiteLocationRepository',
+    'SQLiteEnvironmentRepository',
+    'SQLiteTextureRepository',
+    'SQLiteModel3DRepository',
+]
+
+

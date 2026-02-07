@@ -89,23 +89,65 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryModel3DRepository,
 )
 
+# Import SQLite repositories for production
+from src.infrastructure.sqlite_repositories import (
+    SQLiteDatabase,
+    SQLiteWorldRepository,
+    SQLiteCharacterRepository,
+    SQLiteItemRepository,
+    SQLiteLocationRepository,
+    SQLiteEnvironmentRepository,
+    SQLiteStoryRepository,
+    SQLiteEventRepository,
+    SQLitePageRepository,
+    SQLiteTextureRepository,
+    SQLiteModel3DRepository,
+)
+
 # Import persistence layer
 from .persistence import JSONPersistence
 
-# Initialize repositories (in production, use PostgreSQL repositories)
-world_repo = InMemoryWorldRepository()
-character_repo = InMemoryCharacterRepository()
-story_repo = InMemoryStoryRepository()
-event_repo = InMemoryEventRepository()
-page_repo = InMemoryPageRepository()
-item_repo = InMemoryItemRepository()
-location_repo = InMemoryLocationRepository()
-environment_repo = InMemoryEnvironmentRepository()
-texture_repo = InMemoryTextureRepository()
-model3d_repo = InMemoryModel3DRepository()
+# Load configuration
+config_path = Path(__file__).parent / "config.json"
+with open(config_path, 'r') as f:
+    config = json.load(f)
+
+# Initialize repositories based on configuration
+connection_type = config.get("repository", {}).get("connection_type", "in_memory")
+
+if connection_type == "sqlite":
+    db_path = config.get("repository", {}).get("database_path", "lore_system.db")
+    # Use path relative to mcp_server directory
+    full_db_path = Path(__file__).parent / db_path
+    sqlite_db = SQLiteDatabase(str(full_db_path))
+    sqlite_db.initialize_schema()
+
+    # Use SQLite repositories for all entities
+    world_repo = SQLiteWorldRepository(sqlite_db)
+    character_repo = SQLiteCharacterRepository(sqlite_db)
+    story_repo = SQLiteStoryRepository(sqlite_db)
+    event_repo = SQLiteEventRepository(sqlite_db)
+    page_repo = SQLitePageRepository(sqlite_db)
+    item_repo = SQLiteItemRepository(sqlite_db)
+    location_repo = SQLiteLocationRepository(sqlite_db)
+    environment_repo = SQLiteEnvironmentRepository(sqlite_db)
+    texture_repo = SQLiteTextureRepository(sqlite_db)
+    model3d_repo = SQLiteModel3DRepository(sqlite_db)
+else:
+    # Default to in-memory repositories
+    world_repo = InMemoryWorldRepository()
+    character_repo = InMemoryCharacterRepository()
+    story_repo = InMemoryStoryRepository()
+    event_repo = InMemoryEventRepository()
+    page_repo = InMemoryPageRepository()
+    item_repo = InMemoryItemRepository()
+    location_repo = InMemoryLocationRepository()
+    environment_repo = InMemoryEnvironmentRepository()
+    texture_repo = InMemoryTextureRepository()
+    model3d_repo = InMemoryModel3DRepository()
 
 # Initialize JSON persistence
-persistence = JSONPersistence(data_dir="/Volumes/External/Code/loreSystem/lore_mcp_server/lore_data")
+persistence = JSONPersistence(data_dir=str(Path(__file__).parent / "lore_data"))
 
 # Create MCP server
 app = Server("lore-system-server")
