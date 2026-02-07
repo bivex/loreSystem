@@ -1,41 +1,49 @@
 """
-Plot_branch Repository Interface
+PlotBranch Repository Interface
 
-Port for persisting and retrieving Plot_branch entities.
+Port for persisting and retrieving PlotBranch entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.plot_branch import Plot_branch
+from ..entities.plot_branch import PlotBranch
 from ..value_objects.common import TenantId, EntityId
 
 
-class IPlot_branchRepository(ABC):
+class IPlotBranchRepository(ABC):
     """
-    Repository interface for Plot_branch entity.
+    Repository interface for PlotBranch entity.
     
-    Plot_branchs belong to Worlds (aggregate boundary).
+    PlotBranchs belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Plot_branch) -> Plot_branch:
+    def save(self, entity: PlotBranch) -> PlotBranch:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: PlotBranch to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Plot_branch]:
+    ) -> Optional[PlotBranch]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IPlot_branchRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Plot_branch]:
+    ) -> List[PlotBranch]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

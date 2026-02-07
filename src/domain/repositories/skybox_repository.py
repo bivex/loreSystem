@@ -22,11 +22,19 @@ class ISkyboxRepository(ABC):
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: Skybox to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
@@ -35,7 +43,7 @@ class ISkyboxRepository(ABC):
     ) -> Optional[Skybox]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -46,8 +54,7 @@ class ISkyboxRepository(ABC):
     ) -> List[Skybox]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

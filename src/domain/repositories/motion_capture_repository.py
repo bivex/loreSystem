@@ -1,41 +1,49 @@
 """
-Motion_capture Repository Interface
+MotionCapture Repository Interface
 
-Port for persisting and retrieving Motion_capture entities.
+Port for persisting and retrieving MotionCapture entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.motion_capture import Motion_capture
+from ..entities.motion_capture import MotionCapture
 from ..value_objects.common import TenantId, EntityId
 
 
-class IMotion_captureRepository(ABC):
+class IMotionCaptureRepository(ABC):
     """
-    Repository interface for Motion_capture entity.
+    Repository interface for MotionCapture entity.
     
-    Motion_captures belong to Worlds (aggregate boundary).
+    MotionCaptures belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Motion_capture) -> Motion_capture:
+    def save(self, entity: MotionCapture) -> MotionCapture:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: MotionCapture to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Motion_capture]:
+    ) -> Optional[MotionCapture]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IMotion_captureRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Motion_capture]:
+    ) -> List[MotionCapture]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

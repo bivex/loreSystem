@@ -1,41 +1,49 @@
 """
-Pocket_dimension Repository Interface
+PocketDimension Repository Interface
 
-Port for persisting and retrieving Pocket_dimension entities.
+Port for persisting and retrieving PocketDimension entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.pocket_dimension import Pocket_dimension
+from ..entities.pocket_dimension import PocketDimension
 from ..value_objects.common import TenantId, EntityId
 
 
-class IPocket_dimensionRepository(ABC):
+class IPocketDimensionRepository(ABC):
     """
-    Repository interface for Pocket_dimension entity.
+    Repository interface for PocketDimension entity.
     
-    Pocket_dimensions belong to Worlds (aggregate boundary).
+    PocketDimensions belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Pocket_dimension) -> Pocket_dimension:
+    def save(self, entity: PocketDimension) -> PocketDimension:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: PocketDimension to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Pocket_dimension]:
+    ) -> Optional[PocketDimension]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IPocket_dimensionRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Pocket_dimension]:
+    ) -> List[PocketDimension]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

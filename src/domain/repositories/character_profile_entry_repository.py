@@ -1,41 +1,49 @@
 """
-Character_profile_entry Repository Interface
+CharacterProfileEntry Repository Interface
 
-Port for persisting and retrieving Character_profile_entry entities.
+Port for persisting and retrieving CharacterProfileEntry entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.character_profile_entry import Character_profile_entry
+from ..entities.character_profile_entry import CharacterProfileEntry
 from ..value_objects.common import TenantId, EntityId
 
 
-class ICharacter_profile_entryRepository(ABC):
+class ICharacterProfileEntryRepository(ABC):
     """
-    Repository interface for Character_profile_entry entity.
+    Repository interface for CharacterProfileEntry entity.
     
-    Character_profile_entrys belong to Worlds (aggregate boundary).
+    CharacterProfileEntrys belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Character_profile_entry) -> Character_profile_entry:
+    def save(self, entity: CharacterProfileEntry) -> CharacterProfileEntry:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: CharacterProfileEntry to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Character_profile_entry]:
+    ) -> Optional[CharacterProfileEntry]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ICharacter_profile_entryRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Character_profile_entry]:
+    ) -> List[CharacterProfileEntry]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

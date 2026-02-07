@@ -1,41 +1,49 @@
 """
-Drop_rate Repository Interface
+DropRate Repository Interface
 
-Port for persisting and retrieving Drop_rate entities.
+Port for persisting and retrieving DropRate entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.drop_rate import Drop_rate
+from ..entities.drop_rate import DropRate
 from ..value_objects.common import TenantId, EntityId
 
 
-class IDrop_rateRepository(ABC):
+class IDropRateRepository(ABC):
     """
-    Repository interface for Drop_rate entity.
+    Repository interface for DropRate entity.
     
-    Drop_rates belong to Worlds (aggregate boundary).
+    DropRates belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Drop_rate) -> Drop_rate:
+    def save(self, entity: DropRate) -> DropRate:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: DropRate to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Drop_rate]:
+    ) -> Optional[DropRate]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IDrop_rateRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Drop_rate]:
+    ) -> List[DropRate]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

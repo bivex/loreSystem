@@ -1,41 +1,49 @@
 """
-Lore_fragment Repository Interface
+LoreFragment Repository Interface
 
-Port for persisting and retrieving Lore_fragment entities.
+Port for persisting and retrieving LoreFragment entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.lore_fragment import Lore_fragment
+from ..entities.lore_fragment import LoreFragment
 from ..value_objects.common import TenantId, EntityId
 
 
-class ILore_fragmentRepository(ABC):
+class ILoreFragmentRepository(ABC):
     """
-    Repository interface for Lore_fragment entity.
+    Repository interface for LoreFragment entity.
     
-    Lore_fragments belong to Worlds (aggregate boundary).
+    LoreFragments belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Lore_fragment) -> Lore_fragment:
+    def save(self, entity: LoreFragment) -> LoreFragment:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: LoreFragment to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Lore_fragment]:
+    ) -> Optional[LoreFragment]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ILore_fragmentRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Lore_fragment]:
+    ) -> List[LoreFragment]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

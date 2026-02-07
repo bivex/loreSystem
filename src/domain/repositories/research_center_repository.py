@@ -1,41 +1,49 @@
 """
-Research_center Repository Interface
+ResearchCenter Repository Interface
 
-Port for persisting and retrieving Research_center entities.
+Port for persisting and retrieving ResearchCenter entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.research_center import Research_center
+from ..entities.research_center import ResearchCenter
 from ..value_objects.common import TenantId, EntityId
 
 
-class IResearch_centerRepository(ABC):
+class IResearchCenterRepository(ABC):
     """
-    Repository interface for Research_center entity.
+    Repository interface for ResearchCenter entity.
     
-    Research_centers belong to Worlds (aggregate boundary).
+    ResearchCenters belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Research_center) -> Research_center:
+    def save(self, entity: ResearchCenter) -> ResearchCenter:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: ResearchCenter to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Research_center]:
+    ) -> Optional[ResearchCenter]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IResearch_centerRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Research_center]:
+    ) -> List[ResearchCenter]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

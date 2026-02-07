@@ -1,41 +1,49 @@
 """
-Star_system Repository Interface
+StarSystem Repository Interface
 
-Port for persisting and retrieving Star_system entities.
+Port for persisting and retrieving StarSystem entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.star_system import Star_system
+from ..entities.star_system import StarSystem
 from ..value_objects.common import TenantId, EntityId
 
 
-class IStar_systemRepository(ABC):
+class IStarSystemRepository(ABC):
     """
-    Repository interface for Star_system entity.
+    Repository interface for StarSystem entity.
     
-    Star_systems belong to Worlds (aggregate boundary).
+    StarSystems belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Star_system) -> Star_system:
+    def save(self, entity: StarSystem) -> StarSystem:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: StarSystem to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Star_system]:
+    ) -> Optional[StarSystem]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IStar_systemRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Star_system]:
+    ) -> List[StarSystem]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

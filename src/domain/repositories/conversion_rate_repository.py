@@ -1,41 +1,49 @@
 """
-Conversion_rate Repository Interface
+ConversionRate Repository Interface
 
-Port for persisting and retrieving Conversion_rate entities.
+Port for persisting and retrieving ConversionRate entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.conversion_rate import Conversion_rate
+from ..entities.conversion_rate import ConversionRate
 from ..value_objects.common import TenantId, EntityId
 
 
-class IConversion_rateRepository(ABC):
+class IConversionRateRepository(ABC):
     """
-    Repository interface for Conversion_rate entity.
+    Repository interface for ConversionRate entity.
     
-    Conversion_rates belong to Worlds (aggregate boundary).
+    ConversionRates belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Conversion_rate) -> Conversion_rate:
+    def save(self, entity: ConversionRate) -> ConversionRate:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: ConversionRate to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Conversion_rate]:
+    ) -> Optional[ConversionRate]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IConversion_rateRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Conversion_rate]:
+    ) -> List[ConversionRate]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

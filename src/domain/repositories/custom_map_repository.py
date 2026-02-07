@@ -1,41 +1,49 @@
 """
-Custom_map Repository Interface
+CustomMap Repository Interface
 
-Port for persisting and retrieving Custom_map entities.
+Port for persisting and retrieving CustomMap entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.custom_map import Custom_map
+from ..entities.custom_map import CustomMap
 from ..value_objects.common import TenantId, EntityId
 
 
-class ICustom_mapRepository(ABC):
+class ICustomMapRepository(ABC):
     """
-    Repository interface for Custom_map entity.
+    Repository interface for CustomMap entity.
     
-    Custom_maps belong to Worlds (aggregate boundary).
+    CustomMaps belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Custom_map) -> Custom_map:
+    def save(self, entity: CustomMap) -> CustomMap:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: CustomMap to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Custom_map]:
+    ) -> Optional[CustomMap]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ICustom_mapRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Custom_map]:
+    ) -> List[CustomMap]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

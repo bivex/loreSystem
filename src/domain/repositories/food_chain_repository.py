@@ -1,41 +1,49 @@
 """
-Food_chain Repository Interface
+FoodChain Repository Interface
 
-Port for persisting and retrieving Food_chain entities.
+Port for persisting and retrieving FoodChain entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.food_chain import Food_chain
+from ..entities.food_chain import FoodChain
 from ..value_objects.common import TenantId, EntityId
 
 
-class IFood_chainRepository(ABC):
+class IFoodChainRepository(ABC):
     """
-    Repository interface for Food_chain entity.
+    Repository interface for FoodChain entity.
     
-    Food_chains belong to Worlds (aggregate boundary).
+    FoodChains belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Food_chain) -> Food_chain:
+    def save(self, entity: FoodChain) -> FoodChain:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: FoodChain to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Food_chain]:
+    ) -> Optional[FoodChain]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IFood_chainRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Food_chain]:
+    ) -> List[FoodChain]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

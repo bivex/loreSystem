@@ -1,41 +1,49 @@
 """
-World_event Repository Interface
+WorldEvent Repository Interface
 
-Port for persisting and retrieving World_event entities.
+Port for persisting and retrieving WorldEvent entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.world_event import World_event
+from ..entities.world_event import WorldEvent
 from ..value_objects.common import TenantId, EntityId
 
 
-class IWorld_eventRepository(ABC):
+class IWorldEventRepository(ABC):
     """
-    Repository interface for World_event entity.
+    Repository interface for WorldEvent entity.
     
-    World_events belong to Worlds (aggregate boundary).
+    WorldEvents belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: World_event) -> World_event:
+    def save(self, entity: WorldEvent) -> WorldEvent:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: WorldEvent to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[World_event]:
+    ) -> Optional[WorldEvent]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IWorld_eventRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[World_event]:
+    ) -> List[WorldEvent]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

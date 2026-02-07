@@ -1,41 +1,49 @@
 """
-Time_period Repository Interface
+TimePeriod Repository Interface
 
-Port for persisting and retrieving Time_period entities.
+Port for persisting and retrieving TimePeriod entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.time_period import Time_period
+from ..entities.time_period import TimePeriod
 from ..value_objects.common import TenantId, EntityId
 
 
-class ITime_periodRepository(ABC):
+class ITimePeriodRepository(ABC):
     """
-    Repository interface for Time_period entity.
+    Repository interface for TimePeriod entity.
     
-    Time_periods belong to Worlds (aggregate boundary).
+    TimePeriods belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Time_period) -> Time_period:
+    def save(self, entity: TimePeriod) -> TimePeriod:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: TimePeriod to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Time_period]:
+    ) -> Optional[TimePeriod]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ITime_periodRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Time_period]:
+    ) -> List[TimePeriod]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

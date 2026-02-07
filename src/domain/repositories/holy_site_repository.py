@@ -1,41 +1,49 @@
 """
-Holy_site Repository Interface
+HolySite Repository Interface
 
-Port for persisting and retrieving Holy_site entities.
+Port for persisting and retrieving HolySite entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.holy_site import Holy_site
+from ..entities.holy_site import HolySite
 from ..value_objects.common import TenantId, EntityId
 
 
-class IHoly_siteRepository(ABC):
+class IHolySiteRepository(ABC):
     """
-    Repository interface for Holy_site entity.
+    Repository interface for HolySite entity.
     
-    Holy_sites belong to Worlds (aggregate boundary).
+    HolySites belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Holy_site) -> Holy_site:
+    def save(self, entity: HolySite) -> HolySite:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: HolySite to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Holy_site]:
+    ) -> Optional[HolySite]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IHoly_siteRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Holy_site]:
+    ) -> List[HolySite]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

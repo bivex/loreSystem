@@ -1,41 +1,49 @@
 """
-Difficulty_curve Repository Interface
+DifficultyCurve Repository Interface
 
-Port for persisting and retrieving Difficulty_curve entities.
+Port for persisting and retrieving DifficultyCurve entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.difficulty_curve import Difficulty_curve
+from ..entities.difficulty_curve import DifficultyCurve
 from ..value_objects.common import TenantId, EntityId
 
 
-class IDifficulty_curveRepository(ABC):
+class IDifficultyCurveRepository(ABC):
     """
-    Repository interface for Difficulty_curve entity.
+    Repository interface for DifficultyCurve entity.
     
-    Difficulty_curves belong to Worlds (aggregate boundary).
+    DifficultyCurves belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Difficulty_curve) -> Difficulty_curve:
+    def save(self, entity: DifficultyCurve) -> DifficultyCurve:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: DifficultyCurve to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Difficulty_curve]:
+    ) -> Optional[DifficultyCurve]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IDifficulty_curveRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Difficulty_curve]:
+    ) -> List[DifficultyCurve]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

@@ -22,11 +22,19 @@ class ISpaceshipRepository(ABC):
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: Spaceship to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
@@ -35,7 +43,7 @@ class ISpaceshipRepository(ABC):
     ) -> Optional[Spaceship]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -46,8 +54,7 @@ class ISpaceshipRepository(ABC):
     ) -> List[Spaceship]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

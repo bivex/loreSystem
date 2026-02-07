@@ -1,41 +1,49 @@
 """
-Character_evolution Repository Interface
+CharacterEvolution Repository Interface
 
-Port for persisting and retrieving Character_evolution entities.
+Port for persisting and retrieving CharacterEvolution entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.character_evolution import Character_evolution
+from ..entities.character_evolution import CharacterEvolution
 from ..value_objects.common import TenantId, EntityId
 
 
-class ICharacter_evolutionRepository(ABC):
+class ICharacterEvolutionRepository(ABC):
     """
-    Repository interface for Character_evolution entity.
+    Repository interface for CharacterEvolution entity.
     
-    Character_evolutions belong to Worlds (aggregate boundary).
+    CharacterEvolutions belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Character_evolution) -> Character_evolution:
+    def save(self, entity: CharacterEvolution) -> CharacterEvolution:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: CharacterEvolution to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Character_evolution]:
+    ) -> Optional[CharacterEvolution]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ICharacter_evolutionRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Character_evolution]:
+    ) -> List[CharacterEvolution]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

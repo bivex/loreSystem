@@ -1,41 +1,49 @@
 """
-Spawn_point Repository Interface
+SpawnPoint Repository Interface
 
-Port for persisting and retrieving Spawn_point entities.
+Port for persisting and retrieving SpawnPoint entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.spawn_point import Spawn_point
+from ..entities.spawn_point import SpawnPoint
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISpawn_pointRepository(ABC):
+class ISpawnPointRepository(ABC):
     """
-    Repository interface for Spawn_point entity.
+    Repository interface for SpawnPoint entity.
     
-    Spawn_points belong to Worlds (aggregate boundary).
+    SpawnPoints belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Spawn_point) -> Spawn_point:
+    def save(self, entity: SpawnPoint) -> SpawnPoint:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SpawnPoint to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Spawn_point]:
+    ) -> Optional[SpawnPoint]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISpawn_pointRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Spawn_point]:
+    ) -> List[SpawnPoint]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

@@ -1,41 +1,49 @@
 """
-Chekhovs_gun Repository Interface
+ChekhovsGun Repository Interface
 
-Port for persisting and retrieving Chekhovs_gun entities.
+Port for persisting and retrieving ChekhovsGun entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.chekhovs_gun import Chekhovs_gun
+from ..entities.chekhovs_gun import ChekhovsGun
 from ..value_objects.common import TenantId, EntityId
 
 
-class IChekhovs_gunRepository(ABC):
+class IChekhovsGunRepository(ABC):
     """
-    Repository interface for Chekhovs_gun entity.
+    Repository interface for ChekhovsGun entity.
     
-    Chekhovs_guns belong to Worlds (aggregate boundary).
+    ChekhovsGuns belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Chekhovs_gun) -> Chekhovs_gun:
+    def save(self, entity: ChekhovsGun) -> ChekhovsGun:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: ChekhovsGun to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Chekhovs_gun]:
+    ) -> Optional[ChekhovsGun]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IChekhovs_gunRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Chekhovs_gun]:
+    ) -> List[ChekhovsGun]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

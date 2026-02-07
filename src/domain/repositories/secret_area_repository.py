@@ -1,41 +1,49 @@
 """
-Secret_area Repository Interface
+SecretArea Repository Interface
 
-Port for persisting and retrieving Secret_area entities.
+Port for persisting and retrieving SecretArea entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.secret_area import Secret_area
+from ..entities.secret_area import SecretArea
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISecret_areaRepository(ABC):
+class ISecretAreaRepository(ABC):
     """
-    Repository interface for Secret_area entity.
+    Repository interface for SecretArea entity.
     
-    Secret_areas belong to Worlds (aggregate boundary).
+    SecretAreas belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Secret_area) -> Secret_area:
+    def save(self, entity: SecretArea) -> SecretArea:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SecretArea to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Secret_area]:
+    ) -> Optional[SecretArea]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISecret_areaRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Secret_area]:
+    ) -> List[SecretArea]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

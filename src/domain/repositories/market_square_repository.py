@@ -1,41 +1,49 @@
 """
-Market_square Repository Interface
+MarketSquare Repository Interface
 
-Port for persisting and retrieving Market_square entities.
+Port for persisting and retrieving MarketSquare entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.market_square import Market_square
+from ..entities.market_square import MarketSquare
 from ..value_objects.common import TenantId, EntityId
 
 
-class IMarket_squareRepository(ABC):
+class IMarketSquareRepository(ABC):
     """
-    Repository interface for Market_square entity.
+    Repository interface for MarketSquare entity.
     
-    Market_squares belong to Worlds (aggregate boundary).
+    MarketSquares belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Market_square) -> Market_square:
+    def save(self, entity: MarketSquare) -> MarketSquare:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: MarketSquare to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Market_square]:
+    ) -> Optional[MarketSquare]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IMarket_squareRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Market_square]:
+    ) -> List[MarketSquare]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

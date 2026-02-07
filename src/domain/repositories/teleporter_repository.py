@@ -22,11 +22,19 @@ class ITeleporterRepository(ABC):
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: Teleporter to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
@@ -35,7 +43,7 @@ class ITeleporterRepository(ABC):
     ) -> Optional[Teleporter]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -46,8 +54,7 @@ class ITeleporterRepository(ABC):
     ) -> List[Teleporter]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

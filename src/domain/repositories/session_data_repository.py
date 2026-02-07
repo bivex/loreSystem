@@ -1,41 +1,49 @@
 """
-Session_data Repository Interface
+SessionData Repository Interface
 
-Port for persisting and retrieving Session_data entities.
+Port for persisting and retrieving SessionData entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.session_data import Session_data
+from ..entities.session_data import SessionData
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISession_dataRepository(ABC):
+class ISessionDataRepository(ABC):
     """
-    Repository interface for Session_data entity.
+    Repository interface for SessionData entity.
     
-    Session_datas belong to Worlds (aggregate boundary).
+    SessionDatas belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Session_data) -> Session_data:
+    def save(self, entity: SessionData) -> SessionData:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SessionData to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Session_data]:
+    ) -> Optional[SessionData]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISession_dataRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Session_data]:
+    ) -> List[SessionData]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

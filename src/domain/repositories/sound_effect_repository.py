@@ -1,41 +1,49 @@
 """
-Sound_effect Repository Interface
+SoundEffect Repository Interface
 
-Port for persisting and retrieving Sound_effect entities.
+Port for persisting and retrieving SoundEffect entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.sound_effect import Sound_effect
+from ..entities.sound_effect import SoundEffect
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISound_effectRepository(ABC):
+class ISoundEffectRepository(ABC):
     """
-    Repository interface for Sound_effect entity.
+    Repository interface for SoundEffect entity.
     
-    Sound_effects belong to Worlds (aggregate boundary).
+    SoundEffects belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Sound_effect) -> Sound_effect:
+    def save(self, entity: SoundEffect) -> SoundEffect:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SoundEffect to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Sound_effect]:
+    ) -> Optional[SoundEffect]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISound_effectRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Sound_effect]:
+    ) -> List[SoundEffect]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

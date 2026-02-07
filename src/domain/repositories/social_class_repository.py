@@ -1,41 +1,49 @@
 """
-Social_class Repository Interface
+SocialClass Repository Interface
 
-Port for persisting and retrieving Social_class entities.
+Port for persisting and retrieving SocialClass entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.social_class import Social_class
+from ..entities.social_class import SocialClass
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISocial_classRepository(ABC):
+class ISocialClassRepository(ABC):
     """
-    Repository interface for Social_class entity.
+    Repository interface for SocialClass entity.
     
-    Social_classs belong to Worlds (aggregate boundary).
+    SocialClasss belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Social_class) -> Social_class:
+    def save(self, entity: SocialClass) -> SocialClass:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SocialClass to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Social_class]:
+    ) -> Optional[SocialClass]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISocial_classRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Social_class]:
+    ) -> List[SocialClass]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

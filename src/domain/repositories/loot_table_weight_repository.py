@@ -1,41 +1,49 @@
 """
-Loot_table_weight Repository Interface
+LootTableWeight Repository Interface
 
-Port for persisting and retrieving Loot_table_weight entities.
+Port for persisting and retrieving LootTableWeight entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.loot_table_weight import Loot_table_weight
+from ..entities.loot_table_weight import LootTableWeight
 from ..value_objects.common import TenantId, EntityId
 
 
-class ILoot_table_weightRepository(ABC):
+class ILootTableWeightRepository(ABC):
     """
-    Repository interface for Loot_table_weight entity.
+    Repository interface for LootTableWeight entity.
     
-    Loot_table_weights belong to Worlds (aggregate boundary).
+    LootTableWeights belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Loot_table_weight) -> Loot_table_weight:
+    def save(self, entity: LootTableWeight) -> LootTableWeight:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: LootTableWeight to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Loot_table_weight]:
+    ) -> Optional[LootTableWeight]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ILoot_table_weightRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Loot_table_weight]:
+    ) -> List[LootTableWeight]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

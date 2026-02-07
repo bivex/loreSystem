@@ -1,41 +1,49 @@
 """
-Cursed_item Repository Interface
+CursedItem Repository Interface
 
-Port for persisting and retrieving Cursed_item entities.
+Port for persisting and retrieving CursedItem entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.cursed_item import Cursed_item
+from ..entities.cursed_item import CursedItem
 from ..value_objects.common import TenantId, EntityId
 
 
-class ICursed_itemRepository(ABC):
+class ICursedItemRepository(ABC):
     """
-    Repository interface for Cursed_item entity.
+    Repository interface for CursedItem entity.
     
-    Cursed_items belong to Worlds (aggregate boundary).
+    CursedItems belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Cursed_item) -> Cursed_item:
+    def save(self, entity: CursedItem) -> CursedItem:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: CursedItem to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Cursed_item]:
+    ) -> Optional[CursedItem]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ICursed_itemRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Cursed_item]:
+    ) -> List[CursedItem]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

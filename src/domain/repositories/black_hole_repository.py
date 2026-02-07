@@ -1,41 +1,49 @@
 """
-Black_hole Repository Interface
+BlackHole Repository Interface
 
-Port for persisting and retrieving Black_hole entities.
+Port for persisting and retrieving BlackHole entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.black_hole import Black_hole
+from ..entities.black_hole import BlackHole
 from ..value_objects.common import TenantId, EntityId
 
 
-class IBlack_holeRepository(ABC):
+class IBlackHoleRepository(ABC):
     """
-    Repository interface for Black_hole entity.
+    Repository interface for BlackHole entity.
     
-    Black_holes belong to Worlds (aggregate boundary).
+    BlackHoles belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Black_hole) -> Black_hole:
+    def save(self, entity: BlackHole) -> BlackHole:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: BlackHole to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Black_hole]:
+    ) -> Optional[BlackHole]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IBlack_holeRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Black_hole]:
+    ) -> List[BlackHole]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

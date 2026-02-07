@@ -1,41 +1,49 @@
 """
-Color_palette Repository Interface
+ColorPalette Repository Interface
 
-Port for persisting and retrieving Color_palette entities.
+Port for persisting and retrieving ColorPalette entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.color_palette import Color_palette
+from ..entities.color_palette import ColorPalette
 from ..value_objects.common import TenantId, EntityId
 
 
-class IColor_paletteRepository(ABC):
+class IColorPaletteRepository(ABC):
     """
-    Repository interface for Color_palette entity.
+    Repository interface for ColorPalette entity.
     
-    Color_palettes belong to Worlds (aggregate boundary).
+    ColorPalettes belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Color_palette) -> Color_palette:
+    def save(self, entity: ColorPalette) -> ColorPalette:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: ColorPalette to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Color_palette]:
+    ) -> Optional[ColorPalette]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IColor_paletteRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Color_palette]:
+    ) -> List[ColorPalette]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

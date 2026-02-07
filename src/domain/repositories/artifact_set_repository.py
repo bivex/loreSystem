@@ -1,41 +1,49 @@
 """
-Artifact_set Repository Interface
+ArtifactSet Repository Interface
 
-Port for persisting and retrieving Artifact_set entities.
+Port for persisting and retrieving ArtifactSet entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.artifact_set import Artifact_set
+from ..entities.artifact_set import ArtifactSet
 from ..value_objects.common import TenantId, EntityId
 
 
-class IArtifact_setRepository(ABC):
+class IArtifactSetRepository(ABC):
     """
-    Repository interface for Artifact_set entity.
+    Repository interface for ArtifactSet entity.
     
-    Artifact_sets belong to Worlds (aggregate boundary).
+    ArtifactSets belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Artifact_set) -> Artifact_set:
+    def save(self, entity: ArtifactSet) -> ArtifactSet:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: ArtifactSet to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Artifact_set]:
+    ) -> Optional[ArtifactSet]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IArtifact_setRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Artifact_set]:
+    ) -> List[ArtifactSet]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

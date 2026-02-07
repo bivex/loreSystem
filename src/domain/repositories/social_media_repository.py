@@ -1,41 +1,49 @@
 """
-Social_media Repository Interface
+SocialMedia Repository Interface
 
-Port for persisting and retrieving Social_media entities.
+Port for persisting and retrieving SocialMedia entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.social_media import Social_media
+from ..entities.social_media import SocialMedia
 from ..value_objects.common import TenantId, EntityId
 
 
-class ISocial_mediaRepository(ABC):
+class ISocialMediaRepository(ABC):
     """
-    Repository interface for Social_media entity.
+    Repository interface for SocialMedia entity.
     
-    Social_medias belong to Worlds (aggregate boundary).
+    SocialMedias belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Social_media) -> Social_media:
+    def save(self, entity: SocialMedia) -> SocialMedia:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: SocialMedia to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Social_media]:
+    ) -> Optional[SocialMedia]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ISocial_mediaRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Social_media]:
+    ) -> List[SocialMedia]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

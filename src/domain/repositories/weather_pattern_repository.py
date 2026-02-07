@@ -1,41 +1,49 @@
 """
-Weather_pattern Repository Interface
+WeatherPattern Repository Interface
 
-Port for persisting and retrieving Weather_pattern entities.
+Port for persisting and retrieving WeatherPattern entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.weather_pattern import Weather_pattern
+from ..entities.weather_pattern import WeatherPattern
 from ..value_objects.common import TenantId, EntityId
 
 
-class IWeather_patternRepository(ABC):
+class IWeatherPatternRepository(ABC):
     """
-    Repository interface for Weather_pattern entity.
+    Repository interface for WeatherPattern entity.
     
-    Weather_patterns belong to Worlds (aggregate boundary).
+    WeatherPatterns belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Weather_pattern) -> Weather_pattern:
+    def save(self, entity: WeatherPattern) -> WeatherPattern:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: WeatherPattern to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Weather_pattern]:
+    ) -> Optional[WeatherPattern]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IWeather_patternRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Weather_pattern]:
+    ) -> List[WeatherPattern]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

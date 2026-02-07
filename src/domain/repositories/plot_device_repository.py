@@ -1,41 +1,49 @@
 """
-Plot_device Repository Interface
+PlotDevice Repository Interface
 
-Port for persisting and retrieving Plot_device entities.
+Port for persisting and retrieving PlotDevice entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.plot_device import Plot_device
+from ..entities.plot_device import PlotDevice
 from ..value_objects.common import TenantId, EntityId
 
 
-class IPlot_deviceRepository(ABC):
+class IPlotDeviceRepository(ABC):
     """
-    Repository interface for Plot_device entity.
+    Repository interface for PlotDevice entity.
     
-    Plot_devices belong to Worlds (aggregate boundary).
+    PlotDevices belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Plot_device) -> Plot_device:
+    def save(self, entity: PlotDevice) -> PlotDevice:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: PlotDevice to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Plot_device]:
+    ) -> Optional[PlotDevice]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IPlot_deviceRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Plot_device]:
+    ) -> List[PlotDevice]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

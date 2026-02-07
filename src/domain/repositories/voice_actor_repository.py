@@ -1,41 +1,49 @@
 """
-Voice_actor Repository Interface
+VoiceActor Repository Interface
 
-Port for persisting and retrieving Voice_actor entities.
+Port for persisting and retrieving VoiceActor entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.voice_actor import Voice_actor
+from ..entities.voice_actor import VoiceActor
 from ..value_objects.common import TenantId, EntityId
 
 
-class IVoice_actorRepository(ABC):
+class IVoiceActorRepository(ABC):
     """
-    Repository interface for Voice_actor entity.
+    Repository interface for VoiceActor entity.
     
-    Voice_actors belong to Worlds (aggregate boundary).
+    VoiceActors belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Voice_actor) -> Voice_actor:
+    def save(self, entity: VoiceActor) -> VoiceActor:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: VoiceActor to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Voice_actor]:
+    ) -> Optional[VoiceActor]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IVoice_actorRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Voice_actor]:
+    ) -> List[VoiceActor]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

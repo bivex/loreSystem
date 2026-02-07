@@ -1,41 +1,49 @@
 """
-Player_metric Repository Interface
+PlayerMetric Repository Interface
 
-Port for persisting and retrieving Player_metric entities.
+Port for persisting and retrieving PlayerMetric entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.player_metric import Player_metric
+from ..entities.player_metric import PlayerMetric
 from ..value_objects.common import TenantId, EntityId
 
 
-class IPlayer_metricRepository(ABC):
+class IPlayerMetricRepository(ABC):
     """
-    Repository interface for Player_metric entity.
+    Repository interface for PlayerMetric entity.
     
-    Player_metrics belong to Worlds (aggregate boundary).
+    PlayerMetrics belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Player_metric) -> Player_metric:
+    def save(self, entity: PlayerMetric) -> PlayerMetric:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: PlayerMetric to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Player_metric]:
+    ) -> Optional[PlayerMetric]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IPlayer_metricRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Player_metric]:
+    ) -> List[PlayerMetric]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

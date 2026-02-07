@@ -1,41 +1,49 @@
 """
-Legal_system Repository Interface
+LegalSystem Repository Interface
 
-Port for persisting and retrieving Legal_system entities.
+Port for persisting and retrieving LegalSystem entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.legal_system import Legal_system
+from ..entities.legal_system import LegalSystem
 from ..value_objects.common import TenantId, EntityId
 
 
-class ILegal_systemRepository(ABC):
+class ILegalSystemRepository(ABC):
     """
-    Repository interface for Legal_system entity.
+    Repository interface for LegalSystem entity.
     
-    Legal_systems belong to Worlds (aggregate boundary).
+    LegalSystems belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Legal_system) -> Legal_system:
+    def save(self, entity: LegalSystem) -> LegalSystem:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: LegalSystem to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Legal_system]:
+    ) -> Optional[LegalSystem]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class ILegal_systemRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Legal_system]:
+    ) -> List[LegalSystem]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

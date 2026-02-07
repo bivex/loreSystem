@@ -1,41 +1,49 @@
 """
-Hub_area Repository Interface
+HubArea Repository Interface
 
-Port for persisting and retrieving Hub_area entities.
+Port for persisting and retrieving HubArea entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.hub_area import Hub_area
+from ..entities.hub_area import HubArea
 from ..value_objects.common import TenantId, EntityId
 
 
-class IHub_areaRepository(ABC):
+class IHubAreaRepository(ABC):
     """
-    Repository interface for Hub_area entity.
+    Repository interface for HubArea entity.
     
-    Hub_areas belong to Worlds (aggregate boundary).
+    HubAreas belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Hub_area) -> Hub_area:
+    def save(self, entity: HubArea) -> HubArea:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: HubArea to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Hub_area]:
+    ) -> Optional[HubArea]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IHub_areaRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Hub_area]:
+    ) -> List[HubArea]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,
