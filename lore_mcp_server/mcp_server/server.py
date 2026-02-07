@@ -91,6 +91,13 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryTagRepository,
     InMemoryNoteRepository,
     InMemoryTemplateRepository,
+    InMemoryChoiceRepository,
+    InMemoryFlowchartRepository,
+    InMemoryHandoutRepository,
+    InMemoryImageRepository,
+    InMemoryInspirationRepository,
+    InMemoryMapRepository,
+    InMemoryTokenboardRepository,
 )
 
 # Import SQLite repositories for production
@@ -110,6 +117,13 @@ from src.infrastructure.sqlite_repositories import (
     SQLiteTagRepository,
     SQLiteNoteRepository,
     SQLiteTemplateRepository,
+    SQLiteChoiceRepository,
+    SQLiteFlowchartRepository,
+    SQLiteHandoutRepository,
+    SQLiteImageRepository,
+    SQLiteInspirationRepository,
+    SQLiteMapRepository,
+    SQLiteTokenboardRepository,
 )
 
 # Import persistence layer
@@ -145,6 +159,13 @@ if connection_type == "sqlite":
     tag_repo = SQLiteTagRepository(sqlite_db)
     note_repo = SQLiteNoteRepository(sqlite_db)
     template_repo = SQLiteTemplateRepository(sqlite_db)
+    choice_repo = SQLiteChoiceRepository(sqlite_db)
+    flowchart_repo = SQLiteFlowchartRepository(sqlite_db)
+    handout_repo = SQLiteHandoutRepository(sqlite_db)
+    image_repo = SQLiteImageRepository(sqlite_db)
+    inspiration_repo = SQLiteInspirationRepository(sqlite_db)
+    map_repo = SQLiteMapRepository(sqlite_db)
+    tokenboard_repo = SQLiteTokenboardRepository(sqlite_db)
 else:
     # Default to in-memory repositories
     world_repo = InMemoryWorldRepository()
@@ -161,6 +182,13 @@ else:
     tag_repo = InMemoryTagRepository()
     note_repo = InMemoryNoteRepository()
     template_repo = InMemoryTemplateRepository()
+    choice_repo = InMemoryChoiceRepository()
+    flowchart_repo = InMemoryFlowchartRepository()
+    handout_repo = InMemoryHandoutRepository()
+    image_repo = InMemoryImageRepository()
+    inspiration_repo = InMemoryInspirationRepository()
+    map_repo = InMemoryMapRepository()
+    tokenboard_repo = InMemoryTokenboardRepository()
 
 # Initialize JSON persistence
 persistence = JSONPersistence(data_dir=str(Path(__file__).parent / "lore_data"))

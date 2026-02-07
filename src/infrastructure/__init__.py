@@ -34,6 +34,13 @@ from .sqlite_repositories import (
     SQLiteTagRepository,
     SQLiteNoteRepository,
     SQLiteTemplateRepository,
+    SQLiteChoiceRepository,
+    SQLiteFlowchartRepository,
+    SQLiteHandoutRepository,
+    SQLiteImageRepository,
+    SQLiteInspirationRepository,
+    SQLiteMapRepository,
+    SQLiteTokenboardRepository,
 )
 
 __all__ = [
@@ -52,6 +59,13 @@ __all__ = [
     'InMemoryTagRepository',
     'InMemoryNoteRepository',
     'InMemoryTemplateRepository',
+    'InMemoryChoiceRepository',
+    'InMemoryFlowchartRepository',
+    'InMemoryHandoutRepository',
+    'InMemoryImageRepository',
+    'InMemoryInspirationRepository',
+    'InMemoryMapRepository',
+    'InMemoryTokenboardRepository',
 
     # SQLite repositories (for production)
     'SQLiteDatabase',
@@ -69,6 +83,13 @@ __all__ = [
     'SQLiteTagRepository',
     'SQLiteNoteRepository',
     'SQLiteTemplateRepository',
+    'SQLiteChoiceRepository',
+    'SQLiteFlowchartRepository',
+    'SQLiteHandoutRepository',
+    'SQLiteImageRepository',
+    'SQLiteInspirationRepository',
+    'SQLiteMapRepository',
+    'SQLiteTokenboardRepository',
 ]
 
 

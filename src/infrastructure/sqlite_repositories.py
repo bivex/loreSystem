@@ -240,6 +240,112 @@ class SQLiteDatabase:
                 )
             """)
 
+            # Choices table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS choices (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    story_id INTEGER,
+                    name TEXT NOT NULL,
+                    choice_type TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE,
+                    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE SET NULL
+                )
+            """)
+
+            # Flowcharts table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS flowcharts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    story_id INTEGER,
+                    name TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE,
+                    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE SET NULL
+                )
+            """)
+
+            # Handouts table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS handouts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    session_id INTEGER,
+                    title TEXT NOT NULL,
+                    content TEXT,
+                    is_revealed INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE,
+                    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE SET NULL
+                )
+            """)
+
+            # Images table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS images (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    path TEXT NOT NULL UNIQUE,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Inspirations table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS inspirations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    category TEXT,
+                    content TEXT NOT NULL,
+                    is_used INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Maps table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS maps (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    is_interactive INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Tokenboards table
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS tokenboards (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tenant_id INTEGER NOT NULL,
+                    world_id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+                )
+            """)
+
             # Stories table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS stories (
@@ -1537,4 +1643,719 @@ class SQLiteTemplateRepository:
             created_at=Timestamp(datetime.fromisoformat(row['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
             id=EntityId(row['id'])
+        )
+
+
+class SQLiteChoiceRepository:
+    """SQLite implementation of Choice repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, choice: object) -> object:
+        now = datetime.now().isoformat()
+
+        if choice.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO choices (tenant_id, world_id, story_id, name, choice_type, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    choice.tenant_id.value,
+                    choice.world_id.value,
+                    getattr(choice, 'story_id', None),
+                    choice.name,
+                    getattr(choice, 'choice_type', None),
+                    now,
+                    now
+                ))
+                choice_id = cursor.lastrowid
+                object.__setattr__(choice, 'id', EntityId(choice_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE choices
+                    SET name = ?, choice_type = ?, story_id = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    choice.name,
+                    getattr(choice, 'choice_type', None),
+                    getattr(choice, 'story_id', None),
+                    choice.id.value,
+                    choice.tenant_id.value
+                ))
+
+        return choice
+
+    def find_by_id(self, tenant_id: TenantId, choice_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM choices WHERE id = ? AND tenant_id = ?
+            """, (choice_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_choice(row)
+
+    def list_by_story(self, tenant_id: TenantId, story_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM choices WHERE story_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (story_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_choice(row) for row in rows]
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM choices WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_choice(row) for row in rows]
+
+    def list_by_type(self, tenant_id: TenantId, world_id: EntityId, choice_type: str, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM choices WHERE world_id = ? AND tenant_id = ? AND choice_type = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, choice_type, limit, offset)).fetchall()
+            return [self._row_to_choice(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, choice_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM choices WHERE id = ? AND tenant_id = ?
+            """, (choice_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_choice(self, row: sqlite3.Row) -> object:
+        class SimpleChoice:
+            def __init__(self, id, tenant_id, world_id, story_id, name, choice_type, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.story_id = EntityId(story_id) if story_id else None
+                self.name = name
+                self.choice_type = choice_type
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleChoice(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['story_id'],
+            row['name'],
+            row['choice_type'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteFlowchartRepository:
+    """SQLite implementation of Flowchart repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, flowchart: object) -> object:
+        now = datetime.now().isoformat()
+
+        if flowchart.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO flowcharts (tenant_id, world_id, story_id, name, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    flowchart.tenant_id.value,
+                    flowchart.world_id.value,
+                    getattr(flowchart, 'story_id', None),
+                    flowchart.name,
+                    getattr(flowchart, 'is_active', False),
+                    now,
+                    now
+                ))
+                flowchart_id = cursor.lastrowid
+                object.__setattr__(flowchart, 'id', EntityId(flowchart_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE flowcharts
+                    SET name = ?, is_active = ?, story_id = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    flowchart.name,
+                    getattr(flowchart, 'is_active', False),
+                    getattr(flowchart, 'story_id', None),
+                    flowchart.id.value,
+                    flowchart.tenant_id.value
+                ))
+
+        return flowchart
+
+    def find_by_id(self, tenant_id: TenantId, flowchart_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM flowcharts WHERE id = ? AND tenant_id = ?
+            """, (flowchart_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_flowchart(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM flowcharts WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_flowchart(row) for row in rows]
+
+    def list_by_story(self, tenant_id: TenantId, story_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM flowcharts WHERE story_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (story_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_flowchart(row) for row in rows]
+
+    def find_active(self, tenant_id: TenantId, world_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM flowcharts WHERE world_id = ? AND tenant_id = ? AND is_active = 1 LIMIT 1
+            """, (world_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_flowchart(row)
+
+    def delete(self, tenant_id: TenantId, flowchart_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM flowcharts WHERE id = ? AND tenant_id = ?
+            """, (flowchart_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_flowchart(self, row: sqlite3.Row) -> object:
+        class SimpleFlowchart:
+            def __init__(self, id, tenant_id, world_id, story_id, name, is_active, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.story_id = EntityId(story_id) if story_id else None
+                self.name = name
+                self.is_active = bool(is_active)
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleFlowchart(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['story_id'],
+            row['name'],
+            row['is_active'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteHandoutRepository:
+    """SQLite implementation of Handout repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, handout: object) -> object:
+        now = datetime.now().isoformat()
+
+        if handout.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO handouts (tenant_id, world_id, session_id, title, content, is_revealed, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    handout.tenant_id.value,
+                    handout.world_id.value,
+                    getattr(handout, 'session_id', None),
+                    handout.title,
+                    getattr(handout, 'content', None),
+                    getattr(handout, 'is_revealed', False),
+                    now,
+                    now
+                ))
+                handout_id = cursor.lastrowid
+                object.__setattr__(handout, 'id', EntityId(handout_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE handouts
+                    SET title = ?, content = ?, is_revealed = ?, session_id = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    handout.title,
+                    getattr(handout, 'content', None),
+                    getattr(handout, 'is_revealed', False),
+                    getattr(handout, 'session_id', None),
+                    handout.id.value,
+                    handout.tenant_id.value
+                ))
+
+        return handout
+
+    def find_by_id(self, tenant_id: TenantId, handout_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM handouts WHERE id = ? AND tenant_id = ?
+            """, (handout_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_handout(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM handouts WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_handout(row) for row in rows]
+
+    def list_by_session(self, tenant_id: TenantId, session_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM handouts WHERE session_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (session_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_handout(row) for row in rows]
+
+    def list_revealed(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM handouts WHERE world_id = ? AND tenant_id = ? AND is_revealed = 1 ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_handout(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, handout_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM handouts WHERE id = ? AND tenant_id = ?
+            """, (handout_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_handout(self, row: sqlite3.Row) -> object:
+        class SimpleHandout:
+            def __init__(self, id, tenant_id, world_id, session_id, title, content, is_revealed, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.session_id = EntityId(session_id) if session_id else None
+                self.title = title
+                self.content = content
+                self.is_revealed = bool(is_revealed)
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleHandout(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['session_id'],
+            row['title'],
+            row['content'],
+            row['is_revealed'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteImageRepository:
+    """SQLite implementation of Image repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, image: object) -> object:
+        now = datetime.now().isoformat()
+
+        if image.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO images (tenant_id, world_id, name, path, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    image.tenant_id.value,
+                    image.world_id.value,
+                    image.name,
+                    image.path,
+                    now,
+                    now
+                ))
+                image_id = cursor.lastrowid
+                object.__setattr__(image, 'id', EntityId(image_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE images
+                    SET name = ?, path = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    image.name,
+                    image.path,
+                    image.id.value,
+                    image.tenant_id.value
+                ))
+
+        return image
+
+    def find_by_id(self, tenant_id: TenantId, image_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM images WHERE id = ? AND tenant_id = ?
+            """, (image_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_image(row)
+
+    def find_by_path(self, tenant_id: TenantId, world_id: EntityId, path: str) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM images WHERE world_id = ? AND tenant_id = ? AND path = ? LIMIT 1
+            """, (world_id.value, tenant_id.value, path)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_image(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM images WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_image(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, image_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM images WHERE id = ? AND tenant_id = ?
+            """, (image_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, path: str) -> bool:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT 1 FROM images WHERE world_id = ? AND tenant_id = ? AND path = ? LIMIT 1
+            """, (world_id.value, tenant_id.value, path)).fetchone()
+            return row is not None
+
+    def _row_to_image(self, row: sqlite3.Row) -> object:
+        class SimpleImage:
+            def __init__(self, id, tenant_id, world_id, name, path, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.name = name
+                self.path = path
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleImage(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['name'],
+            row['path'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteInspirationRepository:
+    """SQLite implementation of Inspiration repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, inspiration: object) -> object:
+        now = datetime.now().isoformat()
+
+        if inspiration.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO inspirations (tenant_id, world_id, category, content, is_used, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    inspiration.tenant_id.value,
+                    inspiration.world_id.value,
+                    getattr(inspiration, 'category', None),
+                    inspiration.content,
+                    getattr(inspiration, 'is_used', False),
+                    now,
+                    now
+                ))
+                inspiration_id = cursor.lastrowid
+                object.__setattr__(inspiration, 'id', EntityId(inspiration_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE inspirations
+                    SET category = ?, content = ?, is_used = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    getattr(inspiration, 'category', None),
+                    inspiration.content,
+                    getattr(inspiration, 'is_used', False),
+                    inspiration.id.value,
+                    inspiration.tenant_id.value
+                ))
+
+        return inspiration
+
+    def find_by_id(self, tenant_id: TenantId, inspiration_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM inspirations WHERE id = ? AND tenant_id = ?
+            """, (inspiration_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_inspiration(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM inspirations WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_inspiration(row) for row in rows]
+
+    def list_by_category(self, tenant_id: TenantId, world_id: EntityId, category: str, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM inspirations WHERE world_id = ? AND tenant_id = ? AND category = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, category, limit, offset)).fetchall()
+            return [self._row_to_inspiration(row) for row in rows]
+
+    def list_unused(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM inspirations WHERE world_id = ? AND tenant_id = ? AND is_used = 0 ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_inspiration(row) for row in rows]
+
+    def search_by_content(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM inspirations WHERE tenant_id = ? AND content LIKE ? LIMIT ?
+            """, (tenant_id.value, f'%{search_term}%', limit)).fetchall()
+            return [self._row_to_inspiration(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, inspiration_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM inspirations WHERE id = ? AND tenant_id = ?
+            """, (inspiration_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_inspiration(self, row: sqlite3.Row) -> object:
+        class SimpleInspiration:
+            def __init__(self, id, tenant_id, world_id, category, content, is_used, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.category = category
+                self.content = content
+                self.is_used = bool(is_used)
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleInspiration(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['category'],
+            row['content'],
+            row['is_used'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteMapRepository:
+    """SQLite implementation of Map repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, map_obj: object) -> object:
+        now = datetime.now().isoformat()
+
+        if map_obj.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO maps (tenant_id, world_id, name, is_interactive, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    map_obj.tenant_id.value,
+                    map_obj.world_id.value,
+                    map_obj.name,
+                    getattr(map_obj, 'is_interactive', False),
+                    now,
+                    now
+                ))
+                map_id = cursor.lastrowid
+                object.__setattr__(map_obj, 'id', EntityId(map_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE maps
+                    SET name = ?, is_interactive = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    map_obj.name,
+                    getattr(map_obj, 'is_interactive', False),
+                    map_obj.id.value,
+                    map_obj.tenant_id.value
+                ))
+
+        return map_obj
+
+    def find_by_id(self, tenant_id: TenantId, map_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM maps WHERE id = ? AND tenant_id = ?
+            """, (map_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_map(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM maps WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_map(row) for row in rows]
+
+    def list_interactive(self, tenant_id: TenantId, world_id: EntityId, limit: int = 20, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM maps WHERE world_id = ? AND tenant_id = ? AND is_interactive = 1 ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_map(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, map_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM maps WHERE id = ? AND tenant_id = ?
+            """, (map_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_map(self, row: sqlite3.Row) -> object:
+        class SimpleMap:
+            def __init__(self, id, tenant_id, world_id, name, is_interactive, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.name = name
+                self.is_interactive = bool(is_interactive)
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleMap(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['name'],
+            row['is_interactive'],
+            row['created_at'],
+            row['updated_at']
+        )
+
+
+class SQLiteTokenboardRepository:
+    """SQLite implementation of Tokenboard repository."""
+
+    def __init__(self, db: SQLiteDatabase):
+        self.db = db
+
+    def save(self, tokenboard: object) -> object:
+        now = datetime.now().isoformat()
+
+        if tokenboard.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute("""
+                    INSERT INTO tokenboards (tenant_id, world_id, name, is_active, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    tokenboard.tenant_id.value,
+                    tokenboard.world_id.value,
+                    tokenboard.name,
+                    getattr(tokenboard, 'is_active', False),
+                    now,
+                    now
+                ))
+                tokenboard_id = cursor.lastrowid
+                object.__setattr__(tokenboard, 'id', EntityId(tokenboard_id))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute("""
+                    UPDATE tokenboards
+                    SET name = ?, is_active = ?
+                    WHERE id = ? AND tenant_id = ?
+                """, (
+                    tokenboard.name,
+                    getattr(tokenboard, 'is_active', False),
+                    tokenboard.id.value,
+                    tokenboard.tenant_id.value
+                ))
+
+        return tokenboard
+
+    def find_by_id(self, tenant_id: TenantId, tokenboard_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM tokenboards WHERE id = ? AND tenant_id = ?
+            """, (tokenboard_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_tokenboard(row)
+
+    def find_active(self, tenant_id: TenantId, world_id: EntityId) -> Optional[object]:
+        with self.db.get_connection() as conn:
+            row = conn.execute("""
+                SELECT * FROM tokenboards WHERE world_id = ? AND tenant_id = ? AND is_active = 1 LIMIT 1
+            """, (world_id.value, tenant_id.value)).fetchone()
+
+            if not row:
+                return None
+            return self._row_to_tokenboard(row)
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        with self.db.get_connection() as conn:
+            rows = conn.execute("""
+                SELECT * FROM tokenboards WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?
+            """, (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_tokenboard(row) for row in rows]
+
+    def delete(self, tenant_id: TenantId, tokenboard_id: EntityId) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.execute("""
+                DELETE FROM tokenboards WHERE id = ? AND tenant_id = ?
+            """, (tokenboard_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_tokenboard(self, row: sqlite3.Row) -> object:
+        class SimpleTokenboard:
+            def __init__(self, id, tenant_id, world_id, name, is_active, created_at, updated_at):
+                self.id = EntityId(id) if id else None
+                self.tenant_id = TenantId(tenant_id)
+                self.world_id = EntityId(world_id)
+                self.name = name
+                self.is_active = bool(is_active)
+                self.created_at = Timestamp(datetime.fromisoformat(created_at))
+                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
+
+        return SimpleTokenboard(
+            row['id'],
+            row['tenant_id'],
+            row['world_id'],
+            row['name'],
+            row['is_active'],
+            row['created_at'],
+            row['updated_at']
         )

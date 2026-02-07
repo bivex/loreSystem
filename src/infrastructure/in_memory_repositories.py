@@ -22,6 +22,13 @@ from src.domain.repositories.character_repository import ICharacterRepository
 from src.domain.repositories.item_repository import IItemRepository
 from src.domain.repositories.location_repository import ILocationRepository
 from src.domain.repositories.environment_repository import IEnvironmentRepository
+from src.domain.repositories.choice_repository import IChoiceRepository
+from src.domain.repositories.flowchart_repository import IFlowchartRepository
+from src.domain.repositories.handout_repository import IHandoutRepository
+from src.domain.repositories.image_repository import IImageRepository
+from src.domain.repositories.inspiration_repository import IInspirationRepository
+from src.domain.repositories.map_repository import IMapRepository
+from src.domain.repositories.tokenboard_repository import ITokenboardRepository
 from src.domain.value_objects.common import (
     TenantId, EntityId, WorldName, CharacterName, TimeOfDay, Weather, Lighting
 )
@@ -1261,3 +1268,490 @@ class InMemoryTemplateRepository(ITemplateRepository):
     def exists(self, tenant_id: TenantId, world_id: EntityId, name: "TemplateName") -> bool:
         name_key = (tenant_id, world_id, name.value)
         return name_key in self._names
+
+
+class InMemoryChoiceRepository(IChoiceRepository):
+    """In-memory implementation of Choice repository for testing."""
+
+    def __init__(self):
+        from src.domain.repositories.choice_repository import IChoiceRepository
+        self._choices: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_story: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, choice: object) -> object:
+        if choice.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(choice, 'id', new_id)
+
+        key = (choice.tenant_id, choice.id)
+        self._choices[key] = choice
+
+        story_key = (choice.tenant_id, choice.story_id) if hasattr(choice, 'story_id') else None
+        if story_key:
+            if choice.id not in self._by_story[story_key]:
+                self._by_story[story_key].append(choice.id)
+
+        world_key = (choice.tenant_id, choice.world_id)
+        if choice.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(choice.id)
+
+        return choice
+
+    def find_by_id(self, tenant_id: TenantId, choice_id: EntityId) -> Optional[object]:
+        return self._choices.get((tenant_id, choice_id))
+
+    def list_by_story(self, tenant_id: TenantId, story_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        story_key = (tenant_id, story_id)
+        choice_ids = self._by_story.get(story_key, [])
+        choices = []
+        for choice_id in choice_ids[offset:offset + limit]:
+            choice = self._choices.get((tenant_id, choice_id))
+            if choice:
+                choices.append(choice)
+        return choices
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        choice_ids = self._by_world.get(world_key, [])
+        choices = []
+        for choice_id in choice_ids[offset:offset + limit]:
+            choice = self._choices.get((tenant_id, choice_id))
+            if choice:
+                choices.append(choice)
+        return choices
+
+    def list_by_type(self, tenant_id: TenantId, world_id: EntityId, choice_type: str, limit: int = 50, offset: int = 0) -> List[object]:
+        all_choices = self.list_by_world(tenant_id, world_id)
+        return [c for c in all_choices if getattr(c, 'choice_type', None) == choice_type][offset:offset + limit]
+
+    def delete(self, tenant_id: TenantId, choice_id: EntityId) -> bool:
+        key = (tenant_id, choice_id)
+        if key not in self._choices:
+            return False
+
+        choice = self._choices[key]
+
+        story_key = (choice.tenant_id, choice.story_id) if hasattr(choice, 'story_id') else None
+        if story_key and choice_id in self._by_story[story_key]:
+            self._by_story[story_key].remove(choice_id)
+
+        world_key = (choice.tenant_id, choice.world_id)
+        if choice_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(choice_id)
+
+        del self._choices[key]
+        return True
+
+
+class InMemoryFlowchartRepository:
+    """In-memory implementation of Flowchart repository for testing."""
+
+    def __init__(self):
+        self._flowcharts: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._by_story: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, flowchart: object) -> object:
+        if flowchart.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(flowchart, 'id', new_id)
+
+        key = (flowchart.tenant_id, flowchart.id)
+        self._flowcharts[key] = flowchart
+
+        story_key = (flowchart.tenant_id, flowchart.story_id) if hasattr(flowchart, 'story_id') else None
+        if story_key:
+            if flowchart.id not in self._by_story[story_key]:
+                self._by_story[story_key].append(flowchart.id)
+
+        world_key = (flowchart.tenant_id, flowchart.world_id)
+        if flowchart.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(flowchart.id)
+
+        return flowchart
+
+    def find_by_id(self, tenant_id: TenantId, flowchart_id: EntityId) -> Optional[object]:
+        return self._flowcharts.get((tenant_id, flowchart_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        flowchart_ids = self._by_world.get(world_key, [])
+        flowcharts = []
+        for flowchart_id in flowchart_ids[offset:offset + limit]:
+            flowchart = self._flowcharts.get((tenant_id, flowchart_id))
+            if flowchart:
+                flowcharts.append(flowchart)
+        return flowcharts
+
+    def list_by_story(self, tenant_id: TenantId, story_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        story_key = (tenant_id, story_id)
+        flowchart_ids = self._by_story.get(story_key, [])
+        flowcharts = []
+        for flowchart_id in flowchart_ids[offset:offset + limit]:
+            flowchart = self._flowcharts.get((tenant_id, flowchart_id))
+            if flowchart:
+                flowcharts.append(flowchart)
+        return flowcharts
+
+    def find_active(self, tenant_id: TenantId, world_id: EntityId) -> Optional[object]:
+        all_flowcharts = self.list_by_world(tenant_id, world_id)
+        for flowchart in all_flowcharts:
+            if getattr(flowchart, 'is_active', False):
+                return flowchart
+        return None
+
+    def delete(self, tenant_id: TenantId, flowchart_id: EntityId) -> bool:
+        key = (tenant_id, flowchart_id)
+        if key not in self._flowcharts:
+            return False
+
+        flowchart = self._flowcharts[key]
+
+        story_key = (flowchart.tenant_id, flowchart.story_id) if hasattr(flowchart, 'story_id') else None
+        if story_key and flowchart_id in self._by_story[story_key]:
+            self._by_story[story_key].remove(flowchart_id)
+
+        world_key = (flowchart.tenant_id, flowchart.world_id)
+        if flowchart_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(flowchart_id)
+
+        del self._flowcharts[key]
+        return True
+
+
+class InMemoryHandoutRepository(IHandoutRepository):
+    """In-memory implementation of Handout repository for testing."""
+
+    def __init__(self):
+        self._handouts: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._by_session: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, handout: object) -> object:
+        if handout.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(handout, 'id', new_id)
+
+        key = (handout.tenant_id, handout.id)
+        self._handouts[key] = handout
+
+        session_key = (handout.tenant_id, handout.session_id) if hasattr(handout, 'session_id') else None
+        if session_key:
+            if handout.id not in self._by_session[session_key]:
+                self._by_session[session_key].append(handout.id)
+
+        world_key = (handout.tenant_id, handout.world_id)
+        if handout.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(handout.id)
+
+        return handout
+
+    def find_by_id(self, tenant_id: TenantId, handout_id: EntityId) -> Optional[object]:
+        return self._handouts.get((tenant_id, handout_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        handout_ids = self._by_world.get(world_key, [])
+        handouts = []
+        for handout_id in handout_ids[offset:offset + limit]:
+            handout = self._handouts.get((tenant_id, handout_id))
+            if handout:
+                handouts.append(handout)
+        return handouts
+
+    def list_by_session(self, tenant_id: TenantId, session_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        session_key = (tenant_id, session_id)
+        handout_ids = self._by_session.get(session_key, [])
+        handouts = []
+        for handout_id in handout_ids[offset:offset + limit]:
+            handout = self._handouts.get((tenant_id, handout_id))
+            if handout:
+                handouts.append(handout)
+        return handouts
+
+    def list_revealed(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        all_handouts = self.list_by_world(tenant_id, world_id)
+        return [h for h in all_handouts if getattr(h, 'is_revealed', False)][offset:offset + limit]
+
+    def delete(self, tenant_id: TenantId, handout_id: EntityId) -> bool:
+        key = (tenant_id, handout_id)
+        if key not in self._handouts:
+            return False
+
+        handout = self._handouts[key]
+
+        session_key = (handout.tenant_id, handout.session_id) if hasattr(handout, 'session_id') else None
+        if session_key and handout_id in self._by_session[session_key]:
+            self._by_session[session_key].remove(handout_id)
+
+        world_key = (handout.tenant_id, handout.world_id)
+        if handout_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(handout_id)
+
+        del self._handouts[key]
+        return True
+
+
+class InMemoryImageRepository(IImageRepository):
+    """In-memory implementation of Image repository for testing."""
+
+    def __init__(self):
+        self._images: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._paths: Dict[Tuple[TenantId, EntityId, str], EntityId] = {}
+        self._next_id = 1
+
+    def save(self, image: object) -> object:
+        if image.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(image, 'id', new_id)
+
+        key = (image.tenant_id, image.id)
+        self._images[key] = image
+
+        path_key = (image.tenant_id, image.world_id, image.path)
+        self._paths[path_key] = image.id
+
+        world_key = (image.tenant_id, image.world_id)
+        if image.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(image.id)
+
+        return image
+
+    def find_by_id(self, tenant_id: TenantId, image_id: EntityId) -> Optional[object]:
+        return self._images.get((tenant_id, image_id))
+
+    def find_by_path(self, tenant_id: TenantId, world_id: EntityId, path: str) -> Optional[object]:
+        path_key = (tenant_id, world_id, path)
+        image_id = self._paths.get(path_key)
+        if image_id:
+            return self._images.get((tenant_id, image_id))
+        return None
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        image_ids = self._by_world.get(world_key, [])
+        images = []
+        for image_id in image_ids[offset:offset + limit]:
+            image = self._images.get((tenant_id, image_id))
+            if image:
+                images.append(image)
+        return images
+
+    def delete(self, tenant_id: TenantId, image_id: EntityId) -> bool:
+        key = (tenant_id, image_id)
+        if key not in self._images:
+            return False
+
+        image = self._images[key]
+        path_key = (image.tenant_id, image.world_id, image.path)
+        if path_key in self._paths:
+            del self._paths[path_key]
+
+        world_key = (image.tenant_id, image.world_id)
+        if image_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(image_id)
+
+        del self._images[key]
+        return True
+
+    def exists(self, tenant_id: TenantId, world_id: EntityId, path: str) -> bool:
+        path_key = (tenant_id, world_id, path)
+        return path_key in self._paths
+
+
+class InMemoryInspirationRepository:
+    """In-memory implementation of Inspiration repository for testing."""
+
+    def __init__(self):
+        self._inspirations: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, inspiration: object) -> object:
+        if inspiration.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(inspiration, 'id', new_id)
+
+        key = (inspiration.tenant_id, inspiration.id)
+        self._inspirations[key] = inspiration
+
+        world_key = (inspiration.tenant_id, inspiration.world_id)
+        if inspiration.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(inspiration.id)
+
+        return inspiration
+
+    def find_by_id(self, tenant_id: TenantId, inspiration_id: EntityId) -> Optional[object]:
+        return self._inspirations.get((tenant_id, inspiration_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        inspiration_ids = self._by_world.get(world_key, [])
+        inspirations = []
+        for inspiration_id in inspiration_ids[offset:offset + limit]:
+            inspiration = self._inspirations.get((tenant_id, inspiration_id))
+            if inspiration:
+                inspirations.append(inspiration)
+        return inspirations
+
+    def list_by_category(self, tenant_id: TenantId, world_id: EntityId, category: str, limit: int = 50, offset: int = 0) -> List[object]:
+        all_inspirations = self.list_by_world(tenant_id, world_id)
+        return [i for i in all_inspirations if getattr(i, 'category', None) == category][offset:offset + limit]
+
+    def list_unused(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        all_inspirations = self.list_by_world(tenant_id, world_id)
+        return [i for i in all_inspirations if not getattr(i, 'is_used', False)][offset:offset + limit]
+
+    def search_by_content(self, tenant_id: TenantId, search_term: str, limit: int = 20) -> List[object]:
+        results = []
+        for inspiration in self._inspirations.values():
+            if inspiration.tenant_id == tenant_id:
+                content = getattr(inspiration, 'content', '')
+                if search_term.lower() in content.lower():
+                    results.append(inspiration)
+                    if len(results) >= limit:
+                        break
+        return results
+
+    def delete(self, tenant_id: TenantId, inspiration_id: EntityId) -> bool:
+        key = (tenant_id, inspiration_id)
+        if key not in self._inspirations:
+            return False
+
+        inspiration = self._inspirations[key]
+        world_key = (inspiration.tenant_id, inspiration.world_id)
+        if inspiration_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(inspiration_id)
+
+        del self._inspirations[key]
+        return True
+
+
+class InMemoryMapRepository:
+    """In-memory implementation of Map repository for testing."""
+
+    def __init__(self):
+        self._maps: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, map_obj: object) -> object:
+        if map_obj.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(map_obj, 'id', new_id)
+
+        key = (map_obj.tenant_id, map_obj.id)
+        self._maps[key] = map_obj
+
+        world_key = (map_obj.tenant_id, map_obj.world_id)
+        if map_obj.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(map_obj.id)
+
+        return map_obj
+
+    def find_by_id(self, tenant_id: TenantId, map_id: EntityId) -> Optional[object]:
+        return self._maps.get((tenant_id, map_id))
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        map_ids = self._by_world.get(world_key, [])
+        maps = []
+        for map_id in map_ids[offset:offset + limit]:
+            map_obj = self._maps.get((tenant_id, map_id))
+            if map_obj:
+                maps.append(map_obj)
+        return maps
+
+    def list_interactive(self, tenant_id: TenantId, world_id: EntityId, limit: int = 20, offset: int = 0) -> List[object]:
+        all_maps = self.list_by_world(tenant_id, world_id)
+        return [m for m in all_maps if getattr(m, 'is_interactive', False)][offset:offset + limit]
+
+    def delete(self, tenant_id: TenantId, map_id: EntityId) -> bool:
+        key = (tenant_id, map_id)
+        if key not in self._maps:
+            return False
+
+        map_obj = self._maps[key]
+        world_key = (map_obj.tenant_id, map_obj.world_id)
+        if map_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(map_id)
+
+        del self._maps[key]
+        return True
+
+
+class InMemoryTokenboardRepository(ITokenboardRepository):
+    """In-memory implementation of Tokenboard repository for testing."""
+
+    def __init__(self):
+        self._tokenboards: Dict[Tuple[TenantId, EntityId], object] = {}
+        self._by_world: Dict[Tuple[TenantId, EntityId], List[EntityId]] = defaultdict(list)
+        self._next_id = 1
+
+    def save(self, tokenboard: object) -> object:
+        if tokenboard.id is None:
+            new_id = EntityId(self._next_id)
+            self._next_id += 1
+            object.__setattr__(tokenboard, 'id', new_id)
+
+        key = (tokenboard.tenant_id, tokenboard.id)
+        self._tokenboards[key] = tokenboard
+
+        world_key = (tokenboard.tenant_id, tokenboard.world_id)
+        if tokenboard.id not in self._by_world[world_key]:
+            self._by_world[world_key].append(tokenboard.id)
+
+        return tokenboard
+
+    def find_by_id(self, tenant_id: TenantId, tokenboard_id: EntityId) -> Optional[object]:
+        return self._tokenboards.get((tenant_id, tokenboard_id))
+
+    def find_active(self, tenant_id: TenantId, world_id: EntityId) -> Optional[object]:
+        all_tokenboards = self.list_by_world(tenant_id, world_id)
+        for tokenboard in all_tokenboards:
+            if getattr(tokenboard, 'is_active', False):
+                return tokenboard
+        return None
+
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0) -> List[object]:
+        world_key = (tenant_id, world_id)
+        tokenboard_ids = self._by_world.get(world_key, [])
+        tokenboards = []
+        for tokenboard_id in tokenboard_ids[offset:offset + limit]:
+            tokenboard = self._tokenboards.get((tenant_id, tokenboard_id))
+            if tokenboard:
+                tokenboards.append(tokenboard)
+        return tokenboards
+
+    def delete(self, tenant_id: TenantId, tokenboard_id: EntityId) -> bool:
+        key = (tenant_id, tokenboard_id)
+        if key not in self._tokenboards:
+            return False
+
+        tokenboard = self._tokenboards[key]
+        world_key = (tokenboard.tenant_id, tokenboard.world_id)
+        if tokenboard_id in self._by_world[world_key]:
+            self._by_world[world_key].remove(tokenboard_id)
+
+        del self._tokenboards[key]
+        return True
+
+
+# Import missing interfaces
+from src.domain.repositories.choice_repository import IChoiceRepository
+from src.domain.repositories.handout_repository import IHandoutRepository
+from src.domain.repositories.image_repository import IImageRepository
+from src.domain.repositories.inspiration_repository import IInspirationRepository
+from src.domain.repositories.map_repository import IMapRepository
+from src.domain.repositories.tokenboard_repository import ITokenboardRepository
