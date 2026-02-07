@@ -1,41 +1,49 @@
 """
-Quest_prerequisite Repository Interface
+QuestPrerequisite Repository Interface
 
-Port for persisting and retrieving Quest_prerequisite entities.
+Port for persisting and retrieving QuestPrerequisite entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.quest_prerequisite import Quest_prerequisite
+from ..entities.quest_prerequisite import QuestPrerequisite
 from ..value_objects.common import TenantId, EntityId
 
 
-class IQuest_prerequisiteRepository(ABC):
+class IQuestPrerequisiteRepository(ABC):
     """
-    Repository interface for Quest_prerequisite entity.
+    Repository interface for QuestPrerequisite entity.
     
-    Quest_prerequisites belong to Worlds (aggregate boundary).
+    QuestPrerequisites belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Quest_prerequisite) -> Quest_prerequisite:
+    def save(self, entity: QuestPrerequisite) -> QuestPrerequisite:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: QuestPrerequisite to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Quest_prerequisite]:
+    ) -> Optional[QuestPrerequisite]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IQuest_prerequisiteRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Quest_prerequisite]:
+    ) -> List[QuestPrerequisite]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

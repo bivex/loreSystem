@@ -16,65 +16,37 @@ Complete lore management system for AAA game development with DDD architecture.
 
 **Current Coverage: 100% (18/18 repository interfaces defined in domain)**
 
-**Note**: While 200+ domain entities exist across 34 categories, only 18 repository interfaces are currently defined in the domain layer. All 18 are now fully implemented in both In-Memory and SQLite.
+**All repository interfaces defined in the domain layer are fully implemented with In-Memory and SQLite backends.**
 
 ### ✅ Fully Implemented (In-Memory + SQLite) - **All 18 interfaces working**
 
 **Core Lore System:**
-- WorldRepository - Create/list/delete worlds (core of the system)
-- CharacterRepository - Manage characters within worlds
-- StoryRepository - Create and organize stories
-- PageRepository - Manage content pages
+- **WorldRepository** - Create/list/delete worlds (core of the system)
+- **CharacterRepository** - Manage characters within worlds
+- **StoryRepository** - Create and organize stories
+- **PageRepository** - Manage content pages
 
 **World Building:**
-- ItemRepository - Items and inventory items
-- LocationRepository - World locations and areas
-- EnvironmentRepository - Environmental settings (time, weather, lighting)
+- **ItemRepository** - Items and inventory items
+- **LocationRepository** - World locations and areas
+- **EnvironmentRepository** - Environmental settings (time, weather, lighting)
 
 **Game Mechanics:**
-- SessionRepository - Track active game sessions
-- ChoiceRepository - Interactive choices in stories
-- FlowchartRepository - Story flowcharts and branching
-- HandoutRepository - Player handouts and documents
-- ImageRepository - Asset and image management
-- InspirationRepository - Creative prompts and ideas
-- MapRepository - Game maps and navigation
-- TokenboardRepository - Combat token boards
+- **SessionRepository** - Track active game sessions
+- **ChoiceRepository** - Interactive choices in stories
+- **FlowchartRepository** - Story flowcharts and branching
+- **HandoutRepository** - Player handouts and documents
+- **ImageRepository** - Asset and image management
+- **InspirationRepository** - Creative prompts and ideas
+- **MapRepository** - Game maps and navigation
+- **TokenboardRepository** - Combat token boards
 
 **Content Organization:**
-- TagRepository - Tag-based content organization
-- NoteRepository - GM notes and annotations
-- TemplateRepository - Reusable content templates
+- **TagRepository** - Tag-based content organization
+- **NoteRepository** - GM notes and annotations
+- **TemplateRepository** - Reusable content templates
 
 *Run `python3 check_repositories.py` to see detailed coverage report*
-
-## What's Working vs What's Planned
-
-**Currently Working** (18 repository interfaces, all fully implemented):
-- Full CRUD for Worlds, Characters, Stories, Pages
-- Full CRUD for Items, Locations, Environments
-- Full CRUD for Sessions, Choices, Flowcharts
-- Full CRUD for Handouts, Images, Inspirations
-- Full CRUD for Maps, Tokenboards
-- Full CRUD for Tags, Notes, Templates
-
-**Domain Model Has** (200+ entities, 34 categories, but not all accessible):
-- Quests: QuestChain, QuestNode, QuestPrerequisite, QuestObjective, QuestTracker
-- Progression: Skill, Perk, Trait, Attribute, Experience, LevelUp, TalentTree, Mastery
-- Factions: FactionHierarchy, FactionIdeology, FactionLeader, FactionResource, FactionTerritory
-- Politics: Era, EraTransition, Timeline, Calendar, Nation, Kingdom, Empire, Government
-- Economy: Trade, Barter, Tax, Tariff, Supply, Demand, Price, Inflation
-- Military: Army, Fleet, WeaponSystem, Defense, Fortification, SiegeEngine, Battalion
-- Social: Reputation, Affinity, Disposition, Honor, Karma, SocialClass, SocialMobility
-- Religion: Cult, Sect, HolySite, Scripture, Ritual, Oath, Summon, Pact, Curse, Blessing
-- Locations: HubArea, Instance, Dungeon, Raid, Arena, OpenWorldZone, Skybox, Dimension
-- UGC: Mod, CustomMap, UserScenario, ShareCode, WorkshopEntry
-- Localization: Localization, Translation, VoiceOver, Subtitle, Dubbing
-- Analytics: PlayerMetric, SessionData, Heatmap, DropRate, ConversionRate
-- And 140+ more domain entities across 20+ additional categories
-
-**To explore**: Check `src/domain/entities/` - all entity files are there
-**To track progress**: Run `python3 check_repositories.py`
 
 ## Quick Start
 
@@ -84,6 +56,8 @@ Complete lore management system for AAA game development with DDD architecture.
 ## Domain Model Overview
 
 The domain model includes 200+ AAA game dev entities organized into 34 categories.
+
+**Important:** Only the 18 entities listed in "Repository Implementation Status" above have repository interfaces and are accessible via MCP server. The remaining domain entities (Quests, Progression, Skills, Factions, Politics, Economy, Military, etc.) exist in the domain model but their business logic is handled within other entities and they don't have separate repository interfaces.
 
 ### Core Game Systems
 - **Campaign & Story** (17): Act, Chapter, Episode, Prologue, Epilogue, PlotBranch, Consequence, Ending, AlternateReality

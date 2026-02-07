@@ -1,29 +1,29 @@
 """
-QuestObjective Repository Interface
+QuestReward Repository Interface
 
-Port for persisting and retrieving QuestObjective entities.
+Port for persisting and retrieving QuestReward entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.quest_objective import QuestObjective
+from ..entities.quest_reward import QuestReward
 from ..value_objects.common import TenantId, EntityId
 
 
-class IQuestObjectiveRepository(ABC):
+class IQuestRewardRepository(ABC):
     """
-    Repository interface for QuestObjective entity.
+    Repository interface for QuestReward entity.
     
-    QuestObjectives belong to Worlds (aggregate boundary).
+    QuestRewards belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: QuestObjective) -> QuestObjective:
+    def save(self, entity: QuestReward) -> QuestReward:
         """
         Save an entity (insert or update).
         
         Args:
-            entity: QuestObjective to save
+            entity: QuestReward to save
         
         Returns:
             Saved entity with ID populated
@@ -40,7 +40,7 @@ class IQuestObjectiveRepository(ABC):
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[QuestObjective]:
+    ) -> Optional[QuestReward]:
         """Find entity by ID."""
         pass
     
@@ -51,7 +51,7 @@ class IQuestObjectiveRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[QuestObjective]:
+    ) -> List[QuestReward]:
         """List all entities in a world with pagination."""
         pass
     

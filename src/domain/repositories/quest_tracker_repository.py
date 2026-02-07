@@ -1,41 +1,49 @@
 """
-Quest_tracker Repository Interface
+QuestTracker Repository Interface
 
-Port for persisting and retrieving Quest_tracker entities.
+Port for persisting and retrieving QuestTracker entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.quest_tracker import Quest_tracker
+from ..entities.quest_tracker import QuestTracker
 from ..value_objects.common import TenantId, EntityId
 
 
-class IQuest_trackerRepository(ABC):
+class IQuestTrackerRepository(ABC):
     """
-    Repository interface for Quest_tracker entity.
+    Repository interface for QuestTracker entity.
     
-    Quest_trackers belong to Worlds (aggregate boundary).
+    QuestTrackers belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Quest_tracker) -> Quest_tracker:
+    def save(self, entity: QuestTracker) -> QuestTracker:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: QuestTracker to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Quest_tracker]:
+    ) -> Optional[QuestTracker]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IQuest_trackerRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Quest_tracker]:
+    ) -> List[QuestTracker]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,

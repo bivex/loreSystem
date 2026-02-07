@@ -1,41 +1,49 @@
 """
-Quest_node Repository Interface
+QuestNode Repository Interface
 
-Port for persisting and retrieving Quest_node entities.
+Port for persisting and retrieving QuestNode entities.
 """
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from ..entities.quest_node import Quest_node
+from ..entities.quest_node import QuestNode
 from ..value_objects.common import TenantId, EntityId
 
 
-class IQuest_nodeRepository(ABC):
+class IQuestNodeRepository(ABC):
     """
-    Repository interface for Quest_node entity.
+    Repository interface for QuestNode entity.
     
-    Quest_nodes belong to Worlds (aggregate boundary).
+    QuestNodes belong to Worlds (aggregate boundary).
     """
     
     @abstractmethod
-    def save(self, entity: Quest_node) -> Quest_node:
+    def save(self, entity: QuestNode) -> QuestNode:
         """
         Save an entity (insert or update).
         
+        Args:
+            entity: QuestNode to save
+        
         Returns:
             Saved entity with ID populated
+        
+        Raises:
+            DuplicateEntity: If entity name exists in world
+            ConcurrencyConflict: If version mismatch
+            EntityNotFound: If referenced world doesn't exist
         """
         pass
-
+    
     @abstractmethod
     def find_by_id(
         self,
         tenant_id: TenantId,
         entity_id: EntityId,
-    ) -> Optional[Quest_node]:
+    ) -> Optional[QuestNode]:
         """Find entity by ID."""
         pass
-
+    
     @abstractmethod
     def list_by_world(
         self,
@@ -43,11 +51,10 @@ class IQuest_nodeRepository(ABC):
         world_id: EntityId,
         limit: int = 50,
         offset: int = 0,
-    ) -> List[Quest_node]:
+    ) -> List[QuestNode]:
         """List all entities in a world with pagination."""
         pass
-
-    @abstractmethod
+    
     def delete(
         self,
         tenant_id: TenantId,
