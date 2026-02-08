@@ -13573,3 +13573,3159 @@ class InMemoryTournamentRepository:
             del self._tournaments[(tenant_id, tournament_id)]
             return True
         return False
+
+
+# MISSING IN-MEMORY IMPLEMENTATIONS (69)
+
+class InMemoryAcademyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAchievementRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryActRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAffinityRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAirshipRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAllianceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAlternateRealityRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAmbientRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryArchiveRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryArenaRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryArmyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryArtifactSetRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAtmosphereRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAttributeRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryAutosaveRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBadgeRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBalanceEntitiesRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBannerRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBarterRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBattalionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBestiaryEntryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBlackHoleRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBlessingRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBlueprintRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryBranchPointRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCalendarRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCameraPathRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCampaignRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCataclysmRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCelebrationRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCeremonyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryChapterRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCharacterEvolutionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCharacterProfileEntryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCharacterVariantRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCharacterRelationshipRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCheckpointRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryChekhovsGunRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryChoiceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCinematicRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCodexEntryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryColorPaletteRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCompetitionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryComponentRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryConcertRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryConsequenceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryConstitutionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryConversionRateRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCourtRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCrimeRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCultRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCurrencyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCurseRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCursedItemRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCustomMapRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryCutsceneRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDefenseRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDemandRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDifficultyCurveRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDimensionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDisasterRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDiscoveryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDispositionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDistrictRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDivineItemRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDropRateRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDungeonRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryDubbingRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryEasterEggRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryEclipseRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryEraTransitionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryEnigmaRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryExhibitionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFestivalRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFlashForwardRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFoodChainRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFortificationRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFactionIdeologyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFactionLeaderRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFactionMembershipRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFactionResourceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFactionTerritoryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryHubAreaRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryHiddenPathRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryHolySiteRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryInstanceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryJournalPageRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryKillCountRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryLootTableWeightRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryLoreFragmentRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMarketSquareRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryModRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMotionCaptureRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMountEquipmentRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMuseumRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMythicalArmorRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMysteryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryMythicalArmorRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryNobleDistrictRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryOpenWorldZoneRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPactRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPlotBranchRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPlotDeviceRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPocketDimensionRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPortalRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPortDistrictRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryPlayerMetricRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryRiddleRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryRuneRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryResearchCenterRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryRumorRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySavePointRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryScriptureRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySecretAreaRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySeasonalEventRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySectRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySiegeEngineRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySocialClassRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySocialMediaRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySocialMobilityRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySocketRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySkyboxRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySoundEffectRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySpawnPointRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryStarSystemRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySubtitleRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySummonRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemorySwampRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTeleporterRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTimePeriodRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTimelineRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTournamentRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTalentTreeRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTranslationRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTreasuryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTreatyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryTrophyRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryUndergroundRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryUserScenarioRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryVisualEffectRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryVoiceActorRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryVoiceLineRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryVoiceOverRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryWeatherPatternRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryWeaponSystemRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryWorldEventRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryWorkshopEntryRepository:
+    def __init__(self):
+        self._entities = {}
+        self._next_id = 1
+    def save(self, entity):
+        if entity.id is None:
+            from src.domain.value_objects.common import EntityId
+            entity.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._entities[(entity.tenant_id, entity.id)] = entity
+        return entity
+    def find_by_id(self, tenant_id, entity_id):
+        return self._entities.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [e for e in self._entities.values() if e.tenant_id == tenant_id and e.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._entities:
+            del self._entities[(tenant_id, entity_id)]
+            return True
+        return False
+
+
+# FINAL 3 MISSING IN-MEMORY IMPLEMENTATIONS
+
+class InMemoryDeusExMachinaRepository:
+    def __init__(self):
+        self._deus_ex_machinas = {}
+        self._next_id = 1
+    def save(self, dem):
+        if dem.id is None:
+            from src.domain.value_objects.common import EntityId
+            dem.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._deus_ex_machinas[(dem.tenant_id, dem.id)] = dem
+        return dem
+    def find_by_id(self, tenant_id, entity_id):
+        return self._deus_ex_machinas.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [d for d in self._deus_ex_machinas.values() if d.tenant_id == tenant_id and d.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._deus_ex_machinas:
+            del self._deus_ex_machinas[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryFastTravelPointRepository:
+    def __init__(self):
+        self._fast_travel_points = {}
+        self._next_id = 1
+    def save(self, ftp):
+        if ftp.id is None:
+            from src.domain.value_objects.common import EntityId
+            ftp.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._fast_travel_points[(ftp.tenant_id, ftp.id)] = ftp
+        return ftp
+    def find_by_id(self, tenant_id, entity_id):
+        return self._fast_travel_points.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [f for f in self._fast_travel_points.values() if f.tenant_id == tenant_id and f.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._fast_travel_points:
+            del self._fast_travel_points[(tenant_id, entity_id)]
+            return True
+        return False
+
+class InMemoryRedHerringRepository:
+    def __init__(self):
+        self._red_herrings = {}
+        self._next_id = 1
+    def save(self, rh):
+        if rh.id is None:
+            from src.domain.value_objects.common import EntityId
+            rh.id = EntityId(self._next_id)
+            self._next_id += 1
+        self._red_herrings[(rh.tenant_id, rh.id)] = rh
+        return rh
+    def find_by_id(self, tenant_id, entity_id):
+        return self._red_herrings.get((tenant_id, entity_id))
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        return [r for r in self._red_herrings.values() if r.tenant_id == tenant_id and r.world_id == world_id][offset:offset+limit]
+    def delete(self, tenant_id, entity_id):
+        if (tenant_id, entity_id) in self._red_herrings:
+            del self._red_herrings[(tenant_id, entity_id)]
+            return True
+        return False
