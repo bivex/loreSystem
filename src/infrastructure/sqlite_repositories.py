@@ -1284,6 +1284,1218 @@ class SQLiteCharacterRepository(ICharacterRepository):
     def delete(self, tenant_id: TenantId, character_id: EntityId) -> bool:
         with self.db.get_connection() as conn:
             cursor = conn.execute("""
+
+
+            # CORRECT SQL SCHEMAS FOR ALL 303 ENTITIES
+
+-- Correct SQL schemas for all entities
+-- Generated using regex parser + manual field definitions
+-- Total: 298 entities
+
+CREATE TABLE IF NOT EXISTS worlds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tenant_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    genre TEXT,
+    power_level INTEGER DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(tenant_id, name)
+);;
+
+CREATE TABLE IF NOT EXISTS characters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, backstory TEXT, status TEXT, abilities TEXT, parent_id INTEGER, location_id INTEGER, rarity TEXT, element TEXT, role TEXT, base_hp INTEGER, base_atk INTEGER, base_def INTEGER, base_speed INTEGER, energy_cost INTEGER, version TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, difficulty TEXT, max_rank INTEGER, prerequisites TEXT, objectives TEXT, rewards TEXT, giver_id INTEGER, status TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, rarity INTEGER, type TEXT, value INTEGER, power INTEGER, stats TEXT, requirements TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, environment_type TEXT, size INTEGER, capacity INTEGER, coordinates TEXT, zone_type TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS environments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, time_of_day TEXT, weather TEXT, lighting TEXT, ambient TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS storys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, pages TEXT, genre TEXT, theme TEXT, mood TEXT, word_count INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS choices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, choice_type TEXT, outcome TEXT, weight INTEGER, next_choice_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS flowcharts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, nodes TEXT, edges TEXT, start_node_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, level INTEGER, experience INTEGER, max_level INTEGER, type TEXT, tree_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS perks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, cooldown INTEGER, duration INTEGER, type TEXT, rarity TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, quests TEXT, rewards TEXT, completion_bonus TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, prerequisite_id INTEGER, reward_id INTEGER, choices TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_prerequisites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, type TEXT, value TEXT, required_level INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_objectives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, type TEXT, target_id INTEGER, current_progress INTEGER, max_progress INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS factions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, ideology_id INTEGER, leader_id INTEGER, territory_ids TEXT, resources TEXT, influence REAL, status TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS nations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, government_id INTEGER, capital_id INTEGER, population INTEGER, army_size INTEGER, treasury REAL, alliance_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS treatys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, from_nation_id INTEGER, to_nation_id INTEGER, terms TEXT, start_date TEXT, end_date TEXT, status TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS trades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, from_nation_id INTEGER, to_nation_id INTEGER, item_id INTEGER, quantity INTEGER, price REAL, currency TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS taxs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, rate REAL, type TEXT, description TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS armys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, nation_id INTEGER, unit_count INTEGER, total_power REAL, location_id INTEGER, status TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS weapon_systems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, damage INTEGER, range INTEGER, type TEXT, ammo_type TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cults (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, size INTEGER, members TEXT, ritual_id INTEGER, influence REAL, deity TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, parent_cult_id INTEGER, leader_id INTEGER, teachings TEXT, rules TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dungeons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, difficulty TEXT, min_players INTEGER, max_players INTEGER, level_range TEXT, boss_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, capacity INTEGER, reset_time TEXT, difficulty TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS inventorys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, capacity INTEGER, items TEXT, gold INTEGER, slots INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS crafting_recipes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, materials TEXT, tools TEXT, result_item_id INTEGER, craft_time INTEGER, skill_id INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS mods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, version TEXT, author TEXT, description TEXT, dependencies TEXT, download_count INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS legendary_weapons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, damage INTEGER, element TEXT, type TEXT, passive_effect TEXT, active_skill TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, type TEXT, level INTEGER, stats TEXT, owner_id INTEGER, abilities TEXT, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS mounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, speed INTEGER, type TEXT, stamina INTEGER, capacity INTEGER, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS academys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS acts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS affinitys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS airships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS alliances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS alternate_realitys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ambients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS archives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS arenas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS artifact_sets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS atmospheres (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS attributes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS autosaves (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS balance_entitiess (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS banners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS barters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS battalions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS bestiary_entrys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS black_holes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS blessings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS blueprints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS branch_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS calendars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS camera_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS campaigns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cataclysms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS celebrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ceremonys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chapters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS character_evolutions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS character_profile_entrys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS character_relationships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS character_variants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS checkpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chekhovs_guns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cinematics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS codex_entrys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS color_palettes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS competitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS components (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS concerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS consequences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS constitutions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conversion_rates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS courts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS crimes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS currencys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS curses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cursed_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS custom_maps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS cutscenes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS defenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS demands (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS deus_ex_machinas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS difficulty_curves (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dimensions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS disasters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS discoverys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dispositions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS districts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS divine_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dreams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS drop_rates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS dubbings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS easter_eggs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS eclipses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS empires (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS enchantments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS endings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS enigmas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS epilogues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS episodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS eras (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS era_transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS event_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS evidences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS evolutions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS exhibitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS experiences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS extinctions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_hierarchys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_ideologys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_leaders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_memberships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_resources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS faction_territorys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS fades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS familiars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS famines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS fast_travel_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS festivals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS flashbacks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS fleets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS food_chains (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS foreshadowings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS fortifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS galaxys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS glyphs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS governments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS handouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS heatmaps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS hibernations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS hidden_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS holidays (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS holy_sites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS honors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS hub_areas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS improvements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS inflations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS inspirations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS internets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS invasions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS inventions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS journal_pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS judges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS jurys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS karmas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS kingdoms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS laws (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lawyers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS leaderboards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS legal_systems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS level_ups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS librarys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lightings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS localizations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS loot_table_weights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lore_axiomss (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lore_fragments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS maps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS market_squares (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS masterys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS materials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS memorys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS migrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS miracles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS model3ds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS moons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS moral_choices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS motifs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS motion_captures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS mount_equipments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS museums (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS music_controls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS music_states (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS music_themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS music_tracks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS mysterys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS mythical_armors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS nebulas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS newspapers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS nightmares (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS noble_districts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS oaths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS open_world_zones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS particles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS patents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS phenomenons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pitys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS plagues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS player_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS player_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS plazas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS plot_branchs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS plot_devices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pocket_dimensions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS port_districts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS portals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS prices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS progression_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS progression_states (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS prologues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS propagandas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS prototypes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pulls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS punishments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS purchases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS puzzles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quarters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_givers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_reward_tiers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quest_trackers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS radios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS raids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ranks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS relic_collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reproductions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reputations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS requirements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS researchs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS research_centers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS revolutions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS rewards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS riddles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS rituals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS rumors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS runes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS save_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS schools (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS scriptures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS seasons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS seasonal_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS secret_areas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS session_datas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS shaders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS share_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS shops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS siege_engines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS silences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS skyboxs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS slumss (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS social_classs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS social_medias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS social_mobilitys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sockets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS solstices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sound_effects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS soundtracks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS spaceships (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS spawn_points (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS star_systems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS storylines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS subtitles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS summons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS supplys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS talent_trees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tariffs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS teleporters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS televisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS textures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS themes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS time_periods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS timelines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tokenboards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tournaments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS traits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS translations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS traps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS trophys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS undergrounds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS universitys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_scenarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS vehicles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS visual_effects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS voice_actors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS voice_lines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS voice_overs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS wars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS wards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS waypoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS weather_patterns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS witnesss (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS workshop_entrys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS world_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS wormholes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
+);
+
+
+
+        conn.commit()
+
                 DELETE FROM characters WHERE id = ? AND tenant_id = ?
             """, (character_id.value, tenant_id.value))
 
