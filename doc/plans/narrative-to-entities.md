@@ -1,6 +1,6 @@
-# PLAN-0001: Narrative Chapter to Entities Generation
+# PLAN-0001: Narrative Chapter to Entities Generation (30 Agents)
 
-Loom-based agent orchestration for converting narrative chapters into loreSystem entities using 15 specialized agent professions.
+Loom-based agent orchestration for converting narrative chapters into loreSystem entities using 30 specialized agent professions.
 
 <!-- loom METADATA -->
 ```yaml
@@ -73,7 +73,7 @@ loom:
           description: Narrative entities linked to chapter
 
     - id: character-architect
-      name: Character Architect (6 entities)
+      name: Character Architect (7 entities)
       description: Create Character, CharacterEvolution, CharacterProfileEntry, CharacterRelationship, CharacterVariant, VoiceActor, MotionCapture
       working_dir: "."
       stage_type: standard
@@ -131,7 +131,6 @@ loom:
       files:
         - "agents/skills/world-geographer.md"
         - "src/domain/entities/location*.py"
-        - "src/domain/entities/instance*.py"
         - "src/domain/entities/dungeon*.py"
       truths:
         - "jq '.location | length > 0' entities/world.json"
@@ -170,7 +169,7 @@ loom:
         - "entities/historical.json"
 
     - id: political-scientist
-      name: Political Scientist (8 entities)
+      name: Political Scientist (13 entities)
       description: Create Government, Law, LegalSystem, Court, Judge, Jury, Lawyer, Crime, Punishment, Evidence, Witness, Treaty, Constitution
       working_dir: "."
       stage_type: standard
@@ -188,7 +187,7 @@ loom:
         - "entities/political.json"
 
     - id: economist
-      name: Economist (10 entities)
+      name: Economist (13 entities)
       description: Create Trade, Barter, Tax, Tariff, Supply, Demand, Price, Inflation, Currency, Shop, Purchase, Reward, LootTableWeight
       working_dir: "."
       stage_type: standard
@@ -205,7 +204,7 @@ loom:
         - "entities/economy.json"
 
     - id: faction-analyst
-      name: Faction Analyst (6 entities)
+      name: Faction Analyst (7 entities)
       description: Create Faction, FactionHierarchy, FactionIdeology, FactionLeader, FactionMembership, FactionResource, FactionTerritory
       working_dir: "."
       stage_type: standard
@@ -237,7 +236,7 @@ loom:
         - "entities/military.json"
 
     - id: religious-scholar
-      name: Religious Scholar (10 entities)
+      name: Religious Scholar (11 entities)
       description: Create Cult, Sect, HolySite, Scripture, Ritual, Oath, Summon, Pact, Curse, Blessing, Miracle
       working_dir: "."
       stage_type: standard
@@ -286,25 +285,249 @@ loom:
       artifacts:
         - "entities/content.json"
 
-    - id: technical-director
-      name: Technical Director (193 entities)
-      description: Create all remaining entities: Achievement, Item, Inventory, CraftingRecipe, Map, Image, Tag, Template, Inspiration, Choice, Flowchart, Handout, Tokenboard, Note, and all technical systems (audio, video, UI, transport, biology, astronomy, architecture)
+    - id: achievement-specialist
+      name: Achievement Specialist (6 entities)
+      description: Create Achievement, Trophy, Badge, Title, Rank, Leaderboard
       working_dir: "."
       stage_type: standard
       dependencies: ["parse-chapter"]
       execution_mode: team
       files:
-        - "agents/skills/technical-director.md"
+        - "agents/skills/achievement-specialist.md"
+        - "src/domain/entities/achievement*.py"
+      truths:
+        - "jq '.achievement | length > 0' entities/achievement.json"
+      artifacts:
+        - "entities/achievement.json"
+
+    - id: audio-director
+      name: Audio Director (9 entities)
+      description: Create Ambient, Motif, MusicControl, MusicState, MusicTheme, MusicTrack, Score, SoundEffect, Soundtrack, Silence
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/audio-director.md"
         - "src/domain/entities/*.py"
       truths:
-        - "jq '.item | length > 0' entities/technical.json"
-        - "jq '.achievement | length > 0' entities/technical.json"
+        - "jq '.music_track | length > 0' entities/audio.json"
       artifacts:
-        - "entities/technical.json"
+        - "entities/audio.json"
+
+    - id: visual-effects-artist
+      name: Visual Effects Artist (5 entities)
+      description: Create VisualEffect, Particle, Shader, Lighting, ColorPalette
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/visual-effects-artist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.visual_effect | length > 0' entities/visual.json"
+      artifacts:
+        - "entities/visual.json"
+
+    - id: cinematic-director
+      name: Cinematic Director (6 entities)
+      description: Create Cutscene, Cinematic, CameraPath, Transition, Fade, Flashback
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/cinematic-director.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.cutscene | length > 0' entities/cinematic.json"
+      artifacts:
+        - "entities/cinematic.json"
+
+    - id: media-analyst
+      name: Media Analyst (7 entities)
+      description: Create Newspaper, Radio, Television, Internet, SocialMedia, Propaganda, Rumor
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/media-analyst.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.newspaper | length > 0' entities/media.json"
+      artifacts:
+        - "entities/media.json"
+
+    - id: transportation-engineer
+      name: Transportation Engineer (9 entities)
+      description: Create Mount, Familiar, MountEquipment, Vehicle, Airship, Spaceship, Portal, Teleporter, FastTravelPoint
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/transportation-engineer.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.mount | length > 0' entities/transportation.json"
+      artifacts:
+        - "entities/transportation.json"
+
+    - id: celestial-scientist
+      name: Celestial Scientist (9 entities)
+      description: Create Galaxy, Nebula, BlackHole, Wormhole, StarSystem, Moon, Eclipse, Solstice, CelestialBody
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/celestial-scientist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.galaxy | length > 0' entities/celestial.json"
+      artifacts:
+        - "entities/celestial.json"
+
+    - id: biology-specialist
+      name: Biology Specialist (6 entities)
+      description: Create FoodChain, Migration, Hibernation, Reproduction, Extinction, Evolution
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/biology-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.food_chain | length > 0' entities/biology.json"
+      artifacts:
+        - "entities/biology.json"
+
+    - id: urban-architect
+      name: Urban Architect (8 entities)
+      description: Create District, Ward, Quarter, Plaza, MarketSquare, Slums, NobleDistrict, PortDistrict
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/urban-architect.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.district | length > 0' entities/urban.json"
+      artifacts:
+        - "entities/urban.json"
+
+    - id: research-education-specialist
+      name: Research & Education Specialist (7 entities)
+      description: Create Academy, University, School, Library, ResearchCenter, Archive, Museum
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/research-education-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.academy | length > 0' entities/research.json"
+      artifacts:
+        - "entities/research.json"
+
+    - id: puzzle-secrets-designer
+      name: Puzzle & Secrets Designer (7 entities)
+      description: Create HiddenPath, EasterEgg, Mystery, Enigma, Riddle, Puzzle, Trap
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/puzzle-secrets-designer.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.puzzle | length > 0' entities/puzzle.json"
+      artifacts:
+        - "entities/puzzle.json"
+
+    - id: ui-content-specialist
+      name: UI/Content Specialist (8 entities)
+      description: Create Choice, Flowchart, Handout, Tokenboard, Tag, Template, Inspiration, Note
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/ui-content-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.choice | length > 0' entities/ui_content.json"
+      artifacts:
+        - "entities/ui_content.json"
+
+    - id: analytics-balance-specialist
+      name: Analytics & Balance Specialist (8 entities)
+      description: Create PlayerMetric, SessionData, Heatmap, DropRate, ConversionRate, DifficultyCurve, LootTableWeight, BalanceEntities
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/analytics-balance-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.difficulty_curve | length > 0' entities/analytics.json"
+      artifacts:
+        - "entities/analytics.json"
+
+    - id: legendary-items-specialist
+      name: Legendary Items Specialist (10 entities)
+      description: Create LegendaryWeapon, MythicalArmor, DivineItem, CursedItem, ArtifactSet, RelicCollection, Glyph, Rune, Socket, Enchantment
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/legendary-items-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.legendary_weapon | length > 0' entities/legendary.json"
+      artifacts:
+        - "entities/legendary.json"
+
+    - id: social-cultural-specialist
+      name: Social & Cultural Specialist (11 entities)
+      description: Create Affinity, Disposition, Honor, Karma, SocialClass, SocialMobility, Festival, Celebration, Ceremony, Competition, Tournament
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/social-cultural-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.social_class | length > 0' entities/social_cultural.json"
+      artifacts:
+        - "entities/social_cultural.json"
+
+    - id: game-mechanics-specialist
+      name: Game Mechanics Specialist (13 entities)
+      description: Create Event, EventChain, AlternateReality, Consequence, Ending, Patent, Invention, Improvement, Requirement, Pull, Phenomenon, Pity, Theme
+      working_dir: "."
+      stage_type: standard
+      dependencies: ["parse-chapter"]
+      execution_mode: team
+      files:
+        - "agents/skills/game-mechanics-specialist.md"
+        - "src/domain/entities/*.py"
+      truths:
+        - "jq '.event | length > 0' entities/mechanics.json"
+      artifacts:
+        - "entities/mechanics.json"
 
     - id: validate-entities
       name: Validate All Entities
-      description: Validate all generated entities against loreSystem domain model and schema
+      description: Validate all generated entity JSON files against loreSystem domain model and schema
       working_dir: "."
       stage_type: integration-verify
       dependencies:
@@ -322,12 +545,26 @@ loom:
         - "religious-scholar"
         - "lore-chronicler"
         - "content-creator"
-        - "technical-director"
+        - "achievement-specialist"
+        - "audio-director"
+        - "visual-effects-artist"
+        - "cinematic-director"
+        - "media-analyst"
+        - "transportation-engineer"
+        - "celestial-scientist"
+        - "biology-specialist"
+        - "urban-architect"
+        - "research-education-specialist"
+        - "puzzle-secrets-designer"
+        - "ui-content-specialist"
+        - "analytics-balance-specialist"
+        - "legendary-items-specialist"
+        - "social-cultural-specialist"
+        - "game-mechanics-specialist"
       acceptance:
         - "python scripts/validate_entities.py entities/ --strict"
       truths:
         - "python scripts/validate_schema.py entities/ --all-files"
-        - "jq '[.narrative, .character, .quest, .progression, .world, .environment, .historical, .political, .economy, .faction, .military, .religious, .lore, .content, .technical] | map(. != null) | all' validation_summary.json"
       artifacts:
         - "validation_report.json"
         - "validation_summary.json"
@@ -369,7 +606,22 @@ loom:
 | Religious Scholar | cult, sect, holy_site, scripture, ritual, oath, summon, pact, curse, blessing, miracle | 11 |
 | Lore Chronicler | lore_fragment, codex_entry, journal_page, bestiary_entry, memory, dream, nightmare, secret_area | 8 |
 | Content Creator | mod, custom_map, user_scenario, share_code, workshop_entry, localization, translation, subtitle, dubbing, voice_over | 10 |
-| Technical Director | All remaining 193 entities (achievement, item, inventory, crafting_recipe, map, image, tag, template, inspiration, choice, flowchart, handout, tokenboard, note, audio, video, UI, transport, biology, astronomy, architecture, etc.) | 193 |
+| Achievement Specialist | achievement, trophy, badge, title, rank, leaderboard | 6 |
+| Audio Director | ambient, motif, music_control, music_state, music_theme, music_track, score, sound_effect, soundtrack, silence | 9 |
+| Visual Effects Artist | visual_effect, particle, shader, lighting, color_palette | 5 |
+| Cinematic Director | cutscene, cinematic, camera_path, transition, fade, flashback | 6 |
+| Media Analyst | newspaper, radio, television, internet, social_media, propaganda, rumor | 7 |
+| Transportation Engineer | mount, familiar, mount_equipment, vehicle, airship, spaceship, portal, teleporter, fast_travel_point | 9 |
+| Celestial Scientist | galaxy, nebula, black_hole, wormhole, star_system, moon, eclipse, solstice, celestial_body | 9 |
+| Biology Specialist | food_chain, migration, hibernation, reproduction, extinction, evolution | 6 |
+| Urban Architect | district, ward, quarter, plaza, market_square, slums, noble_district, port_district | 8 |
+| Research & Education Specialist | academy, university, school, library, research_center, archive, museum | 7 |
+| Puzzle & Secrets Designer | hidden_path, easter_egg, mystery, enigma, riddle, puzzle, trap | 7 |
+| UI/Content Specialist | choice, flowchart, handout, tokenboard, tag, template, inspiration, note | 8 |
+| Analytics & Balance Specialist | player_metric, session_data, heatmap, drop_rate, conversion_rate, difficulty_curve, loot_table_weight, balance_entities | 8 |
+| Legendary Items Specialist | legendary_weapon, mythical_armor, divine_item, cursed_item, artifact_set, relic_collection, glyph, rune, socket, enchantment | 10 |
+| Social & Cultural Specialist | affinity, disposition, honor, karma, social_class, social_mobility, festival, celebration, ceremony, competition, tournament | 11 |
+| Game Mechanics Specialist | event, event_chain, alternate_reality, consequence, ending, patent, invention, improvement, requirement, pull, phenomenon, pity, theme | 13 |
 | **TOTAL** | **All 295 entities** | **295** |
 
 ## Usage
@@ -377,7 +629,7 @@ loom:
 ```bash
 cd /root/clawd
 loom init doc/plans/narrative-to-entities.md
-loom run --max-parallel 15  # All 15 agents working in parallel
+loom run --max-parallel 30  # All 30 agents working in parallel
 loom status --live
 ```
 
@@ -399,6 +651,21 @@ entities/
 ├── religious.json          # 11 entities
 ├── lore.json               # 8 entities
 ├── content.json            # 10 entities
-├── technical.json          # 193 entities
+├── achievement.json         # 6 entities
+├── audio.json              # 9 entities
+├── visual.json             # 5 entities
+├── cinematic.json          # 6 entities
+├── media.json              # 7 entities
+├── transportation.json      # 9 entities
+├── celestial.json          # 9 entities
+├── biology.json            # 6 entities
+├── urban.json              # 8 entities
+├── research.json           # 7 entities
+├── puzzle.json             # 7 entities
+├── ui_content.json         # 8 entities
+├── analytics.json          # 8 entities
+├── legendary.json          # 10 entities
+├── social_cultural.json    # 11 entities
+├── mechanics.json           # 13 entities
 └── validation_summary.json # Combined validation
 ```
