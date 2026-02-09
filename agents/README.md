@@ -6,7 +6,7 @@ This directory contains Loom-based agent orchestration system for converting nar
 
 ```
 agents/
-├── skills/                    # 15 specialized agent skills
+├── skills/                    # 30 specialized agent skills
 │   ├── narrative-specialist.md
 │   ├── character-architect.md
 │   ├── quest-designer.md
@@ -21,11 +21,26 @@ agents/
 │   ├── religious-scholar.md
 │   ├── lore-chronicler.md
 │   ├── content-creator.md
-│   └── technical-director.md
+│   ├── achievement-specialist.md
+│   ├── audio-director.md
+│   ├── visual-effects-artist.md
+│   ├── cinematic-director.md
+│   ├── media-analyst.md
+│   ├── transportation-engineer.md
+│   ├── celestial-scientist.md
+│   ├── biology-specialist.md
+│   ├── urban-architect.md
+│   ├── research-education-specialist.md
+│   ├── puzzle-secrets-designer.md
+│   ├── ui-content-specialist.md
+│   ├── analytics-balance-specialist.md
+│   ├── legendary-items-specialist.md
+│   ├── social-cultural-specialist.md
+│   └── game-mechanics-specialist.md
 └── README.md                  # This file
 
 doc/plans/
-└── narrative-to-entities.md    # Loom orchestration plan
+├── narrative-to-entities.md    # Loom orchestration plan (30 agents)
 
 scripts/
 ├── parse_chapter.py           # Parse chapter text
@@ -49,10 +64,25 @@ entities/                       # Generated entity files
 ├── religious.json       # 11 entities
 ├── lore.json            # 8 entities
 ├── content.json        # 10 entities
-└── technical.json     # 193 entities
+├── achievement.json         # 6 entities
+├── audio.json              # 9 entities
+├── visual.json             # 5 entities
+├── cinematic.json          # 6 entities
+├── media.json              # 7 entities
+├── transportation.json      # 9 entities
+├── celestial.json          # 9 entities
+├── biology.json            # 6 entities
+├── urban.json              # 8 entities
+├── research.json           # 7 entities
+├── puzzle.json             # 7 entities
+├── ui_content.json         # 8 entities
+├── analytics.json          # 8 entities
+├── legendary.json          # 10 entities
+├── social_cultural.json    # 11 entities
+└── mechanics.json           # 13 entities
 ```
 
-## The 15 Agent Professions
+## The 30 Agent Professions
 
 | # | Profession | Entity Types | Count |
 |---|------------|--------------|-------|
@@ -70,7 +100,22 @@ entities/                       # Generated entity files
 | 12 | Religious Scholar | Cults, Rituals, Miracles, etc. | 11 |
 | 13 | Lore Chronicler | Lore fragments, Bestiary, Secrets, etc. | 8 |
 | 14 | Content Creator | Mods, Maps, Localization, etc. | 10 |
-| 15 | Technical Director | All remaining technical entities | 193 |
+| 15 | Achievement Specialist | Achievements, Trophies, Badges, Titles, Ranks, Leaderboards | 6 |
+| 16 | Audio Director | Music, Sound Effects, Ambient, Motifs, Scores | 9 |
+| 17 | Visual Effects Artist | Visual Effects, Particles, Shaders, Lighting, Color Palettes | 5 |
+| 18 | Cinematic Director | Cutscenes, Cinematics, Camera Paths, Transitions, Fades, Flashbacks | 6 |
+| 19 | Media Analyst | Newspapers, Radio, TV, Internet, Social Media, Propaganda, Rumors | 7 |
+| 20 | Transportation Engineer | Mounts, Familiars, Vehicles, Airships, Spaceships, Portals, Teleporters | 9 |
+| 21 | Celestial Scientist | Galaxies, Nebulae, Black Holes, Wormholes, Star Systems, Moons, Eclipses, Solstices | 9 |
+| 22 | Biology Specialist | Food Chains, Migrations, Hibernation, Reproduction, Extinction, Evolution | 6 |
+| 23 | Urban Architect | Districts, Wards, Quarters, Plazas, Market Squares, Slums, Noble Districts, Port Districts | 8 |
+| 24 | Research & Education Specialist | Academies, Universities, Schools, Libraries, Research Centers, Archives, Museums | 7 |
+| 25 | Puzzle & Secrets Designer | Hidden Paths, Easter Eggs, Mysteries, Enigmas, Riddles, Puzzles, Traps | 7 |
+| 26 | UI/Content Specialist | Choices, Flowcharts, Handouts, Tokenboards, Tags, Templates, Inspiration, Notes | 8 |
+| 27 | Analytics & Balance Specialist | Player Metrics, Session Data, Heatmaps, Drop Rates, Conversion Rates, Difficulty Curves, Loot Table Weights | 8 |
+| 28 | Legendary Items Specialist | Legendary Weapons, Mythical Armor, Divine Items, Cursed Items, Artifact Sets, Relic Collections, Glyphs, Runes, Sockets, Enchantments | 10 |
+| 29 | Social & Cultural Specialist | Affinity, Disposition, Honor, Karma, Social Classes, Social Mobility, Festivals, Celebrations, Ceremonies, Competitions, Tournaments | 11 |
+| 30 | Game Mechanics Specialist | Events, Event Chains, Alternate Realities, Consequences, Endings, Patents, Inventions, Improvements, Requirements, Pulls, Phenomena, Pity, Themes | 13 |
 | **TOTAL** | **All loreSystem entities** | **295** |
 
 ## Usage
@@ -95,14 +140,14 @@ cat chapter_1.txt | python scripts/parse_chapter.py
 ### 3. Run Orchestration
 
 ```bash
-# Run with all 15 agents in parallel
-loom run --max-parallel 15
+# Run with all 30 agents in parallel
+loom run --max-parallel 30
 
 # Run with manual control
 loom run --manual
 
 # Run with live status monitoring
-loom run --max-parallel 15 && loom status --live
+loom run --max-parallel 30 && loom status --live
 ```
 
 ### 4. Monitor Progress
@@ -151,7 +196,7 @@ Chapter Text
 └─────────────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 2. PARALLEL AGENT EXECUTION (15 agents)                           │
+│ 2. PARALLEL AGENT EXECUTION (30 agents)                           │
 │    ├─ Narrative Specialist → entities/narrative.json                 │
 │    ├─ Character Architect → entities/character.json                 │
 │    ├─ Quest Designer → entities/quest.json                         │
@@ -166,7 +211,22 @@ Chapter Text
 │    ├─ Religious Scholar → entities/religious.json                 │
 │    ├─ Lore Chronicler → entities/lore.json                      │
 │    ├─ Content Creator → entities/content.json                    │
-│    └─ Technical Director → entities/technical.json                │
+│    ├─ Achievement Specialist → entities/achievement.json             │
+│    ├─ Audio Director → entities/audio.json                           │
+│    ├─ Visual Effects Artist → entities/visual.json                     │
+│    ├─ Cinematic Director → entities/cinematic.json                  │
+│    ├─ Media Analyst → entities/media.json                           │
+│    ├─ Transportation Engineer → entities/transportation.json       │
+│    ├─ Celestial Scientist → entities/celestial.json                   │
+│    ├─ Biology Specialist → entities/biology.json                     │
+│    ├─ Urban Architect → entities/urban.json                         │
+│    ├─ Research & Education Specialist → entities/research.json          │
+│    ├─ Puzzle & Secrets Designer → entities/puzzle.json                 │
+│    ├─ UI/Content Specialist → entities/ui_content.json             │
+│    ├─ Analytics & Balance Specialist → entities/analytics.json          │
+│    ├─ Legendary Items Specialist → entities/legendary.json            │
+│    ├─ Social & Cultural Specialist → entities/social_cultural.json      │
+│    └─ Game Mechanics Specialist → entities/mechanics.json              │
 └─────────────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
