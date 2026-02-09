@@ -2,6 +2,8 @@
 
 Complete lore management system for AAA game development with DDD architecture.
 
+> **⚠️ AGENT BRANCH** - This branch is dedicated to agentic development and AI-assisted workflows.
+
 ## Features
 
 - **Domain Model**: 200+ AAA game dev entities across 34 categories
