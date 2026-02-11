@@ -2,6 +2,8 @@
 
 This directory contains Loom-based agent orchestration system for converting narrative chapters into loreSystem entities.
 
+**Powered by [Loom](https://github.com/cosmix/loom)** - A goal-backward orchestration system for AI agents.
+
 ## Structure
 
 ```
