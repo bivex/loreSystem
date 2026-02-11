@@ -104,6 +104,14 @@
   },
   "permissions": {
     "allow": [
+      "Read(**)",                                                                               
+      "Edit(**)",                                                                                 
+      "Write(**)",                                                                              
+      "Bash(*)",                                                                                
+      "Grep(**)",                                                                                 
+      "Glob(**)",                                                                                 
+      "WebFetch",                                                                                 
+      "MCP",       
       "Read(.work/**)",
       "Write(.work/**)",
       "Read(.claude/CLAUDE.md)",
