@@ -7,6 +7,61 @@ set -e
 # Set terminal emulator for loom
 export TERMINAL=xterm
 
+# Setup Xvfb for headless server (no display)
+echo "🖥️  Checking for X11 display..."
+if [ -z "$DISPLAY" ]; then
+    echo "  ⚠ No DISPLAY found, setting up Xvfb (virtual framebuffer)..."
+
+    # Install Xvfb if not present
+    if ! command -v Xvfb &> /dev/null; then
+        echo "  📦 Installing Xvfb..."
+        apt-get update -qq
+        apt-get install -y xvfb > /dev/null
+        echo "  ✓ Xvfb installed"
+    fi
+
+    # Start Xvfb on display :99
+    if ! pgrep -f "Xvfb :99" > /dev/null; then
+        echo "  🚀 Starting Xvfb on display :99..."
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        Xvfb_PID=$!
+        sleep 2
+
+        # Verify Xvfb started
+        if pgrep -f "Xvfb :99" > /dev/null; then
+            echo "  ✓ Xvfb started (PID: $Xvfb_PID)"
+            export DISPLAY=:99
+            echo "  ✓ DISPLAY set to :99"
+
+            # Store PID for cleanup
+            echo $Xvfb_PID > /tmp/loom_xvfb.pid
+        else
+            echo -e "${RED}  ✗ Failed to start Xvfb${NC}"
+            exit 1
+        fi
+    else
+        echo "  ✓ Xvfb already running on :99"
+        export DISPLAY=:99
+    fi
+else
+    echo "  ✓ DISPLAY already set: $DISPLAY"
+fi
+echo ""
+
+# Cleanup function for Xvfb
+cleanup_xvfb() {
+    if [ -f /tmp/loom_xvfb.pid ]; then
+        Xvfb_PID=$(cat /tmp/loom_xvfb.pid)
+        if ps -p $Xvfb_PID > /dev/null 2>&1; then
+            kill $Xvfb_PID 2>/dev/null
+            rm -f /tmp/loom_xvfb.pid
+        fi
+    fi
+}
+
+# Trap to cleanup Xvfb on script exit
+trap cleanup_xvfb EXIT
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
