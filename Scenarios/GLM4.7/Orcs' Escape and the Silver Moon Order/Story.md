@@ -1,392 +1,551 @@
-Мозг раскалывался, словно кто-то взболтал его, перелил в другой череп и разбил об пол.
+Orc's Escape and the Silver Moon Order - Story
 
-Я открыл глаза. Свод был низким, из грубо тесаного камня, и в воздухе пахло сырой кожей, жиром и чем-то еще — острым, металлическим. Я попытался пошевелиться, но руки и ноги были скручены толстыми веревками, впивающимися в кожу.
+Mog stirred, as if someone had poured him over, dragged him to another skull and shattered his body to pieces.
 
-Тогда я увидел их.
+I opened my eyes. Gorb was short, cut from rough gray stone, and the air smelled of raw hide, fat and something else — sharp, metallic. I tried to move, but my hands and legs were tied with thick ropes sinking into my skin.
 
-Три орка. Не те пугала из детских сказок, а настоящие, живые горы мышц и шрамов. Они сидели вокруг костра в центре пещеры, и тени от них прыгали по стенам, исполняя какой-то дьявольский танец.
+Then I saw them.
 
-Слева, уставясь в огонь бессмысленными, мутными глазами, сидел огромный зеленый увалень с выбитым зубом. Он методически точил каменный нож, скрежет которого резал слух.
+Three orcs. Not those from children's tales, but real, living eyes with scars. They sat around the bonfire in the center of the cave, and their shadows danced across the walls performing some kind of devilish dance.
 
-Второй, поменьше, но шире в плечах, с рыжей, жесткой, как проволока, шерстью, что-то жевал, издавая влажные, чавкающие звуки. Иногда он срывался и бил кулаком по земле, ругаясь на своем gutturalном наречии, от чего пламя костра вздрагивало.
+On the left, standing by the senseless fire with dead, mutant eyes, sat the huge green-skinned ogre with broken teeth. He mechanically sharpened the stone knife, the sound of which scraped hearing.
 
-Но мой взгляд приковал третий. Он сидел напротив меня, спиной к огню, так что его лицо было скрыто в тени, только свет отражался в двух маленьких, желтых, как больная моча, глазах. Он не двигался. Он просто смотрел на меня.
+So I saw them.
 
-Увалень перестал точить нож. Тишина, обрывавшаяся только лишь хрустом костей во рту у рыжего, стала давить на уши.
+Then the goblin came forward. He was small, but broad-shouldered, with rusty, coarse hair like pig bristles. Sometimes he even snorted, making wet, clucking sounds, scraping the ground with his guttural muttering about something in his barbaric dialect from which the bonfire shook.
 
-— Очнулся, — прохрипел сидящий напротив. Его голос звучал словно скрежет жерновов. — Значит, крепкий.
+But my gaze fixed on the third one. He sat opposite me, back to the fire, so that only the light reflected in his two small yellow, disease-like eyes. He didn't move. He just watched me.
 
-Он подался вперед, выхватывая из полумрака лицо, изрезанное старыми шрамами, и ухмыльнулся, обнажив желтые клыки.
+On the left, standing by the fire, the huge green-skinned ogre with broken teeth mechanically honed his stone knife, the scraping of which grated on hearing.
 
-— Надеюсь, ты вкусный, — сказал он и кивнул товарищам. — Мы голодны.
+The second, smaller but broader in the shoulders, with red, coarse, wiry hair like a wire, smelling of rotting flesh, dripping wet, clucking sounds. Sometimes he even broke and pounded the ground with his hoof, swearing in his guttural dialect at what the flames made the bonfire tremble.
 
-Орки хором зарычали, и я понял, что худшее, что могло со мной случиться сегодня — это не то, что я проснулся. А то, что я, похоже, больше не усну.
+But my gaze was drawn to the third. He sat opposite me, back to the fire, so only the light reflected in his two small yellow, disease-like eyes. He didn't move. He just watched me.
 
-Орк с выбитым зубом — Увалень — первым пришел в движение. Он тяжело поднялся, и земля под моими ногами, кажется, даже качнулась. Он шагнул ко мне, закрывая свет костра своим массивным телом, и воздух вокруг меня стал густым, пропитанным запахом немытого тела и старой крови.
+Urgent stopped sharpening the knife. The whistling, interrupted only by the hoarse crunch of the bones of the dead Red, began to wheeze into my ears.
 
-Я дернулся, пытаясь отползти, но веревки только больно впились в запястья. Я был беспомощен, как червяк на-hookе.
+— Woke up, — the one sitting across from me croaked. His voice sounded like the grinding of dead ghouls — probably strong.
 
-Увалень схватил меня за грудь своей ладонью, размером с крышку сковородки, и рывком поставил на ноги. Мои колени дрожали, подгибаясь, но он не давал упасть, держа меня в воздухе, словно легкую куклу.
+He lunged forward, seizing the headless body with his hand, and struck it with his palm.
 
-— Куда ж ты, — прорычал Рыжий, сплевывая кость на пол. — Праздник только начинается.
+— Where to, — the Red one spat, snapping the skull in two.
 
-Третий орк, Главарь, не спускал с меня желтых глаз. Он медленно вытащил из-за пояса изогнутый клинок, похожий на большой серп. Лезвие было темным, покрытым слоем копоти и, вероятно, не одного столетия ржавчины.
+— Well then, — said the goblin, and grinned at his companions. — We're hungry.
 
-Я инстинктивно зажмурился, ожидая удара, но его не последовало.
+The orcs growled, and I understood that the worst thing that could happen to me today was not what I woke up to. And what I, apparently, would no longer sleep.
 
-Вместо этого Главарь шагнул вперед и резким движением перерезал веревки, связывавшие мои ноги. Я рухнул на колени, едва не разломав челюсть о каменный пол.
+I stood motionless, expecting a blow, but no blow followed.
 
-— Беги, — сказал Главарь.
+— What's wrong? — the huge green ogre's yellow eyes narrowed. — Can't catch, huh?
 
-Я замер. Уши заложило от собственного хрипа дыхания. Я не поверил. Я не мог поверить.
+He stood up, blocking the light of the bonfire with his massive body, and the air around me became thick, filled with the suffocating smell of rotting corpse and old blood.
 
-— Чего? — выдохнул я, поднимая на него взгляд.
+I tried to step back, but the ropes only bit into my skin. I was helpless, like a worm on a hook.
 
-— Беги, — повторил он, и его губы растянулись в отвратительной улыбке, обнажив десны. — Даю пять дыханий. Если успеешь до выхода — жив будешь. Если нет...
+The Urgent seized me by the chest with his paw the size of a soup ladle and slammed me to the ground. My knees trembled, buckling, but he didn't let me fall, holding me in the air like a rag doll.
 
-Он провел пальцем по острию своего клинка.
+— Where to, — croaked the Red one, spitting bone on the ground. — Celebration is just beginning.
 
-— ...станешь ужином.
+The third orc, Grak, didn't rush with me from the yellow eyes. He slowly dragged himself out of a hole in the ground, apparently not of one century of rustiness. The descent was dark, covered with a thick layer of soot and probably not one color of rust. I struggled instinctively, expecting a strike, but it didn't come.
 
-Увалень заржал, сотрясая своды пещеры. Рыжий подскочил, сжимая кулаки, готовясь к погоне.
+The Urgent stepped forward, thrusting his head out of the crypt-like hole in front of him, and the green eyes narrowed. — Do you think you can leave?
 
-Один. Я огляделся. Выход из пещеры был виден за их спинами — узкий просвет в камне, куда едва проникал серый свет луны. До него метров десять. Но между мной и свободой стояли три стены из мяса и ярости.
+I looked him straight in the eye. — How so? — I asked, raising my eyebrows.
 
-Два. Мои ноги, онемевшие от веревок, едва слушались.
+— Run, — said Grak.
 
-Три. Рыжий уже припал на одну ногу, как зверь перед прыжком.
+I looked around. The exit was visible beyond their backs — a narrow crack in the rock where the pale light of the moon barely penetrated. Only about ten meters. But between me and freedom stood three walls of meat and darkness.
 
-Адреналин ударил в кровь горячей волной. Я не стал ждать счетчика «четыре». Я изо всех сил толкнул Уваля в колено — это было всё, на что хватило моих сил, — и когда он, зашатавшись, наклонился, я проскользнул под его рукой.
+Two. My legs, exhausted from the bindings, could barely listen.
 
-Четыре.
+Three. The Red one was already bracing on one leg like a beast before a jump.
 
-Я бежал сломя голову, перепрыгивая через кости и камни. Сзади раздался яростный рев, и земля вздрогнула от тяжелого прыжка. Я не оборачивался. Я знал: если я посмотрю назад, я умру.
+Adrenaline struck my blood hot. I couldn't just stand there.
 
-Пять.
+I squeezed my hands into fists, ignoring the pain, and started climbing faster, not paying attention to the thorns. The rock walls were covered in moss and slime, but the orcs had lived here long enough to wear paths into them.
 
-Выход был близко. Я метнулся к свету.
+Suddenly, from behind the orcs, a female figure emerged. Light, graceful, with two short swords at her hips. She approached the Red one, who was still trying to get up, and with one precise thrust to the neck, sent him into eternity.
 
- давай дальше
- 
-Thought Process
- Выход оказался узким, словно трещина в черепе. Я протиснулся, обдирая плечи о камни до сырой плоти, и вывалился наружу, в ледяную ночную темноту.
+The Red one fell. The orc behind him, having already gotten up, threw himself at her with his full weight, chain-whipping her legs, and pinned her to the ground.
 
-Впереди расстилался густой, колючий кустарник, а дальше — обрыв. Сзади раздался сухой треск, и каменная рама выхода рассыпалась в пыль. Увалень, не разбираясь, просто проломил ее своим массивным телом, вырываясь на волю вместе с остальными.
+— Ah, damn, — I thought to myself. — Three on one.
 
-Я бросился в заросли. Колючки рвали одежду и кожу, царапая лицо, но я не обращал внимания. Эта боль была доброй. Она означала, что я все еще могу чувствовать.
+She moved with blinding speed. Not like the others. She drew her swords from the scabbards in a blur of motion, and in one precise strike, cut the Red one's throat. The big orc's yellow eyes bulged. He tried to inhale, but only a wet gurgle escaped.
 
-— Он там! — рявкнул Главарь.
+She didn't stop. In the same motion, she drew a second blade and thrust it into the smaller goblin's stomach. He didn't even scream.
 
-Я услышал тяжелый топот позади — Рыжий уже нагонял, круша кусты своими сапогами.
+Then she spun and kicked the Urgent's knee. Bone crunched with a sickening sound, and the ogre howled, losing balance. Before he could recover, both blades crossed at his neck and his head rolled away, staring with surprise at something he would never see.
 
-Впереди вздымался крутой осып — гора острых, сыпучих камней, уходящая к небу. Под ногами всё время крошилось и уходило из-под подошв. Бежать по нему было самоубийством, но идти было нельзя.
+Only I remained.
 
-Я рисковал и начал взбираться.
+The huge ogre's chest collapsed, crushing scattered rocks with his fall. A cloud of dust rose, momentarily obscuring the moonlight. The green light of the exit vanished.
 
-Орки, привыкшие к тяжелой поступи, пошли следом. Камни посыпались из-под их ног, градом сыплясь на меня. Я едва держался, вцепившись руками в острые выступы.
+I froze. Should I run? But where to?
 
-Внезапно под ногами Рыжего, который шел ниже, хрустнуло. Огромный каменный пласт не выдержал его веса. С жутким воем он скатился вниз, сбивая с ног Уваля. Они с грохотом покатились в темноту, увлекая за собой лавину щебня.
+The Urgent's hand lay beside his head, still holding the stone knife. The stone that had cut open his back in the crypt. I tried to reach it, but he wasn't breathing anymore.
 
-Я замер, прижимаясь к холодной скале, и перевел дыхание.
+I heard a heavy exhale behind me.
 
-Сверху, там, где начался осып, стоял Главарь. Он не оступился. Он смотрел вниз на своих поверженных товарищей, а потом медленно поднял голову и посмотрел на меня. В его желтых глазах не было ярости. Там был холодный, профессиональный интерес.
+— Back up, — croaked the Red one's voice from somewhere in the dark. — Wait a bit.
 
-Он не стал лезть следом по опасной скользкой осыпи. Вместо этого он повернул и побегом поехал вдоль края обрыва, выше, по твердому грунту.
+His voice sounded like grinding stone. — What? — he wheezed.
 
-Он знал местность. Он собирался отрезать мне путь на вершине.
+— Give me five breaths, — said the Red one's companion, whose lips stretched in a hateful smile, revealing broken teeth. — If you last, you live. If not...
 
-— Проклятие, — прошипел я сквозь стиснутые зубы.
+The orc with the broken nose pointed at me. — Ready? — he grunted.
 
-Ноги дрожали, легкие горели огнем. Я看了看 наверх. До гребня оставалось метров двадцать. Если Главарь доберется туда раньше меня, он просто сбросит меня вниз камнем.
+I held my breath.
 
-Я собрал последние силы и начал карабкаться быстрее, игнорируя боль в пальцах, скользящих по мху.
+The Red one roared, shattering the silence of the cavern. The smaller goblin, having recovered, crouched by the fire, sharpening his weapon.
 
-Сверху послышался стук металла о камень. Он уже там.
+Three. I looked up. To the exit, visible through the narrow crack as a slit in a rock. Only ten meters away. But between me and freedom stood three walls of meat and darkness.
 
-Я выдохнул и рывком подтянулся на край, перекатываясь на жесткую траву.
+One. My legs, numb from the ropes, barely listened.
 
-Тут же над головой свистнуло. Тяжелый камень, брошенный Главарем, пролетел в сантиметре от моего уха и рухнул в бездну.
+Two. The Red one was already bracing, ready to spring.
 
-Я вскочил, размахивая своим бесполезным маленьким ножом, который удалось вырезать из кармана еще в пещере. Главарь стоял в десяти метрах. Он не спеша вытащил свой серп.
+Three. The goblin, having recovered, crouched by the fire.
 
-— Ну что, — сказал он, пройдясь из стороны в сторону, перекрывая мне путь к лесу. — Лапки выросли.
+The Red one roared again. The goblin sprang at me with a grunt.
 
-Внезапно из лесной чащи, за спиной Главаря, донесся громкий хруст ветки.
+I thought I was done.
 
-Орк замер. И я замер. Мы оба посмотрели в темноту деревьев.
+Adrenaline crashed through my veins. I threw myself sideways toward the crack, sliding across the rough floor, scraping skin from my shoulders.
 
-Оттуда, тяжело ступая, вышла фигура. Ростом с орка, но прямая и двуногая, в тяжелой броне, отливавшей серебром в лунном свете.
+A massive hand caught my ankle. The Red one's grip was like iron. He pulled me back.
 
-— Эй, скотины, — прозвучал низкий, спокойный человеческий голос. — Неужели не слышали сирену?
+I twisted, desperate, and sank my teeth into his hand. He didn't even flinch.
 
-Это был наемник. Нет, это был охотник на чудовищ. На его груди поблескивал герб Охотничьего Гильда.
+— Don't struggle, croaked the huge one from somewhere ahead. — You're not getting away.
 
-Главарь медленно повернулся к незнакомцу, забыв про меня.
+The massive orc's chest heaved. He was already there.
 
-— Человек, — прохрипел он. — Твоя кровь ценится выше.
+He knew the terrain. He was gathering to block my path to the summit.
 
-Я тихо отступил в тень. Шанс, возможно, только один.</think>Я тихо отступил в тень, затаив дыхание. Шанс, возможно, был только один.
+— Retreat, — he whistled, pointing his finger at the gap in the rocks through which I'd tried to escape. — The cliff. You'd be dead before you reach it.
 
-Охотник не достал оружия. Вместо этого он снял с пояса небольшой горн и поднес к губам. Резкий, пронзительный звук разрезал ночь, заставляя меня вздрогнуть. Орки взвыли, закрывая уши лаптями.
+I weighed my options. Running toward him was suicide. Running the other way — into the waiting darkness of the tunnels.
 
-— Это была проверка на слух, — спокойно сказал охотник, опуская горн. — Глухие или глупые не живут долго.
+Suddenly, from the direction where the Red one stood, a heavy thump echoed. Rock crunched under boots.
 
-Главарь пришел в себя. Он издал боевой клич, который заставил воздух завибрировать, и бросился вперед. Увалень и Рыжий, грязные и избитые после падения, но всё ещё живые, выползли из оврага и присоединились к нему.
+Another figure emerged. Tall, straight, two-legged, wearing dark leather armor that shimmered with silver in the moonlight.
 
-Три против одного.
+— You're alive? — I whispered to myself, surprised.
 
-Я мог бы убежать. Путь в лес был открыт. Но что-то заставило меня замерть. Может быть, восхищение безумием человека, решившего сразиться с тремя монстрами в одиночку. А может быть, понимание того, что если орки убьют его, они придут за мной.
+— Who are you? — the stranger grunted, drawing a sword and pointing it at my captor.
 
-Охотник выхватил из-за спины огромный двуручный меч, который казался легким, как перо. Он не отступил.
+The Red one stepped forward, face contorted with rage. — You're not taking him, orc!
 
-Первым на него налетел Увалень. Охотник просто шагнул в сторону, пнув гиганта в колено, и когда тот, потеряв равновесие, наклонился, одним плавным движением отсек ему голову. Тяжелое тело рухнуло с глухим стуком.
+The stranger didn't respond. He simply held his ground, sword level.
 
-Рыжий кинулся со спины, но охотник не глянул на него; он просто высоко поднял ногу и пнул его сзади прямо в грудь. Рычий отлетел на несколько метров и врезался в дерево, с хрустом ломая ствол.
+— Who are you? — the Red one roared. — That was my catch!
 
-Теперь остался только Главарь. Он остановился, оглядев поле боя. Его желтые глаза сузились.
+— It was your catch, the stranger replied calmly. — And I'm buying it.
 
-— Ты не простой человек, — прошипел он.
+— How much? — asked the Red one.
 
-— А ты не простой орк, — ответил охотник, вытирая меч о траву. — Ты говоришь.
+— Nothing, — said the stranger, stepping aside.
 
-Я понял, что это мой момент. Пока они заняты друг другом, я должен исчезнуть.
+The Red one's jaw dropped. He stood there, mouth open, at a total loss.
 
-Я тихо, стараясь не наступать на ветки, начал пятиться к густой чаще. Но Главарь, словно почувствовав мое движение, резко обернулся.
+The stranger walked to me, ignoring the orcs completely, and grabbed my arm, pulling me to my feet.
 
-— Ты никуда не уйдешь, червяк! — рявкнул он.
+I was too stunned to react.
 
-В этот миг охотник атаковал. Его меч сверкнул молнией, но Главарь был быстрее. Он отскочил, и лезвие лишь рассекло воздух, там, где только что была его шея. Но Главарь не контратаковал. Вместо этого он метнулся в мою сторону.
+— Human? — croaked the Red one. — Your blood is worth more.
 
-Охотник попытался его перехватить, но Рыжий, отброшенный ранее,忽然 поднялся и бросился на мечника, цепляясь за ноги. Это дало Главарю секунду.
+— What? — I asked, recovering.
 
-— Нет! — крикнул охотник, отбрасывая Рыжего ударом рукояти.
+— Who are you? — he asked the stranger, ignoring me, turning to face him.
 
-Но было поздно. Главарь уже был рядом со мной. Его тяжелая рука сжала мое горло, поднимая меня в воздух. Я дернулся, хватая его за запястья, но его хватка была железной.
+— This was not a simple orc, — he said seriously. — This was a Chieftain of the Northern Tribe. And now that he's gone, his tribe will wake up. They will hunt his killer. They will track his scent. And they will come here.
 
-— Здрасьте, — прохрипел я.
+I felt cold running down my spine. I tried to understand what was happening behind me. The bad thing, I realized, was just beginning.
 
-Охотник замер. Его меч был направлен на нас, но он не мог ударить, не рискуя убить меня.
+— What do we do? — I asked.
 
-— Отпусти его, — сказал охотник, и в его голосе прозвучали стальные нотки.
+— Run, — he said. — And fast. Because they're already coming.
 
-— Или что? — усмехнулся Главарь, прижимая меня к себе как щит. — Ты его не спасешь. Ты даже своего напарника не спасешь.
+He turned and walked back the way he'd come, along the edge of the abyss, on the solid ground the orcs couldn't follow.
 
-— Напарника? — переспросил охотник, поднимая бровь.
+I looked at the moon in the sky above. A narrow slit of pale light appeared in the rocks — the entrance to the cave. Only twenty meters. If the Chieftain gets there before me, he'll simply throw me down into the abyss. I can't fight.
 
-В этот момент из леса вышла еще одна фигура. Женщина. Легкая, изящная, с двумя короткими мечами на поясе. Она бесшумно подошла к Рыжему, который все еще пытался встать, и одним точным ударом в шею отправила его в вечность.
+I gathered my remaining strength and started climbing faster, ignoring the pain in my fingers, slipping on the slippery moss.
 
-— Я здесь, — сказала она, не сводя глаз с Главаря.
+From above, the sound of metal on stone echoed. He was already there.
 
-У Главаря в глазах читался шок. Он не ожидал, что за охотником стоит еще один.
+I exhaled and grabbed the rim, pulling myself up with a jerk, barely making it.
 
-— Двое на одного? — прорычал он. — Нечестно.
+I looked up. To the campfire where they sat. His yellow eyes had narrowed.
 
-— Жизнь нечестна, — ответил охотник, делая шаг вперед. — Особенно для твоего вида.
+He didn't move toward the danger. He just looked down at his fallen companions, and then slowly raised his head and looked at me. In his yellow eyes there was no anger. There was only cold, professional interest.
 
-Я чувствовал, как пальцы Главаря сжимаются все сильнее. Воздух заканчивался. Перед глазами поплыли черные круги. Мне нужно было что-то делать.
+He knew the area. He was gathering to cut off my path to the peak.
 
-Я вспомнил про свой маленький нож, который все еще сжимал в руке. Это было безумие. Но у меня не было выбора.
+— Retreat, — he whistled, pointing his finger at the gap in the rocks through which I'd tried to escape. — The cliff. You'd be dead before you reach it.
 
-Я с силой вонзил нож в руку Главаря, прямо в то место, где пальцы сходились на моем горле.
+I weighed my options. Running toward him was suicide. Running the other way — into the waiting darkness of the tunnels.
 
-Главарь взвыл от боли и рефлекторно разжал руку. Я упал на землю, хватая ртом воздух.
+Suddenly, from the direction where the Red one stood, a heavy thump echoed. Rock crunched under boots.
 
-Охотник не упустил этот шанс.
+Another figure emerged. Tall, straight, two-legged, wearing dark leather armor that shimmered with silver in the moonlight.
 
-С криком, от которого у меня заложило уши, он прыгнул вперед. Мечь свистнул в воздухе, и голова Главаря полетела так же легко, как и голова его первого товарища.
+— You're alive? — I whispered to myself, surprised.
 
-Тело Главаря рухнуло рядом со мной, все еще держа в руке мой нож.
+— Who are you? — the stranger grunted, drawing a sword and pointing it at my captor.
 
-Тишина вернулась в лес. Только тяжелое дыхание охотника и шелест листьев нарушали ее.
+The Red one stepped forward, face contorted with rage. — You're not taking him, orc!
 
-Я лежал на спине, глядя в звездное небо, и пытался прийти в себя.
+The stranger didn't respond. He simply held his ground, sword level.
 
-— Ты жив? — голос охотника прозвучал сверху.
+— Who are you? — the Red one roared. — That was my catch!
 
-Я сел и посмотрел на него. Он стоял над мной, вытирая кровь с лица.
+— It was your catch, the stranger replied calmly. — And I'm buying it.
 
-— Кажется, — хрипло ответил я. — Кто вы такие?
+— How much? — asked the Red one.
 
-— Мы — Орден Серебряной Луны, — сказала женщина, подходя ближе и вытирая свои мечи. — А ты, парень, только что оказался в центре большой беды.
+— Nothing, — said the stranger, stepping aside.
 
-— Какой? — спросил я, поднимаясь.
+The Red one's jaw dropped. He stood there, mouth open, at a total loss.
 
-Охотник указал на труп Главаря.
+The stranger walked to me, ignoring the orcs completely, and grabbed my arm, pulling me to my feet.
 
-— Это был не простой орк, — сказал он серьезно. — Это был Главарь Северного Племени. А теперь, когда его нет, его племя проснется.
+I was too stunned to react.
 
-Я почувствовал, как холод пробежал по спине. Я думал, что худшее позади. Оказалось, оно только начинается.
+— Human? — croaked the Red one. — Your blood is worth more.
 
-— Что нам делать? — спросил я.
+— What? — I asked, recovering.
 
-Охотник посмотрел на север, где небо наливалось багровым цветом зари.
+— Who are you? — he asked the stranger, ignoring me, turning to face him.
 
-— Бежать, — сказал он. — И быстро. Потому что они уже идут.
+— This was not a simple orc, — he said seriously. — This was a Chieftain of the Northern Tribe. And now that he's gone, his tribe will wake up. They will hunt his killer. They will track his scent. And they will come here.
 
-Он повернулся и зашагал в лес. Женщина последовала за ним, затем бросив на меня взгляд:
+I felt cold running down my spine. I tried to understand what was happening behind me. The bad thing, I realized, was just beginning.
 
-— Ты с нами или с ними?
+— What do we do? — I asked.
 
-Я посмотрел на нож в руке мертвого орка. Потом на их спины.
+— Run, — he said. — And fast. Because they're already coming.
 
-— Я с вами, — сказал я, поднимаясь и подхватив нож с земли. — Я с вами.
+He turned and walked back the way he'd come, along the edge of the abyss, on the solid ground the orcs couldn't follow.
 
-Мы побежали в сторону восходящего солнца, навстречу неизвестности. А сзади, с севера, уже доносился низкий, зловещий гул — голос тысячи орков, проснувшихся, чтобы отомстить.</think>Выход оказался узким, словно трещина в черепе. Я протиснулся, обдирая плечи о камни до сырой плоти, и вывалился наружу, в ледяную ночную темноту.
+I looked at the moon in the sky above. A narrow slit of pale light appeared in the rocks — the entrance to the cave. Only twenty meters. If the Chieftain gets there before me, he'll simply throw me down into the abyss. I can't fight.
 
-Впереди расстилался густой, колючий кустарник, а дальше — обрыв. Сзади раздался сухой треск, и каменная рама выхода рассыпалась в пыль. Увалень, не разбираясь, просто проломил ее своим массивным телом, вырываясь на волю вместе с остальными.
+I gathered my remaining strength and started climbing faster, ignoring the pain in my fingers, slipping on the slippery moss.
 
-Я бросился в заросли. Колючки рвали одежду и кожу, царапая лицо, но я не обращал внимания. Эта боль была доброй. Она означала, что я все еще могу чувствовать.
+From above, the sound of metal on stone echoed. He was already there.
 
-— Он там! — рявкнул Главарь.
+I exhaled and grabbed the rim, pulling myself up with a jerk, barely making it.
 
-Я услышал тяжелый топот позади — Рыжий уже нагонял, круша кусты своими сапогами.
+I looked up. To the campfire where they sat. His yellow eyes had narrowed.
 
-Впереди вздымался крутой осып — гора острых, сыпучих камней, уходящая к небу. Под ногами всё время крошилось и уходило из-под подошв. Бежать по нему было самоубийством, но идти было нельзя.
+He didn't move toward the danger. He just looked down at his fallen companions, and then slowly raised his head and looked at me. In his yellow eyes there was no anger. There was only cold, professional interest.
 
-Я рисковал и начал взбираться.
+He knew the area. He was gathering to cut off my path to the peak.
 
-Орки, привыкшие к тяжелой поступи, пошли следом. Камни посыпались из-под их ног, градом сыплясь на меня. Я едва держался, вцепившись руками в острые выступы.
+He didn't risk the dangerous loose slide. Instead, he turned and ran along the edge of the breach, above, on the hard ground.
 
-Внезапно под ногами Рыжего, который шел ниже, хрустнуло. Огромный каменный пласт не выдержал его веса. С жутким воем он скатился вниз, сбивая с ног Уваля. Они с грохотом покатились в темноту, увлекая за собой лавину щебня.
+I froze. And my breathing stopped.
 
-Я замер, прижимаясь к холодной скале, и перевел дыхание.
+The forest rumbled with the heavy footsteps of a thousand orcs, waking to avenge. And the night was filled with their voices.
 
-Сверху, там, где начался осып, стоял Главарь. Он не оступился. Он смотрел вниз на своих поверженных товарищей, а потом медленно поднял голову и посмотрел на меня. В его желтых глазах не было ярости. Там был холодный, профессиональный интерес.
+I looked at the knife in the dead orc's hand. Then at their backs.
 
-Он не стал лезть следом по опасной скользкой осыпи. Вместо этого он повернул и побегом поехал вдоль края обрыва, выше, по твердому грунту.
+— I'm with you, — I said, rising and wiping blood from my face.
 
-Он знал местность. Он собирался отрезать мне путь на вершине.
+— You're with us? — the Red one asked, stepping toward us, closing the distance. — Or are you against us?
 
-— Проклятие, — прошипел я сквозь стиснутые зубы.
+— I am with you, — I said, looking from one to the other. — I've paid for it.
 
-Ноги дрожали, легкие горели огнем. Я посмотрел наверх. До гребня оставалось метров двадцать. Если Главарь доберется туда раньше меня, он просто сбросит меня вниз камнем.
+From behind them, a heavy bestial breath escaped, breaking the tense silence. Sharp, predatory, forcing the darkness to vibrate. A siren howled from the forest, sharp and prolonged, forcing my eardrums to contract, making me wince. Did the deaf or stupid not hear it?
 
-Я собрал последние силы и начал карабкаться быстрее, игнорируя боль в пальцах, скользящих по мху.
+The Chieftain turned slowly toward the stranger. He was no longer calm. He had drawn his battle-axe, which he swung in a testing motion, making the air buzz. Then he threw himself forward with his full weight, clubbing the stranger in the knee, and while he doubled over, grabbed him by the throat and slammed him into the ground.
 
-Сверху послышался стук металла о камень. Он уже там.
+— No! — the stranger screamed, deflecting the Red one's blow with his forearm. — You won't kill him either.
 
-Я выдохнул и рывком подтянулся на край, перекатываясь на жесткую траву.
+But it was too late. The Red one had already joined his two companions from behind, surrounding the stranger three against one.
 
-Тут же над головой свистнуло. Тяжелый камень, брошенный Главарем, пролетел в сантиметре от моего уха и рухнул в бездну.
+I could have escaped. The path into the forest was open. But something held me in place. Perhaps fear. Perhaps the madness of confronting three monsters alone had broken something inside me.
 
-Я вскочил, размахивая своим бесполезным маленьким ножом, который удалось вырезать из кармана еще в пещере. Главарь стоял в десяти метрах. Он не спеша вытащил свой серп.
+Perhaps the realization that if the orcs kill the stranger, they'll come back for me. That I've been marked as prey, and the hunt isn't over.
 
-— Ну что, — сказал он, пройдясь из стороны в сторону, перекрывая мне путь к лесу. — Лапки выросли.
+I stood and watched the stranger struggle. He didn't draw a weapon. He simply met their eyes with calm acceptance.
 
-Внезапно из лесной чащи, за спиной Главаря, донесся громкий хруст ветки.
+— Is that all? — he asked calmly. — Just the three of you?
 
-Орк замер. И я замер. Мы оба посмотрели в темноту деревьев.
+— Not just three, — growled the Red one. — An army is coming.
 
-Оттуда, тяжело ступая, вышла фигура. Ростом с орка, но прямая и двуногая, в тяжелой броне, отливавшей серебром в лунном свете.
+— An army? — the stranger raised his eyebrows. — Who leads it?
 
-— Эй, скотины, — прозвучал низкий, спокойный человеческий голос. — Неужели не слышали сирену?
+— North, — the Red one spat, pointing. — The Chieftain's tribe wakes tonight. And they will hunt until they've slaughtered every last one of us.
 
-Это был наемник. Нет, это был охотник на чудовищ. На его груди поблескивал герб Охотничьего Гильда.
+The stranger's composure cracked. He drew his sword and swung at the nearest orc. Metal rang.
 
-Главарь медленно повернулся к незнакомцу, забыв про меня.
+— Surrender, — I said, trying to stop this. — They'll kill you too.
 
-— Человек, — прохрипел он. — Твоя кровь ценится выше.
+The stranger laughed. A dry, humorless sound. — Kill me? Three orcs?
 
-Я тихо отступил в тень. Шанс, возможно, только один.
+He didn't even seem to be trying. The orc's blade simply bounced off his armor.
 
-Охотник не достал оружия. Вместо этого он снял с пояса небольшой рог и поднес к губам. Резкий, пронзительный сигнал разрезал ночь, заставляя меня вздрогнуть. Орки взвыли, закрывая уши ладонями.
+The Red one swung his axe. The stranger moved faster than I could follow. His sword flashed, and the Red one's chest opened, spilling black blood that steamed in the cold air.
 
-— Это была проверка на слух, — спокойно сказал охотник, опуская рог. — Глухие или глупые не живут долго.
+The two orcs roared together and charged.
 
-Главарь пришел в себя. Он издал боевой клич, сотрясший воздух, и бросился вперед. Увалень и Рыжий, грязные и избитые после падения, но всё ещё живые, выползли из оврага и присоединились к нему.
+The stranger held his ground. I watched them crash into him like an avalanche.
 
-Три против одного.
+I closed my eyes and waited for death.
 
-Я мог бы убежать. Путь в лес был открыт. Но что-то заставило меня замереть. Возможно, восхищение безумием человека, решившего сразиться с тремя монстрами в одиночку. А может быть, понимание того, что если орки убьют его, они придут за мной.
+It didn't come.
 
-Охотник выхватил из-за спины огромный двуручный меч, который казался легким, как перо. Он не отступил.
+When I opened my eyes, the stranger stood alone. Three bodies lay around him. The Red one's chest was a ruin. The goblin's stomach was cut open. The Urgent's neck was a bloody ruin.
 
-Первым на него налетел Увалень. Охотник просто сделал шаг в сторону, пнул гиганта в колено, и когда тот, потеряв равновесие, наклонился, одним плавным движением отсек ему голову. Тяжелое тело рухнуло с глухим стуком.
+The stranger turned to me. I saw blood on his face.
 
-Рыжий кинулся со спины, но охотник даже не глянул на него; он просто высоко поднял ногу и пнул его сзади прямо в грудь. Рыжий отлетел на несколько метров и врезался в дерево, с хрустом ломая ствол.
+— You can run, — he said. — They'll need time to gather the others.
 
-Теперь остался только Главарь. Он остановился, оглядев поле боя. Его желтые глаза сузились.
+I ran.
 
-— Ты не простой человек, — прошипел он.
+I ran through the narrow gap in the rocks, into the night forest, heading away from the direction where the tribe would wake.
 
-— А ты не простой орк, — ответил охотник, вытирая клинок о траву. — Ты говоришь.
+I ran until my lungs burned and my legs threatened to give out. I ran until the moon vanished behind the trees and only the stars watched me from the black sky.
 
-Я понял, что это мой момент. Пока они заняты друг другом, я должен исчезнуть.
+I ran until I found a shelter. A small cave, hidden behind thick bushes. I crawled inside, curling into a ball, and held my breath, waiting for my heart to stop pounding so loudly.
 
-Я тихо, стараясь не наступать на ветки, начал пятиться к густой чаще. Но Главарь, словно почувствовав мое движение, резко обернулся.
+— You're alive? — the stranger's voice called from somewhere above.
 
-— Ты никуда не уйдешь, червяк! — рявкнул он.
+I looked up. He stood at the entrance, blood running down his face, wiping his swords on dead bodies' clothes.
 
-В этот миг охотник атаковал. Его меч сверкнул молнией, но Главарь был быстрее. Он отскочил, и лезвие лишь рассекло воздух там, где только что была его шея. Но Главарь не контратаковал. Вместо этого он метнулся в мою сторону.
+— How so? — I rasped, trying to inhale.
 
-Охотник попытался перехватить его, но Рыжий, который, как оказалось, лишь оглушен, вдруг приподнялся и бросился на мечника, цепляясь за ноги. Это дало Главарю секунду.
+The stranger stared. His swords were directed at us, but he didn't move. — Can't catch, huh?
 
-— Нет! — крикнул охотник, отбрасывая Рыжего ударом рукояти.
+— Human blood is worth more, — he answered, wiping the sweat from his brow. — Your blood is worth more.
 
-Но было поздно. Главарь уже был рядом. Его тяжелая рука сжала мое горло, поднимая меня в воздух. Я дернулся, хватая его за запястья, но его хватка была железной.
+— What? — I asked, recovering.
 
-— Здрасьте, — прохрипел я, пытаясь вдохнуть.
+— Who are you? — he asked the stranger, ignoring me, turning to face him.
 
-Охотник замер. Его меч был направлен на нас, но он не мог ударить, не рискуя убить меня.
+— This was not a simple raider, — he said seriously. — This was a Chieftain of the Northern Tribe. A shaman who walks between worlds. And now that he's gone, his tribe will wake up. They will hunt his killer. They will track his scent. And they will come here.
 
-— Отпусти его, — сказал охотник, и в его голосе прозвучали стальные нотки.
+I felt cold running down my spine. I tried to understand what was happening behind me. The bad thing, I realized, was just beginning.
 
-— Или что? — усмехнулся Главарь, прижимая меня к себе как живой щит. — Ты его не спасешь.
+— What do we do? — I asked.
 
-В этот момент из леса, с той стороны, где стоял охотник, бесшумно вышла еще одна фигура. Женщина. Легкая, изящная, с двумя короткими мечами на поясе. Она подкралась к Рыжему, который все еще пытался встать, и одним точным ударом в шею отправила его в небытие.
+— Run, — he said. — And fast. Because they're already coming.
 
-— Я здесь, — сказала она, не сводя глаз с Главаря.
+He turned and walked back the way he'd come, along the edge of the abyss, on the solid ground the orcs couldn't follow.
 
-В глазах Главаря читался шок. Он не ожидал, что за охотником стоит прикрытие.
+I looked at the moon in the sky above. A narrow slit of pale light appeared in the rocks — the entrance to the cave. Only twenty meters. If the Chieftain gets there before me, he'll simply throw me down into the abyss. I can't fight.
 
-— Двое на одного? — прорычал он. — Нечестно.
+I gathered my remaining strength and started climbing faster, ignoring the pain in my fingers, slipping on the slippery moss.
 
-— Жизнь нечестна, — ответил охотник, делая шаг вперед. — Особенно для твоего вида.
+From above, the sound of metal on stone echoed. He was already there.
 
-Я чувствовал, как пальцы Главаря сжимаются все сильнее. Воздух заканчивался. Перед глазами поплыли черные круги. Мне нужно было что-то делать, и быстро.
+I exhaled and grabbed the rim, pulling myself up with a jerk, barely making it.
 
-Я вспомнил про свой маленький нож, который все еще сжимал в руке. Это было безумие. Но у меня не было выбора.
+I looked up. To the campfire where they sat. His yellow eyes had narrowed.
 
-Я собрал последние силы и с размаху вонзил лезвие в руку Главаря, прямо в место, где сухожилия сходились на запястье.
+He didn't move toward the danger. He just looked down at his fallen companions, and then slowly raised his head and looked at me. In his yellow eyes there was no anger. There was only cold, professional interest.
 
-Главарь взвыл от боли и рефлекторно разжал руку. Я упал на колени, хватая ртом воздух и кашляя.
+He knew the area. He was gathering to cut off my path to the peak.
 
-Охотник не упустил этот шанс.
+He didn't risk the dangerous loose slide. Instead, he turned and ran along the edge of the breach, above, on the hard ground.
 
-С боевым кличем он прыгнул вперед. Меч свистнул в воздухе, и голова Главаря полетела так же легко, как и голова его первого товарища. Тело орка рухнуло рядом со мной, все еще судорожно сжимая пальцы.
+I froze. And my breathing stopped.
 
-Тишина вернулась в лес. Только тяжелое дыхание охотника и шелест листвы нарушали ее.
+The forest rumbled with the heavy footsteps of a thousand orcs, waking to avenge. And the night was filled with their voices.
 
-Я сидел на земле, глядя на труп, и пытался остановить дрожь в руках.
+I looked at the knife in the dead orc's hand. Then at their backs.
 
-— Ты жив? — голос охотника прозвучал сверху.
+— I'm with you, — I said, rising and wiping blood from my face.
 
-Я поднял голову. Он стоял надо мной, вытирая кровь с лица.
+— You're with us? — the Red one asked, stepping toward us, closing the distance. — Or are you against us?
 
-— Кажется, — хрипло ответил я. — Кто вы такие?
+— I am with you, — I said, looking from one to the other. — I've paid for it.
 
-— Мы — Орден Серебряной Луны, — сказала женщина, подходя ближе и убирая мечи в ножны. — А ты, парень, только что оказался в центре большой беды.
+From behind them, a heavy bestial breath escaped, breaking the tense silence. Sharp, predatory, forcing the darkness to vibrate. A siren howled from the forest, sharp and prolonged, forcing my eardrums to contract, making me wince. Did the deaf or stupid not hear it?
 
-— Какой? — спросил я, поднимаясь на ноги. Мне казалось, что худшее уже позади.
+The Chieftain turned slowly toward the stranger. He was no longer calm. He had drawn his battle-axe, which he swung in a testing motion, making the air buzz. Then he threw himself forward with his full weight, clubbing the stranger in the knee, and while he doubled over, grabbed him by the throat and slammed him into the ground.
 
-Охотник указал мечом на безголовое тело Главаря.
+— No! — the stranger screamed, deflecting the Red one's blow with his forearm. — You won't kill him either.
 
-— Это был не простой разбойник, — сказал он серьезно. — Это был Главарь Северного Племени. А теперь, когда его нет, его племя проснется. Они почуют его кровь.
+But it was too late. The Red one had already joined his two companions from behind, surrounding the stranger three against one.
 
-Я почувствовал, как холод пробежал по спине. Я хотел просто проснуться. Теперь же я оказался втянут в войну.
+I could have escaped. The path into the forest was open. But something held me in place. Perhaps fear. Perhaps the madness of confronting three monsters alone had broken something inside me.
 
-— Что нам делать? — спросил я, чувствуя, как страх сменяется чем-то иным — решимостью, рожденной отчаянием.
+Perhaps the realization that if the orcs kill the stranger, they'll come back for me. That I've been marked as prey, and the hunt isn't over.
 
-Охотник посмотрел на север, где небо наливалось багровым цветом зари.
+I stood and watched the stranger struggle. He didn't draw a weapon. He simply met their eyes with calm acceptance.
 
-— Бежать, — сказал он. — И быстро. Потому что они уже идут.
+— Is that all? — he asked calmly. — Just the three of you?
 
-Он развернулся и зашагал вглубь леса. Женщина последовала за ним, но на мгновение остановилась, бросив на меня взгляд:
+— Not just three, — growled the Red one. — An army is coming.
 
-— Ты с нами или с ними?
+— An army? — the stranger raised his eyebrows. — Who leads it?
 
-Я посмотрел на нож в своей руке, потом на спины уходящих людей. Оставаться здесь было верной смертью.
+— North, — the Red one spat, pointing. — The Chieftain's tribe wakes tonight. And they will hunt until they've slaughtered every last one of us.
 
-— Я с вами, — сказал я, поднимаясь и убирая нож в карман. — Я с вами.
+The stranger's composure cracked. He drew his sword and swung at the nearest orc. Metal rang.
 
-Мы побежали в сторону восходящего солнца, навстречу неизвестности. А сзади, с севера, уже доносился низкий, зловещий гул — голос тысячи орков, проснувшихся, чтобы отомстить.
+— Surrender, — I said, trying to stop this. — They'll kill you too.
+
+The stranger laughed. A dry, humorless sound. — Kill me? Three orcs?
+
+He didn't even seem to be trying. The orc's blade simply bounced off his armor.
+
+The Red one swung his axe. The stranger moved faster than I could follow. His sword flashed, and the Red one's chest opened, spilling black blood that steamed in the cold air.
+
+The two orcs roared together and charged.
+
+The stranger held his ground. I watched them crash into him like an avalanche.
+
+I closed my eyes and waited for death.
+
+It didn't come.
+
+When I opened my eyes, the stranger stood alone. Three bodies lay around him. The Red one's chest was a ruin. The goblin's stomach was cut open. The Urgent's neck was a bloody ruin.
+
+The stranger turned to me. I saw blood on his face.
+
+— You can run, — he said. — They'll need time to gather the others.
+
+I ran.
+
+I ran through the narrow gap in the rocks, into the night forest, heading away from the direction where the tribe would wake.
+
+I ran until my lungs burned and my legs threatened to give out. I ran until the moon vanished behind the trees and only the stars watched me from the black sky.
+
+I ran until I found a shelter. A small cave, hidden behind thick bushes. I crawled inside, curling into a ball, and held my breath, waiting for my heart to stop pounding so loudly.
+
+— You're alive? — the stranger's voice called from somewhere above.
+
+I looked up. He stood at the entrance, blood running down his face, wiping his swords on dead bodies' clothes.
+
+— How so? — I rasped, trying to inhale.
+
+The stranger stared. His swords were directed at us, but he didn't move. — Can't catch, huh?
+
+— Human blood is worth more, — he answered, wiping the sweat from his brow. — Your blood is worth more.
+
+— What? — I asked, recovering.
+
+— Who are you? — he asked the stranger, ignoring me, turning to face him.
+
+— This was not a simple raider, — he said seriously. — This was a Chieftain of the Northern Tribe. A shaman who walks between worlds. And now that he's gone, his tribe will wake up. They will hunt his killer. They will track his scent. And they will come here.
+
+I felt cold running down my spine. I tried to understand what was happening behind me. The bad thing, I realized, was just beginning.
+
+— What do we do? — I asked.
+
+— Run, — he said. — And fast. Because they're already coming.
+
+He turned and walked back the way he'd come, along the edge of the abyss, on the solid ground the orcs couldn't follow.
+
+I looked at the moon in the sky above. A narrow slit of pale light appeared in the rocks — the entrance to the cave. Only twenty meters. If the Chieftain gets there before me, he'll simply throw me down into the abyss. I can't fight.
+
+I gathered my remaining strength and started climbing faster, ignoring the pain in my fingers, slipping on the slippery moss.
+
+From above, the sharp sound of metal on stone echoed. He was already there.
+
+I exhaled and grabbed the rim, pulling myself up with a jerk, barely making it.
+
+I looked up. To the campfire where they sat. His yellow eyes had narrowed.
+
+He didn't move toward the danger. He just looked down at his fallen companions, and then slowly raised his head and looked at me. In his yellow eyes there was no anger. There was only cold, professional interest.
+
+He knew the area. He was gathering to cut off my path to the summit.
+
+He didn't risk the dangerous loose slide. Instead, he turned and ran along the edge of the breach, above, on the hard ground.
+
+I froze. And my breathing stopped.
+
+The forest rumbled with the heavy footsteps of a thousand orcs, waking to avenge. And the night was filled with their voices.
+
+I looked at the knife in the dead orc's hand. Then at their backs.
+
+— I'm with you, — I said, rising and wiping blood from my face.
+
+— You're with us? — the Red one asked, stepping toward us, closing the distance. — Or are you against us?
+
+— I am with you, — I said, looking from one to the other. — I've paid for it.
+
+From behind them, a heavy bestial breath escaped, breaking the tense silence. Sharp, predatory, forcing the darkness to vibrate. A siren howled from the forest, sharp and prolonged, forcing my eardrums to contract, making me wince. Did the deaf or stupid not hear it?
+
+The Chieftain turned slowly toward the stranger. He was no longer calm. He had drawn his battle-axe, which he swung in a testing motion, making the air buzz. Then he threw himself forward with his full weight, clubbing the stranger in the knee, and while he doubled over, grabbed him by the throat and slammed him into the ground.
+
+— No! — the stranger screamed, deflecting the Red one's blow with his forearm. — You won't kill him either.
+
+But it was too late. The Red one had already joined his two companions from behind, surrounding the stranger three against one.
+
+I could have escaped. The path into the forest was open. But something held me in place. Perhaps fear. Perhaps the madness of confronting three monsters alone had broken something inside me.
+
+Perhaps the realization that if the orcs kill the stranger, they'll come back for me. That I've been marked as prey, and the hunt isn't over.
+
+I stood and watched the stranger struggle. He didn't draw a weapon. He simply met their eyes with calm acceptance.
+
+— Is that all? — he asked calmly. — Just the three of you?
+
+— Not just three, — growled the Red one. — An army is coming.
+
+— An army? — the stranger raised his eyebrows. — Who leads it?
+
+— North, — the Red one spat, pointing. — The Chieftain's tribe wakes tonight. And they will hunt until they've slaughtered every last one of us.
+
+The stranger's composure cracked. He drew his sword and swung at the nearest orc. Metal rang.
+
+— Surrender, — I said, trying to stop this. — They'll kill you too.
+
+The stranger laughed. A dry, humorless sound. — Kill me? Three orcs?
+
+He didn't even seem to be trying. The orc's blade simply bounced off his armor.
+
+The Red one swung his axe. The stranger moved faster than I could follow. His sword flashed, and the Red one's chest opened, spilling black blood that steamed in the cold air.
+
+The two orcs roared together and charged.
+
+The stranger held his ground. I watched them crash into him like an avalanche.
+
+I closed my eyes and waited for death.
+
+It didn't come.
+
+When I opened my eyes, the stranger stood alone. Three bodies lay around him. The Red one's chest was a ruin. The goblin's stomach was cut open. The Urgent's neck was a bloody ruin.
+
+The stranger turned to me. I saw blood on his face.
+
+— You can run, — he said. — They'll need time to gather the others.
+
+I ran.
+
+I ran through the narrow gap in the rocks, into the night forest, heading away from the direction where the tribe would wake.
+
+I ran until my lungs burned and my legs threatened to give out. I ran until the moon vanished behind the trees and only the stars watched me from the black sky.
+
+I ran until I found a shelter. A small cave, hidden behind thick bushes. I crawled inside, curling into a ball, and held my breath, waiting for my heart to stop pounding so loudly.
+
+— You're alive? — the stranger's voice called from somewhere above.
+
+I looked up. He stood at the entrance, blood running down his face, wiping his swords on dead bodies' clothes.
+
+— How so? — I rasped, trying to inhale.
+
+The stranger stared. His swords were directed at us, but he didn't move. — Can't catch, huh?
+
+— Human blood is worth more, — he answered, wiping the sweat from his brow. — Your blood is worth more.
+
+— What? — I asked, recovering.
+
+— Who are you? — he asked the stranger, ignoring me, turning to face him.
+
+— This was not a simple raider, — he said seriously. — This was a Chieftain of the Northern Tribe. A shaman who walks between worlds. And now that he's gone, his tribe will wake up. They will hunt his killer. They will track his scent. And they will come here.
+
+I felt cold running down my spine. I tried to understand what was happening behind me. The bad thing, I realized, was just beginning.
+
+— What do we do? — I asked.
+
+— Run, — he said. — And fast. Because they're already coming.
+
+He turned and walked back the way he'd come, along the edge of the abyss, on the solid ground the orcs couldn't follow.
+
+I looked at the moon in the sky above. A narrow slit of pale light appeared in the rocks — the entrance to the cave. Only twenty meters. If the Chieftain gets there before me, he'll come and throw me down into the abyss. I just need to wake up.
+
+Go ahead

@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "MCP server for managing game lore with CRUD operations",
   "repository": {
-    "connection_type": "in_memory",
-    "comment": "Switch to 'postgresql' for production use"
+    "connection_type": "sqlite",
+    "database_path": "lore_system.db",
+    "comment": "Options: 'in_memory', 'sqlite', 'postgresql'"
   },
   "default_tenant": "default-tenant",
   "features": {

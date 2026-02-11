@@ -1,0 +1,61 @@
+{
+  "economy": {
+    "currencies": {
+      "gold": {
+        "symbol": "G",
+        "is_crypto": false
+      },
+      "silver": {
+        "symbol": "S",
+        "is_crypto": false
+      },
+      "crystal": {
+        "symbol": "C",
+        "is_crypto": false
+      }
+    },
+    "trade_routes": {
+      "main": {
+        "name": "Capital -> Town Main Road",
+        "from": "Capital City",
+        "to": "Trade Town",
+        "profit": "20.0%",
+        "volume": 1000
+      },
+      "secondary": {
+        "name": "Capital -> Port Coastal Route",
+        "from": "Capital City",
+        "to": "Coastal Port",
+        "profit": "15.0%",
+        "volume": 500
+      }
+    },
+    "barter_market": {
+      "location": "Capital City",
+      "commission": "5.0%",
+      "is_npc_managed": true
+    },
+    "taxes": {
+      "income": "10.0%",
+      "luxury": "15.0%"
+    },
+    "inflation": {
+      "rate": "105.0%",
+      "period_days": 30,
+      "currency": "Gold Coins"
+    },
+    "statistics": {
+      "total_routes": 2,
+      "active_routes": 2,
+      "avg_profit_margin": 0.175,
+      "daily_transaction_volume": 1500
+    }
+  },
+  "metadata": {
+    "tenant_id": "tenant_001",
+    "world_id": "world_001",
+    "export_date": "2026-01-30T21:16:22.760450",
+    "export_tool": "MythWeave Chronicles v1.0",
+    "author": "AAA Game Development Studio"
+  }
+}

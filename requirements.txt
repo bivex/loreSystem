@@ -1,6 +1,6 @@
 # Production Dependencies
 # Core
-python>=3.11,<3.13
+# python>=3.11,<3.13
 
 # Database
 psycopg2-binary>=2.9.9

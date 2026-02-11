@@ -1,0 +1,18 @@
+Prefab:
+  GameObject:
+    m_Children: []
+    m_Component: []
+    m_Layer: 0
+    m_Name: Valid Test Campaign
+    m_PrefabInternal: 0
+    m_PrefabParentObject: null
+    m_TagString: Campaign
+  m_ChildCount: 0
+  m_Component: 0
+  m_Scripting: 1
+  m_Tag: 0
+  m_Version: 1
+meta:
+  description: A properly structured campaign
+  difficulty: medium
+  type: main_story

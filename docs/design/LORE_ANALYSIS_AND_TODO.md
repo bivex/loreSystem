@@ -1,249 +1,246 @@
-# Лор-Система: Глубокий Анализ и План Улучшений
-## Lore System: Deep Analysis and Improvement Plan
+# Lore System: Deep Analysis and Improvement Plan
 
-> **Цель**: Создать игровую систему с максимальной связностью лора, увлекательным флоу, долгим удержанием игроков и монетизацией через награды и покупки.
->
 > **Goal**: Build a game system with maximum lore interconnection, engaging flow, long player retention, and monetization through rewards and purchases.
 
 ---
 
-## 🔴 КРИТИЧЕСКИЕ ПРОБЛЕМЫ / CRITICAL ISSUES
+## 🔴 CRITICAL ISSUES
 
-### 1. ❌ ОТСУТСТВУЕТ ИГРОВАЯ ЭКОНОМИКА / Missing Game Economy
+### 1. ❌ Missing Game Economy
 
-**Проблема**: Нет сущностей для монетизации и игровых ценностей.
+**Problem**: No entities for monetization and game values.
 
-**Отсутствующие сущности**:
-- ❌ `Currency` - игровые валюты (мягкая, твердая, премиум)
-- ❌ `PlayerInventory` - инвентарь игрока
-- ❌ `PlayerProgress` - прогресс игрока по лору
-- ❌ `Reward` - система наград (за квесты, достижения)
-- ❌ `Purchase` - покупки за фиат/игровую валюту
-- ❌ `Shop` - магазин с предметами
-- ❌ `Bundle` - наборы для покупки
-- ❌ `Achievement` - достижения
-- ❌ `DailyQuest` - ежедневные квесты для удержания
-- ❌ `SeasonPass` - сезонный пропуск
+**Missing entities**:
+- ❌ `Currency` - game currencies (soft, hard, premium)
+- ❌ `PlayerInventory` - player inventory
+- ❌ `PlayerProgress` - player progress through lore
+- ❌ `Reward` - reward system (for quests, achievements)
+- ❌ `Purchase` - purchases for fiat/game currency
+- ❌ `Shop` - shop with items
+- ❌ `Bundle` - purchase bundles
+- ❌ `Achievement` - achievements
+- ❌ `DailyQuest` - daily quests for retention
+- ❌ `SeasonPass` - season pass
 
-**Последствия**:
-- Невозможна монетизация
-- Нет системы наград
-- Нет мотивации для возвращения игроков
-- Нет прогрессии
+**Consequences**:
+- Monetization impossible
+- No reward system
+- No motivation for player return
+- No progression
 
-### 2. ❌ СЛАБАЯ СВЯЗАННОСТЬ ЛОРА / Weak Lore Interconnection
+### 2. ❌ Weak Lore Interconnection
 
-**Проблема**: Сущности существуют изолированно, нет глубоких связей.
+**Problem**: Entities exist in isolation, no deep connections.
 
-**Отсутствующие связи**:
-- ❌ `CharacterRelationship` - отношения между персонажами (друг, враг, любовник, соперник)
-- ❌ `LocationConnection` - связи между локациями (дороги, порталы, тайные проходы)
-- ❌ `EventChain` - цепочки событий (причина-следствие)
-- ❌ `FactionMembership` - принадлежность к фракциям
-- ❌ `ItemOrigin` - история предметов (кто создал, кто владел)
-- ❌ `QuestDependency` - зависимости квестов (квесты-предшественники)
-- ❌ `CharacterMentor` - система наставничества
-- ❌ `LoreReference` - перекрестные ссылки в описаниях
+**Missing connections**:
+- ❌ `CharacterRelationship` - relationships between characters (friend, enemy, lover, rival)
+- ❌ `LocationConnection` - connections between locations (roads, portals, secret passages)
+- ❌ `EventChain` - event chains (cause-effect)
+- ❌ `FactionMembership` - faction membership
+- ❌ `ItemOrigin` - item history (who created, who owned)
+- ❌ `QuestDependency` - quest dependencies (precursor quests)
+- ❌ `CharacterMentor` - mentorship system
+- ❌ `LoreReference` - cross-references in descriptions
 
-**Последствия**:
-- Лор кажется плоским и несвязным
-- Нет глубины мира
-- Игрок не чувствует влияния своих действий
-- Нет эмерджентных историй
+**Consequences**:
+- Lore feels flat and disconnected
+- No world depth
+- Player doesn't feel impact of their actions
+- No emergent stories
 
-### 3. ❌ НЕТ ГАЧА-МЕХАНИКИ / Missing Gacha Mechanics
+### 3. ❌ Missing Gacha Mechanics
 
-**Проблема**: Заявлена "gacha RPG", но нет механики коллекционирования.
+**Problem**: "Gacha RPG" is claimed, but no collection mechanic exists.
 
-**Отсутствующие сущности**:
-- ❌ `Banner` - баннеры для гачи (ограниченные, стандартные)
-- ❌ `Pull` - история вытягиваний игрока
-- ❌ `RarityTier` - расширенная система редкостей (SSR, SR, R, N)
-- ❌ `CollectionBonus` - бонусы за сбор коллекций
-- ❌ `CharacterSkin` - скины персонажей (косметика)
-- ❌ `CharacterConstellation` - созвездия/дупликаты для усиления
-- ❌ `Pity` - система жалости (гарантированные дропы)
+**Missing entities**:
+- ❌ `Banner` - gacha banners (limited, standard)
+- ❌ `Pull` - player pull history
+- ❌ `RarityTier` - extended rarity system (SSR, SR, R, N)
+- ❌ `CollectionBonus` - bonuses for collecting collections
+- ❌ `CharacterSkin` - character skins (cosmetics)
+- ❌ `CharacterConstellation` - constellations/duplicates for upgrades
+- ❌ `Pity` - pity system (guaranteed drops)
 
-**Последствия**:
-- Основная монетизация невозможна
-- Нет коллекционного аспекта
-- Нет долгосрочных целей для китов
+**Consequences**:
+- Main monetization impossible
+- No collection aspect
+- No long-term goals for whales
 
-### 4. ❌ НЕТ ИГРОВОГО ФЛОУ / Missing Game Flow
+### 4. ❌ Missing Game Flow
 
-**Проблема**: Нет сущностей для управления потоком игрока.
+**Problem**: No entities for managing player flow.
 
-**Отсутствующие сущности**:
-- ❌ `Tutorial` - туториал и онбординг
-- ❌ `Milestone` - этапы прогресса
-- ❌ `Chapter` - главы основного сюжета
-- ❌ `Challenge` - испытания (time-limited)
-- ❌ `Expedition` - экспедиции/походы
-- ❌ `BattleFormation` - формации для боя
-- ❌ `EnemyEncounter` - встречи с врагами
-- ❌ `DifficultyLevel` - уровни сложности
+**Missing entities**:
+- ❌ `Tutorial` - tutorial and onboarding
+- ❌ `Milestone` - progress stages
+- ❌ `Chapter` - main story chapters
+- ❌ `Challenge` - challenges (time-limited)
+- ❌ `Expedition` - expeditions/raids
+- ❌ `BattleFormation` - formations for battle
+- ❌ `EnemyEncounter` - enemy encounters
+- ❌ `DifficultyLevel` - difficulty levels
 
-**Последствия**:
-- Нет структуры прогресса
-- Игрок не знает "что дальше"
-- Нет системы испытаний
-- Низкое удержание
+**Consequences**:
+- No progress structure
+- Player doesn't know "what's next"
+- No challenge system
+- Low retention
 
-### 5. ❌ НЕТ СОЦИАЛЬНЫХ МЕХАНИК / Missing Social Mechanics
+### 5. ❌ Missing Social Mechanics
 
-**Проблема**: Одиночная игра без взаимодействия.
+**Problem**: Single-player game without interaction.
 
-**Отсутствующие сущности**:
-- ❌ `Guild` - гильдии
-- ❌ `GuildMember` - члены гильдии
-- ❌ `GuildQuest` - гильдейские квесты
-- ❌ `Friend` - друзья игрока
-- ❌ `GiftExchange` - обмен подарками
-- ❌ `Leaderboard` - таблицы лидеров
-- ❌ `PvPMatch` - PvP матчи
-- ❌ `CoopRaid` - кооперативные рейды
+**Missing entities**:
+- ❌ `Guild` - guilds
+- ❌ `GuildMember` - guild members
+- ❌ `GuildQuest` - guild quests
+- ❌ `Friend` - player friends
+- ❌ `GiftExchange` - gift exchange
+- ❌ `Leaderboard` - leaderboards
+- ❌ `PvPMatch` - PvP matches
+- ❌ `CoopRaid` - cooperative raids
 
-**Последствия**:
-- Нет социального удержания
-- Нет вирального роста
-- Нет соревновательного аспекта
+**Consequences**:
+- No social retention
+- No viral growth
+- No competitive aspect
 
-### 6. ❌ НЕТ СИСТЕМЫ ПРОГРЕССИИ / Missing Progression System
+### 6. ❌ Missing Progression System
 
-**Проблема**: Не ясно, как персонажи и игрок прогрессируют.
+**Problem**: It's unclear how characters and players progress.
 
-**Отсутствующие сущности**:
-- ❌ `CharacterLevel` - уровни персонажей
-- ❌ `CharacterAscension` - возвышение персонажей
-- ❌ `TalentTree` - деревья талантов
-- ❌ `EquipmentSet` - наборы экипировки (сет-бонусы)
-- ❌ `WeaponUpgrade` - улучшение оружия
-- ❌ `ArtifactSet` - наборы артефактов
-- ❌ `PlayerLevel` - уровень игрока
-- ❌ `Mastery` - мастерство (skill-based progression)
+**Missing entities**:
+- ❌ `CharacterLevel` - character levels
+- ❌ `CharacterAscension` - character ascension
+- ❌ `TalentTree` - talent trees
+- ❌ `EquipmentSet` - equipment sets (set bonuses)
+- ❌ `WeaponUpgrade` - weapon upgrades
+- ❌ `ArtifactSet` - artifact sets
+- ❌ `PlayerLevel` - player level
+- ❌ `Mastery` - mastery (skill-based progression)
 
-**Последствия**:
-- Нет ощущения роста силы
-- Нет долгосрочных целей
-- Нет эндгейм-контента
+**Consequences**:
+- No sense of power growth
+- No long-term goals
+- No endgame content
 
 ---
 
-## 🟡 ВАЖНЫЕ УЛУЧШЕНИЯ / Important Improvements
+## 🟡 Important Improvements
 
-### 7. ⚠️ СЛАБЫЕ СВЯЗИ МЕЖДУ STORYLINES И GAMEPLAY
+### 7. ⚠️ Weak Links Between Storylines and Gameplay
 
-**Проблема**: `Storyline` не связан с игровыми механиками.
+**Problem**: `Storyline` not linked to game mechanics.
 
-**Нужные улучшения**:
-- Add `recommended_power_level` к storylines
-- Add `unlocked_by_quest_ids` для гейтинга контента
-- Add `rewards_on_completion` для мотивации
-- Add `branching_paths` для реиграбельности
+**Needed improvements**:
+- Add `recommended_power_level` to storylines
+- Add `unlocked_by_quest_ids` for content gating
+- Add `rewards_on_completion` for motivation
+- Add `branching_paths` for replayability
 
-### 8. ⚠️ ITEMS НЕ ИМЕЮТ ИГРОВОЙ ЦЕННОСТИ
+### 8. ⚠️ Items Have No Game Value
 
-**Проблема**: Items просто описания, нет игровых характеристик.
+**Problem**: Items are just descriptions, no game characteristics.
 
-**Нужные улучшения**:
+**Needed improvements**:
 - Add `stats` (attack, defense, HP, etc.)
-- Add `required_level` для прогрессии
-- Add `set_id` для сет-бонусов
-- Add `enhancement_level` (+0 до +15)
-- Add `sell_price` и `buy_price`
-- Add `stackable` и `max_stack`
+- Add `required_level` for progression
+- Add `set_id` for set bonuses
+- Add `enhancement_level` (+0 to +15)
+- Add `sell_price` and `buy_price`
+- Add `stackable` and `max_stack`
 
-### 9. ⚠️ CHARACTERS НЕ ИМЕЮТ ИГРОВОЙ МЕХАНИКИ
+### 9. ⚠️ Characters Have No Game Mechanics
 
-**Проблема**: Characters - только лор, нет боевых характеристик.
+**Problem**: Characters are only lore, no combat stats.
 
-**Нужные улучшения**:
+**Needed improvements**:
 - Add `base_stats` (HP, ATK, DEF, SPD, CRIT)
 - Add `element` (Fire, Water, Earth, etc.)
 - Add `role` (DPS, Tank, Healer, Support)
-- Add `energy_cost` для ультов
-- Add `pull_banner_id` откуда можно получить
+- Add `energy_cost` for ultimates
+- Add `pull_banner_id` where they can be obtained
 - Add `ownership_status` (owned, not_owned)
 
-### 10. ⚠️ QUESTS НЕ ИМЕЮТ НАГРАДЫ
+### 10. ⚠️ Quests Have No Rewards
 
-**Проблема**: Quests не возвращают конкретные награды.
+**Problem**: Quests don't return specific rewards.
 
-**Нужные улучшения**:
+**Needed improvements**:
 - Add `currency_rewards` (gold, gems, etc.)
-- Add `item_rewards` с количеством
-- Add `character_rewards` (для сюжетных)
+- Add `item_rewards` with quantities
+- Add `character_rewards` (for story ones)
 - Add `experience_rewards`
-- Add `repeatable` флаг
-- Add `daily_limit` для фарма
+- Add `repeatable` flag
+- Add `daily_limit` for farming
 
-### 11. ⚠️ EVENTS НЕ ВЛИЯЮТ НА МИР
+### 11. ⚠️ Events Don't Affect the World
 
-**Проблема**: Events - просто записи, нет последствий.
+**Problem**: Events are just records, no consequences.
 
-**Нужные улучшения**:
-- Add `world_state_changes` (что изменилось в мире)
-- Add `unlocks_locations` (открывает новые локации)
-- Add `unlocks_characters` (появление новых персонажей)
-- Add `triggers_events` (цепные реакции)
-- Add `reputation_changes` (влияние на фракции)
+**Needed improvements**:
+- Add `world_state_changes` (what changed in the world)
+- Add `unlocks_locations` (opens new locations)
+- Add `unlocks_characters` (appearance of new characters)
+- Add `triggers_events` (chain reactions)
+- Add `reputation_changes` (impact on factions)
 
-### 12. ⚠️ LOCATIONS НЕ ИМЕЮТ ИГРОВОГО КОНТЕНТА
+### 12. ⚠️ Locations Have No Game Content
 
-**Проблема**: Locations - только описания.
+**Problem**: Locations are only descriptions.
 
-**Нужные улучшения**:
-- Add `available_resources` (что можно собрать)
-- Add `enemy_types` (кто обитает)
-- Add `unlock_requirement` (как открыть)
-- Add `fast_travel_available` флаг
+**Needed improvements**:
+- Add `available_resources` (what can be gathered)
+- Add `enemy_types` (who inhabits)
+- Add `unlock_requirement` (how to open)
+- Add `fast_travel_available` flag
 - Add `danger_level` (1-10)
-- Add `discovered_by_player` статус
+- Add `discovered_by_player` status
 
 ---
 
-## 🟢 ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ / Additional Improvements
+## 🟢 Additional Improvements
 
-### 13. ✅ УЛУЧШЕНИЯ GUI (из gui_todo.txt)
+### 13. ✅ GUI Improvements (from gui_todo.txt)
 
-**Проблема**: GUI не юзер-френдли.
+**Problem**: GUI is not user-friendly.
 
-**Критичные исправления**:
+**Critical fixes**:
 - Replace JSON text inputs with visual editors (ChoiceTab, TokenboardTab)
 - Add search and filtering to all tabs
 - Add date/time pickers (SessionsTab)
 - Add relationship visualization
 - Add real-time validation indicators
 
-### 14. ✅ ДОБАВИТЬ СИСТЕМУ ТЕГОВ
+### 14. ✅ Add Tag System
 
-**Улучшение**: Расширить систему тегов для фильтрации.
+**Improvement**: Extend tag system for filtering.
 
-**Нужно**:
+**Needed**:
 - Add `TagCategory` (gameplay, lore, monetization, etc.)
-- Add `TagColor` для визуализации
+- Add `TagColor` for visualization
 - Add auto-tagging rules
 - Add tag popularity tracking
 
-### 15. ✅ УЛУЧШИТЬ СИСТЕМУ ВЫБОРОВ (Choices)
+### 15. ✅ Improve Choice System
 
-**Проблема**: Choices примитивные, нет игровых последствий.
+**Problem**: Choices are primitive, no game consequences.
 
-**Нужно**:
-- Add `stat_requirements` (нужна харизма 5+)
-- Add `item_requirements` (нужен ключ)
-- Add `currency_cost` (заплатить за выбор)
-- Add `reputation_impact` (влияние на фракции)
-- Add `permanent_consequences` флаг
+**Needed**:
+- Add `stat_requirements` (need charisma 5+)
+- Add `item_requirements` (need key)
+- Add `currency_cost` (pay for choice)
+- Add `reputation_impact` (impact on factions)
+- Add `permanent_consequences` flag
 
 ---
 
-## 📋 ПЛАН РЕАЛИЗАЦИИ / Implementation Plan
+## 📋 Implementation Plan
 
-### Phase 1: Игровая Экономика (1-2 недели)
-**Цель**: Сделать игру монетизируемой
+### Phase 1: Game Economy (1-2 weeks)
+**Goal**: Make the game monetizable
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `Currency` entity (gold, gems, premium currency)
 2. ✅ Create `PlayerProfile` entity (profile with currencies and progress)
 3. ✅ Create `Purchase` entity (IAP transactions)
@@ -251,16 +248,16 @@
 5. ✅ Create `Bundle` entity (special offers)
 6. ✅ Create `Reward` entity (quest/achievement rewards)
 
-**Связи**:
+**Connections**:
 - Quest → Reward (many-to-many)
 - Purchase → Bundle (one-to-many)
 - PlayerProfile → Currency (balances)
 - Shop → Item (available items)
 
-### Phase 2: Гача-Механика (1-2 недели)
-**Цель**: Реализовать основной драйвер монетизации
+### Phase 2: Gacha Mechanics (1-2 weeks)
+**Goal**: Implement main monetization driver
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `Banner` entity (gacha banners)
 2. ✅ Create `Pull` entity (pull history)
 3. ✅ Create `CharacterRarity` extended enum (SSR, SR, R, N)
@@ -268,17 +265,17 @@
 5. ✅ Create `CollectionMilestone` entity (collection bonuses)
 6. ✅ Create `CharacterDuplicate` entity (constellation system)
 
-**Связи**:
+**Connections**:
 - Banner → Character (featured characters)
 - Pull → Banner (where pulled)
 - Pull → Character (what pulled)
 - PlayerProfile → Pity (per banner)
 - CollectionMilestone → Reward
 
-### Phase 3: Прогрессия и Силовая Система (2-3 недели)
-**Цель**: Дать игроку ощущение роста
+### Phase 3: Progression and Power System (2-3 weeks)
+**Goal**: Give player sense of growth
 
-**Расширения сущностей**:
+**Entity extensions**:
 1. ✅ Extend `Character` with combat stats
 2. ✅ Extend `Item` with game stats
 3. ✅ Create `CharacterLevel` entity
@@ -287,16 +284,16 @@
 6. ✅ Create `EquipmentSet` entity
 7. ✅ Create `WeaponUpgrade` entity
 
-**Связи**:
+**Connections**:
 - Character → CharacterLevel (current level)
 - Character → TalentTree (unlocked talents)
 - Item → EquipmentSet (set membership)
 - Item → WeaponUpgrade (upgrade level)
 
-### Phase 4: Связность Лора (2-3 недели)
-**Цель**: Сделать мир живым и связным
+### Phase 4: Lore Connectivity (2-3 weeks)
+**Goal**: Make world alive and connected
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `CharacterRelationship` entity
 2. ✅ Create `Faction` entity
 3. ✅ Create `FactionMembership` entity
@@ -305,7 +302,7 @@
 6. ✅ Create `ItemHistory` entity
 7. ✅ Create `LoreReference` entity
 
-**Связи**:
+**Connections**:
 - Character ↔ Character (via Relationship)
 - Character → Faction (via Membership)
 - Location → Location (via Connection)
@@ -313,10 +310,10 @@
 - Item → Character (via History - who owned)
 - Story → Character/Location/Item (via Reference)
 
-### Phase 5: Игровой Флоу (2-3 недели)
-**Цель**: Структурировать путь игрока
+### Phase 5: Game Flow (2-3 weeks)
+**Goal**: Structure player journey
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `Tutorial` entity
 2. ✅ Create `Chapter` entity
 3. ✅ Create `Milestone` entity
@@ -325,7 +322,7 @@
 6. ✅ Create `DifficultyLevel` entity
 7. ✅ Create `PlayerProgress` entity
 
-**Связи**:
+**Connections**:
 - Chapter → Quest (main story quests)
 - Chapter → Milestone (chapter completion milestones)
 - Milestone → Reward (milestone rewards)
@@ -333,10 +330,10 @@
 - Expedition → Location (expedition destinations)
 - PlayerProgress → Chapter/Quest/Challenge (completion tracking)
 
-### Phase 6: Социальные Механики (2-3 недели)
-**Цель**: Удержание через социал
+### Phase 6: Social Mechanics (2-3 weeks)
+**Goal**: Retention through social
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `Guild` entity
 2. ✅ Create `GuildMember` entity
 3. ✅ Create `GuildQuest` entity
@@ -345,17 +342,17 @@
 6. ✅ Create `Leaderboard` entity
 7. ✅ Create `CoopRaid` entity
 
-**Связи**:
+**Connections**:
 - Guild → GuildMember (members)
 - Guild → GuildQuest (guild activities)
 - PlayerProfile → Friend (friend list)
 - PlayerProfile → Leaderboard (rankings)
 - CoopRaid → PlayerProfile (participants)
 
-### Phase 7: Ретеншн-Механики (1-2 недели)
-**Цель**: Ежедневное возвращение игроков
+### Phase 7: Retention Mechanics (1-2 weeks)
+**Goal**: Daily player returns
 
-**Новые сущности**:
+**New entities**:
 1. ✅ Create `DailyQuest` entity
 2. ✅ Create `DailyLogin` entity
 3. ✅ Create `SeasonPass` entity
@@ -363,17 +360,17 @@
 5. ✅ Create `TimeGate` entity (energy system)
 6. ✅ Create `WeeklyBoss` entity
 
-**Связи**:
+**Connections**:
 - DailyQuest → Reward (daily rewards)
 - DailyLogin → Reward (login bonuses)
 - SeasonPass → Milestone (tier rewards)
 - Achievement → Reward (achievement rewards)
 - WeeklyBoss → Character (boss enemies)
 
-### Phase 8: GUI Улучшения (3-4 недели)
-**Цель**: Сделать редактор профессиональным
+### Phase 8: GUI Improvements (3-4 weeks)
+**Goal**: Make editor professional
 
-**Задачи** (из gui_todo.txt):
+**Tasks** (from gui_todo.txt):
 1. ✅ Replace JSON inputs with visual editors
 2. ✅ Add search and filtering
 3. ✅ Add date/time pickers
@@ -385,101 +382,101 @@
 
 ---
 
-## 🎯 ПРИОРИТЕТЫ ДЛЯ БЫСТРОГО СТАРТА / Quick Start Priorities
+## 🎯 Quick Start Priorities
 
-### Минимальный MVP для Игры (2-3 недели):
+### Minimal MVP for Game (2-3 weeks):
 
-**Неделя 1: Базовая Экономика**
+**Week 1: Basic Economy**
 - [ ] Currency entity
 - [ ] PlayerProfile entity
 - [ ] Reward entity
 - [ ] Extend Quest with rewards
 - [ ] Simple shop
 
-**Неделя 2: Базовая Гача**
+**Week 2: Basic Gacha**
 - [ ] Banner entity
 - [ ] Pull entity
 - [ ] Character rarity tiers
 - [ ] Simple pity system
 
-**Неделя 3: Базовая Прогрессия**
+**Week 3: Basic Progression**
 - [ ] Character stats (HP, ATK, DEF)
 - [ ] Item stats
 - [ ] Character levels (1-100)
 - [ ] Simple combat formula
 
-### Критические Связи для Лора (параллельно):
+### Critical Lore Connections (in parallel):
 - [ ] CharacterRelationship
 - [ ] Faction + FactionMembership
-- [ ] EventChain (причина-следствие)
+- [ ] EventChain (cause-effect)
 - [ ] LocationConnection
 
 ---
 
-## 📊 МЕТРИКИ УСПЕХА / Success Metrics
+## 📊 Success Metrics
 
-### Технические Метрики:
-- **Связность**: Средний # связей на сущность > 3
-- **Покрытие**: Все сущности имеют игровую ценность
-- **Реюзабельность**: Все предметы можно получить через gameplay
+### Technical Metrics:
+- **Connectivity**: Average # connections per entity > 3
+- **Coverage**: All entities have game value
+- **Reusability**: All items obtainable through gameplay
 
-### Игровые Метрики:
+### Game Metrics:
 - **Retention D1**: > 40%
 - **Retention D7**: > 20%
 - **Retention D30**: > 10%
 - **ARPU**: > $5
 - **Conversion**: > 3%
-- **Session Length**: > 15 минут
+- **Session Length**: > 15 minutes
 - **Sessions per Day**: > 3
 
-### Метрики Лора:
-- **Lore Depth**: Каждый персонаж связан >= 3 другими
-- **World Cohesion**: Все события влияют на мир
-- **Player Agency**: Выборы влияют на 50%+ контента
+### Lore Metrics:
+- **Lore Depth**: Each character connected >= 3 others
+- **World Cohesion**: All events affect the world
+- **Player Agency**: Choices affect 50%+ content
 
 ---
 
-## 🚨 РИСКИ И МИТИГАЦИЯ / Risks and Mitigation
+## 🚨 Risks and Mitigation
 
-### Риск 1: Перегрузка Сложностью
-**Проблема**: Слишком много сущностей = сложность разработки
+### Risk 1: Complexity Overload
+**Problem**: Too many entities = development complexity
 
-**Митигация**:
-- Начать с MVP (Currency, Banner, Stats)
-- Итеративно добавлять фичи
-- Приоритет: Монетизация → Прогрессия → Социал
+**Mitigation**:
+- Start with MVP (Currency, Banner, Stats)
+- Iteratively add features
+- Priority: Monetization → Progression → Social
 
-### Риск 2: Несбалансированная Экономика
-**Проблема**: Плохой баланс убивает монетизацию
+### Risk 2: Unbalanced Economy
+**Problem**: Poor balance kills monetization
 
-**Митигация**:
-- Моделирование экономики в Excel
-- A/B тестирование цен
-- Мониторинг метрик (ARPU, Conversion)
+**Mitigation**:
+- Model economy in Excel
+- A/B test prices
+- Monitor metrics (ARPU, Conversion)
 
-### Риск 3: Слабый Лор
-**Проблема**: Игроков не зацепит история
+### Risk 3: Weak Lore
+**Problem**: Players won't be hooked by story
 
-**Митигация**:
-- Писать backstories >= 200 символов
-- Проверять связность (граф-визуализация)
-- Тестировать на фокус-группах
+**Mitigation**:
+- Write backstories >= 200 characters
+- Check connectivity (graph visualization)
+- Test with focus groups
 
-### Риск 4: Низкий Retention
-**Проблема**: Игроки не возвращаются
+### Risk 4: Low Retention
+**Problem**: Players won't return
 
-**Митигация**:
-- Ежедневные квесты с 1-го дня
-- Туториал-гайдинг < 5 минут
-- Push-нотификации (energy full, events)
+**Mitigation**:
+- Daily quests from day 1
+- Tutorial guiding < 5 minutes
+- Push notifications (energy full, events)
 
 ---
 
-## 📝 КОНКРЕТНЫЕ TODO / Specific TODOs
+## 📝 Specific TODOs
 
-### TODO: Новые Entity Файлы
+### TODO: New Entity Files
 
-#### Экономика:
+#### Economy:
 - [ ] `src/domain/entities/currency.py` (Currency)
 - [ ] `src/domain/entities/player_profile.py` (PlayerProfile)
 - [ ] `src/domain/entities/purchase.py` (Purchase)
@@ -487,14 +484,14 @@
 - [ ] `src/domain/entities/bundle.py` (Bundle)
 - [ ] `src/domain/entities/reward.py` (Reward)
 
-#### Гача:
+#### Gacha:
 - [ ] `src/domain/entities/banner.py` (Banner)
 - [ ] `src/domain/entities/pull.py` (Pull)
 - [ ] `src/domain/entities/pity.py` (Pity)
 - [ ] `src/domain/entities/collection_milestone.py` (CollectionMilestone)
 - [ ] `src/domain/entities/character_duplicate.py` (CharacterDuplicate)
 
-#### Прогрессия:
+#### Progression:
 - [ ] `src/domain/entities/character_level.py` (CharacterLevel)
 - [ ] `src/domain/entities/character_ascension.py` (CharacterAscension)
 - [ ] `src/domain/entities/talent_tree.py` (TalentTree)
@@ -502,7 +499,7 @@
 - [ ] `src/domain/entities/weapon_upgrade.py` (WeaponUpgrade)
 - [ ] `src/domain/entities/artifact_set.py` (ArtifactSet)
 
-#### Связность Лора:
+#### Lore Connectivity:
 - [ ] `src/domain/entities/character_relationship.py` (CharacterRelationship)
 - [ ] `src/domain/entities/faction.py` (Faction)
 - [ ] `src/domain/entities/faction_membership.py` (FactionMembership)
@@ -511,7 +508,7 @@
 - [ ] `src/domain/entities/item_history.py` (ItemHistory)
 - [ ] `src/domain/entities/lore_reference.py` (LoreReference)
 
-#### Игровой Флоу:
+#### Game Flow:
 - [ ] `src/domain/entities/tutorial.py` (Tutorial)
 - [ ] `src/domain/entities/chapter.py` (Chapter)
 - [ ] `src/domain/entities/milestone.py` (Milestone)
@@ -520,7 +517,7 @@
 - [ ] `src/domain/entities/difficulty_level.py` (DifficultyLevel)
 - [ ] `src/domain/entities/player_progress.py` (PlayerProgress)
 
-#### Социальные:
+#### Social:
 - [ ] `src/domain/entities/guild.py` (Guild)
 - [ ] `src/domain/entities/guild_member.py` (GuildMember)
 - [ ] `src/domain/entities/guild_quest.py` (GuildQuest)
@@ -529,7 +526,7 @@
 - [ ] `src/domain/entities/leaderboard.py` (Leaderboard)
 - [ ] `src/domain/entities/coop_raid.py` (CoopRaid)
 
-#### Ретеншн:
+#### Retention:
 - [ ] `src/domain/entities/daily_quest.py` (DailyQuest)
 - [ ] `src/domain/entities/daily_login.py` (DailyLogin)
 - [ ] `src/domain/entities/season_pass.py` (SeasonPass)
@@ -546,7 +543,7 @@
 - [ ] `src/domain/value_objects/relationship_type.py` (RelationshipType enum)
 - [ ] `src/domain/value_objects/faction_rank.py` (FactionRank enum)
 
-### TODO: Расширения Существующих Entities
+### TODO: Extend Existing Entities
 
 #### Character:
 - [ ] Add `base_stats: CharacterStats`
@@ -605,7 +602,7 @@
 - [ ] Add `reputation_impact: Dict[EntityId, int]`
 - [ ] Add `permanent_consequences: bool`
 
-### TODO: GUI Tabs (Новые)
+### TODO: GUI Tabs (New)
 
 - [ ] `src/presentation/gui/tabs/currency_tab.py`
 - [ ] `src/presentation/gui/tabs/player_profile_tab.py`
@@ -620,7 +617,7 @@
 - [ ] `src/presentation/gui/tabs/daily_quest_tab.py`
 - [ ] `src/presentation/gui/tabs/season_pass_tab.py`
 
-### TODO: GUI Improvements (Существующие)
+### TODO: GUI Improvements (Existing)
 
 - [ ] ChoiceTab: Replace JSON inputs with visual option/consequence editors
 - [ ] TokenboardTab: Replace JSON with counters table widget
@@ -635,10 +632,10 @@
 ### TODO: Documentation
 
 - [ ] Update README with new entities
-- [ ] Create GAME_DESIGN.md (игровой дизайн)
-- [ ] Create MONETIZATION.md (стратегия монетизации)
-- [ ] Create ECONOMY_BALANCE.md (баланс экономики)
-- [ ] Create LORE_GUIDELINES.md (гайдлайны по лору)
+- [ ] Create GAME_DESIGN.md (game design)
+- [ ] Create MONETIZATION.md (monetization strategy)
+- [ ] Create ECONOMY_BALANCE.md (economy balance)
+- [ ] Create LORE_GUIDELINES.md (lore guidelines)
 - [ ] Update STRUCTURE.md with new entities
 - [ ] Create ADR-003: Gacha System Design
 - [ ] Create ADR-004: Economy and Monetization
@@ -670,61 +667,61 @@
 
 ---
 
-## 💡 КЛЮЧЕВЫЕ ИНСАЙТЫ / Key Insights
+## 💡 Key Insights
 
-### Для Удержания Игроков:
-1. **Ежедневные Цели**: Минимум 3 ежедневных квеста с прогрессом 10-15 минут каждый
-2. **Энергия**: Система энергии с восстановлением = постоянные возвращения
-3. **События**: Ограниченные по времени события (2-3 недели) = FOMO
-4. **Социал**: Гильдии и кооп = социальное удержание
-5. **Сезонный Пропуск**: Сезоны по 6-8 недель = долгосрочная цель
+### For Player Retention:
+1. **Daily Goals**: Minimum 3 daily quests with 10-15 minute progress each
+2. **Energy**: Energy system with regeneration = constant returns
+3. **Events**: Time-limited events (2-3 weeks) = FOMO
+4. **Social**: Guilds and co-op = social retention
+5. **Season Pass**: 6-8 week seasons = long-term goal
 
-### Для Монетизации:
-1. **Гача**: Основной источник (70%+ дохода)
-2. **Battle Pass**: Стабильный доход ($10-20/месяц от активных)
-3. **Convenience**: Энергия, skip tickets = мелкие покупки
-4. **Косметика**: Скины персонажей = дополнительный доход
-5. **Пакеты**: Ограниченные офферы = импульсные покупки
+### For Monetization:
+1. **Gacha**: Main source (70%+ revenue)
+2. **Battle Pass**: Stable revenue ($10-20/month from actives)
+3. **Convenience**: Energy, skip tickets = small purchases
+4. **Cosmetics**: Character skins = additional revenue
+5. **Bundles**: Limited offers = impulse purchases
 
-### Для Глубины Лора:
-1. **Отношения**: Минимум 2-3 отношения на персонажа
-2. **Фракции**: 5-7 фракций с конфликтами
-3. **История Предметов**: Легендарные предметы имеют историю владения
-4. **Цепочки Событий**: События влияют друг на друга (причина-следствие)
-5. **Перекрестные Ссылки**: Персонажи упоминают друг друга в диалогах
+### For Lore Depth:
+1. **Relationships**: Minimum 2-3 relationships per character
+2. **Factions**: 5-7 factions with conflicts
+3. **Item History**: Legendary items have ownership history
+4. **Event Chains**: Events affect each other (cause-effect)
+5. **Cross-References**: Characters mention each other in dialogue
 
 ---
 
-## 🎮 ПРИМЕРЫ СВЯЗНОСТИ / Connectivity Examples
+## 🎮 Connectivity Examples
 
-### Пример 1: Персонаж "Лира Кровавый Шёпот"
+### Example 1: Character "Lira Bloodwhisper"
 
-**Текущее состояние** (изолировано):
+**Current state** (isolated):
 ```
-Character: Лира
+Character: Lira
 - Abilities: 3
 - No relationships
 - No faction
 - No item history
 ```
 
-**Улучшенное состояние** (связанное):
+**Improved state** (connected):
 ```
-Character: Лира
+Character: Lira
 ├── Relationships:
-│   ├── Враг → Виктор (он убил её семью)
-│   ├── Любовник → Элиза (запретная любовь)
-│   └── Наставник → Древний Вампир (её создатель)
-├── Faction: Клан Кровавой Луны (ранг: Наследница)
+│   ├── Enemy → Victor (he killed her family)
+│   ├── Lover → Eliza (forbidden love)
+│   └── Mentor → Ancient Vampire (her creator)
+├── Faction: Blood Moon Clan (rank: Heir)
 ├── Items Owned:
-│   ├── Клинок Луны (получен от наставника)
-│   └── Амулет Крови (семейная реликвия)
+│   ├── Moon Blade (received from mentor)
+│   └── Blood Amulet (family heirloom)
 ├── Quests:
-│   ├── "Месть Виктору" (основной квест)
-│   └── "Спасти Элизу" (побочный квест)
+│   ├── "Revenge on Victor" (main quest)
+│   └── "Save Eliza" (side quest)
 ├── Events:
-│   ├── "Уничтожение Клана" (причина её пути)
-│   └── "Ритуал Превращения" (её становление)
+│   ├── "Clan Destruction" (cause of her path)
+│   └── "Transformation Ritual" (her becoming)
 └── Stats:
     ├── HP: 2500
     ├── ATK: 350
@@ -733,9 +730,9 @@ Character: Лира
     └── Rarity: SSR
 ```
 
-### Пример 2: Квест "Forge the Eternal Blade"
+### Example 2: Quest "Forge the Eternal Blade"
 
-**Текущее состояние**:
+**Current state**:
 ```
 Quest: Forge the Eternal Blade
 - Objectives: 3
@@ -744,7 +741,7 @@ Quest: Forge the Eternal Blade
 - No consequences
 ```
 
-**Улучшенное состояние**:
+**Improved state**:
 ```
 Quest: Forge the Eternal Blade
 ├── Prerequisites:
@@ -771,9 +768,9 @@ Quest: Forge the Eternal Blade
     └── Reputation: Crystal Guardians +100
 ```
 
-### Пример 3: Событие "The Great Reforging"
+### Example 3: Event "The Great Reforging"
 
-**Текущее состояние**:
+**Current state**:
 ```
 Event: The Great Reforging
 - Description: text
@@ -781,7 +778,7 @@ Event: The Great Reforging
 - No consequences
 ```
 
-**Улучшенное состояние**:
+**Improved state**:
 ```
 Event: The Great Reforging
 ├── Triggered By:
@@ -812,44 +809,44 @@ Event: The Great Reforging
 
 ---
 
-## 📈 ИЗМЕРЕНИЯ ПРОГРЕССА / Progress Tracking
+## 📈 Progress Tracking
 
-### Метрики Связности (на 18.01.2026):
-- **Entities**: 24 типов
-- **Avg Connections per Entity**: ~1.5 (НИЗКО, цель: 3+)
-- **Entities with Game Value**: ~30% (НИЗКО, цель: 100%)
-- **Lore Depth Score**: 3/10 (нужно: 8+)
+### Connectivity Metrics (as of 2026-01-18):
+- **Entities**: 24 types
+- **Avg Connections per Entity**: ~1.5 (LOW, target: 3+)
+- **Entities with Game Value**: ~30% (LOW, target: 100%)
+- **Lore Depth Score**: 3/10 (needed: 8+)
 
-### После Улучшений (цель):
-- **Entities**: 50+ типов
+### After Improvements (target):
+- **Entities**: 50+ types
 - **Avg Connections per Entity**: 5+
 - **Entities with Game Value**: 100%
 - **Lore Depth Score**: 9/10
 
 ---
 
-## ✅ ВЫВОД / Conclusion
+## ✅ Conclusion
 
-**Текущая система** - хорошая основа для редактора лора, но **не готова для игры**.
+**Current system** - good foundation for lore editor, but **not ready for game**.
 
-**Критические дыры**:
-1. ❌ Нет монетизации
-2. ❌ Нет гачи
-3. ❌ Нет прогрессии
-4. ❌ Слабая связность
-5. ❌ Нет социала
+**Critical gaps**:
+1. ❌ No monetization
+2. ❌ No gacha
+3. ❌ No progression
+4. ❌ Weak connectivity
+5. ❌ No social
 
-**Рекомендация**: 
-Реализовать **Phase 1-2 (Экономика + Гача)** в первую очередь для MVP, затем **Phase 4 (Связность)** для глубины лора.
+**Recommendation**:
+Implement **Phase 1-2 (Economy + Gacha)** first for MVP, then **Phase 4 (Connectivity)** for lore depth.
 
-**Ожидаемый результат**:
-- Игра с полноценной монетизацией
-- Глубокий, связанный лор
-- Высокое удержание игроков (D7 > 20%)
-- Профессиональный редактор для контент-команды
+**Expected result**:
+- Game with full monetization
+- Deep, connected lore
+- High player retention (D7 > 20%)
+- Professional editor for content team
 
 ---
 
-**Дата**: 2026-01-18  
-**Автор**: Senior Lore System Expert  
-**Статус**: Ready for Implementation
+**Date**: 2026-01-18  
+**Author**: Senior Lore System Expert  
+**Status**: Ready for Implementation

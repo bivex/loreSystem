@@ -1,10 +1,8 @@
 # Task Completion Summary
 
-## Problem Statement (Russian)
+## Problem Statement
 
-> Определить и проверить: entities, attributes, identifiers (primary key), foreign keys, relationships, cardinality, optionality, associative entities, weak entities, inheritance (generalization/specialization), aggregation, composition, roles, domains, constraints, invariants, business rules, states, state transitions, lifecycle, events, commands, queries, ownership, permissions, references, indexes, schemas, tables, views, repositories, aggregate roots. Thinking deep
-
-**Translation**: Define and verify: entities, attributes, identifiers (primary key), foreign keys, relationships, cardinality, optionality, associative entities, weak entities, inheritance (generalization/specialization), aggregation, composition, roles, domains, constraints, invariants, business rules, states, state transitions, lifecycle, events, commands, queries, ownership, permissions, references, indexes, schemas, tables, views, repositories, aggregate roots. Thinking deep.
+Define and verify: entities, attributes, identifiers (primary key), foreign keys, relationships, cardinality, optionality, associative entities, weak entities, inheritance (generalization/specialization), aggregation, composition, roles, domains, constraints, invariants, business rules, states, state transitions, lifecycle, events, commands, queries, ownership, permissions, references, indexes, schemas, tables, views, repositories, aggregate roots. Thinking deep.
 
 ## Solution Delivered
 

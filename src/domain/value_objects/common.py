@@ -80,6 +80,56 @@ class CharacterStatus(str, Enum):
     INACTIVE = "inactive"
 
 
+class EntityStatus(str, Enum):
+    """General entity status."""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DELETED = "deleted"
+    ARCHIVED = "archived"
+
+
+class ChainStatus(str, Enum):
+    """Quest chain completion status."""
+    NOT_STARTED = "not_started"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class ObjectiveType(str, Enum):
+    """Types of quest objectives."""
+    KILL = "kill"
+    COLLECT = "collect"
+    INTERACT = "interact"
+    DELIVER = "deliver"
+    ESCORT = "escort"
+    DEFEND = "defend"
+    EXPLORE = "explore"
+    TALK = "talk"
+    CRAFT = "craft"
+    USE = "use"
+
+
+class ObjectiveStatus(str, Enum):
+    """Quest objective status."""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class PrerequisiteType(str, Enum):
+    """Types of quest prerequisites."""
+    LEVEL = "level"
+    QUEST = "quest"
+    ITEM = "item"
+    SKILL = "skill"
+    LOCATION = "location"
+    REPUTATION = "reputation"
+    CUSTOM = "custom"
+
+
 class QuestStatus(str, Enum):
     """Quest completion status."""
     ACTIVE = "active"

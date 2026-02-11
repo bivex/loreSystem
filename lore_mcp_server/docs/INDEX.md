@@ -1,38 +1,38 @@
-# Lore System MCP Server - Индекс файлов
+# Lore System MCP Server - File Index
 
-Полная структура проекта MCP сервера для управления игровым лором.
+Complete project structure of the MCP server for managing game lore.
 
 ---
 
-## 📂 Структура проекта
+## 📂 Project Structure
 
 ```
 mcp/
-├── 🔧 Основные файлы
-│   ├── server.py (34K)              - Главный MCP сервер
-│   ├── persistence.py (12K)         - Слой сохранения в JSON
-│   ├── config.json (1.0K)           - Конфигурация сервера
-│   └── requirements.txt (37B)       - Зависимости Python
+├── 🔧 Main files
+│   ├── server.py (34K)              - Main MCP server
+│   ├── persistence.py (12K)         - JSON persistence layer
+│   ├── config.json (1.0K)           - Server configuration
+│   └── requirements.txt (37B)       - Python dependencies
 │
-├── 📖 Документация
-│   ├── README.md (6.8K)             - Главная документация
-│   ├── QUICKSTART.md (6.2K)         - Быстрый старт
-│   ├── tools.md (17K)               - Справочник всех инструментов 🆕
-│   ├── FEATURES.md (12K)            - Список всех возможностей
-│   ├── CHANGELOG.md (3.3K)          - История версий
-│   ├── demo_save_to_json.md (5.9K)  - Руководство по сохранению
-│   └── INDEX.md (этот файл)         - Индекс проекта
+├── 📖 Documentation
+│   ├── README.md (6.8K)             - Main documentation
+│   ├── QUICKSTART.md (6.2K)         - Quick start guide
+│   ├── tools.md (17K)               - Complete tools reference 🆕
+│   ├── FEATURES.md (12K)            - List of all features
+│   ├── CHANGELOG.md (3.3K)          - Version history
+│   ├── demo_save_to_json.md (5.9K)  - Persistence guide
+│   └── INDEX.md (this file)         - Project index
 │
-├── 🧪 Тесты
-│   ├── test_server.py (5.5K)        - Тесты компонентов
-│   └── test_persistence.py (4.6K)   - Тесты JSON сохранения
+├── 🧪 Tests
+│   ├── test_server.py (5.5K)        - Component tests
+│   └── test_persistence.py (4.6K)   - JSON persistence tests
 │
-├── 💡 Примеры
-│   ├── example_usage.py (8.5K)      - Демо использования
-│   └── setup.sh (1.2K)              - Скрипт установки
+├── 💡 Examples
+│   ├── example_usage.py (8.5K)      - Usage demo
+│   └── setup.sh (1.2K)              - Installation script
 │
-└── 📁 Генерируемые данные
-    └── lore_data/                   - Папка с JSON файлами (создается автоматически)
+└── 📁 Generated data
+    └── lore_data/                   - JSON files folder (auto-created)
         ├── worlds/
         ├── characters/
         ├── stories/
@@ -42,37 +42,37 @@ mcp/
 
 ---
 
-## 📚 Руководства по использованию
+## 📚 Usage Guides
 
-### Для новичков
-1. **QUICKSTART.md** - начните отсюда для быстрой настройки
-2. **tools.md** - справочник всех 22 инструментов
-3. **example_usage.py** - готовый пример кода
+### For beginners
+1. **QUICKSTART.md** - start here for quick setup
+2. **tools.md** - reference for all 22 tools
+3. **example_usage.py** - ready-to-use code example
 
-### Для разработчиков
-1. **README.md** - полная техническая документация
-2. **FEATURES.md** - детальное описание возможностей
-3. **persistence.py** - изучите реализацию сохранения
+### For developers
+1. **README.md** - complete technical documentation
+2. **FEATURES.md** - detailed feature description
+3. **persistence.py** - study persistence implementation
 
-### Для продвинутых
-1. **server.py** - код MCP сервера
-2. **config.json** - настройки и лимиты
-3. **CHANGELOG.md** - история изменений
+### For advanced users
+1. **server.py** - MCP server code
+2. **config.json** - settings and limits
+3. **CHANGELOG.md** - change history
 
 ---
 
-## 🎯 Основные файлы
+## 🎯 Main Files
 
 ### server.py (34KB)
-Главный MCP сервер с 22 инструментами:
-- ✅ 5 операций с мирами (CRUD + list)
-- ✅ 6 операций с персонажами (CRUD + abilities)
-- ✅ 3 операции с историями
-- ✅ 2 операции с событиями
-- ✅ 2 операции со страницами
-- ✅ 4 операции сохранения (JSON persistence)
+Main MCP server with 22 tools:
+- ✅ 5 world operations (CRUD + list)
+- ✅ 6 character operations (CRUD + abilities)
+- ✅ 3 story operations
+- ✅ 2 event operations
+- ✅ 2 page operations
+- ✅ 4 persistence operations (JSON persistence)
 
-**Использование:**
+**Usage:**
 ```bash
 python server.py
 ```
@@ -80,123 +80,123 @@ python server.py
 ---
 
 ### persistence.py (12KB)
-Слой JSON сохранения данных:
-- Сохранение в отдельные файлы
-- Экспорт в единый файл
-- Загрузка данных
-- Статистика хранилища
+JSON data persistence layer:
+- Save to separate files
+- Export to single file
+- Load data
+- Storage statistics
 
-**Основной класс:**
+**Main class:**
 ```python
 class JSONPersistence:
-    def save_all(...)          # Сохранить всё
-    def export_tenant(...)     # Экспорт в 1 файл
-    def load_all(...)          # Загрузить всё
-    def get_storage_stats(...) # Статистика
+    def save_all(...)          # Save all
+    def export_tenant(...)     # Export to 1 file
+    def load_all(...)          # Load all
+    def get_storage_stats(...) # Statistics
 ```
 
 ---
 
 ### config.json (1KB)
-Конфигурация сервера:
+Server configuration:
 
-**Лимиты:**
+**Limits:**
 - max_worlds_per_tenant: 100
 - max_characters_per_world: 1000
 - max_abilities_per_character: 20
 - max_list_limit: 1000
 
-**Валидация:**
+**Validation:**
 - backstory_min_length: 100
 - power_level_min/max: 1-10
 - name_max_length: 100/255
 
 ---
 
-## 📖 Документация
+## 📖 Documentation
 
 ### tools.md (17KB) 🆕
-**Полный справочник всех инструментов на русском языке**
+**Complete reference for all tools in Russian**
 
-Содержание:
-- ✅ Все 22 MCP tool с примерами
-- ✅ Параметры и форматы ответов
-- ✅ Важные ограничения
-- ✅ Типичные сценарии использования
-- ✅ Примеры на русском и английском
+Content:
+- ✅ All 22 MCP tools with examples
+- ✅ Parameters and response formats
+- ✅ Important limitations
+- ✅ Typical use cases
+- ✅ Examples in Russian and English
 
-**Категории:**
-- 🌍 Управление мирами (5 tools)
-- 🦸 Управление персонажами (6 tools)
-- 📖 Управление историями (3 tools)
-- 📅 Управление событиями (2 tools)
-- 📄 Управление страницами (2 tools)
-- 💾 Сохранение в JSON (4 tools)
+**Categories:**
+- 🌍 World management (5 tools)
+- 🦸 Character management (6 tools)
+- 📖 Story management (3 tools)
+- 📅 Event management (2 tools)
+- 📄 Page management (2 tools)
+- 💾 JSON persistence (4 tools)
 
 ---
 
 ### README.md (6.8KB)
-Главная техническая документация:
-- Установка и настройка
-- API всех инструментов
-- Примеры использования
-- Модель данных
-- Архитектура
+Main technical documentation:
+- Installation and setup
+- API for all tools
+- Usage examples
+- Data model
+- Architecture
 
 ---
 
 ### QUICKSTART.md (6.2KB)
-Быстрый старт за 5 минут:
-- Установка зависимостей
-- Запуск сервера
-- Настройка Claude Desktop
-- Первые команды
-- Решение проблем
+Quick start in 5 minutes:
+- Install dependencies
+- Run server
+- Configure Claude Desktop
+- First commands
+- Troubleshooting
 
 ---
 
 ### FEATURES.md (12KB)
-Полный список возможностей:
-- Описание всех фич
-- Доменная модель
-- Типы данных
-- Валидация
+Complete feature list:
+- Description of all features
+- Domain model
+- Data types
+- Validation
 - Use cases
 - Roadmap
 
 ---
 
 ### demo_save_to_json.md (5.9KB)
-Руководство по JSON сохранению:
-- Примеры сохранения
-- Экспорт данных
-- Структура файлов
+JSON persistence guide:
+- Save examples
+- Data export
+- File structure
 - Best practices
 - Use cases
 
 ---
 
 ### CHANGELOG.md (3.3KB)
-История версий:
+Version history:
 - **v1.1.0** (2026-01-26) - JSON Persistence
-- **v1.0.0** (2026-01-26) - Первый релиз
+- **v1.0.0** (2026-01-26) - First release
 
 ---
 
-## 🧪 Тесты
+## 🧪 Tests
 
 ### test_server.py (5.5KB)
-Тесты основных компонентов:
+Main component tests:
 ```bash
 python test_server.py
 ```
 
-Проверяет:
-- ✅ Импорты модулей
-- ✅ Работу репозиториев
-- ✅ Создание персонажей с abilities
+Checks:
+- ✅ Module imports
+- ✅ Repository operations
+- ✅ Character creation with abilities
 
-**Результат:**
+**Result:**
 ```
 ✓ All tests passed (3/3)
 The MCP server is ready to use!
@@ -205,42 +205,42 @@ The MCP server is ready to use!
 ---
 
 ### test_persistence.py (4.6KB)
-Тесты JSON сохранения:
+JSON persistence tests:
 ```bash
 python test_persistence.py
 ```
 
-Проверяет:
-- ✅ Сохранение в JSON файлы
-- ✅ Список сохраненных файлов
-- ✅ Статистику хранилища
-- ✅ Экспорт в единый файл
-- ✅ Загрузку данных
-- ✅ Корректность данных
+Checks:
+- ✅ Save to JSON files
+- ✅ List saved files
+- ✅ Storage statistics
+- ✅ Export to single file
+- ✅ Load data
+- ✅ Data correctness
 
-**Результат:**
+**Result:**
 ```
 ✅ All JSON persistence tests passed!
 ```
 
 ---
 
-## 💡 Примеры
+## 💡 Examples
 
 ### example_usage.py (8.5KB)
-Полный демонстрационный скрипт:
+Complete demo script:
 
-Создает:
-- ✅ 1 мир "Aetheria"
-- ✅ 2 персонажа (маг + воин)
-- ✅ 2 способности
-- ✅ 1 историю
-- ✅ 1 событие
-- ✅ 1 страницу
-- ✅ Сохранение всего в JSON
-- ✅ Экспорт в единый файл
+Creates:
+- ✅ 1 world "Aetheria"
+- ✅ 2 characters (mage + warrior)
+- ✅ 2 abilities
+- ✅ 1 story
+- ✅ 1 event
+- ✅ 1 page
+- ✅ Save all to JSON
+- ✅ Export to single file
 
-**Запуск:**
+**Run:**
 ```bash
 python example_usage.py
 ```
@@ -248,45 +248,45 @@ python example_usage.py
 ---
 
 ### setup.sh (1.2KB)
-Автоматическая установка:
+Automated installation:
 ```bash
 ./setup.sh
 ```
 
-Выполняет:
-- Проверку Python версии
-- Установку MCP зависимостей
-- Установку loreSystem зависимостей
-- Отображение инструкций
+Performs:
+- Python version check
+- Install MCP dependencies
+- Install loreSystem dependencies
+- Display instructions
 
 ---
 
-## 🎮 Быстрый старт
+## 🎮 Quick Start
 
-### 1. Установка
+### 1. Installation
 ```bash
 cd mcp
 ./setup.sh
 ```
 
-### 2. Тестирование
+### 2. Testing
 ```bash
 python test_server.py
 python test_persistence.py
 ```
 
-### 3. Запуск примера
+### 3. Run example
 ```bash
 python example_usage.py
 ```
 
-### 4. Запуск сервера
+### 4. Run server
 ```bash
 python server.py
 ```
 
-### 5. Настройка Claude Desktop
-Добавьте в `claude_desktop_config.json`:
+### 5. Configure Claude Desktop
+Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
@@ -300,112 +300,112 @@ python server.py
 
 ---
 
-## 📊 Статистика проекта
+## 📊 Project Statistics
 
-### Код
-- **Python:** 3 файла (server.py, persistence.py, *.py)
-- **Всего строк кода:** ~1200
-- **Тестов:** 2 файла, 9 тестов
-- **Coverage:** 100% критических путей
+### Code
+- **Python:** 3 files (server.py, persistence.py, *.py)
+- **Total lines of code:** ~1200
+- **Tests:** 2 files, 9 tests
+- **Coverage:** 100% critical paths
 
-### Документация
-- **Документов:** 7 файлов
-- **Всего слов:** ~15,000
-- **Языки:** Английский + Русский
-- **Примеров:** 50+
+### Documentation
+- **Documents:** 7 files
+- **Total words:** ~15,000
+- **Languages:** English + Russian
+- **Examples:** 50+
 
-### Инструменты
-- **MCP Tools:** 22 инструмента
-- **Категорий:** 6 (миры, персонажи, истории, события, страницы, сохранение)
-- **Операций CRUD:** Полная поддержка
+### Tools
+- **MCP Tools:** 22 tools
+- **Categories:** 6 (worlds, characters, stories, events, pages, persistence)
+- **CRUD Operations:** Full support
 
 ---
 
-## 🔧 Технологии
+## 🔧 Technologies
 
 - **Python:** 3.11+
 - **MCP:** 1.0+
-- **Архитектура:** Domain-Driven Design
-- **Паттерны:** Repository, Value Objects, Aggregates
-- **Хранение:** In-Memory + JSON Files
-- **Тесты:** pytest
+- **Architecture:** Domain-Driven Design
+- **Patterns:** Repository, Value Objects, Aggregates
+- **Storage:** In-Memory + JSON Files
+- **Tests:** pytest
 
 ---
 
-## 📖 Рекомендуемый порядок чтения
+## 📖 Recommended Reading Order
 
-### Для начинающих:
-1. **INDEX.md** (этот файл) - обзор
-2. **QUICKSTART.md** - установка
-3. **tools.md** - справочник инструментов
-4. **example_usage.py** - примеры
+### For beginners:
+1. **INDEX.md** (this file) - overview
+2. **QUICKSTART.md** - installation
+3. **tools.md** - tools reference
+4. **example_usage.py** - examples
 
-### Для разработчиков:
-1. **README.md** - API документация
-2. **FEATURES.md** - возможности
-3. **server.py** - изучение кода
-4. **persistence.py** - реализация
+### For developers:
+1. **README.md** - API documentation
+2. **FEATURES.md** - features
+3. **server.py** - code study
+4. **persistence.py** - implementation
 
-### Для проектных менеджеров:
-1. **FEATURES.md** - что умеет система
-2. **tools.md** - какие инструменты доступны
-3. **CHANGELOG.md** - что добавлено
-4. **demo_save_to_json.md** - примеры работы
-
----
-
-## 🎯 Частые задачи
-
-### Хочу создать персонажа
-→ См. **tools.md** раздел "Управление персонажами"
-
-### Хочу сохранить данные
-→ См. **demo_save_to_json.md**
-
-### Хочу настроить сервер
-→ См. **QUICKSTART.md** + **config.json**
-
-### Хочу узнать все возможности
-→ См. **FEATURES.md**
-
-### Хочу увидеть примеры
-→ См. **example_usage.py**
-
-### Хочу понять архитектуру
-→ См. **README.md** раздел "Architecture"
+### For project managers:
+1. **FEATURES.md** - what the system can do
+2. **tools.md** - what tools are available
+3. **CHANGELOG.md** - what was added
+4. **demo_save_to_json.md** - usage examples
 
 ---
 
-## 🌟 Ключевые возможности
+## 🎯 Common Tasks
 
-✅ **22 MCP инструмента** для полного управления лором
-✅ **JSON сохранение** через tool calls
-✅ **Мультитенантность** с изоляцией данных
-✅ **Domain-Driven Design** с валидацией
-✅ **Полная документация** на 2 языках
-✅ **100% покрытие тестами** критических функций
-✅ **Готовые примеры** для быстрого старта
+### I want to create a character
+→ See **tools.md** section "Character Management"
 
----
+### I want to save data
+→ See **demo_save_to_json.md**
 
-## 📞 Поддержка
+### I want to configure the server
+→ See **QUICKSTART.md** + **config.json**
 
-### Проблемы с установкой?
-→ См. **QUICKSTART.md** раздел "Troubleshooting"
+### I want to know all features
+→ See **FEATURES.md**
 
-### Ошибки валидации?
-→ См. **tools.md** раздел "Важные ограничения"
+### I want to see examples
+→ See **example_usage.py**
 
-### Вопросы по API?
-→ См. **README.md** или **tools.md**
-
-### Нужны примеры?
-→ См. **example_usage.py** и **demo_save_to_json.md**
+### I want to understand architecture
+→ See **README.md** section "Architecture"
 
 ---
 
-**Версия:** 1.1.0
-**Последнее обновление:** 2026-01-26
-**Статус:** Production Ready ✅
-**Файлов в проекте:** 14
-**Общий размер:** ~110 KB
+## 🌟 Key Features
+
+✅ **22 MCP tools** for complete lore management
+✅ **JSON persistence** via tool calls
+✅ **Multi-tenancy** with data isolation
+✅ **Domain-Driven Design** with validation
+✅ **Complete documentation** in 2 languages
+✅ **100% test coverage** of critical functions
+✅ **Ready-to-use examples** for quick start
+
+---
+
+## 📞 Support
+
+### Installation issues?
+→ See **QUICKSTART.md** section "Troubleshooting"
+
+### Validation errors?
+→ See **tools.md** section "Important Limitations"
+
+### API questions?
+→ See **README.md** or **tools.md**
+
+### Need examples?
+→ See **example_usage.py** and **demo_save_to_json.md**
+
+---
+
+**Version:** 1.1.0
+**Last updated:** 2026-01-26
+**Status:** Production Ready ✅
+**Files in project:** 14
+**Total size:** ~110 KB

@@ -1,53 +1,53 @@
 # MCP Tools Reference | Справочник инструментов
 
-Полный список доступных инструментов MCP сервера для управления игровым лором.
+Complete list of available MCP server tools for managing game lore.
 
 ---
 
-## 🌍 Управление мирами (World Management)
+## 🌍 World Management
 
 ### `create_world`
-Создать новый мир в системе лора.
+Create a new world in the lore system.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
-  "tenant_id": "string",      // ID арендатора (обязательно)
-  "name": "string",            // Название мира, макс 100 символов (обязательно)
-  "description": "string",     // Описание мира, макс 1000 символов (обязательно)
-  "parent_id": "string"        // ID родительского мира (опционально)
+  "tenant_id": "string",      // Tenant ID (required)
+  "name": "string",            // World name, max 100 characters (required)
+  "description": "string",     // World description, max 1000 characters (required)
+  "parent_id": "string"        // Parent world ID (optional)
 }
 ```
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
-  "name": "Этерия",
-  "description": "Магический мир, где древние технологии встречаются с мистикой"
+  "name": "Aetherya",
+  "description": "A magical world where ancient technology meets mysticism"
 }
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
   "world": {
     "id": 1,
-    "name": "Этерия",
+    "name": "Aetherya",
     "description": "...",
     "version": 1
   },
-  "message": "World 'Этерия' created successfully"
+  "message": "World 'Aetherya' created successfully"
 }
 ```
 
 ---
 
 ### `get_world`
-Получить мир по ID.
+Get a world by ID.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -58,38 +58,38 @@
 ---
 
 ### `list_worlds`
-Список всех миров арендатора.
+List all worlds for a tenant.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
-  "limit": 100,        // По умолчанию: 100
-  "offset": 0          // По умолчанию: 0
+  "limit": 100,        // Default: 100
+  "offset": 0          // Default: 0
 }
 ```
 
 ---
 
 ### `update_world`
-Обновить название или описание мира.
+Update world name or description.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "world_id": "string",
-  "name": "string",           // Новое название (опционально)
-  "description": "string"     // Новое описание (опционально)
+  "name": "string",           // New name (optional)
+  "description": "string"     // New description (optional)
 }
 ```
 
 ---
 
 ### `delete_world`
-Удалить мир.
+Delete a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -99,36 +99,36 @@
 
 ---
 
-## 🦸 Управление персонажами (Character Management)
+## 🦸 Character Management
 
 ### `create_character`
-Создать нового персонажа в мире.
+Create a new character in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "world_id": "string",
-  "name": "string",                    // Имя персонажа, макс 100 символов
-  "backstory": "string",               // Предыстория, минимум 100 символов!
+  "name": "string",                    // Character name, max 100 characters
+  "backstory": "string",               // Backstory, minimum 100 characters!
   "rarity": "string",                  // COMMON | UNCOMMON | RARE | EPIC | LEGENDARY
   "element": "string",                 // physical | fire | water | earth | wind | light | dark
   "role": "string",                    // dps | tank | support | specialist
-  "base_hp": integer,                  // Базовое здоровье
-  "base_atk": integer,                 // Базовая атака
-  "base_def": integer,                 // Базовая защита
-  "base_speed": integer,               // Базовая скорость
-  "energy_cost": integer               // Стоимость ультимейта
+  "base_hp": integer,                  // Base health
+  "base_atk": integer,                 // Base attack
+  "base_def": integer,                 // Base defense
+  "base_speed": integer,               // Base speed
+  "energy_cost": integer               // Ultimate cost
 }
 ```
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
   "world_id": "1",
-  "name": "Лира Звездоткачиха",
-  "backstory": "Рожденная под небесным схождением, Лира обнаружила свое сродство со звездной магией в возрасте пяти лет. Она провела десятилетия, изучая магию в Арканном Нексусе, в конечном итоге став одним из самых молодых Архимагов в истории.",
+  "name": "Lyra Starweaver",
+  "backstory": "Born under a celestial convergence, Lyra discovered her affinity for star magic at the age of five. She spent decades studying magic at the Arcane Nexus, eventually becoming one of the youngest Archmages in history.",
   "rarity": "LEGENDARY",
   "element": "light",
   "role": "dps",
@@ -140,17 +140,17 @@
 }
 ```
 
-**Важно:**
-- ⚠️ **Backstory должен быть минимум 100 символов** - это требование домена для глубины персонажа
-- Все боевые характеристики опциональны
-- Имя должно быть уникальным в пределах мира
+**Important:**
+- ⚠️ **Backstory must be minimum 100 characters** - this is a domain requirement for character depth
+- All combat stats are optional
+- Name must be unique within the world
 
 ---
 
 ### `get_character`
-Получить персонажа по ID.
+Get a character by ID.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -161,9 +161,9 @@
 ---
 
 ### `list_characters`
-Список персонажей в мире.
+List characters in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -176,14 +176,14 @@
 ---
 
 ### `update_character`
-Обновить данные персонажа.
+Update character data.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "character_id": "string",
-  "backstory": "string",     // Новая предыстория (мин 100 символов)
+  "backstory": "string",     // New backstory (min 100 characters)
   "status": "string"         // active | inactive
 }
 ```
@@ -191,9 +191,9 @@
 ---
 
 ### `delete_character`
-Удалить персонажа.
+Delete a character.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -204,42 +204,42 @@
 ---
 
 ### `add_ability`
-Добавить способность персонажу.
+Add an ability to a character.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "character_id": "string",
   "ability_name": "string",
   "description": "string",
-  "power_level": integer     // От 1 до 10 (не 1-100!)
+  "power_level": integer     // From 1 to 10 (not 1-100!)
 }
 ```
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
   "character_id": "1",
-  "ability_name": "Космический Каскад",
-  "description": "Призывает дождь звездного света, наносящий урон всем врагам",
+  "ability_name": "Cosmic Cascade",
+  "description": "Summons a rain of starlight that damages all enemies",
   "power_level": 9
 }
 ```
 
-**Важно:**
-- ⚠️ **Power level: 1-10** (1 = слабая, 10 = сильнейшая)
-- НЕ используйте шкалу 1-100!
+**Important:**
+- ⚠️ **Power level: 1-10** (1 = weak, 10 = strongest)
+- DO NOT use the 1-100 scale!
 
 ---
 
-## 📖 Управление историями (Story Management)
+## 📖 Story Management
 
 ### `create_story`
-Создать новую историю в мире.
+Create a new story in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -251,29 +251,29 @@
 }
 ```
 
-**Типы историй:**
-- **LINEAR** - Линейное повествование (A → B → C → Конец)
-- **NON_LINEAR** - Разветвленный сюжет (множественные концовки)
-- **INTERACTIVE** - Интерактивный нарратив (выборы игрока)
+**Story types:**
+- **LINEAR** - Linear narrative (A → B → C → End)
+- **NON_LINEAR** - Branching plot (multiple endings)
+- **INTERACTIVE** - Interactive narrative (player choices)
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
   "world_id": "1",
-  "name": "Пробуждение Разлома",
-  "description": "Когда измерительные разломы начинают появляться по всей Этерии, Лира должна объединиться с маловероятными союзниками",
+  "name": "The Fracture Awakening",
+  "description": "As dimensional rifts begin appearing across Aetherya, Lyra must unite with unlikely allies",
   "story_type": "NON_LINEAR",
-  "content": "Глава 1: Первый Толчок\n\nАрканные сенсоры замерцали невозможными показаниями..."
+  "content": "Chapter 1: The First Tremor\n\nArcane sensors flickered with impossible readings..."
 }
 ```
 
 ---
 
 ### `get_story`
-Получить историю по ID.
+Get a story by ID.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -284,9 +284,9 @@
 ---
 
 ### `list_stories`
-Список историй в мире.
+List stories in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -298,32 +298,32 @@
 
 ---
 
-## 📅 Управление событиями (Event Management)
+## 📅 Event Management
 
 ### `create_event`
-Создать событие на временной линии.
+Create an event on the timeline.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "world_id": "string",
   "name": "string",
   "description": "string",
-  "start_date": "string",           // ISO дата (2026-01-26T12:00:00)
-  "end_date": "string",             // ISO дата (опционально)
-  "participant_ids": ["string"],    // Массив ID персонажей (мин 1!)
+  "start_date": "string",           // ISO date (2026-01-26T12:00:00)
+  "end_date": "string",             // ISO date (optional)
+  "participant_ids": ["string"],    // Array of character IDs (minimum 1!)
   "outcome": "string"               // success | failure | ongoing
 }
 ```
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
   "world_id": "1",
-  "name": "Битва за Расколотое Небо",
-  "description": "Массивный разлом открылся над столицей, высвобождая потусторонних ужасов",
+  "name": "Battle for the Shattered Sky",
+  "description": "A massive rift opened above the capital, unleashing otherworldly horrors",
   "start_date": "3024-06-15T14:30:00",
   "end_date": "3024-06-15T23:45:00",
   "participant_ids": ["1", "2", "3"],
@@ -331,16 +331,16 @@
 }
 ```
 
-**Важно:**
-- ⚠️ **Обязательно минимум 1 участник** (`participant_ids`)
-- События без участников нарушают инвариант домена
+**Important:**
+- ⚠️ **Minimum 1 participant required** (`participant_ids`)
+- Events without participants violate the domain invariant
 
 ---
 
 ### `list_events`
-Список событий в мире.
+List events in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -352,37 +352,37 @@
 
 ---
 
-## 📄 Управление страницами (Page Management)
+## 📄 Page Management
 
 ### `create_page`
-Создать кастомную страницу лора.
+Create a custom lore page.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
   "world_id": "string",
   "name": "string",
-  "content": "string"     // Поддерживается Markdown
+  "content": "string"     // Markdown supported
 }
 ```
 
-**Пример:**
+**Example:**
 ```json
 {
   "tenant_id": "my-game",
   "world_id": "1",
-  "name": "Арканный Нексус",
-  "content": "# Арканный Нексус\n\n## Обзор\nАрканный Нексус - это главное учреждение для изучения магии в Этерии...\n\n## История\nОснован в Год 1247 Советом Семи..."
+  "name": "Arcane Nexus",
+  "content": "# Arcane Nexus\n\n## Overview\nThe Arcane Nexus is the premier institution for magical study in Aetherya...\n\n## History\nFounded in Year 1247 by the Council of Seven..."
 }
 ```
 
 ---
 
 ### `list_pages`
-Список страниц в мире.
+List pages in a world.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
@@ -394,24 +394,24 @@
 
 ---
 
-## 💾 Сохранение в JSON (Persistence)
+## 💾 Persistence (Save to JSON)
 
 ### `save_to_json`
-Сохранить все данные лора в JSON файлы.
+Save all lore data to JSON files.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string"
 }
 ```
 
-**Что происходит:**
-- Создается структура `lore_data/`
-- Каждая сущность сохраняется в отдельный файл
-- Организация по типам (worlds/, characters/, stories/, events/, pages/)
+**What happens:**
+- Creates `lore_data/` structure
+- Each entity saved to separate file
+- Organized by type (worlds/, characters/, stories/, events/, pages/)
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
@@ -428,7 +428,7 @@
 }
 ```
 
-**Структура файлов:**
+**File structure:**
 ```
 lore_data/
 ├── worlds/
@@ -445,17 +445,17 @@ lore_data/
 ---
 
 ### `export_tenant`
-Экспортировать весь тенант в один JSON файл.
+Export an entire tenant to a single JSON file.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
   "tenant_id": "string",
-  "filename": "string"     // Например: "my_world_backup.json"
+  "filename": "string"     // Example: "my_world_backup.json"
 }
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
@@ -466,7 +466,7 @@ lore_data/
 }
 ```
 
-**Формат экспорта:**
+**Export format:**
 ```json
 {
   "metadata": {
@@ -491,25 +491,25 @@ lore_data/
 }
 ```
 
-**Использование:**
-- 📦 Полный бэкап
-- 📤 Отправка команде
-- 🔄 Контроль версий (git)
-- 💾 Архивирование
+**Usage:**
+- 📦 Full backup
+- 📤 Share with team
+- 🔄 Version control (git)
+- 💾 Archiving
 
 ---
 
 ### `list_saved_files`
-Список всех сохраненных JSON файлов.
+List all saved JSON files.
 
-**Параметры:**
+**Parameters:**
 ```json
 {
-  "tenant_id": "string"    // Опционально, для фильтрации
+  "tenant_id": "string"    // Optional, for filtering
 }
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
@@ -532,14 +532,14 @@ lore_data/
 ---
 
 ### `get_storage_stats`
-Статистика по хранилищу.
+Storage statistics.
 
-**Параметры:**
+**Parameters:**
 ```json
 {}
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
@@ -575,64 +575,64 @@ lore_data/
 
 ---
 
-## 📊 Сводная таблица
+## 📊 Summary Table
 
-| Категория | Инструменты | Всего |
-|-----------|-------------|-------|
-| **Миры** | create, get, list, update, delete | 5 |
-| **Персонажи** | create, get, list, update, delete, add_ability | 6 |
-| **Истории** | create, get, list | 3 |
-| **События** | create, list | 2 |
-| **Страницы** | create, list | 2 |
-| **Сохранение** | save_to_json, export_tenant, list_saved_files, get_storage_stats | 4 |
-| **ИТОГО** | | **22 инструмента** |
-
----
-
-## 🎯 Быстрые примеры
-
-### Создать полный мир
-```
-1. create_world - создать мир
-2. create_character - добавить героя
-3. add_ability - добавить способности
-4. create_story - создать историю
-5. create_event - добавить событие
-6. create_page - документировать лор
-7. save_to_json - сохранить всё
-```
-
-### Бэкап проекта
-```
-1. export_tenant - полный экспорт
-2. get_storage_stats - проверить размер
-```
-
-### Проверка данных
-```
-1. list_worlds - посмотреть миры
-2. list_characters - посмотреть персонажей
-3. get_storage_stats - статистика хранилища
-```
+| Category | Tools | Total |
+|-----------|-------|-------|
+| **Worlds** | create, get, list, update, delete | 5 |
+| **Characters** | create, get, list, update, delete, add_ability | 6 |
+| **Stories** | create, get, list | 3 |
+| **Events** | create, list | 2 |
+| **Pages** | create, list | 2 |
+| **Persistence** | save_to_json, export_tenant, list_saved_files, get_storage_stats | 4 |
+| **TOTAL** | | **22 tools** |
 
 ---
 
-## ⚠️ Важные ограничения
+## 🎯 Quick Examples
 
-| Правило | Значение | Причина |
-|---------|----------|---------|
-| Backstory мин. длина | 100 символов | Глубина персонажа |
-| Power level диапазон | 1-10 | Баланс игры |
-| Event участники мин. | 1 персонаж | Логическая целостность |
-| World name макс. | 255 символов | Валидация БД |
-| Character name макс. | 255 символов | Валидация БД |
-| Description макс. | 1000 символов | Валидация БД |
+### Create a complete world
+```
+1. create_world - create a world
+2. create_character - add a hero
+3. add_ability - add abilities
+4. create_story - create a story
+5. create_event - add an event
+6. create_page - document lore
+7. save_to_json - save everything
+```
+
+### Backup a project
+```
+1. export_tenant - full export
+2. get_storage_stats - check size
+```
+
+### Data verification
+```
+1. list_worlds - view worlds
+2. list_characters - view characters
+3. get_storage_stats - storage statistics
+```
 
 ---
 
-## 📝 Формат ответов
+## ⚠️ Important Constraints
 
-### Успех
+| Rule | Value | Reason |
+|------|-------|--------|
+| Backstory min. length | 100 characters | Character depth |
+| Power level range | 1-10 | Game balance |
+| Event participants min. | 1 character | Logical integrity |
+| World name max. | 255 characters | DB validation |
+| Character name max. | 255 characters | DB validation |
+| Description max. | 1000 characters | DB validation |
+
+---
+
+## 📝 Response Formats
+
+### Success
 ```json
 {
   "success": true,
@@ -641,16 +641,16 @@ lore_data/
 }
 ```
 
-### Ошибка
+### Error
 ```json
 {
   "success": false,
-  "error": "Подробное сообщение об ошибке",
+  "error": "Detailed error message",
   "type": "ValueError"
 }
 ```
 
-### Список
+### List
 ```json
 {
   "success": true,
@@ -661,13 +661,13 @@ lore_data/
 
 ---
 
-## 🚀 Типичные сценарии
+## 🚀 Typical Scenarios
 
-### Создание RPG персонажа
+### Creating an RPG character
 ```json
 create_character {
-  "name": "Арагорн",
-  "backstory": "Потомок Исилдура, Арагорн - законный наследник трона Гондора. Он вырос в Ривенделле под опекой Элронда и стал следопытом Севера, защищая Шир и его жителей от темных сил.",
+  "name": "Aragorn",
+  "backstory": "Descendant of Isildur, Aragorn is the rightful heir to the throne of Gondor. He grew up in Rivendell under Elrond's care and became a Ranger of the North, protecting the Shire and its inhabitants from dark forces.",
   "rarity": "LEGENDARY",
   "element": "physical",
   "role": "dps",
@@ -676,25 +676,25 @@ create_character {
 }
 
 add_ability {
-  "ability_name": "Удар Андурила",
+  "ability_name": "Andúril Strike",
   "power_level": 9
 }
 ```
 
-### Создание истории с событиями
+### Creating a story with events
 ```json
 create_story {
-  "name": "Братство Кольца",
+  "name": "The Fellowship of the Ring",
   "story_type": "LINEAR"
 }
 
 create_event {
-  "name": "Совет Элронда",
+  "name": "Council of Elrond",
   "participant_ids": ["1", "2", "3", "4"]
 }
 ```
 
-### Полный бэкап
+### Full backup
 ```json
 save_to_json {
   "tenant_id": "my-rpg"
@@ -708,6 +708,6 @@ export_tenant {
 
 ---
 
-**Версия:** 1.1.0
-**Последнее обновление:** 2026-01-26
-**Всего инструментов:** 22
+**Version:** 1.1.0
+**Last updated:** 2026-01-26
+**Total tools:** 22

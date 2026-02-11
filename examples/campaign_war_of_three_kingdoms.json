@@ -1,0 +1,88 @@
+{
+  "campaign": {
+    "id": null,
+    "name": "War of Three Kingdoms",
+    "description": "An epic RPG campaign with branching narrative, moral choices, and multiple endings set in a fantasy world with three warring kingdoms.",
+    "type": "main_story",
+    "difficulty": "medium",
+    "recommended_level_range": [
+      10,
+      50
+    ]
+  },
+  "structure": {
+    "prologue": {
+      "name": "Prologue: Three Kingdoms United",
+      "description": "Long ago, three kingdoms - Solaris, Lunaris, and Terratia - lived in harmony beneath the Three Moons. Peace and prosperity reigned throughout the realm..."
+    },
+    "chapters": [
+      {
+        "id": null,
+        "name": "Chapter 1: The Invasion Begins",
+        "type": "main",
+        "number": 1,
+        "description": "Without warning, shadows moved across the realm. The Dark Lord Malachar's forces invaded Solaris Kingdom first, sweeping through northern territories..."
+      },
+      {
+        "id": null,
+        "name": "Chapter 2: Shadow War",
+        "type": "main",
+        "number": 2,
+        "description": "As Solaris fell, Lunaris and Terratia forged an alliance. Together they pushed back the darkness, but at great cost. Ancient ruins were desecrated, and thousands of innocent lives were lost..."
+      },
+      {
+        "id": null,
+        "name": "Chapter 3: Final Confrontation",
+        "type": "main",
+        "number": 3,
+        "description": "The combined armies of the three kingdoms marched on Malachar's fortress at Mount Vespera. In the final battle, the Dark Lord was defeated, but not before his final curse bound the souls of the fallen..."
+      }
+    ],
+    "plot_branches": [
+      {
+        "id": null,
+        "type": "choice",
+        "description": "Player chooses the fate of the three kingdoms - unite them, conquer them, or remain neutral",
+        "moral_choice": "How do you resolve the conflict between the three kingdoms?"
+      }
+    ],
+    "endings": [
+      {
+        "id": null,
+        "name": "Good Ending: Three Kingdoms United",
+        "type": "good",
+        "description": "Through diplomacy and mutual understanding, the three kingdoms unite to form a powerful alliance. Peace and prosperity return to the realm for generations to come.",
+        "is_canon": false,
+        "rarity": "common"
+      },
+      {
+        "id": null,
+        "name": "Evil Ending: Eternal Tyrant",
+        "type": "evil",
+        "description": "You exploit the chaos and destruction to become the supreme ruler of all three kingdoms. Eternal darkness and tyranny cover the realm, but at what cost to your soul?",
+        "is_canon": false,
+        "rarity": "rare"
+      },
+      {
+        "id": null,
+        "name": "Neutral Ending: Silent Observer",
+        "type": "neutral",
+        "description": "You choose not to interfere, becoming a silent observer of the conflict. The three kingdoms destroy each other, and darkness eventually consumes everything. You watch from the shadows, powerless but alive.",
+        "is_canon": false,
+        "rarity": "uncommon"
+      }
+    ]
+  },
+  "metadata": {
+    "estimated_playtime_hours": 60,
+    "total_endings": 3,
+    "canonical_ending": null,
+    "moral_alignment_system": "good/evil/neutral",
+    "replay_value": "high"
+  },
+  "export_info": {
+    "export_date": "2026-01-30T21:11:21.829400",
+    "export_tool": "MythWeave Chronicles v1.0",
+    "author": "AAA Game Development Studio"
+  }
+}
