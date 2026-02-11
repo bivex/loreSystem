@@ -118,6 +118,24 @@ entities/                       # Generated entity files
 
 ## Usage
 
+### Prerequisites
+
+**On remote/headless servers:** Loom requires a terminal emulator to spawn agent sessions.
+
+```bash
+# Install xterm (simplest terminal emulator)
+apt install xterm
+
+# Set TERMINAL environment variable
+export TERMINAL=xterm
+
+# Or add to ~/.bashrc for persistence
+echo 'export TERMINAL=xterm' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**Available terminal emulators:** kitty, alacritty, foot, wezterm, gnome-terminal, konsole, xfce4-terminal, xterm
+
 ### 1. Initialize Loom Plan
 
 ```bash
@@ -140,7 +158,11 @@ bash scripts/fix_loom_blockers.sh
 ### 3. Run Orchestration
 
 ```bash
-# Run with all 30 agents in parallel
+# Quick start with helper script (includes TERMINAL setup)
+bash scripts/start_loom.sh
+
+# Or manually:
+export TERMINAL=xterm
 loom run --max-parallel 30
 
 # Run with manual control
