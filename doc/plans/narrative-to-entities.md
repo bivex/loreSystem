@@ -28,36 +28,12 @@ loom:
       allow_local_binding: false
       allow_unix_sockets: false
   stages:
-    - id: parse-chapter
-      name: Parse Chapter Input
-      description: Extract entities, relationships, context from chapter text
-      working_dir: "."
-      stage_type: standard
-      dependencies: []
-      acceptance:
-        - "python scripts/validate_parse_output.py parsed_data.json"
-      files:
-        - "scripts/parse_chapter.py"
-        - "src/domain/story/*.py"
-      truths:
-        - "jq '.entities | length > 0' parsed_data.json"
-        - "jq '.chapter_id != null' parsed_data.json"
-      artifacts:
-        - "parsed_data.json"
-        - "extracted_entities.json"
-        - "relationships.json"
-      wiring:
-        - source: "parsed_data.json"
-          pattern: "chapter_id"
-          description: Chapter ID reference established
-      execution_mode: single
-
     - id: narrative-specialist
       name: Narrative Specialist (8 entities)
       description: Create Story, Chapter, Act, Episode, Prologue, Epilogue, PlotBranch, BranchPoint
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/narrative-specialist.md"
@@ -77,7 +53,7 @@ loom:
       description: Create Character, CharacterEvolution, CharacterProfileEntry, CharacterRelationship, CharacterVariant, VoiceActor, MotionCapture
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/character-architect.md"
@@ -96,7 +72,7 @@ loom:
       description: Create Quest, QuestChain, QuestNode, QuestGiver, QuestObjective, QuestPrerequisite, QuestRewardTier, QuestTracker, MoralChoice
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/quest-designer.md"
@@ -111,7 +87,7 @@ loom:
       description: Create Skill, Perk, Trait, Attribute, Experience, LevelUp, TalentTree, Mastery, ProgressionEvent, ProgressionState
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/progression-engineer.md"
@@ -126,7 +102,7 @@ loom:
       description: Create Location, HubArea, Instance, Dungeon, Raid, Arena, OpenWorldZone, Underground, Skybox, Dimension, PocketDimension
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/world-geographer.md"
@@ -142,7 +118,7 @@ loom:
       description: Create Environment, WeatherPattern, Atmosphere, Lighting, TimePeriod, Disaster
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/environmental-scientist.md"
@@ -157,7 +133,7 @@ loom:
       description: Create Era, EraTransition, Timeline, Calendar, Festival, Celebration, Ceremony, Exhibition, Tournament, Competition
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/historian.md"
@@ -173,7 +149,7 @@ loom:
       description: Create Government, Law, LegalSystem, Court, Judge, Jury, Lawyer, Crime, Punishment, Evidence, Witness, Treaty, Constitution
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/political-scientist.md"
@@ -191,7 +167,7 @@ loom:
       description: Create Trade, Barter, Tax, Tariff, Supply, Demand, Price, Inflation, Currency, Shop, Purchase, Reward, LootTableWeight
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/economist.md"
@@ -208,7 +184,7 @@ loom:
       description: Create Faction, FactionHierarchy, FactionIdeology, FactionLeader, FactionMembership, FactionResource, FactionTerritory
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/faction-analyst.md"
@@ -223,7 +199,7 @@ loom:
       description: Create Army, Fleet, Battalion, WeaponSystem, Defense, Fortification, SiegeEngine, War, Invasion, Revolution
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/military-strategist.md"
@@ -240,7 +216,7 @@ loom:
       description: Create Cult, Sect, HolySite, Scripture, Ritual, Oath, Summon, Pact, Curse, Blessing, Miracle
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/religious-scholar.md"
@@ -257,7 +233,7 @@ loom:
       description: Create LoreFragment, CodexEntry, JournalPage, BestiaryEntry, Memory, Dream, Nightmare, SecretArea
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/lore-chronicler.md"
@@ -274,7 +250,7 @@ loom:
       description: Create Mod, CustomMap, UserScenario, ShareCode, WorkshopEntry, Localization, Translation, Subtitle, Dubbing, VoiceOver
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/content-creator.md"
@@ -290,7 +266,7 @@ loom:
       description: Create Achievement, Trophy, Badge, Title, Rank, Leaderboard
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/achievement-specialist.md"
@@ -305,7 +281,7 @@ loom:
       description: Create Ambient, Motif, MusicControl, MusicState, MusicTheme, MusicTrack, Score, SoundEffect, Soundtrack, Silence
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/audio-director.md"
@@ -320,7 +296,7 @@ loom:
       description: Create VisualEffect, Particle, Shader, Lighting, ColorPalette
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/visual-effects-artist.md"
@@ -335,7 +311,7 @@ loom:
       description: Create Cutscene, Cinematic, CameraPath, Transition, Fade, Flashback
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/cinematic-director.md"
@@ -350,7 +326,7 @@ loom:
       description: Create Newspaper, Radio, Television, Internet, SocialMedia, Propaganda, Rumor
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/media-analyst.md"
@@ -365,7 +341,7 @@ loom:
       description: Create Mount, Familiar, MountEquipment, Vehicle, Airship, Spaceship, Portal, Teleporter, FastTravelPoint
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/transportation-engineer.md"
@@ -380,7 +356,7 @@ loom:
       description: Create Galaxy, Nebula, BlackHole, Wormhole, StarSystem, Moon, Eclipse, Solstice, CelestialBody
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/celestial-scientist.md"
@@ -395,7 +371,7 @@ loom:
       description: Create FoodChain, Migration, Hibernation, Reproduction, Extinction, Evolution
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/biology-specialist.md"
@@ -410,7 +386,7 @@ loom:
       description: Create District, Ward, Quarter, Plaza, MarketSquare, Slums, NobleDistrict, PortDistrict
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/urban-architect.md"
@@ -425,7 +401,7 @@ loom:
       description: Create Academy, University, School, Library, ResearchCenter, Archive, Museum
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/research-education-specialist.md"
@@ -440,7 +416,7 @@ loom:
       description: Create HiddenPath, EasterEgg, Mystery, Enigma, Riddle, Puzzle, Trap
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/puzzle-secrets-designer.md"
@@ -455,7 +431,7 @@ loom:
       description: Create Choice, Flowchart, Handout, Tokenboard, Tag, Template, Inspiration, Note
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/ui-content-specialist.md"
@@ -470,7 +446,7 @@ loom:
       description: Create PlayerMetric, SessionData, Heatmap, DropRate, ConversionRate, DifficultyCurve, LootTableWeight, BalanceEntities
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/analytics-balance-specialist.md"
@@ -485,7 +461,7 @@ loom:
       description: Create LegendaryWeapon, MythicalArmor, DivineItem, CursedItem, ArtifactSet, RelicCollection, Glyph, Rune, Socket, Enchantment
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/legendary-items-specialist.md"
@@ -500,7 +476,7 @@ loom:
       description: Create Affinity, Disposition, Honor, Karma, SocialClass, SocialMobility, Festival, Celebration, Ceremony, Competition, Tournament
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/social-cultural-specialist.md"
@@ -515,7 +491,7 @@ loom:
       description: Create Event, EventChain, AlternateReality, Consequence, Ending, Patent, Invention, Improvement, Requirement, Pull, Phenomenon, Pity, Theme
       working_dir: "."
       stage_type: standard
-      dependencies: ["parse-chapter"]
+      dependencies: []
       execution_mode: team
       files:
         - "agents/skills/game-mechanics-specialist.md"

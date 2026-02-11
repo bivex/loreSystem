@@ -40,11 +40,9 @@ agents/
 └── README.md                  # This file
 
 doc/plans/
-├── narrative-to-entities.md    # Loom orchestration plan (30 agents)
+├── narrative-to-entities.md    # Loom orchestration plan (30 agents, 32 stages)
 
 scripts/
-├── parse_chapter.py           # Parse chapter text
-├── validate_parse_output.py   # Validate parsed data
 ├── validate_entities.py       # Validate all entities
 ├── validate_schema.py         # Validate schema compliance
 └── verify_sqlite_inserts.py  # Verify database inserts
@@ -124,17 +122,19 @@ entities/                       # Generated entity files
 
 ```bash
 cd /root/clawd
-loom init doc/plans/narrative-to-entities.md
+
+# Fresh initialization (removes old .work directory)
+rm -rf .work && loom init doc/plans/narrative-to-entities.md
 ```
 
 ### 2. Prepare Chapter Input
 
 ```bash
-# Create a chapter text file
+# Create a chapter text file (agents will read it directly)
 echo "Chapter 1: The Beginning. Kira stood at the edge of Eldoria..." > chapter_1.txt
 
-# Or use stdin
-cat chapter_1.txt | python scripts/parse_chapter.py
+# Or run the helper script to fix blockers and create sample chapter
+bash scripts/fix_loom_blockers.sh
 ```
 
 ### 3. Run Orchestration
@@ -188,15 +188,7 @@ python scripts/verify_sqlite_inserts.py lore_system.db entities/
 Chapter Text
     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 1. PARSE CHAPTER                                                 │
-│    - Extract entities using regex/NLP                                │
-│    - Identify relationships                                         │
-│    - Generate chapter ID                                          │
-│    Output: parsed_data.json, extracted_entities.json                  │
-└─────────────────────────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────────────────────────┐
-│ 2. PARALLEL AGENT EXECUTION (30 agents)                           │
+│ PARALLEL AGENT EXECUTION (30 agents)                              │
 │    ├─ Narrative Specialist → entities/narrative.json                 │
 │    ├─ Character Architect → entities/character.json                 │
 │    ├─ Quest Designer → entities/quest.json                         │
@@ -230,7 +222,7 @@ Chapter Text
 └─────────────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 3. VALIDATION                                                   │
+│ 2. VALIDATION                                                   │
 │    - Validate all entity files                                    │
 │    - Check schema compliance                                      │
 │    - Verify required fields                                      │
@@ -238,7 +230,7 @@ Chapter Text
 └─────────────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│ 4. PERSIST TO SQLITE                                            │
+│ 3. PERSIST TO SQLITE                                            │
 │    - Insert all entities into lore_system.db                       │
 │    - Create database tables if needed                             │
 │    - Log insertion results                                        │
@@ -301,8 +293,7 @@ sqlite3 lore_system.db "SELECT COUNT(*) FROM story;"
 
 ## Next Steps
 
-1. **Enhance NLP parsing**: Replace regex with NLP/LLM for better extraction
-2. **Add entity linking**: Cross-reference entities between agents
+1. **Add entity linking**: Cross-reference entities between agents
 3. **Implement diff tracking**: Track changes between chapters
 4. **Add conflict resolution**: Handle entity conflicts between agents
 5. **Create agent teams**: Enable collaborative agent work
