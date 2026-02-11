@@ -1,4 +1,4 @@
-# Loom Agent Orchestration for loreSystem
+# 🎭 Loom Agent Orchestration for loreSystem
 
 This directory contains Loom-based agent orchestration system for converting narrative chapters into loreSystem entities.
 
@@ -116,9 +116,11 @@ entities/                       # Generated entity files
 | 30 | Game Mechanics Specialist | Events, Event Chains, Alternate Realities, Consequences, Endings, Patents, Inventions, Improvements, Requirements, Pulls, Phenomena, Pity, Themes | 13 |
 | **TOTAL** | **All loreSystem entities** | **295** |
 
-## Usage
+## 🚀 Usage
 
-### Prerequisites
+### 📋 Prerequisites
+
+⚠️ **KVM Performance Warning:** Performance on KVM virtual machines is very weak and processes may hang/freeze. Consider using bare metal or LXC containers for better stability.
 
 **On remote/headless servers:** Loom requires a terminal emulator to spawn agent sessions.
 
@@ -136,7 +138,7 @@ source ~/.bashrc
 
 **Available terminal emulators:** kitty, alacritty, foot, wezterm, gnome-terminal, konsole, xfce4-terminal, xterm
 
-### 1. Initialize Loom Plan
+### 1️⃣ Initialize Loom Plan
 
 ```bash
 cd /root/clawd
@@ -145,7 +147,7 @@ cd /root/clawd
 rm -rf .work && loom init doc/plans/narrative-to-entities.md
 ```
 
-### 2. Prepare Chapter Input
+### 2️⃣ Prepare Chapter Input
 
 ```bash
 # Create a chapter text file (agents will read it directly)
@@ -155,7 +157,7 @@ echo "Chapter 1: The Beginning. Kira stood at the edge of Eldoria..." > chapter_
 bash scripts/fix_loom_blockers.sh
 ```
 
-### 3. Run Orchestration
+### 3️⃣ Run Orchestration
 
 ```bash
 # Quick start with helper script (includes TERMINAL setup)
@@ -172,7 +174,7 @@ loom run --manual
 loom run --max-parallel 30 && loom status --live
 ```
 
-### 4. Monitor Progress
+### 4️⃣ Monitor Progress
 
 ```bash
 # Live status
@@ -185,7 +187,7 @@ loom status --compact
 loom status --verbose
 ```
 
-### 5. Validate Results
+### 5️⃣ Validate Results
 
 ```bash
 # Validate all entities
@@ -195,7 +197,7 @@ python scripts/validate_entities.py --strict
 python scripts/validate_schema.py --all-files
 ```
 
-### 6. Persist to SQLite
+### 6️⃣ Persist to SQLite
 
 After validation completes, entities are automatically inserted into `lore_system.db`.
 
@@ -204,7 +206,7 @@ After validation completes, entities are automatically inserted into `lore_syste
 python scripts/verify_sqlite_inserts.py lore_system.db entities/
 ```
 
-## Pipeline Flow
+## 🔄 Pipeline Flow
 
 ```
 Chapter Text
@@ -260,7 +262,7 @@ Chapter Text
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Agent Skills
+## 🧠 Agent Skills
 
 Each `skills/*.md` file defines:
 
@@ -270,9 +272,9 @@ Each `skills/*.md` file defines:
 4. **Output Format**: JSON schema requirements
 5. **Key Considerations**: Important notes and edge cases
 
-## Configuration
+## ⚙️ Configuration
 
-### Loom Plan Configuration
+### 📝 Loom Plan Configuration
 
 Edit `doc/plans/narrative-to-entities.md` to customize:
 
@@ -281,7 +283,7 @@ Edit `doc/plans/narrative-to-entities.md` to customize:
 - **Acceptance Criteria**: Shell commands for stage completion
 - **Truths/Artifacts/Wiring**: Goal-backward verification
 
-### Agent Skills Configuration
+### 🧠 Agent Skills Configuration
 
 Edit `agents/skills/*.md` files to:
 
@@ -290,9 +292,9 @@ Edit `agents/skills/*.md` files to:
 - Change output formats
 - Update validation rules
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Stage Stuck?
+### Stage Stuck? 🤔
 
 ```bash
 loom stage status <stage-id>
@@ -313,13 +315,13 @@ sqlite3 lore_system.db ".tables"
 sqlite3 lore_system.db "SELECT COUNT(*) FROM story;"
 ```
 
-## Next Steps
+## 🎯 Next Steps
 
 1. **Add entity linking**: Cross-reference entities between agents
 3. **Implement diff tracking**: Track changes between chapters
 4. **Add conflict resolution**: Handle entity conflicts between agents
 5. **Create agent teams**: Enable collaborative agent work
 
-## License
+## 📜 License
 
 MIT - See LICENSE file in repository root.
