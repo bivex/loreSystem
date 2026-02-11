@@ -18,6 +18,7 @@ echo ""
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Step 1: Stop any running daemon
@@ -26,6 +27,68 @@ if loom stop 2>/dev/null; then
     echo "  ✓ Daemon stopped"
 else
     echo "  ⚠ No daemon was running"
+fi
+
+# Step 1b: Kill ALL loom processes (including orphans from deleted binary)
+echo "🧹 Killing any orphaned loom processes..."
+if pgrep -x loom >/dev/null 2>&1; then
+    pkill -9 -x loom 2>/dev/null || true
+    sleep 1
+    if pgrep -x loom >/dev/null 2>&1; then
+        echo -e "${RED}  ✗ Some processes could not be killed${NC}"
+        echo "  Running processes:"
+        pgrep -fl loom || true
+    else
+        echo "  ✓ All orphaned processes killed"
+    fi
+else
+    echo "  ✓ No orphaned processes found"
+fi
+
+# Step 1c: Check for launchd services
+echo "🔍 Checking for launchd services..."
+LAUNCHD_SERVICES=$(launchctl list 2>/dev/null | grep -i loom || true)
+if [ -n "$LAUNCHD_SERVICES" ]; then
+    echo "  ⚠ Found launchd services:"
+    echo "$LAUNCHD_SERVICES"
+    # Try to unload any loom-related services
+    echo "  Attempting to unload services..."
+    for service in $(echo "$LAUNCHD_SERVICES" | awk '{print $1}'); do
+        if launchctl unload "$service" 2>/dev/null; then
+            echo "    ✓ Unloaded: $service"
+        fi
+    done
+else
+    echo "  ✓ No launchd services found"
+fi
+
+# Step 1d: Verify loom binary is valid
+echo "🔍 Verifying loom binary..."
+LOOM_PATH=$(which loom 2>/dev/null)
+if [ -z "$LOOM_PATH" ]; then
+    echo -e "${RED}  ✗ loom binary not found in PATH${NC}"
+    exit 1
+fi
+if [ ! -f "$LOOM_PATH" ]; then
+    echo -e "${RED}  ✗ loom binary path doesn't exist: $LOOM_PATH${NC}"
+    echo "  This indicates a deleted binary issue. Reinstall loom."
+    exit 1
+fi
+echo "  ✓ loom binary found: $LOOM_PATH"
+
+# Step 1e: Clean orphaned worktrees
+echo "🧹 Cleaning orphaned worktrees..."
+if [ -d ".worktrees" ]; then
+    WORKTREE_COUNT=$(find .worktrees -maxdepth 1 -type d ! -name ".worktrees" | wc -l | tr -d ' ')
+    if [ "$WORKTREE_COUNT" -gt 0 ]; then
+        echo "  Found $WORKTREE_COUNT worktree(s), cleaning..."
+        find .worktrees -maxdepth 1 -type d ! -name ".worktrees" -exec rm -rf {} + 2>/dev/null || true
+        echo "  ✓ Worktrees cleaned"
+    else
+        echo "  ✓ No orphaned worktrees"
+    fi
+else
+    echo "  ✓ No .worktrees directory"
 fi
 
 # Step 2: Restore plan from IN_PROGRESS if needed
@@ -47,8 +110,18 @@ fi
 # Step 3: Clean work directory
 echo ""
 echo "🧹 Cleaning work directory..."
-rm -rf .work
-echo "  ✓ Work directory cleaned"
+if [ -d ".work" ]; then
+    # Remove work directory completely to avoid any state issues
+    rm -rf .work
+    echo "  ✓ Work directory cleaned"
+else
+    echo "  ✓ Work directory already clean"
+fi
+
+# Also clean handoffs if they exist
+if [ -d ".work/handoffs" ]; then
+    rm -rf .work/handoffs
+fi
 
 # Step 4: Fix any git issues
 echo ""
@@ -147,7 +220,38 @@ else
     echo "  ✓ chapter_1.txt exists"
 fi
 
-# Step 8: Run loom
+# Step 8: Final pre-flight check
+echo ""
+echo "🔍 Final pre-flight check..."
+FINAL_ISSUES=0
+
+# Check no loom processes running
+if pgrep -x loom >/dev/null 2>&1; then
+    echo -e "${RED}  ✗ ERROR: loom processes still running!${NC}"
+    pgrep -fl loom || true
+    FINAL_ISSUES=1
+fi
+
+# Check .work is clean
+if [ -d ".work" ] && [ "$(ls -A .work 2>/dev/null)" ]; then
+    echo "  ⚠ Warning: .work directory not empty"
+    echo "  This may cause issues, but continuing..."
+fi
+
+# Check plan file exists
+if [ ! -f "doc/plans/narrative-to-entities.md" ]; then
+    echo -e "${RED}  ✗ ERROR: Plan file not found!${NC}"
+    FINAL_ISSUES=1
+fi
+
+if [ $FINAL_ISSUES -eq 1 ]; then
+    echo ""
+    echo -e "${RED}✗ Pre-flight check failed. Please fix issues above.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}  ✓ All checks passed${NC}"
+
+# Step 9: Run loom
 echo ""
 echo "🎯 Starting Loom with 30 parallel agents..."
 echo ""
