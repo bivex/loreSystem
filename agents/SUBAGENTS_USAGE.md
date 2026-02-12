@@ -1,102 +1,133 @@
-# loreSystem Subagents for OpenClaw - Quick Start
+# loreSystem Subagents for OpenClaw — Quick Start (со скилами)
 
-## Configuration Complete
+## Структура скилов
 
-All 30 subagents are now configured in `SUBAGENTS_CONFIG.json`.
+Каждый субагент загружает **три базовых скила** + **один специализированный**:
 
-## Quick Start
+| Скил | Назначение |
+|------|-----------|
+| `lore-extraction` | Общие правила извлечения сущностей из loreSystem |
+| `json-formatter` | Форматирование вывода строго в JSON |
+| `entity-validator` | Валидация типов, полей и связей между сущностями |
+| `<domain>-*` | Специфика конкретной предметной области |
 
-### Option 1: Spawn Individual Subagent
+Скилы хранятся в папке `skills/` и регистрируются в `SUBAGENTS_CONFIG.json` в секции `skills.registry`.
 
-```bash
-# Basic syntax
-openclaw agent spawn --task "Extract character entities" --label "Character Architect"
+---
 
-# With custom model and thinking
-openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "Extract character entities" --label "Character Architect"
+## Запуск субагента
 
-# With timeout (default 300s, override here)
-openclaw agent spawn --runTimeoutSeconds 600 --task "Extract character entities" --label "Character Architect"
-```
-
-# With custom model/thinking
-openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "Extract character entities" --label "Character Architect"
-
-# With timeout
-openclaw agent spawn --runTimeoutSeconds 600 --task "Extract character entities"
-```
-
-### Option 2: Spawn Using Config Key
+### Вариант 1 — по ключу конфига (рекомендуется)
 
 ```bash
 openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect"
 ```
 
-### Option 3: Batch Spawn Multiple Subagents
+> Скилы, задача и выходной файл берутся автоматически из конфига.
+
+### Вариант 2 — вручную с явным указанием скилов
 
 ```bash
-# Spawn multiple subagents in parallel
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "narrative-specialist" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "quest-designer" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "world-geographer"
+openclaw agent spawn \
+  --task "Extract character entities (character, character_evolution, ...)" \
+  --label "Character Architect" \
+  --skills skills/lore-extraction.md,skills/json-formatter.md,skills/entity-validator.md,skills/character-design.md
 ```
 
-## List Active Subagents
+### Вариант 3 — с переопределением модели/таймаута
 
 ```bash
-/subagents list
+openclaw agent spawn \
+  --config SUBAGENTS_CONFIG.json \
+  --key "technical-director" \
+  --model anthropic/claude-sonnet-4 \
+  --thinking high \
+  --runTimeoutSeconds 900
 ```
 
-## Stop a Subagent
+### Вариант 4 — пакетный запуск группы субагентов параллельно
 
 ```bash
-/subagents stop <run-id>
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "narrative-specialist"   &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect"    &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "quest-designer"         &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "world-geographer"       &
+wait
+echo "Batch done"
 ```
 
-## View Subagent Log
+### Вариант 5 — запуск всех 30 субагентов одной командой
 
 ```bash
-/subagents log <run-id>
+for key in \
+  narrative-specialist character-architect quest-designer progression-engineer \
+  world-geographer environmental-scientist historian political-scientist \
+  economist faction-analyst military-strategist religious-scholar \
+  lore-chronicler content-creator achievement-specialist audio-director \
+  visual-effects-artist cinematic-director media-analyst transportation-engineer \
+  celestial-scientist biology-specialist urban-architect research-education-specialist \
+  puzzle-secrets-designer ui-content-specialist analytics-balance-specialist \
+  legendary-items-specialist social-cultural-specialist technical-director; do
+    openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "$key" &
+done
+wait
+echo "All 30 subagents done"
 ```
 
-## Quick Reference - All 30 Subagents
+---
 
-| # | Subagent | Entities | Output File |
-|---|------------|----------|-------------|
-| 1 | narrative-specialist | 8 narrative | entities/narrative.json |
-| 2 | character-architect | 7 character | entities/character.json |
-| 3 | quest-designer | 9 quest | entities/quest.json |
-| 4 | progression-engineer | 10 progression | entities/progression.json |
-| 5 | world-geographer | 11 location | entities/world.json |
-| 6 | environmental-scientist | 6 environmental | entities/environment.json |
-| 7 | historian | 10 historical | entities/historical.json |
-| 8 | political-scientist | 13 political | entities/political.json |
-| 9 | economist | 13 economic | entities/economy.json |
-| 10 | faction-analyst | 7 faction | entities/faction.json |
-| 11 | military-strategist | 10 military | entities/military.json |
-| 12 | religious-scholar | 11 religious | entities/religious.json |
-| 13 | lore-chronicler | 8 lore | entities/lore.json |
-| 14 | content-creator | 10 content | entities/content.json |
-| 15 | achievement-specialist | 6 achievement | entities/achievement.json |
-| 16 | audio-director | 9 audio | entities/audio.json |
-| 17 | visual-effects-artist | 5 visual | entities/visual.json |
-| 18 | cinematic-director | 6 cinematic | entities/cinematic.json |
-| 19 | media-analyst | 7 media | entities/media.json |
-| 20 | transportation-engineer | 9 transport | entities/transportation.json |
-| 21 | celestial-scientist | 9 celestial | entities/celestial.json |
-| 22 | biology-specialist | 6 biology | entities/biology.json |
-| 23 | urban-architect | 8 urban | entities/urban.json |
-| 24 | research-education-specialist | 7 research | entities/research.json |
-| 25 | puzzle-secrets-designer | 7 puzzle | entities/puzzle.json |
-| 26 | ui-content-specialist | 8 UI | entities/ui_content.json |
-| 27 | analytics-balance-specialist | 8 analytics | entities/analytics.json |
-| 28 | legendary-items-specialist | 10 legendary | entities/legendary.json |
-| 29 | social-cultural-specialist | 11 social | entities/social_cultural.json |
-| 30 | technical-director | 193 technical | entities/technical.json |
-| **TOTAL** | **All loreSystem entities** | **295** |
+## Управление субагентами
 
-## Full Entity Count Breakdown
+```bash
+openclaw subagent list                        # список активных
+openclaw subagent stop <run-id>               # остановить
+openclaw subagent log <run-id>                # просмотр лога
+openclaw subagent log <run-id> 50             # последние 50 строк
+openclaw subagent info <run-id>               # статус и метаданные
+openclaw subagent message send <run-id> -m "Уточни поле X"  # отправить сообщение
+```
+
+---
+
+## Полный список субагентов
+
+| # | Ключ | Лейбл | Скилы | Сущностей | Файл |
+|---|------|-------|-------|-----------|------|
+| 1 | `narrative-specialist` | Narrative Specialist | lore-extraction, json-formatter, entity-validator, **narrative-writing** | 8 | `entities/narrative.json` |
+| 2 | `character-architect` | Character Architect | lore-extraction, json-formatter, entity-validator, **character-design** | 7 | `entities/character.json` |
+| 3 | `quest-designer` | Quest Designer | lore-extraction, json-formatter, entity-validator, **quest-design** | 9 | `entities/quest.json` |
+| 4 | `progression-engineer` | Progression Engineer | lore-extraction, json-formatter, entity-validator, **progression-design** | 10 | `entities/progression.json` |
+| 5 | `world-geographer` | World Geographer | lore-extraction, json-formatter, entity-validator, **world-building** | 11 | `entities/world.json` |
+| 6 | `environmental-scientist` | Environmental Scientist | lore-extraction, json-formatter, entity-validator, **environmental-design** | 6 | `entities/environment.json` |
+| 7 | `historian` | Historian | lore-extraction, json-formatter, entity-validator, **historical-research** | 10 | `entities/historical.json` |
+| 8 | `political-scientist` | Political Scientist | lore-extraction, json-formatter, entity-validator, **political-analysis** | 13 | `entities/political.json` |
+| 9 | `economist` | Economist | lore-extraction, json-formatter, entity-validator, **economic-modeling** | 13 | `entities/economy.json` |
+| 10 | `faction-analyst` | Faction Analyst | lore-extraction, json-formatter, entity-validator, **faction-design** | 7 | `entities/faction.json` |
+| 11 | `military-strategist` | Military Strategist | lore-extraction, json-formatter, entity-validator, **military-strategy** | 10 | `entities/military.json` |
+| 12 | `religious-scholar` | Religious Scholar | lore-extraction, json-formatter, entity-validator, **religious-lore** | 11 | `entities/religious.json` |
+| 13 | `lore-chronicler` | Lore Chronicler | lore-extraction, json-formatter, entity-validator, **lore-writing** | 8 | `entities/lore.json` |
+| 14 | `content-creator` | Content Creator | lore-extraction, json-formatter, entity-validator, **content-management** | 10 | `entities/content.json` |
+| 15 | `achievement-specialist` | Achievement Specialist | lore-extraction, json-formatter, entity-validator, **achievement-design** | 6 | `entities/achievement.json` |
+| 16 | `audio-director` | Audio Director | lore-extraction, json-formatter, entity-validator, **audio-direction** | 9 | `entities/audio.json` |
+| 17 | `visual-effects-artist` | Visual Effects Artist | lore-extraction, json-formatter, entity-validator, **vfx-design** | 5 | `entities/visual.json` |
+| 18 | `cinematic-director` | Cinematic Director | lore-extraction, json-formatter, entity-validator, **cinematic-direction** | 6 | `entities/cinematic.json` |
+| 19 | `media-analyst` | Media Analyst | lore-extraction, json-formatter, entity-validator, **media-analysis** | 7 | `entities/media.json` |
+| 20 | `transportation-engineer` | Transportation Engineer | lore-extraction, json-formatter, entity-validator, **transport-design** | 9 | `entities/transportation.json` |
+| 21 | `celestial-scientist` | Celestial Scientist | lore-extraction, json-formatter, entity-validator, **celestial-science** | 9 | `entities/celestial.json` |
+| 22 | `biology-specialist` | Biology Specialist | lore-extraction, json-formatter, entity-validator, **biology-design** | 6 | `entities/biology.json` |
+| 23 | `urban-architect` | Urban Architect | lore-extraction, json-formatter, entity-validator, **urban-design** | 8 | `entities/urban.json` |
+| 24 | `research-education-specialist` | Research & Education Specialist | lore-extraction, json-formatter, entity-validator, **research-design** | 7 | `entities/research.json` |
+| 25 | `puzzle-secrets-designer` | Puzzle & Secrets Designer | lore-extraction, json-formatter, entity-validator, **puzzle-design** | 7 | `entities/puzzle.json` |
+| 26 | `ui-content-specialist` | UI/Content Specialist | lore-extraction, json-formatter, entity-validator, **ui-design** | 8 | `entities/ui_content.json` |
+| 27 | `analytics-balance-specialist` | Analytics & Balance Specialist | lore-extraction, json-formatter, entity-validator, **analytics-balance** | 8 | `entities/analytics.json` |
+| 28 | `legendary-items-specialist` | Legendary Items Specialist | lore-extraction, json-formatter, entity-validator, **legendary-items** | 10 | `entities/legendary.json` |
+| 29 | `social-cultural-specialist` | Social & Cultural Specialist | lore-extraction, json-formatter, entity-validator, **social-culture** | 11 | `entities/social_cultural.json` |
+| 30 | `technical-director` | Technical Director (catch-all) | lore-extraction, json-formatter, entity-validator, **technical-systems** | 193 | `entities/technical.json` |
+| **TOTAL** | | | | **295** | |
+
+---
+
+## Разбивка сущностей
 
 ### Narrative (8)
 story, chapter, act, episode, prologue, epilogue, plot_branch, branch_point
@@ -186,118 +217,43 @@ legendary_weapon, mythical_armor, divine_item, cursed_item, artifact_set, relic_
 affinity, disposition, honor, karma, social_class, social_mobility, festival, celebration, ceremony, competition, tournament
 
 ### Technical (193)
-All remaining entities: achievements, inventory, content, creative tools, interactive systems, audio systems, visual systems, cinematic systems, narrative devices, events, progression, legal, research, media, secrets, art, transport, legendary, biology, celestial, architecture, player systems, balance, game mechanics
+Все оставшиеся сущности: achievements, inventory, content, creative tools, interactive systems, audio systems, visual systems, cinematic systems, narrative devices, events, progression, legal, research, media, secrets, art, transport, legendary, biology, celestial, architecture, player systems, balance, game mechanics
 
 ---
 
-## OpenClaw Command Reference
+## Справка по параметрам
 
-### Channel Commands
+| Параметр | Описание | По умолчанию |
+|----------|----------|--------------|
+| `--config` | Путь к конфиг-файлу | — |
+| `--key` | Ключ субагента из конфига | — |
+| `--model` | Модель (`anthropic/claude-sonnet-4`, `anthropic/claude-opus-4`, `zai/glm-4.7`) | из конфига |
+| `--thinking` | Уровень мышления (`low`, `medium`, `high`) | из конфига |
+| `--runTimeoutSeconds` | Таймаут в секундах | 300 |
+| `--skills` | Список путей к скилам через запятую | из конфига |
+| `--task` | Описание задачи | из конфига |
+| `--label` | Человекочитаемый лейбл | из конфига |
 
-**Login to channel:**
+### Политики инструментов
+
+Разрешены: `read`, `write`, `edit`, `glob`, `grep`  
+Запрещены: `sessions_spawn`, `gateway`, `whatsapp_login`
+
+### Порядок приоритетов модели
+
+1. Флаг `--model` в команде (наивысший)
+2. Поле `model` в конфиге субагента
+3. `agents.defaults.subagents.model` в конфиге
+4. Дефолтная модель OpenClaw (наименьший)
+
+---
+
+## Gateway
+
 ```bash
-openclaw channel login <channel-name>
+openclaw gateway enable    # включить
+openclaw gateway disable   # выключить
+openclaw gateway status    # статус
 ```
 
-**Send message to channel:**
-```bash
-openclaw channel message send "<content>"
-```
-
-### Agent Spawn Commands
-
-**Basic spawn with task:**
-```bash
-openclaw agent spawn --task "<task description>" --label "<Agent Label>"
-```
-
-**Spawn with custom model:**
-```bash
-openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "<task>" --label "<Label>"
-```
-
-**Spawn with custom timeout:**
-```bash
-openclaw agent spawn --runTimeoutSeconds 600 --task "<task>" --label "<Label>"
-```
-
-**Spawn using config key:**
-```bash
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "<subagent-key>"
-```
-
-**Batch spawn multiple subagents (parallel):**
-```bash
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "narrative-specialist" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "quest-designer" &
-openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "world-geographer"
-```
-
-### Agent Management Commands
-
-**List all subagents:**
-```bash
-openclaw subagent list
-```
-
-**Stop a running subagent:**
-```bash
-openclaw subagent stop <run-id>
-```
-
-**View subagent log/transcript:**
-```bash
-openclaw subagent log <run-id> [lines]
-```
-
-**Get subagent info:**
-```bash
-openclaw subagent info <run-id>
-```
-
-**Send follow-up message:**
-```bash
-openclaw subagent message send <run-id> "<message content>"
-```
-
-### Gateway Control
-
-**Enable gateway:**
-```bash
-openclaw gateway enable
-```
-
-**Disable gateway:**
-```bash
-openclaw gateway disable
-```
-
-**Check gateway status:**
-```bash
-openclaw gateway status
-```
-
-### Configuration Options
-
-| Option | Description | Default |
-|--------|-------------|----------|
-| `--model` | Model to use (anthropic/claude-sonnet-4, anthropic/claude-opus-4) | From config |
-| `--thinking` | Thinking level (low, medium, high) | From config |
-| `--runTimeoutSeconds` | Timeout in seconds | 300 |
-| `--config` | Path to config file | - |
-| `--key` | Subagent key from config | - |
-| `--task` | Task description for subagent | - |
-| `--label` | Human-readable label | - |
-
-### Tool Policies
-
-Default tool policies for loreSystem subagents:
-- **Allowed:** read, write, edit, glob, grep
-- **Denied:** sessions_spawn, gateway, whatsapp_login
-
-### Model Resolution Order
-
-1. Command-line `--model` flag (highest priority)
-2. Config file `model` setting
-3. OpenClaw default model (lowest priority)
+Docs: docs.openclaw.ai/cli
