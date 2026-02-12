@@ -9,21 +9,30 @@ loom:
   sandbox:
     enabled: true
     auto_allow: true
-    excluded_commands: ["loom"]
+    excluded_commands: []
     filesystem:
       deny_read:
         - "~/.ssh/**"
         - "~/.aws/**"
-        - "../../**"
+        - "~/.gnupg/**"
       deny_write:
-        - "../../**"
         - "agents/skills/**"
+        - ".work/stages/**"
+        - ".work/sessions/**"
+        - ".git/**"
       allow_write:
         - "entities/**"
         - "scripts/**"
         - "doc/plans/**"
+        - "src/**"
+      allow_read:
+        - ".work/config.toml"
+        - ".work/signals/**"
+        - ".work/handoffs/**"
+        - ".claude/CLAUDE.md"
+        - "agents/skills/**"
     network:
-      allowed_domains: ["github.com", "crates.io"]
+      allowed_domains: ["github.com", "crates.io", "raw.githubusercontent.com"]
       additional_domains: []
       allow_local_binding: false
       allow_unix_sockets: false
@@ -36,6 +45,7 @@ loom:
       stage_type: standard
       dependencies: []
       execution_mode: team
+      context_budget: 70
       files:
         - "agents/skills/narrative-specialist.md"
         - "src/domain/story/*.py"
@@ -56,6 +66,7 @@ loom:
       stage_type: standard
       dependencies: []
       execution_mode: team
+      context_budget: 70
       files:
         - "agents/skills/character-architect.md"
         - "src/domain/entities/character*.py"
@@ -75,6 +86,7 @@ loom:
       stage_type: standard
       dependencies: []
       execution_mode: team
+      context_budget: 70
       files:
         - "agents/skills/quest-designer.md"
         - "src/domain/entities/quest*.py"
@@ -114,6 +126,7 @@ loom:
         - "narrative-specialist"
         - "character-architect"
         - "quest-designer"
+      context_budget: 70
       acceptance:
         - "python scripts/validate_entities.py entities/ --strict"
       truths:
@@ -129,6 +142,7 @@ loom:
       working_dir: "."
       stage_type: standard
       dependencies: ["validate-entities"]
+      context_budget: 70
       acceptance:
         - "python scripts/verify_sqlite_inserts.py lore_system.db entities/"
       truths:
@@ -157,6 +171,14 @@ loom:
 
 ## Usage
 
+### macOS (Current System)
+```bash
+cd /Volumes/External/Code/loreSystem
+rm -rf .work && loom init doc/plans/IN_PROGRESS-narrative-to-entities.md
+loom run --max-parallel 3
+```
+
+### Linux (with X11)
 ```bash
 cd /root/clawd
 rm -rf .work && loom init doc/plans/narrative-to-entities.md
@@ -165,6 +187,28 @@ Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 export DISPLAY=:99
 loom run --max-parallel 3
 ```
+
+## macOS Worktree Path Resolution
+
+**CRITICAL for macOS loom worktrees:**
+
+When working in a loom git worktree, agents are in an isolated environment at `.worktrees/<stage-id>/`.
+
+**Path Resolution Rules:**
+1. **Always use absolute paths** when referencing main repo: `/Volumes/External/Code/loreSystem/`
+2. **`.work/` is a SYMLINK** to shared state - use it for accessing shared resources
+3. **Never use `../`** - use absolute paths instead
+4. **`working_dir`** is relative to worktree root, not main repo
+
+**Correct path patterns:**
+- Main repo files: `/Volumes/External/Code/loreSystem/agents/skills/...`
+- Shared state: `.work/config.toml`, `.work/signals/...`
+- Worktree files: Use paths relative to `working_dir`
+
+**Example:**
+- If `working_dir: "."`, you're at `.worktrees/<stage-id>/`
+- To read skill files: use absolute path `/Volumes/External/Code/loreSystem/agents/skills/...`
+- To access shared state: `.work/config.toml` (symlink works from worktree)
 
 ## Output Structure
 
