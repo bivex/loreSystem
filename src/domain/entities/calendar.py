@@ -29,52 +29,51 @@ class CalendarType(str, Enum):
 class Calendar:
     """
     Calendar defines how time is measured in the world.
-    
+
     Invariants:
     - Name cannot be empty
     - At least one time unit must be defined
     - Months per year must be positive
     """
-    
+
     id: Optional[EntityId]
     tenant_id: TenantId
     world_id: EntityId
-    
+
     name: str
     description: Description
-    
-    # Calendar type
     calendar_type: CalendarType
-    
-    # Time units
+
+    # Names (required)
+    day_names: List[str]
+    month_names: List[str]
+    season_names: List[str]
+
+    # Special dates (required)
+    holiday_ids: List[EntityId]
+
+    # Settings (required)
+    is_primary_calendar: bool
+    is_used_by: List[EntityId]
+
+    # Meta (required)
+    created_at: Timestamp
+    updated_at: Timestamp
+    version: Version
+
+    # Time units (with defaults)
     seconds_per_minute: int = 60
     minutes_per_hour: int = 60
     hours_per_day: int = 24
     days_per_week: int = 7
     weeks_per_month: int = 4
     months_per_year: int = 12
-    
-    # Names
-    day_names: List[str]  # Names of days in week
-    month_names: List[str]  # Names of months in year
-    season_names: List[str]  # Names of seasons
-    
-    # Special dates
-    holiday_ids: List[EntityId]
-    epoch_start: Optional[int]  # Year count starts from this
-    epoch_name: Optional[str]  # e.g., "Age of Darkness"
-    
-    # Moon phases (if lunar calendar)
-    moon_phase_names: Optional[List[str]]
-    days_per_lunar_cycle: Optional[int]
-    
-    # Settings
-    is_primary_calendar: bool
-    is_used_by: List[EntityId]  # Nations/factions using this calendar
-    
-    created_at: Timestamp
-    updated_at: Timestamp
-    version: Version
+
+    # Optional fields
+    epoch_start: Optional[int] = None
+    epoch_name: Optional[str] = None
+    moon_phase_names: Optional[List[str]] = None
+    days_per_lunar_cycle: Optional[int] = None
     
     def __post_init__(self):
         """Validate invariants after construction."""
