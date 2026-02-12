@@ -9,7 +9,21 @@ All 30 subagents are now configured in `SUBAGENTS_CONFIG.json`.
 ### Option 1: Spawn Individual Subagent
 
 ```bash
-openclaw agent spawn "Extract character entities" --label "Character Architect"
+# Basic syntax
+openclaw agent spawn --task "Extract character entities" --label "Character Architect"
+
+# With custom model and thinking
+openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "Extract character entities" --label "Character Architect"
+
+# With timeout (default 300s, override here)
+openclaw agent spawn --runTimeoutSeconds 600 --task "Extract character entities" --label "Character Architect"
+```
+
+# With custom model/thinking
+openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "Extract character entities" --label "Character Architect"
+
+# With timeout
+openclaw agent spawn --runTimeoutSeconds 600 --task "Extract character entities"
 ```
 
 ### Option 2: Spawn Using Config Key
@@ -173,3 +187,117 @@ affinity, disposition, honor, karma, social_class, social_mobility, festival, ce
 
 ### Technical (193)
 All remaining entities: achievements, inventory, content, creative tools, interactive systems, audio systems, visual systems, cinematic systems, narrative devices, events, progression, legal, research, media, secrets, art, transport, legendary, biology, celestial, architecture, player systems, balance, game mechanics
+
+---
+
+## OpenClaw Command Reference
+
+### Channel Commands
+
+**Login to channel:**
+```bash
+openclaw channel login <channel-name>
+```
+
+**Send message to channel:**
+```bash
+openclaw channel message send "<content>"
+```
+
+### Agent Spawn Commands
+
+**Basic spawn with task:**
+```bash
+openclaw agent spawn --task "<task description>" --label "<Agent Label>"
+```
+
+**Spawn with custom model:**
+```bash
+openclaw agent spawn --model anthropic/claude-sonnet-4 --thinking high --task "<task>" --label "<Label>"
+```
+
+**Spawn with custom timeout:**
+```bash
+openclaw agent spawn --runTimeoutSeconds 600 --task "<task>" --label "<Label>"
+```
+
+**Spawn using config key:**
+```bash
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "<subagent-key>"
+```
+
+**Batch spawn multiple subagents (parallel):**
+```bash
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "narrative-specialist" &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect" &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "quest-designer" &
+openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "world-geographer"
+```
+
+### Agent Management Commands
+
+**List all subagents:**
+```bash
+openclaw subagent list
+```
+
+**Stop a running subagent:**
+```bash
+openclaw subagent stop <run-id>
+```
+
+**View subagent log/transcript:**
+```bash
+openclaw subagent log <run-id> [lines]
+```
+
+**Get subagent info:**
+```bash
+openclaw subagent info <run-id>
+```
+
+**Send follow-up message:**
+```bash
+openclaw subagent message send <run-id> "<message content>"
+```
+
+### Gateway Control
+
+**Enable gateway:**
+```bash
+openclaw gateway enable
+```
+
+**Disable gateway:**
+```bash
+openclaw gateway disable
+```
+
+**Check gateway status:**
+```bash
+openclaw gateway status
+```
+
+### Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|----------|
+| `--model` | Model to use (anthropic/claude-sonnet-4, anthropic/claude-opus-4) | From config |
+| `--thinking` | Thinking level (low, medium, high) | From config |
+| `--runTimeoutSeconds` | Timeout in seconds | 300 |
+| `--config` | Path to config file | - |
+| `--key` | Subagent key from config | - |
+| `--task` | Task description for subagent | - |
+| `--label` | Human-readable label | - |
+
+### Tool Policies
+
+Default tool policies for loreSystem subagents:
+- **Allowed:** read, write, edit, glob, grep
+- **Denied:** sessions_spawn, gateway, whatsapp_login
+
+### Model Resolution Order
+
+1. Command-line `--model` flag (highest priority)
+2. Config file `model` setting
+3. OpenClaw default model (lowest priority)

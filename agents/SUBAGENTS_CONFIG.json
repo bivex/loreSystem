@@ -6,7 +6,7 @@
   "agents": {
     "defaults": {
       "subagents": {
-        "model": "anthropic/claude-sonnet-4",
+        "model": "zai/glm-4.7",
         "thinking": "low",
         "maxConcurrent": 8,
         "archiveAfterMinutes": 30,
