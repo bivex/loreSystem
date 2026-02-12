@@ -1,0 +1,427 @@
+{
+  "worlds": [
+    {
+      "id": 1,
+      "name": "The Shadowlands",
+      "description": "A grim world of forgotten kingdoms, eldritch horrors, and dungeons filled with ancient evil. The sun dims each year as the Shadow King's influence spreads across the realm. Heroes delve into darkness not for glory, but survival.",
+      "created_at": "2024-01-01T00:00:00+00:00",
+      "updated_at": "2024-01-15T10:30:00+00:00",
+      "version": 2
+    }
+  ],
+  "characters": [
+    {
+      "id": 2,
+      "world_id": 1,
+      "name": "Thorn the Undying",
+      "backstory": "Once a respected paladin of the Order of the Silver Dawn, Thorn fell to the Shadow King's corruption during the Siege of Blackhold. Now neither alive nor dead, he wanders the Shadowlands as a death knight, eternally seeking redemption. His armor, once gleaming silver, now bears the blackened marks of his fall. He carries the sword Mercy's End - a blade that drinks the souls of those it slays.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Death's Touch",
+          "description": "Melee attacks drain life force from foes",
+          "power_level": 7
+        },
+        {
+          "name": "Undead Command",
+          "description": "Can raise and control lesser undead",
+          "power_level": 6
+        }
+      ],
+      "created_at": "2024-01-02T00:00:00+00:00",
+      "updated_at": "2024-01-16T14:20:00+00:00",
+      "version": 3
+    },
+    {
+      "id": 3,
+      "world_id": 1,
+      "name": "Elara Void-Walker",
+      "backstory": "A sorceress who glimpsed beyond the veil of reality and returned changed. Her left eye glows with pale violet light - a mark of her contact with the Outer Dark. She seeks the Lost Library of Xal to find a way to seal the dimensional rifts before the Old Ones can enter fully into this world. Her mind is fragile, her power immense.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Void Gaze",
+          "description": "Can peer into other dimensions and see invisible entities",
+          "power_level": 8
+        },
+        {
+          "name": "Rend Reality",
+          "description": "Tears holes in space for short-range teleportation or attacks",
+          "power_level": 9
+        }
+      ],
+      "created_at": "2024-01-03T00:00:00+00:00",
+      "updated_at": "2024-01-03T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "events": [
+    {
+      "id": 4,
+      "world_id": 1,
+      "name": "The Dimming Sun",
+      "description": "The annual Festival of Lights fails as the sun visibly dims for the third year in a row. Panic spreads through settlements. The Shadow King's ritual nears completion.",
+      "start_date": "2024-01-20T00:00:00+00:00",
+      "end_date": null,
+      "outcome": "ongoing",
+      "participant_ids": [2, 3],
+      "created_at": "2024-01-17T00:00:00+00:00",
+      "updated_at": "2024-01-17T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "items": [
+    {
+      "id": 5,
+      "world_id": 1,
+      "name": "Mercy's End",
+      "description": "A blackened greatsword that pulses with necrotic energy. When it kills, the victim's soul is trapped within the blade, sometimes whispering secrets to its wielder. Thorn despises this weapon but cannot wield another.",
+      "item_type": "weapon",
+      "rarity": "legendary",
+      "created_at": "2024-01-04T00:00:00+00:00",
+      "updated_at": "2024-01-04T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 6,
+      "world_id": 1,
+      "name": "Torch of False Hope",
+      "description": "An ever-burning torch that casts green light. It reveals invisible creatures and magical traps, but the light attracts shadow beings. Those who carry it too long begin to hear whispers from the Shadow Realm.",
+      "item_type": "tool",
+      "rarity": "rare",
+      "created_at": "2024-01-05T00:00:00+00:00",
+      "updated_at": "2024-01-05T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "quests": [
+    {
+      "id": 7,
+      "world_id": 1,
+      "name": "Seal the Shadow Gate",
+      "description": "Find and close the dimensional rift before the Shadow King completes his ritual",
+      "objectives": [
+        "Locate the entrance to Blackhold Catacombs",
+        "Retrieve the Seal of Xal from the Lost Library",
+        "Survive the Catacombs of Madness",
+        "Perform the sealing ritual at the Shadow Gate"
+      ],
+      "status": "active",
+      "participant_ids": [2, 3],
+      "reward_ids": [5],
+      "created_at": "2024-01-18T00:00:00+00:00",
+      "updated_at": "2024-01-18T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "locations": [
+    {
+      "id": 8,
+      "world_id": 1,
+      "name": "Blackhold Catacombs",
+      "description": "Ancient catacombs beneath the ruined city of Blackhold. The walls weep a black ichor that drips from the stone itself. Those who enter report hearing their own deaths whispered to them. The Shadow Gate lies at the deepest level.",
+      "location_type": "dungeon",
+      "parent_location_id": null,
+      "created_at": "2024-01-06T00:00:00+00:00",
+      "updated_at": "2024-01-06T00:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": 9,
+      "world_id": 1,
+      "name": "The Shadow Gate",
+      "description": "A tear in reality at the heart of the Catacombs. Through it, the true form of the Shadow King is visible - a mass of writhing darkness and too many eyes. The gate pulses with each beat of a vast, alien heart.",
+      "location_type": "other",
+      "parent_location_id": 8,
+      "created_at": "2024-01-07T00:00:00+00:00",
+      "updated_at": "2024-01-07T00:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "cutscenes": [
+    {
+      "id": "cutscene-001",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Thorn's Fall",
+      "duration_ms": 45000,
+      "description": "The climactic moment when Thorn succumbed to corruption. A pivotal backstory scene showing his final moments as a paladin before becoming a death knight.",
+      "trigger_event": "blackhold_first_entered",
+      "priority": 10,
+      "skippable": true,
+      "auto_start": true,
+      "camera_id": "camera-thorn-fall",
+      "cinematic_id": "cinematic-thorn-fall",
+      "metadata": {
+        "chapter": "prologue",
+        "importance": "critical",
+        "unlock_requirement": "level_3"
+      },
+      "created_at": "2024-01-08T00:00:00+00:00",
+      "updated_at": "2024-01-08T00:00:00+00:00"
+    },
+    {
+      "id": "cutscene-002",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "The Gate Opens",
+      "duration_ms": 30000,
+      "description": "The Shadow Gate fully opens for the first time. The party witnesses the true scale of the threat as endless shadows pour through.",
+      "trigger_event": "shadow_gate_first_opened",
+      "priority": 10,
+      "skippable": false,
+      "auto_start": true,
+      "camera_id": "camera-gate-pan",
+      "cinematic_id": "cinematic-gate-opens",
+      "metadata": {
+        "chapter": "climax",
+        "importance": "critical",
+        "music_override": "shadow_theme_urgent"
+      },
+      "created_at": "2024-01-09T00:00:00+00:00",
+      "updated_at": "2024-01-09T00:00:00+00:00"
+    }
+  ],
+  "cinematics": [
+    {
+      "id": "cinematic-thorn-fall",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Thorn's Fall Sequence",
+      "duration_ms": 45000,
+      "description": "Extended cinematic sequence showing Thorn's corruption and transformation. Camera moves from his hopeful face to the corruption spreading, ending with his first act as an undead.",
+      "scene_id": "scene-blackhold-siege",
+      "camera_path_id": "camera-path-thorn-fall",
+      "transitions": ["transition-black-white"],
+      "fades": ["fade-to-black"],
+      "priority": 10,
+      "is_looping": false,
+      "metadata": {
+        "key_characters": ["thorn", "shadow_king"],
+        "emotional_arc": "hope_to_despair"
+      },
+      "created_at": "2024-01-10T00:00:00+00:00",
+      "updated_at": "2024-01-10T00:00:00+00:00"
+    },
+    {
+      "id": "cinematic-gate-opens",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Shadow Gate Opening",
+      "duration_ms": 30000,
+      "description": "Dramatic reveal of the fully opened Shadow Gate. Uses slow camera movement to emphasize the scale of the dimensional rift and the endless darkness beyond.",
+      "scene_id": "scene-shadow-gate-chamber",
+      "camera_path_id": "camera-path-gate-reveal",
+      "transitions": ["transition-dissolve-shadow"],
+      "fades": ["fade-shadow-in"],
+      "priority": 10,
+      "is_looping": false,
+      "metadata": {
+        "music_cue": "the_horror_unveiled",
+        "sound_layer": "ambient_dread"
+      },
+      "created_at": "2024-01-11T00:00:00+00:00",
+      "updated_at": "2024-01-11T00:00:00+00:00"
+    }
+  ],
+  "camera_paths": [
+    {
+      "id": "camera-path-thorn-fall",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Thorn Transformation Shot",
+      "duration_ms": 45000,
+      "description": "Slow push-in from a medium shot of Thorn's face to extreme close-up of his eyes as they turn from human to undead, then pull back to reveal his shadowy wings.",
+      "easing": "ease-in-out",
+      "loop": false,
+      "look_at_target": "thorn_face",
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {"x": 0, "y": 1.7, "z": -3},
+          "rotation": {"x": 0, "y": 0, "z": 0},
+          "fov": 60
+        },
+        {
+          "time": 15000,
+          "position": {"x": 0, "y": 1.7, "z": -1.5},
+          "rotation": {"x": 0, "y": 0, "z": 0},
+          "fov": 50
+        },
+        {
+          "time": 30000,
+          "position": {"x": 0, "y": 1.7, "z": -0.5},
+          "rotation": {"x": 0, "y": 0, "z": 0},
+          "fov": 40
+        },
+        {
+          "time": 45000,
+          "position": {"x": 0, "y": 1.7, "z": -4},
+          "rotation": {"x": 0, "y": 0, "z": 0},
+          "fov": 75
+        }
+      ],
+      "metadata": {
+        "dramatic_intent": "intimate_to_epic",
+        "focus_target": "thorn_eyes"
+      },
+      "created_at": "2024-01-12T00:00:00+00:00",
+      "updated_at": "2024-01-12T00:00:00+00:00"
+    },
+    {
+      "id": "camera-path-gate-reveal",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Gate Reveal Sweep",
+      "duration_ms": 30000,
+      "description": "Starting from the party's perspective, slowly pan upward to reveal the towering Shadow Gate, then continue upward into the endless darkness beyond.",
+      "easing": "smoothstep",
+      "loop": false,
+      "look_at_target": "shadow_gate_center",
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {"x": -5, "y": 2, "z": 0},
+          "rotation": {"x": -10, "y": 30, "z": 0},
+          "fov": 70
+        },
+        {
+          "time": 10000,
+          "position": {"x": 0, "y": 5, "z": 0},
+          "rotation": {"x": -30, "y": 0, "z": 0},
+          "fov": 65
+        },
+        {
+          "time": 20000,
+          "position": {"x": 0, "y": 15, "z": 0},
+          "rotation": {"x": -60, "y": 0, "z": 0},
+          "fov": 60
+        },
+        {
+          "time": 30000,
+          "position": {"x": 0, "y": 50, "z": 0},
+          "rotation": {"x": -85, "y": 0, "z": 0},
+          "fov": 90
+        }
+      ],
+      "metadata": {
+        "purpose": "scale_reveal",
+        "emotion": "awe_and_terror"
+      },
+      "created_at": "2024-01-13T00:00:00+00:00",
+      "updated_at": "2024-01-13T00:00:00+00:00"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "transition-black-white",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Despair Transition",
+      "transition_type": "fade",
+      "duration_ms": 2000,
+      "description": "Transition from black to harsh white symbolizing Thorn's death and rebirth as undead.",
+      "from_scene_id": "scene-blackhold-burning",
+      "to_scene_id": "scene-thorn-awakened",
+      "color": "#FFFFFF",
+      "easing": "ease-in-out",
+      "metadata": {
+        "flash_duration": 200,
+        "sound_effect": "soul_scream"
+      },
+      "created_at": "2024-01-14T00:00:00+00:00",
+      "updated_at": "2024-01-14T00:00:00+00:00"
+    },
+    {
+      "id": "transition-dissolve-shadow",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Shadow Dissolve",
+      "transition_type": "dissolve",
+      "duration_ms": 3000,
+      "description": "Reality dissolves into shadow particles as the gate opens and the Shadow King's presence manifests.",
+      "from_scene_id": "scene-approach-gate",
+      "to_scene_id": "scene-gate-opens",
+      "color": "#1a0a0a",
+      "easing": "ease-in",
+      "metadata": {
+        "particle_type": "shadow_shard",
+        "particle_count": 5000
+      },
+      "created_at": "2024-01-15T00:00:00+00:00",
+      "updated_at": "2024-01-15T00:00:00+00:00"
+    }
+  ],
+  "fades": [
+    {
+      "id": "fade-to-black",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Death Fade",
+      "fade_type": "out",
+      "duration_ms": 3000,
+      "description": "Fade to black as Thorn dies and is reborn as undead.",
+      "color": "#000000",
+      "from_opacity": 0.0,
+      "to_opacity": 1.0,
+      "easing": "ease-in",
+      "metadata": {
+        "trigger": "thorn_death",
+        "hold_duration": 1500
+      },
+      "created_at": "2024-01-16T00:00:00+00:00",
+      "updated_at": "2024-01-16T00:00:00+00:00"
+    },
+    {
+      "id": "fade-shadow-in",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Shadow Manifest Fade",
+      "fade_type": "in-out",
+      "duration_ms": 4000,
+      "description": "Shadowy darkness fades in from the edges of the screen as the Shadow Gate opens, then recedes slightly.",
+      "color": "#0d0d0d",
+      "from_opacity": 0.0,
+      "to_opacity": 0.6,
+      "easing": "ease-in-out",
+      "metadata": {
+        "vignette_intensity": 0.8,
+        "edge_bleed": true
+      },
+      "created_at": "2024-01-17T00:00:00+00:00",
+      "updated_at": "2024-01-17T00:00:00+00:00"
+    }
+  ],
+  "flashbacks": [
+    {
+      "id": "flashback-001",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "The Silver Dawn's Last Stand",
+      "scene_id": "scene-silver-dawn-fall",
+      "description": "A painful memory of the Silver Dawn paladins being overwhelmed by shadow creatures. Thorn relives the moment he made his pact with darkness to save his comrades - only to become their executioner.",
+      "trigger_event": "thorn_health_critical",
+      "flashback_time": "999-12-31T23:59:00Z",
+      "duration_ms": 35000,
+      "characters": ["thorn", "mercy_captain", "shadow_king_manifest"],
+      "is_skippable": false,
+      "filter_effect": "grayscale",
+      "metadata": {
+        "emotional_impact": "trauma",
+        "gameplay_effect": "thorn_accuracy_debuff",
+        "audio_treatment": "distant_muffled"
+      },
+      "created_at": "2024-01-18T00:00:00+00:00",
+      "updated_at": "2024-01-18T00:00:00+00:00"
+    },
+    {
+      "id": "flashback-002",
+      "tenant_id": "shadow-dark-tenant",
+      "name": "Elara's Gaze Beyond",
+      "scene_id": "scene-elara-vision",
+      "description": "Elara remembers the moment she looked through the dimensional rift and saw the Old Ones waiting beyond. Her left eye was marked that day, and she has never been the same.",
+      "trigger_event": "elara_near_shadow_gate",
+      "flashback_time": "1023-06-15T03:33:00Z",
+      "duration_ms": 25000,
+      "characters": ["elara", "outer_dark_entity"],
+      "is_skippable": true,
+      "filter_effect": "dream",
+      "metadata": {
+        "vision_overlay": "violet_eye_glow",
+        "unlock_ability": "void_gaze_true_sight"
+      },
+      "created_at": "2024-01-19T00:00:00+00:00",
+      "updated_at": "2024-01-19T00:00:00+00:00"
+    }
+  ],
+  "next_id": 10
+}
