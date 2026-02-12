@@ -108,25 +108,15 @@
       "spawn_task": "Extract achievement entities (achievement, trophy, badge, title, rank, leaderboard)",
       "output_file": "entities/achievement.json"
     },
-    "audio-director": {
-      "label": "Audio Director",
-      "spawn_task": "Extract audio entities (music_track, music_theme, motif, score, soundtrack, voice_line, sound_effect, ambient, music_control, music_state)",
-      "output_file": "entities/audio.json"
-    },
-    "visual-effects-artist": {
-      "label": "Visual Effects Artist",
-      "spawn_task": "Extract visual entities (visual_effect, particle, shader, lighting, color_palette)",
-      "output_file": "entities/visual.json"
-    },
-    "cinematic-director": {
-      "label": "Cinematic Director",
-      "spawn_task": "Extract cinematic entities (cutscene, cinematic, camera_path, transition, fade, flashback)",
-      "output_file": "entities/cinematic.json"
-    },
     "media-analyst": {
       "label": "Media Analyst",
       "spawn_task": "Extract media entities (newspaper, radio, television, internet, social_media, propaganda, rumor)",
       "output_file": "entities/media.json"
+    },
+    "game-mechanics-specialist": {
+      "label": "Game Mechanics Specialist",
+      "spawn_task": "Extract game mechanics entities (event, event_chain, alternate_reality, consequence, sequence, ending, patent, invention, improvement, requirement, pull, pity, phenomenon, theme)",
+      "output_file": "entities/mechanics.json"
     },
     "transportation-engineer": {
       "label": "Transportation Engineer",
