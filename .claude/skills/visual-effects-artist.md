@@ -1,3 +1,8 @@
+---
+name: loresystem-visual
+description: Extract visual entities (visual_effect, particle, shader, lighting, color_palette) from loreSystem source files into structured JSON.
+---
+
 # visual-effects-artist
 
 **OpenClaw Subagent** - Visual effects specialist for particles, shaders, lighting, and VFX systems

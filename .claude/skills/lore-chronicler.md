@@ -1,3 +1,8 @@
+---
+name: loresystem-lore
+description: Extract lore entities (lore_fragment, codex_entry, journal_page, bestiary_entry, memory, dream, nightmare, secret_area) from loreSystem source files into structured JSON.
+---
+
 # Lore Chronicler
 
 **OpenClaw Subagent** - Lore systems expert for world lore, secrets, and hidden knowledge

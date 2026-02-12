@@ -1,3 +1,8 @@
+---
+name: loresystem-audio
+description: Extract audio entities (music_track, music_theme, motif, score, soundtrack, voice_line, sound_effect, ambient, music_control, music_state) from loreSystem source files into structured JSON.
+---
+
 # audio-director
 
 **OpenClaw Subagent** - Audio systems specialist for music, sound effects, ambient audio, and voice systems

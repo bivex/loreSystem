@@ -1,3 +1,8 @@
+---
+name: loresystem-biology
+description: Extract biology entities (food_chain, migration, hibernation, reproduction, extinction, evolution) from loreSystem source files into structured JSON.
+---
+
 # biology-specialist
 
 **OpenClaw Subagent** - Biology systems specialist for ecology, evolution, life sciences, and ecosystems

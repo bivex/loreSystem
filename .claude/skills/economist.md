@@ -1,3 +1,8 @@
+---
+name: loresystem-economy
+description: Extract economic entities (trade, barter, tax, tariff, supply, demand, price, inflation, currency, shop, purchase, reward, loot_table_weight) from loreSystem source files into structured JSON.
+---
+
 # Economist
 
 **OpenClaw Subagent** - Extracts economic system entities including trade, barter, taxes, tariffs, supply, demand, pricing, inflation, currency, shops, purchases, rewards, and loot table weights.

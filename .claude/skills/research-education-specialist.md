@@ -1,3 +1,8 @@
+---
+name: loresystem-research
+description: Extract research entities (research, academy, university, school, library, research_center, archive, museum) from loreSystem source files into structured JSON.
+---
+
 # research-education-specialist
 
 **OpenClaw Subagent** - Education systems and knowledge institutions analysis for loreSystem.

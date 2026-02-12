@@ -1,3 +1,8 @@
+---
+name: loresystem-military
+description: Extract military entities (army, fleet, battalion, weapon_system, defense, fortification, siege_engine, war, invasion, revolution) from loreSystem source files into structured JSON.
+---
+
 # Military Strategist
 
 **OpenClaw Subagent** - Military systems expert for warfare, combat, and military structures

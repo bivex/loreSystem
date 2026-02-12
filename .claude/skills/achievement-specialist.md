@@ -1,3 +1,8 @@
+---
+name: loresystem-achievement
+description: Extract achievement entities (achievement, trophy, badge, title, rank, leaderboard) from loreSystem source files into structured JSON.
+---
+
 # Achievement Specialist
 
 **OpenClaw Subagent** - Achievement systems expert for progression rewards and player recognition

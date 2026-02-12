@@ -1,3 +1,8 @@
+---
+name: loresystem-media
+description: Extract media entities (newspaper, radio, television, internet, social_media, propaganda, rumor) from loreSystem source files into structured JSON.
+---
+
 # media-analyst
 
 **OpenClaw Subagent** - Media systems specialist for news, propaganda, information channels, and communication platforms

@@ -1,3 +1,8 @@
+---
+name: loresystem-transport
+description: Extract transport entities (mount, familiar, mount_equipment, vehicle, spaceship, airship, portal, teleporter) from loreSystem source files into structured JSON.
+---
+
 # transportation-engineer
 
 **OpenClaw Subagent** - Transportation systems specialist for mounts, vehicles, teleportation, and travel mechanics

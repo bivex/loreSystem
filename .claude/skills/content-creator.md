@@ -1,3 +1,8 @@
+---
+name: loresystem-content
+description: Extract content entities (mod, custom_map, user_scenario, share_code, workshop_entry, localization, translation, subtitle, dubbing, voice_over) from loreSystem source files into structured JSON.
+---
+
 # Content Creator
 
 **OpenClaw Subagent** - Content systems expert for user-generated content, localization, and content pipelines

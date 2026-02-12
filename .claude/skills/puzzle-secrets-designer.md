@@ -1,3 +1,8 @@
+---
+name: loresystem-puzzle
+description: Extract puzzle entities (secret_area, hidden_path, easter_egg, mystery, enigma, riddle, puzzle, trap) from loreSystem source files into structured JSON.
+---
+
 # puzzle-secrets-designer
 
 **OpenClaw Subagent** - Puzzles, secrets, and hidden content analysis for loreSystem.

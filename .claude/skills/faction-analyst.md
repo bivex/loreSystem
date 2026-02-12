@@ -1,3 +1,8 @@
+---
+name: loresystem-faction
+description: Extract faction entities (faction, faction_hierarchy, faction_ideology, faction_leader, faction_membership, faction_resource, faction_territory) from loreSystem source files into structured JSON.
+---
+
 # Faction Analyst
 
 **OpenClaw Subagent** - Extracts faction system entities including factions, faction hierarchies, ideologies, leaders, memberships, resources, and territories.

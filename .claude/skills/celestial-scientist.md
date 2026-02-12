@@ -1,3 +1,8 @@
+---
+name: loresystem-celestial
+description: Extract celestial entities (galaxy, nebula, black_hole, wormhole, star_system, moon, eclipse, solstice, celestial_body) from loreSystem source files into structured JSON.
+---
+
 # celestial-scientist
 
 **OpenClaw Subagent** - Celestial systems specialist for astronomy, cosmic phenomena, and space science

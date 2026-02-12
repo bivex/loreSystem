@@ -1,3 +1,8 @@
+---
+name: loresystem-religious
+description: Extract religious entities (cult, sect, holy_site, scripture, ritual, oath, summon, pact, curse, blessing, miracle) from loreSystem source files into structured JSON.
+---
+
 # Religious Scholar
 
 **OpenClaw Subagent** - Religious systems expert for religion, mysticism, and spiritual systems

@@ -1,3 +1,8 @@
+---
+name: loresystem-cinematic
+description: Extract cinematic entities (cutscene, cinematic, camera_path, transition, fade, flashback) from loreSystem source files into structured JSON.
+---
+
 # cinematic-director
 
 **OpenClaw Subagent** - Cinematic systems specialist for cutscenes, camera work, transitions, and filmic techniques

@@ -1,3 +1,8 @@
+---
+name: loresystem-urban
+description: Extract urban entities (district, ward, quarter, plaza, market_square, slum, noble_district, port_district) from loreSystem source files into structured JSON.
+---
+
 # urban-architect
 
 **OpenClaw Subagent** - Urban architecture and city planning analysis for loreSystem.
