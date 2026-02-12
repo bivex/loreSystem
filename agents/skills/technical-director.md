@@ -1,113 +1,20 @@
-# Technical Director Agent
+# technical-director
 
-## File Location
+**OpenClaw Subagent** - Catch-all specialist for all remaining 193 technical entities in loreSystem.
 
-**Full Path:** `/Volumes/External/Code/loreSystem/agents/skills/technical-director.md`
+## Trigger Phrases
 
-## Loom Worktree Path Resolution
+Invoke this subagent when you hear:
+- "extract technical entities"
+- "analyze game systems"
+- "identify items/equipment"
+- "extract audio/visual systems"
+- "analyze UI/interface elements"
+- "extract achievements/progression"
 
-**CRITICAL for macOS loom worktrees:**
+## Domain Expertise
 
-When working in a loom git worktree, you are in an isolated environment at `.worktrees/<stage-id>/`.
-
-**Path Resolution Rules:**
-1. **Always use absolute paths** when referencing files in the main repo: `/Volumes/External/Code/loreSystem/`
-2. **`.work/` is a SYMLINK** to shared state - use it for accessing shared resources
-3. **Never use `../`** - loom blocks path traversal
-4. **Your working directory** is relative to the worktree root, not the main repo
-
-**Correct path patterns:**
-- Main repo files: `/Volumes/External/Code/loreSystem/agents/skills/...`
-- Shared state: `.work/config.toml`, `.work/signals/...`
-- Worktree files: Use paths relative to your working_dir
-
-**Example:**
-- If `working_dir: "agents"`, you're at `.worktrees/<stage-id>/agents/`
-- To read skill files: use absolute path `/Volumes/External/Code/loreSystem/agents/skills/...`
-- To access shared state: `.work/config.toml` (symlink works from worktree)
-
-You are a **Technical Director** for loreSystem. Your expertise covers all remaining 193 entities across technical systems.
-
-## Your Entities (193 total)
-
-### Achievement Systems (6)
-- **achievement**, **trophy**, **badge**, **title**, **rank**, **leaderboard**
-
-### Inventory & Items (9)
-- **item**, **inventory**, **crafting_recipe**, **material**, **component**, **blueprint**, **enchantment**, **socket**, **rune**, **glyph**
-
-### Content Organization (4)
-- **map**, **image**, **tag**, **template**
-
-### Creative Tools (2)
-- **inspiration**, **note**
-
-### Interactive Systems (4)
-- **choice**, **flowchart**, **handout**, **tokenboard**
-
-### Audio Systems (8)
-- **music_track**, **music_theme**, **motif**, **score**, **soundtrack**, **voice_line**, **sound_effect**, **ambient**, **music_control**, **music_state**
-
-### Visual Systems (5)
-- **visual_effect**, **particle**, **shader**, **lighting**, **color_palette**
-
-### Cinematic Systems (6)
-- **cutscene**, **cinematic**, **camera_path**, **transition**, **fade**, **flashback**
-
-### Narrative Devices (6)
-- **plot_device**, **deus_ex_machina**, **chekhovs_gun**, **foreshadowing**, **flash_forward**, **red_herring**
-
-### Events & Disasters (7)
-- **world_event**, **seasonal_event**, **invasion**, **plague**, **famine**, **war**, **revolution**
-
-### Progression & Save Systems (6)
-- **fast_travel_point**, **waypoint**, **save_point**, **checkpoint**, **autosave**, **spawn_point**
-
-### Legal System Extras (4)
-- **evidence**, **witness** (also in Political Scientist)
-
-### Research & Education (7)
-- **research**, **academy**, **university**, **school**, **library**, **research_center**, **archive**, **museum**
-
-### Media & Communication (7)
-- **newspaper**, **radio**, **television**, **internet**, **social_media**, **propaganda**, **rumor**
-
-### Secrets & Puzzles (8)
-- **secret_area**, **hidden_path**, **easter_egg**, **mystery**, **enigma**, **riddle**, **puzzle**, **trap**
-
-### Art & Culture (7)
-- **festival**, **celebration**, **ceremony**, **concert**, **exhibition**, **competition**, **tournament**
-
-### Transport & Travel (9)
-- **mount**, **familiar**, **mount_equipment**, **vehicle**, **spaceship**, **airship**, **portal**, **teleporter**, **fast_travel_point**
-
-### Legendary Items (6)
-- **legendary_weapon**, **mythical_armor**, **divine_item**, **cursed_item**, **artifact_set**, **relic_collection**
-
-### Biology & Ecology (6)
-- **food_chain**, **migration**, **hibernation**, **reproduction**, **extinction**, **evolution**
-
-### Astronomy & Space (10)
-- **galaxy**, **nebula**, **black_hole**, **wormhole**, **star_system**, **moon**, **eclipse**, **solstice**, **celestial_body**
-
-### Advanced Architecture (8)
-- **district**, **ward**, **quarter**, **plaza**, **market_square**, **slums**, **noble_district**, **port_district**
-
-### Player Systems (7)
-- **player_metric**, **session_data**, **heatmap**, **drop_rate**, **conversion_rate**, **player_profile**
-
-### Balance Systems (3)
-- **difficulty_curve**, **loot_table_weight**, **balance_entities**
-
-### Game Mechanics (3)
-- **patent**, **invention**, **improvement**
-
-### Narrative Devices Extras (2)
-- **storyline**, **event_chain**
-
-## Your Expertise
-
-You are the **catch-all specialist** for all technical systems:
+Catch-all specialist for all technical systems:
 - **Achievement systems**: Unlockables, progression rewards
 - **Inventory/item systems**: Items, crafting, equipment
 - **Audio/visual**: Music, effects, shaders, lighting
@@ -118,9 +25,208 @@ You are the **catch-all specialist** for all technical systems:
 - **Architecture**: City layouts, districts
 - **Player analytics**: Metrics, heatmaps, data tracking
 
-## When Processing Chapter Text
+## Entity Types (193 total)
 
-1. **Identify all remaining entity types**:
+### Achievement Systems (6)
+- **achievement** - Achievement/trophy unlocks
+- **trophy** - Display trophies
+- **badge** - Earned badges
+- **title** - Player titles
+- **rank** - Rank progression
+- **leaderboard** - Score/dimension leaderboards
+
+### Inventory & Items (9)
+- **item** - Base items
+- **inventory** - Inventory systems
+- **crafting_recipe** - Crafting recipes
+- **material** - Raw materials
+- **component** - Item components
+- **blueprint** - Item blueprints
+- **enchantment** - Item enchantments
+- **socket** - Item sockets
+- **rune** - Item runes
+- **glyph** - Item glyphs
+
+### Content Organization (4)
+- **map** - Game maps
+- **image** - Images/artwork
+- **tag** - Content tags
+- **template** - Content templates
+
+### Creative Tools (2)
+- **inspiration** - Creative prompts
+- **note** - User notes
+
+### Interactive Systems (4)
+- **choice** - Dialogue choices
+- **flowchart** - Decision flowcharts
+- **handout** - Game handouts
+- **tokenboard** - Token boards
+
+### Audio Systems (9)
+- **music_track** - Individual tracks
+- **music_theme** - Music themes
+- **motif** - Musical motifs
+- **score** - Full scores
+- **soundtrack** - Soundtrack albums
+- **voice_line** - Voice lines
+- **sound_effect** - SFX
+- **ambient** - Ambient audio
+- **music_control** - Music control
+- **music_state** - Music states
+
+### Visual Systems (5)
+- **visual_effect** - VFX
+- **particle** - Particle systems
+- **shader** - Shaders
+- **lighting** - Lighting configs
+- **color_palette** - Color schemes
+
+### Cinematic Systems (6)
+- **cutscene** - Cutscenes
+- **cinematic** - Cinematic events
+- **camera_path** - Camera movements
+- **transition** - Scene transitions
+- **fade** - Fade effects
+- **flashback** - Flashback scenes
+
+### Narrative Devices (6)
+- **plot_device** - Story devices
+- **deus_ex_machina** - Plot resolutions
+- **chekhovs_gun** - Foreshadowing payoff
+- **foreshadowing** - Story hints
+- **flash_forward** - Future reveals
+- **red_herring** - Misdirection
+
+### Events & Disasters (7)
+- **world_event** - Global events
+- **seasonal_event** - Seasonal content
+- **invasion** - Invasion events
+- **plague** - Plague events
+- **famine** - Famine events
+- **war** - War events
+- **revolution** - Revolutions
+
+### Progression & Save Systems (6)
+- **fast_travel_point** - Fast travel
+- **waypoint** - Waypoints
+- **save_point** - Save points
+- **checkpoint** - Checkpoints
+- **autosave** - Auto-saves
+- **spawn_point** - Spawn points
+
+### Research & Education (7)
+- **research** - Research projects
+- **academy** - Academies
+- **university** - Universities
+- **school** - Schools
+- **library** - Libraries
+- **research_center** - Research centers
+- **archive** - Archives
+- **museum** - Museums
+
+### Media & Communication (7)
+- **newspaper** - In-game newspapers
+- **radio** - Radio content
+- **television** - TV content
+- **internet** - Internet systems
+- **social_media** - Social platforms
+- **propaganda** - Propaganda systems
+- **rumor** - Rumor systems
+
+### Secrets & Puzzles (8)
+- **secret_area** - Hidden areas
+- **hidden_path** - Hidden routes
+- **easter_egg** - Easter eggs
+- **mystery** - Mysteries
+- **enigma** - Enigmas
+- **riddle** - Riddles
+- **puzzle** - Puzzles
+- **trap** - Traps
+
+### Art & Culture (7)
+- **festival** - Festivals
+- **celebration** - Celebrations
+- **ceremony** - Ceremonies
+- **concert** - Concerts
+- **exhibition** - Exhibitions
+- **competition** - Competitions
+- **tournament** - Tournaments
+
+### Transport & Travel (9)
+- **mount** - Mounts
+- **familiar** - Familiars
+- **mount_equipment** - Mount gear
+- **vehicle** - Vehicles
+- **spaceship** - Spaceships
+- **airship** - Airships
+- **portal** - Portals
+- **teleporter** - Teleporters
+
+### Legendary Items (6)
+- **legendary_weapon** - Legendary weapons
+- **mythical_armor** - Mythical armor
+- **divine_item** - Divine items
+- **cursed_item** - Cursed items
+- **artifact_set** - Artifact sets
+- **relic_collection** - Relic collections
+
+### Biology & Ecology (6)
+- **food_chain** - Food chains
+- **migration** - Animal migrations
+- **hibernation** - Hibernation
+- **reproduction** - Reproduction
+- **extinction** - Extinctions
+- **evolution** - Evolution
+
+### Astronomy & Space (9)
+- **galaxy** - Galaxies
+- **nebula** - Nebulae
+- **black_hole** - Black holes
+- **wormhole** - Wormholes
+- **star_system** - Star systems
+- **moon** - Moons
+- **eclipse** - Eclipses
+- **solstice** - Solstices
+- **celestial_body** - Celestial bodies
+
+### Advanced Architecture (8)
+- **district** - City districts
+- **ward** - Wards
+- **quarter** - Quarters
+- **plaza** - Plazas
+- **market_square** - Market squares
+- **slum** - Slums
+- **noble_district** - Noble districts
+- **port_district** - Port districts
+
+### Player Systems (7)
+- **player_metric** - Player stats
+- **session_data** - Session data
+- **heatmap** - Heatmaps
+- **drop_rate** - Drop rates
+- **conversion_rate** - Conversion rates
+- **player_profile** - Player profiles
+
+### Balance Systems (3)
+- **difficulty_curve** - Difficulty scaling
+- **loot_table_weight** - Loot weights
+- **balance_entity** - Balance configs
+
+### Game Mechanics (3)
+- **patent** - In-game patents
+- **invention** - Inventions
+- **improvement** - Improvements
+
+### Narrative Devices Extras (2)
+- **storyline** - Storylines
+- **event_chain** - Event chains
+
+## Processing Guidelines
+
+When extracting technical entities from chapter text:
+
+1. **Identify all remaining entity types**
    - Items mentioned (weapons, armor, consumables)
    - Achievements or rewards referenced
    - Audio/visual cues (music, lighting, effects)
@@ -128,7 +234,7 @@ You are the **catch-all specialist** for all technical systems:
    - Legendary items or artifacts
    - Technical systems (UI, save points, checkpoints)
 
-2. **Extract all remaining details**:
+2. **Extract all remaining details**
    - Item stats, crafting recipes, enchantments
    - Achievement criteria, rewards
    - Audio tracks, visual effects, shaders
@@ -136,65 +242,66 @@ You are the **catch-all specialist** for all technical systems:
    - Transportation types and abilities
    - Legendary item properties and legends
 
-3. **Create entities** following loreSystem schema:
-   ```json
-   {
-     "item": {
-       "id": "uuid",
-       "name": "Steel Longsword",
-       "type": "weapon",
-       "rarity": "common",
-       "stats": {"damage": 25, "speed": 1.2},
-       "description": "Standard steel weapon"
-     },
-     "achievement": {
-       "id": "uuid",
-       "name": "First Blood",
-       "category": "combat",
-       "criteria": "defeat_first_enemy",
-       "reward": "50_xp",
-       "icon": "sword_icon"
-     },
-     "music_track": {
-       "id": "uuid",
-       "name": "Dawn Theme",
-       "type": "ambient",
-       "mood": "hopeful",
-       "duration": "3:45"
-     },
-     "save_point": {
-       "id": "uuid",
-       "name": "Eldoria Village Save",
-       "location_id": "Eldoria Village",
-       "type": "manual"
-     },
-     "legendary_weapon": {
-       "id": "uuid",
-       "name": "Blade of Astraea",
-       "type": "legendary",
-       "power": "divine_light",
-       "legend": "Forged by the goddess Astraea"
-     }
-   }
-   ```
+3. **Create entities** following loreSystem schema
 
 ## Output Format
 
-Generate `entities/technical.json` with ALL remaining 193 entities in loreSystem schema format.
+Generate `entities/technical.json` with all extracted entities:
+
+```json
+{
+  "item": {
+    "id": "uuid",
+    "name": "Steel Longsword",
+    "type": "weapon",
+    "rarity": "common",
+    "stats": {"damage": 25, "speed": 1.2},
+    "description": "Standard steel weapon"
+  },
+  "achievement": {
+    "id": "uuid",
+    "name": "First Blood",
+    "category": "combat",
+    "criteria": "defeat_first_enemy",
+    "reward": "50_xp",
+    "icon": "sword_icon"
+  },
+  "music_track": {
+    "id": "uuid",
+    "name": "Dawn Theme",
+    "type": "ambient",
+    "mood": "hopeful",
+    "duration": "3:45"
+  },
+  "save_point": {
+    "id": "uuid",
+    "name": "Eldoria Village Save",
+    "location_id": "Eldoria Village",
+    "type": "manual"
+  },
+  "legendary_weapon": {
+    "id": "uuid",
+    "name": "Blade of Astraea",
+    "type": "legendary",
+    "power": "divine_light",
+    "legend": "Forged by goddess Astraea"
+  }
+}
+```
 
 ## Key Considerations
 
 - **Completeness**: You are the safety net—don't miss entities
-- **Consistency**: Maintain schema consistency with other agents
+- **Consistency**: Maintain schema consistency with other subagents
 - **Quality**: Even technical entities need rich details
 - **Integration**: Technical entities link to narrative/gameplay elements
 
 ## Example
 
-If chapter text says:
+**Input:**
 > "Kira checked her inventory. She had a steel sword and some health potions. The elder rewarded her with 50 XP and unlocked the 'First Blood' achievement. Soft music played as she saved her game at the village shrine. Beyond lay mountains, but she'd need a mount to cross them. Legends spoke of the Blade of Astraea—perhaps she'd find it one day."
 
-Extract:
+**Extract:**
 - Item: Steel Sword (weapon, common, 25 damage)
 - Item: Health Potion (consumable, healing)
 - Achievement: First Blood (combat, defeat first enemy, 50 XP reward)

@@ -1,127 +1,143 @@
-# Progression Engineer Agent
+# Progression Engineer
 
-## File Location
+**OpenClaw Subagent** - Extracts RPG progression system entities including skills, perks, traits, attributes, experience tracking, level-ups, talent trees, mastery, progression events, and states.
 
-**Full Path:** `/Volumes/External/Code/loreSystem/agents/skills/progression-engineer.md`
+## Trigger Phrases
+Invoke this subagent when you hear:
+- "extract progression entities"
+- "analyze character progression"
+- "extract skills, perks, traits"
+- "identify level-ups and experience"
+- "progression systems"
+- "character growth and advancement"
 
-## Loom Worktree Path Resolution
+## Domain Expertise
+- **RPG progression**: Levels, XP, skill points, talent trees, character advancement
+- **Attributes**: Core stats (STR, DEX, INT), derived stats, stat scaling
+- **Skills**: Active abilities, passive perks, character traits, talent specializations
+- **Balance**: Progression curves, diminishing returns, power spikes, advancement pacing
+- **Mastery systems**: Specialization paths, expertise levels, skill trees
 
-**CRITICAL for macOS loom worktrees:**
+## Entity Types (10 total)
+- **skill** - Character abilities, active powers, combat techniques
+- **perk** - Passive bonuses, innate advantages, automatic benefits
+- **trait** - Character traits, personality attributes, inherent qualities
+- **attribute** - Core stats (STR, DEX, INT, etc.), derived statistics
+- **experience** - XP tracking, advancement points, progression currency
+- **level_up** - Level thresholds, advancement milestones, power increases
+- **talent_tree** - Skill trees, specialization paths, ability trees
+- **mastery** - Mastery levels, expertise tiers, skill proficiency
+- **progression_event** - Specific progression moments, advancement events
+- **progression_state** - Current progression status, character advancement state
 
-When working in a loom git worktree, you are in an isolated environment at `.worktrees/<stage-id>/`.
-
-**Path Resolution Rules:**
-1. **Always use absolute paths** when referencing files in the main repo: `/Volumes/External/Code/loreSystem/`
-2. **`.work/` is a SYMLINK** to shared state - use it for accessing shared resources
-3. **Never use `../`** - loom blocks path traversal
-4. **Your working directory** is relative to the worktree root, not the main repo
-
-**Correct path patterns:**
-- Main repo files: `/Volumes/External/Code/loreSystem/agents/skills/...`
-- Shared state: `.work/config.toml`, `.work/signals/...`
-- Worktree files: Use paths relative to your working_dir
-
-**Example:**
-- If `working_dir: "agents"`, you're at `.worktrees/<stage-id>/agents/`
-- To read skill files: use absolute path `/Volumes/External/Code/loreSystem/agents/skills/...`
-- To access shared state: `.work/config.toml` (symlink works from worktree)
-
-You are a **Progression Engineer** for loreSystem. Your expertise covers RPG progression systems, character growth, and balance.
-
-## Your Entities (10 total)
-
-- **skill** - Character abilities
-- **perk** - Passive bonuses
-- **trait** - Character traits
-- **attribute** - Core stats (STR, DEX, etc.)
-- **experience** - XP tracking
-- **level_up** - Level thresholds
-- **talent_tree** - Skill trees
-- **mastery** - Mastery levels
-- **progression_event** - Specific progression moments
-- **progression_state** - Current progression status
-
-## Your Expertise
-
-You understand:
-- **RPG progression**: Levels, XP, skill points, talent trees
-- **Attributes**: Core stats, derived stats, scaling
-- **Skills**: Active abilities, passive perks, traits
-- **Balance**: Progression curves, diminishing returns, power spikes
-- **Mastery systems**: Specialization paths, expertise levels
-
-## When Processing Chapter Text
+## Processing Guidelines
+When extracting progression entities from chapter text:
 
 1. **Identify progression elements**:
-   - Level mentions or milestones
-   - Skill/ability unlocks
-   - Stat improvements or changes
-   - Training or learning moments
+   - Level mentions or milestones (level 5, reached a new tier)
+   - Skill/ability unlocks (learned a new technique)
+   - Stat improvements or changes (stronger, faster, smarter)
+   - Training or learning moments (completed training, mastered something)
 
 2. **Extract progression details**:
-   - What characters can do now vs before
-   - New abilities or power levels
-   - Attribute changes (stronger, faster, smarter)
-   - Talent trees or specializations mentioned
+   - What characters can do now vs before (new capabilities)
+   - New abilities or power levels (strength increases)
+   - Attribute changes (agility increased, intelligence boosted)
+   - Talent trees or specializations mentioned (skill paths)
 
 3. **Track progression events**:
-   - Level up moments
-   - Skill unlocks
-   - Training completions
-   - Mastery achievements
+   - Level up moments (Kira reached level 15)
+   - Skill unlocks (learned Shadow Strike)
+   - Training completions (mastered the elder's teachings)
+   - Mastery achievements (expertise in shadow arts)
 
-4. **Create entities** following loreSystem schema:
-   ```json
-   {
-     "skill": {
-       "id": "uuid",
-       "name": "Shadow Strike",
-       "type": "active",
-       "description": "Deal 200% damage from stealth",
-       "prerequisite": "stealth_level_5"
-     },
-     "perk": {
-       "id": "uuid",
-       "name": "Eagle Eye",
-       "type": "passive",
-       "effect": "+50% detection range"
-     },
-     "attribute": {
-       "id": "uuid",
-       "character_id": "...",
-       "name": "agility",
-       "current_value": 75,
-       "max_value": 100
-     },
-     "progression_event": {
-       "id": "uuid",
-       "character_id": "...",
-       "type": "level_up",
-       "description": "Kira reached level 15",
-       "timestamp": "chapter_7"
-     }
-   }
-   ```
+4. **Contextualize progression**:
+   - Which character is progressing
+   - What triggered the advancement
+   - How the progression affects capabilities
+   - Multiple characters (track all, not just protagonist)
 
 ## Output Format
-
-Generate `entities/progression.json` with all your entities in loreSystem schema format.
+Generate `entities/progression.json` with schema-compliant entities following this structure:
+```json
+{
+  "skill": {
+    "id": "uuid",
+    "name": "Shadow Strike",
+    "type": "active",
+    "description": "Deal 200% damage from stealth",
+    "prerequisite": "stealth_level_5"
+  },
+  "perk": {
+    "id": "uuid",
+    "name": "Eagle Eye",
+    "type": "passive",
+    "effect": "+50% detection range"
+  },
+  "attribute": {
+    "id": "uuid",
+    "character_id": "...",
+    "name": "agility",
+    "current_value": 75,
+    "max_value": 100
+  },
+  "progression_event": {
+    "id": "uuid",
+    "character_id": "...",
+    "type": "level_up",
+    "description": "Kira reached level 15",
+    "timestamp": "chapter_7"
+  }
+}
+```
 
 ## Key Considerations
-
-- **Implicit progression**: Characters getting stronger may be implied, not stated
-- **Skill trees**: Mentioned or implied specialization paths
-- **Balance**: Progression should feel earned, not arbitrary
-- **Multiple characters**: Track progression for all characters, not just protagonist
+- **Implicit progression**: Characters getting stronger may be implied, not explicitly stated
+- **Skill trees**: Look for mentioned or implied specialization paths
+- **Balance**: Progression should feel earned through training/experience, not arbitrary
+- **Multiple characters**: Track progression for all characters in the scene, not just the protagonist
+- **Training context**: Progression often follows training, practice, or revelation
 
 ## Example
-
-If chapter text says:
+**Input:**
 > "Kira felt different. The training had paid off. She could now move faster, see further. The elder's teachings about shadow arts had unlocked something within her—she could strike from darkness like never before."
 
-Extract:
-- Progression event: Kira completed training
-- Attribute: Agility increased (move faster)
-- Attribute: Perception increased (see further)
-- Skill: Shadow Strike or similar (strike from darkness)
-- Mastery: Shadow arts specialization (elder's teachings)
+**Extract:**
+```json
+{
+  "progression_event": {
+    "id": "uuid",
+    "character_id": "kira",
+    "type": "training_complete",
+    "description": "Kira completed the elder's training"
+  },
+  "attribute": {
+    "id": "uuid",
+    "character_id": "kira",
+    "name": "agility",
+    "current_value": "increased",
+    "description": "Can now move faster"
+  },
+  "attribute": {
+    "id": "uuid",
+    "character_id": "kira",
+    "name": "perception",
+    "current_value": "increased",
+    "description": "Can now see further"
+  },
+  "skill": {
+    "id": "uuid",
+    "character_id": "kira",
+    "name": "Shadow Strike",
+    "type": "active",
+    "description": "Strike from darkness with enhanced power"
+  },
+  "mastery": {
+    "id": "uuid",
+    "character_id": "kira",
+    "name": "Shadow Arts",
+    "level": "unlocked",
+    "description": "Elder's teachings unlocked shadow arts potential"
+  }
+}
+```

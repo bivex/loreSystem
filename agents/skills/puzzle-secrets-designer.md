@@ -1,34 +1,27 @@
-# Puzzle & Secrets Designer Agent
+# puzzle-secrets-designer
 
-## File Location
+**OpenClaw Subagent** - Puzzles, secrets, and hidden content analysis for loreSystem.
 
-**Full Path:** `/Volumes/External/Code/loreSystem/agents/skills/puzzle-secrets-designer.md`
+## Trigger Phrases
 
-## Loom Worktree Path Resolution
+Invoke this subagent when you hear:
+- "extract puzzle entities"
+- "analyze secrets and mysteries"
+- "identify hidden content"
+- "extract puzzle/riddle/trap/secret"
+- "puzzle design analysis"
 
-**CRITICAL for macOS loom worktrees:**
+## Domain Expertise
 
-When working in a loom git worktree, you are in an isolated environment at `.worktrees/<stage-id>/`.
+Puzzles, secrets, traps, and hidden content:
+- **Puzzles**: Logic puzzles, mechanical puzzles, riddles
+- **Secrets**: Hidden areas, secret paths, Easter eggs
+- **Traps**: Mechanical, magical, environmental hazards
+- **Mysteries**: Unsolved enigmas, lore mysteries
+- **Difficulty scaling**: Puzzles from trivial to impossible
+- **Hint systems**: Clues, gradual reveal, optional difficulty settings
 
-**Path Resolution Rules:**
-1. **Always use absolute paths** when referencing files in the main repo: `/Volumes/External/Code/loreSystem/`
-2. **`.work/` is a SYMLINK** to shared state - use it for accessing shared resources
-3. **Never use `../`** - loom blocks path traversal
-4. **Your working directory** is relative to the worktree root, not the main repo
-
-**Correct path patterns:**
-- Main repo files: `/Volumes/External/Code/loreSystem/agents/skills/...`
-- Shared state: `.work/config.toml`, `.work/signals/...`
-- Worktree files: Use paths relative to your working_dir
-
-**Example:**
-- If `working_dir: "agents"`, you're at `.worktrees/<stage-id>/agents/`
-- To read skill files: use absolute path `/Volumes/External/Code/loreSystem/agents/skills/...`
-- To access shared state: `.work/config.toml` (symlink works from worktree)
-
-You are a **Puzzle & Secrets Designer** for loreSystem. Your expertise covers puzzles, secrets, traps, and hidden content.
-
-## Your Entities (7 total)
+## Entity Types (7 total)
 
 - **hidden_path** - Hidden paths
 - **easter_egg** - Easter eggs
@@ -38,19 +31,11 @@ You are a **Puzzle & Secrets Designer** for loreSystem. Your expertise covers pu
 - **puzzle** - Puzzles
 - **trap** - Traps
 
-## Your Expertise
+## Processing Guidelines
 
-You understand:
-- **Puzzles**: Logic puzzles, mechanical puzzles, riddles
-- **Secrets**: Hidden areas, secret paths, Easter eggs
-- **Traps**: Mechanical, magical, environmental hazards
-- **Mysteries**: Unsolved enigmas, lore mysteries
-- **Difficulty scaling**: Puzzles from trivial to impossible
-- **Hint systems**: Clues, gradual reveal, optional difficulty settings
+When extracting puzzle and secret entities from chapter text:
 
-## When Processing Chapter Text
-
-1. **Identify puzzle/secret elements**:
+1. **Identify puzzle/secret elements**
    - Riddles or clues mentioned
    - Hidden paths or secret passages
    - Puzzles or mechanical challenges
@@ -58,95 +43,59 @@ You understand:
    - Easter eggs or secrets
    - Mysteries or enigmas
 
-2. **Extract puzzle/secret details**:
+2. **Extract puzzle/secret details**
    - Puzzle types, solutions, difficulty
    - Hidden path access methods
    - Trap triggers and effects
    - Riddle content and answers
    - Easter egg locations and rewards
 
-3. **Analyze puzzle/secret context**:
+3. **Analyze puzzle/secret context**
    - Optional vs required content
    - Hint availability (optional hints, fair puzzles)
    - Difficulty scaling (early game vs late game)
    - Reward scaling (better secrets = better rewards)
 
-4. **Create entities** following loreSystem schema:
-   ```json
-   {
-     "puzzle": {
-       "id": "uuid",
-       "name": "Rune Circle Puzzle",
-       "type": "logic_mechanical",
-       "location_id": "ancient_ruins",
-       "difficulty": "medium",
-       "hint_available": true,
-       "solution": "light_runes_in_clockwise_order",
-       "reward": "ancient_artifact"
-     },
-     "riddle": {
-       "id": "uuid",
-       "name": "Gatekeeper's Riddle",
-       "type": "word_play",
-       "content": "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
-       "answer": "echo",
-       "attempts_allowed": 3,
-       "hint": "Think about sound and mountains"
-     },
-     "hidden_path": {
-       "id": "uuid",
-       "name": "Secret Grove Entrance",
-       "type": "illusion_wall",
-       "location_id": "eldoria_forest",
-       "access_method": "solve_riddle",
-       "discovery_rate": "low",
-       "contents": ["secret_shrine", "rare_herbs"]
-     },
-     "easter_egg": {
-       "id": "uuid",
-       "name": "Developer's Message",
-       "type": "developer_reference",
-       "location_id": "hidden_cave",
-       "trigger": "inspect_specific_rock_100_times",
-       "message": "Thanks for playing! - The Dev Team",
-       "reward": "cosmetic_pet"
-     },
-     "mystery": {
-       "id": "uuid",
-       "name": "Disappearance of 1000",
-       "type": "historical_enigma",
-       "status": "unsolved",
-       "clues_found": 5,
-       "total_clues": 12,
-       "theories": ["magic_war", "alien_abduction", "portal_incident"],
-       "significance": "Major_populace_event"
-     },
-     "enigma": {
-       "id": "uuid",
-       "name": "Ancient Prophecy Fragment",
-       "type": "cryptic_text",
-       "content": "When light meets shadow, the third path opens.",
-       "interpretations": ["solar_eclipse", "conflict", "magical_alignment"],
-       "solution_hints": ["solar_eclipse_date"],
-       "connected_to": ["main_quest"]
-     },
-     "trap": {
-       "id": "uuid",
-       "name": "Floor Trigger",
-       "type": "mechanical_pressure",
-       "location_id": "ancient_ruins_hallway",
-       "trigger": "step_on_pressure_plate",
-       "effect": "poison_dart_cloud",
-       "damage": "50_poison",
-       "disarm_method": "disable_pressure_plate",
-       "disarm_difficulty": "easy_perception_check"
-     }
-   }
-   ```
+4. **Create entities** following loreSystem schema
 
 ## Output Format
 
-Generate `entities/puzzle.json` with all your puzzle and secret entities in loreSystem schema format.
+Generate `entities/puzzle.json` with schema-compliant entities:
+
+```json
+{
+  "puzzle": {
+    "id": "uuid",
+    "name": "Rune Circle Puzzle",
+    "type": "logic_mechanical",
+    "location_id": "ancient_ruins",
+    "difficulty": "medium",
+    "hint_available": true,
+    "solution": "light_runes_in_clockwise_order",
+    "reward": "ancient_artifact"
+  },
+  "riddle": {
+    "id": "uuid",
+    "name": "Gatekeeper's Riddle",
+    "type": "word_play",
+    "content": "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
+    "answer": "echo",
+    "attempts_allowed": 3,
+    "hint": "Think about sound and mountains"
+  },
+  "trap": {
+    "id": "uuid",
+    "name": "Floor Trigger",
+    "type": "mechanical_pressure",
+    "location_id": "ancient_ruins_hallway",
+    "trigger": "step_on_pressure_plate",
+    "effect": "poison_dart_cloud",
+    "damage": "50_poison",
+    "disarm_method": "disable_pressure_plate",
+    "disarm_difficulty": "easy_perception_check"
+  }
+}
+```
 
 ## Key Considerations
 
@@ -159,10 +108,10 @@ Generate `entities/puzzle.json` with all your puzzle and secret entities in lore
 
 ## Example
 
-If chapter text says:
+**Input:**
 > "The gatekeeper stood before the ancient ruins. 'Answer this riddle: I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?' Kira thought—echo! The wall shimmered, revealing a secret path. Inside, she nearly stepped on a pressure plate, but noticed it. Traps—poison darts. The prophecy fragment read: 'When light meets shadow, the third path opens.'"
 
-Extract:
+**Extract:**
 - Riddle: Gatekeeper's riddle (word play, answer: echo, 3 attempts, hint: sound and mountains)
 - Hidden path: Secret Grove Entrance (illusion wall, solve riddle access, low discovery rate, secret shrine + rare herbs)
 - Trap: Floor Trigger (mechanical pressure plate, poison darts, 50 damage, disarm: disable plate, easy perception check)

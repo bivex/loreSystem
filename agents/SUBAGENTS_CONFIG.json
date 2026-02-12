@@ -1,0 +1,187 @@
+{
+  "openclaw_config": {
+    "description": "Configuration for loreSystem subagents in OpenClaw",
+    "version": "1.0"
+  },
+  "agents": {
+    "defaults": {
+      "subagents": {
+        "model": "anthropic/claude-sonnet-4",
+        "thinking": "low",
+        "maxConcurrent": 8,
+        "archiveAfterMinutes": 30,
+        "runTimeoutSeconds": 300
+      }
+    },
+    "list": [
+      {
+        "id": "loresystem",
+        "name": "loreSystem Assistant",
+        "default": true,
+        "subagents": {
+          "allowAgents": ["*"]
+        }
+      }
+    ]
+  },
+  "tools": {
+    "subagents": {
+      "tools": {
+        "allow": ["read", "write", "edit", "glob", "grep"],
+        "deny": ["sessions_spawn", "gateway", "whatsapp_login"]
+      }
+    }
+  },
+  "subagents": {
+    "narrative-specialist": {
+      "label": "Narrative Specialist",
+      "spawn_task": "Extract narrative entities (story, chapter, act, episode, prologue, epilogue, plot_branch, branch_point)",
+      "output_file": "entities/narrative.json"
+    },
+    "character-architect": {
+      "label": "Character Architect",
+      "spawn_task": "Extract character entities (character, character_evolution, character_profile_entry, character_relationship, character_variant, voice_actor, motion_capture)",
+      "output_file": "entities/character.json"
+    },
+    "quest-designer": {
+      "label": "Quest Designer",
+      "spawn_task": "Extract quest entities (quest, quest_chain, quest_node, quest_giver, quest_objective, quest_prerequisite, quest_reward_tier, quest_tracker, moral_choice)",
+      "output_file": "entities/quest.json"
+    },
+    "progression-engineer": {
+      "label": "Progression Engineer",
+      "spawn_task": "Extract progression entities (skill, perk, trait, attribute, experience, level_up, talent_tree, mastery, progression_event, progression_state)",
+      "output_file": "entities/progression.json"
+    },
+    "world-geographer": {
+      "label": "World Geographer",
+      "spawn_task": "Extract location entities (location, hub_area, instance, dungeon, raid, arena, open_world_zone, underground, skybox, dimension, pocket_dimension)",
+      "output_file": "entities/world.json"
+    },
+    "environmental-scientist": {
+      "label": "Environmental Scientist",
+      "spawn_task": "Extract environmental entities (environment, weather_pattern, atmosphere, lighting, time_period, disaster)",
+      "output_file": "entities/environment.json"
+    },
+    "historian": {
+      "label": "Historian",
+      "spawn_task": "Extract historical entities (era, era_transition, timeline, calendar, festival, celebration, ceremony, exhibition, tournament, competition)",
+      "output_file": "entities/historical.json"
+    },
+    "political-scientist": {
+      "label": "Political Scientist",
+      "spawn_task": "Extract political entities (government, law, legal_system, court, judge, jury, lawyer, crime, punishment, evidence, witness, treaty, constitution)",
+      "output_file": "entities/political.json"
+    },
+    "economist": {
+      "label": "Economist",
+      "spawn_task": "Extract economic entities (trade, barter, tax, tariff, supply, demand, price, inflation, currency, shop, purchase, reward, loot_table_weight)",
+      "output_file": "entities/economy.json"
+    },
+    "faction-analyst": {
+      "label": "Faction Analyst",
+      "spawn_task": "Extract faction entities (faction, faction_hierarchy, faction_ideology, faction_leader, faction_membership, faction_resource, faction_territory)",
+      "output_file": "entities/faction.json"
+    },
+    "military-strategist": {
+      "label": "Military Strategist",
+      "spawn_task": "Extract military entities (army, fleet, battalion, weapon_system, defense, fortification, siege_engine, war, invasion, revolution)",
+      "output_file": "entities/military.json"
+    },
+    "religious-scholar": {
+      "label": "Religious Scholar",
+      "spawn_task": "Extract religious entities (cult, sect, holy_site, scripture, ritual, oath, summon, pact, curse, blessing, miracle)",
+      "output_file": "entities/religious.json"
+    },
+    "lore-chronicler": {
+      "label": "Lore Chronicler",
+      "spawn_task": "Extract lore entities (lore_fragment, codex_entry, journal_page, bestiary_entry, memory, dream, nightmare, secret_area)",
+      "output_file": "entities/lore.json"
+    },
+    "content-creator": {
+      "label": "Content Creator",
+      "spawn_task": "Extract content entities (mod, custom_map, user_scenario, share_code, workshop_entry, localization, translation, subtitle, dubbing, voice_over)",
+      "output_file": "entities/content.json"
+    },
+    "achievement-specialist": {
+      "label": "Achievement Specialist",
+      "spawn_task": "Extract achievement entities (achievement, trophy, badge, title, rank, leaderboard)",
+      "output_file": "entities/achievement.json"
+    },
+    "audio-director": {
+      "label": "Audio Director",
+      "spawn_task": "Extract audio entities (music_track, music_theme, motif, score, soundtrack, voice_line, sound_effect, ambient, music_control, music_state)",
+      "output_file": "entities/audio.json"
+    },
+    "visual-effects-artist": {
+      "label": "Visual Effects Artist",
+      "spawn_task": "Extract visual entities (visual_effect, particle, shader, lighting, color_palette)",
+      "output_file": "entities/visual.json"
+    },
+    "cinematic-director": {
+      "label": "Cinematic Director",
+      "spawn_task": "Extract cinematic entities (cutscene, cinematic, camera_path, transition, fade, flashback)",
+      "output_file": "entities/cinematic.json"
+    },
+    "media-analyst": {
+      "label": "Media Analyst",
+      "spawn_task": "Extract media entities (newspaper, radio, television, internet, social_media, propaganda, rumor)",
+      "output_file": "entities/media.json"
+    },
+    "transportation-engineer": {
+      "label": "Transportation Engineer",
+      "spawn_task": "Extract transport entities (mount, familiar, mount_equipment, vehicle, spaceship, airship, portal, teleporter)",
+      "output_file": "entities/transportation.json"
+    },
+    "celestial-scientist": {
+      "label": "Celestial Scientist",
+      "spawn_task": "Extract celestial entities (galaxy, nebula, black_hole, wormhole, star_system, moon, eclipse, solstice, celestial_body)",
+      "output_file": "entities/celestial.json"
+    },
+    "biology-specialist": {
+      "label": "Biology Specialist",
+      "spawn_task": "Extract biology entities (food_chain, migration, hibernation, reproduction, extinction, evolution)",
+      "output_file": "entities/biology.json"
+    },
+    "urban-architect": {
+      "label": "Urban Architect",
+      "spawn_task": "Extract urban entities (district, ward, quarter, plaza, market_square, slum, noble_district, port_district)",
+      "output_file": "entities/urban.json"
+    },
+    "research-education-specialist": {
+      "label": "Research & Education Specialist",
+      "spawn_task": "Extract research entities (research, academy, university, school, library, research_center, archive, museum)",
+      "output_file": "entities/research.json"
+    },
+    "puzzle-secrets-designer": {
+      "label": "Puzzle & Secrets Designer",
+      "spawn_task": "Extract puzzle entities (secret_area, hidden_path, easter_egg, mystery, enigma, riddle, puzzle, trap)",
+      "output_file": "entities/puzzle.json"
+    },
+    "ui-content-specialist": {
+      "label": "UI/Content Specialist",
+      "spawn_task": "Extract UI entities (choice, flowchart, handout, tokenboard, tag, template, inspiration, note)",
+      "output_file": "entities/ui_content.json"
+    },
+    "analytics-balance-specialist": {
+      "label": "Analytics & Balance Specialist",
+      "spawn_task": "Extract analytics entities (player_metric, session_data, heatmap, drop_rate, conversion_rate, difficulty_curve, loot_table_weight, balance_entity)",
+      "output_file": "entities/analytics.json"
+    },
+    "legendary-items-specialist": {
+      "label": "Legendary Items Specialist",
+      "spawn_task": "Extract legendary item entities (legendary_weapon, mythical_armor, divine_item, cursed_item, artifact_set, relic_collection, glyph, rune, socket, enchantment)",
+      "output_file": "entities/legendary.json"
+    },
+    "social-cultural-specialist": {
+      "label": "Social & Cultural Specialist",
+      "spawn_task": "Extract social entities (affinity, disposition, honor, karma, social_class, social_mobility, festival, celebration, ceremony, competition, tournament)",
+      "output_file": "entities/social_cultural.json"
+    },
+    "technical-director": {
+      "label": "Technical Director (catch-all)",
+      "spawn_task": "Extract all remaining 193 technical entities (achievements, inventory, content, creative tools, interactive systems, audio, visual, cinematic, narrative devices, events, progression, legal, research, media, secrets, art, transport, legendary, biology, celestial, architecture, player systems, balance, game mechanics)",
+      "output_file": "entities/technical.json"
+    }
+  }
+}

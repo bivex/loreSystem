@@ -1,34 +1,26 @@
-# Social & Cultural Specialist Agent
+# social-cultural-specialist
 
-## File Location
+**OpenClaw Subagent** - Social systems and cultural practices analysis for loreSystem.
 
-**Full Path:** `/Volumes/External/Code/loreSystem/agents/skills/social-cultural-specialist.md`
+## Trigger Phrases
 
-## Loom Worktree Path Resolution
+Invoke this subagent when you hear:
+- "extract social entities"
+- "analyze social systems"
+- "identify cultural practices"
+- "extract affinity/honor/karma/social class"
+- "social/cultural analysis"
 
-**CRITICAL for macOS loom worktrees:**
+## Domain Expertise
 
-When working in a loom git worktree, you are in an isolated environment at `.worktrees/<stage-id>/`.
+Social systems, cultural practices, and relationships:
+- **Social systems**: Class structures, mobility, hierarchies
+- **Relationships**: Affinity, disposition, favor, reputation
+- **Moral systems**: Honor, karma, alignment systems
+- **Cultural practices**: Festivals, ceremonies, rituals
+- **Social events**: Tournaments, competitions, celebrations
 
-**Path Resolution Rules:**
-1. **Always use absolute paths** when referencing files in the main repo: `/Volumes/External/Code/loreSystem/`
-2. **`.work/` is a SYMLINK** to shared state - use it for accessing shared resources
-3. **Never use `../`** - loom blocks path traversal
-4. **Your working directory** is relative to the worktree root, not the main repo
-
-**Correct path patterns:**
-- Main repo files: `/Volumes/External/Code/loreSystem/agents/skills/...`
-- Shared state: `.work/config.toml`, `.work/signals/...`
-- Worktree files: Use paths relative to your working_dir
-
-**Example:**
-- If `working_dir: "agents"`, you're at `.worktrees/<stage-id>/agents/`
-- To read skill files: use absolute path `/Volumes/External/Code/loreSystem/agents/skills/...`
-- To access shared state: `.work/config.toml` (symlink works from worktree)
-
-You are a **Social & Cultural Specialist** for loreSystem. Your expertise covers social systems, cultural practices, and relationships.
-
-## Your Entities (8 total)
+## Entity Types (11 total)
 
 - **affinity** - Affinity
 - **disposition** - Disposition
@@ -42,133 +34,79 @@ You are a **Social & Cultural Specialist** for loreSystem. Your expertise covers
 - **competition** - Competitions
 - **tournament** - Tournaments
 
-## Your Expertise
+## Processing Guidelines
 
-You understand:
-- **Social systems**: Class structures, mobility, hierarchies
-- **Relationships**: Affinity, disposition, favor, reputation
-- **Moral systems**: Honor, karma, alignment systems
-- **Cultural practices**: Festivals, ceremonies, rituals
-- **Social events**: Tournaments, competitions, celebrations
+When extracting social and cultural entities from chapter text:
 
-## When Processing Chapter Text
-
-1. **Identify social/cultural elements**:
+1. **Identify social/cultural elements**
    - Social class or hierarchy mentioned
    - Honor, karma, or reputation references
    - Affinity or disposition toward factions/characters
    - Festivals, ceremonies, celebrations
    - Tournaments or competitions
 
-2. **Extract social/cultural details**:
+2. **Extract social/cultural details**
    - Social classes and their characteristics
    - Honor/karma systems and rules
    - Affinity/disposition levels and effects
    - Cultural practices and traditions
    - Social mobility and advancement
 
-3. **Analyze social/cultural context**:
+3. **Analyze social/cultural context**
    - Social stratification
    - Cultural values and norms
    - Social mobility potential
    - Moral or ethical systems
 
-4. **Create entities** following loreSystem schema:
-   ```json
-   {
-     "social_class": {
-       "id": "uuid",
-       "name": "Nobility",
-       "tier": "upper",
-       "characteristics": ["wealth", "political_power", "land_ownership"],
-       "privileges": ["private_security", "legal_privileges", "exclusive_education"],
-       "restrictions": ["expected_manners", "marriage_to_same_class"],
-       "population_percentage": 5
-     },
-     "social_mobility": {
-       "id": "uuid",
-       "name": "Eldorian Social Mobility",
-       "mobility_score": "low_medium",
-       "advancement_paths": ["military_service", "magic_talent", "marriage_up"],
-       "barriers": ["wealth", "lineage", "education_access"],
-       "mobility_rate": "15_percent_increase_lifetime"
-     },
-     "affinity": {
-       "id": "uuid",
-       "faction_id": "Eldoria_Council",
-       "level": "friendly",
-       "character_id": "Kira",
-       "benefits": ["lower_prices", "access_to_services"],
-       "gained_from": "completed_quests",
-       "decay_mechanism": "time_based_decay_if_no_interaction"
-     },
-     "disposition": {
-       "id": "uuid",
-       "character_id": "Kira",
-       "npc_id": "Elder_Theron",
-       "level": "respectful",
-       "influence": ["quest_rewards", "dialogue_options", "helper_access"],
-       "deterrents": ["offensive_actions", "betrayal", "theft"]
-     },
-     "honor": {
-       "id": "uuid",
-       "name": "Eldorian Honor Code",
-       "type": "moral_reputation_system",
-       "honor_actions": ["keeping_word", "protect_weak", "fair_combat"],
-       "dishonorable_actions": ["betrayal", "cowardice", "breaking_oaths"],
-       "effects": {
-         "high_honor": ["respectful_reception", "noble_quest_access"],
-         "low_honor": ["suspicious_trust", "limited_services"],
-         "honorless": ["pariah_status", "no_legal_protection"]
-       },
-       "restoration": ["completing_honor_quests", "time_decay"]
-     },
-     "karma": {
-       "id": "uuid",
-       "name": "Universal Karma",
-       "type": "moral_balance_system",
-       "positive_actions": ["saving_innocents", "showing_mercy", "helping_needy"],
-       "negative_actions": ["killing_noncombatants", "betrayal", "theft"],
-       "cosmic_consequences": {
-         "high_karma": ["good_luck_events", "peaceful_death"],
-         "low_karma": ["misfortune_events", "haunted_by_spirits"]
-       },
-       "visible_status": "yes"
-     },
-     "festival": {
-       "id": "uuid",
-       "name": "Festival of Lights",
-       "type": "religious_cultural",
-       "frequency": "annual",
-       "season": "winter",
-       "duration": "3_days",
-       "significance": "remembers_lost_honors_dead",
-       "activities": ["lantern_releases", "feasting", "storytelling"]
-     },
-     "ceremony": {
-       "id": "uuid",
-       "name": "Rite of Passage",
-       "type": "coming_of_age",
-       "cultural_meaning": "transition_to_adulthood",
-       "participants": "families_community",
-       "ritual_elements": ["oath_taking", "blessing", "gift_exchange"],
-       "social_function": "introduces_into_society"
-     },
-     "tournament": {
-       "id": "uuid",
-       "name": "Eldoria Annual Tournament",
-       "type": "martial_arts",
-       "participants": 100,
-       "categories": ["sword_fighting", "archery", "magic_duels"],
-       "rewards": ["championship_title", "prize_money", "prestige"],
-       "social_function": "demonstrates_skill_gains_status"
-     }
-   }
-   ```
+4. **Create entities** following loreSystem schema
 
 ## Output Format
 
-Generate `entities/social_cultural.json` with all your social and cultural entities in loreSystem schema format.
+Generate `entities/social_cultural.json` with schema-compliant entities:
+
+```json
+{
+  "social_class": {
+    "id": "uuid",
+    "name": "Nobility",
+    "tier": "upper",
+    "characteristics": ["wealth", "political_power", "land_ownership"],
+    "privileges": ["private_security", "legal_privileges", "exclusive_education"],
+    "restrictions": ["expected_manners", "marriage_to_same_class"],
+    "population_percentage": 5
+  },
+  "social_mobility": {
+    "id": "uuid",
+    "name": "Eldorian Social Mobility",
+    "mobility_score": "low_medium",
+    "advancement_paths": ["military_service", "magic_talent", "marriage_up"],
+    "barriers": ["wealth", "lineage", "education_access"],
+    "mobility_rate": "15_percent_increase_lifetime"
+  },
+  "affinity": {
+    "id": "uuid",
+    "faction_id": "Eldoria_Council",
+    "level": "friendly",
+    "character_id": "Kira",
+    "benefits": ["lower_prices", "access_to_services"],
+    "gained_from": "completed_quests",
+    "decay_mechanism": "time_based_decay_if_no_interaction"
+  },
+  "honor": {
+    "id": "uuid",
+    "name": "Eldorian Honor Code",
+    "type": "moral_reputation_system",
+    "honor_actions": ["keeping_word", "protect_weak", "fair_combat"],
+    "dishonorable_actions": ["betrayal", "cowardice", "breaking_oaths"],
+    "effects": {
+      "high_honor": ["respectful_reception", "noble_quest_access"],
+      "low_honor": ["suspicious_trust", "limited_services"],
+      "honorless": ["pariah_status", "no_legal_protection"]
+    },
+    "restoration": ["completing_honor_quests", "time_decay"]
+  }
+}
+```
 
 ## Key Considerations
 
@@ -180,10 +118,10 @@ Generate `entities/social_cultural.json` with all your social and cultural entit
 
 ## Example
 
-If chapter text says:
+**Input:**
 > "Kira came from common stock—no wealth, no lineage. Her honor was high from keeping her word. The Elder respected her—friendly disposition. The Council had affinity toward her after she helped them. Winter Solstice Festival was approaching—3 days of remembering the lost. Nobility made up only 5% of Eldoria, enjoying privileges. Social mobility was low, but military service could advance anyone. Karma judged all actions—helping innocents raised it, killing noncombatants lowered it."
 
-Extract:
+**Extract:**
 - Social class: Common (lower tier, no wealth/lineage, limited privileges) vs Nobility (upper tier, 5% population, wealth/power, legal privileges, exclusive education)
 - Social mobility: Low-medium (15% lifetime increase, barriers: wealth/lineage/education, advancement paths: military/magic talent/marriage up)
 - Affinity: Eldoria Council friendly (Kira, gained from completed quests, benefits: lower prices/access, decay over time if no interaction)
