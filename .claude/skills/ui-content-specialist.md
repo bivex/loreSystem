@@ -1,3 +1,8 @@
+---
+name: loresystem-ui
+description: Extract UI entities (choice, flowchart, handout, tokenboard, tag, template, inspiration, note) from loreSystem source files into structured JSON.
+---
+
 # ui-content-specialist
 
 **OpenClaw Subagent** - User interfaces and content systems analysis for loreSystem.

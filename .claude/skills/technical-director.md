@@ -1,3 +1,8 @@
+---
+name: loresystem-technical
+description: Extract all remaining 193 technical entities (achievements, inventory, content, creative tools, interactive systems, audio, visual, cinematic, narrative devices, events, progression, legal, research, media, secrets, art, transport, legendary, biology, celestial, architecture, player systems, balance, game mechanics) from loreSystem source files into structured JSON.
+---
+
 # technical-director
 
 **OpenClaw Subagent** - Catch-all specialist for all remaining 193 technical entities in loreSystem.

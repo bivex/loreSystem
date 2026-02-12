@@ -1,3 +1,8 @@
+---
+name: loresystem-legendary
+description: Extract legendary item entities (legendary_weapon, mythical_armor, divine_item, cursed_item, artifact_set, relic_collection, glyph, rune, socket, enchantment) from loreSystem source files into structured JSON.
+---
+
 # legendary-items-specialist
 
 **OpenClaw Subagent** - Legendary items and powerful equipment analysis for loreSystem.

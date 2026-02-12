@@ -1,3 +1,8 @@
+---
+name: loresystem-social
+description: Extract social entities (affinity, disposition, honor, karma, social_class, social_mobility, festival, celebration, ceremony, competition, tournament) from loreSystem source files into structured JSON.
+---
+
 # social-cultural-specialist
 
 **OpenClaw Subagent** - Social systems and cultural practices analysis for loreSystem.

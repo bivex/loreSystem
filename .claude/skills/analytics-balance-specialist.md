@@ -1,3 +1,8 @@
+---
+name: loresystem-analytics
+description: Extract analytics entities (player_metric, session_data, heatmap, drop_rate, conversion_rate, difficulty_curve, loot_table_weight, balance_entity) from loreSystem source files into structured JSON.
+---
+
 # analytics-balance-specialist
 
 **OpenClaw Subagent** - Player analytics and difficulty balancing analysis for loreSystem.
