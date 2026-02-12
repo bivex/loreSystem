@@ -35,7 +35,6 @@ class EndingRarity(str, Enum):
     RARE = "rare"  # Requires significant effort
     EPIC = "epic"  # Major achievement
     MYTHIC = "mythic"  # Extremely hard to find
-    MYTHIC = "mythic"  # Extremely hard to find
 
 
 @dataclass

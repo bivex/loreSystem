@@ -46,10 +46,12 @@ class AlternateReality:
     """An alternate version of reality - could be a parallel timeline, dream world, or simulation."""
 
     tenant_id: TenantId
-    id: Optional[EntityId] = field(default=None, compare=False)
     name: str
     description: Description
     reality_type: RealityType
+    created_at: Timestamp
+    updated_at: Timestamp
+    id: Optional[EntityId] = field(default=None, compare=False)
     access_method: Optional[RealityAccess] = None
     parent_world_id: Optional[EntityId] = None
     divergence_point: Optional[str] = None  # When/where it diverged
@@ -57,8 +59,6 @@ class AlternateReality:
     stability: float = 1.0  # How stable the reality is
     entry_points: List[str] = field(default_factory=list)  # How players enter
     exit_points: List[str] = field(default_factory=list)  # How players leave
-    created_at: Timestamp
-    updated_at: Timestamp
     version: Version = field(default_factory=Version)
 
     def __post_init__(self):
