@@ -1,0 +1,269 @@
+{
+  "story": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "tenant_id": "tenant-001",
+      "world_id": "world-001",
+      "name": "The Chronicles of Eldoria",
+      "description": "An epic fantasy saga following heroes through a world torn by ancient magic and political intrigue",
+      "story_type": "non_linear",
+      "content": "In the realm of Eldoria, where ancient magic still pulses through the ley lines, a young hero discovers their destiny is tied to the fate of all kingdoms...",
+      "choice_ids": [],
+      "connected_world_ids": [],
+      "is_active": true,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "chapter": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440101",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "The Awakening",
+      "description": "Kira discovers her latent magical abilities during a chance encounter with a mystical artifact",
+      "chapter_type": "introduction",
+      "status": "available",
+      "sequence_number": 1,
+      "episode_ids": ["660e8400-e29b-41d4-a716-446655440201"],
+      "act_ids": [],
+      "required_level": 1,
+      "estimated_minutes": 45,
+      "unlocks_at_level": null,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440102",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "Into the Shadowlands",
+      "description": "The journey begins as Kira ventures into the cursed Shadowlands seeking answers",
+      "chapter_type": "rising_action",
+      "status": "locked",
+      "sequence_number": 2,
+      "episode_ids": [],
+      "act_ids": [],
+      "required_level": 5,
+      "estimated_minutes": 60,
+      "unlocks_at_level": null,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "act": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440301",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "The Call to Adventure",
+      "description": "Kira's peaceful life is shattered when she discovers her magical heritage",
+      "act_type": "setup",
+      "status": "not_started",
+      "act_number": 1,
+      "structure": "three_act",
+      "chapter_ids": ["660e8400-e29b-41d4-a716-446655440101"],
+      "key_events": [
+        "Discovery of the ancient artifact",
+        "First manifestation of magical powers",
+        "Meeting the mysterious mentor"
+      ],
+      "estimated_minutes": 90,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440302",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "Rising Darkness",
+      "description": "The ancient enemy stirs and Kira must gather allies",
+      "act_type": "rising_action",
+      "status": "not_started",
+      "act_number": 2,
+      "structure": "three_act",
+      "chapter_ids": ["660e8400-e29b-41d4-a716-446655440102"],
+      "key_events": [
+        "Formation of the party",
+        "First confrontation with enemy forces",
+        "Discovery of the prophecy"
+      ],
+      "estimated_minutes": 180,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "episode": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440201",
+      "tenant_id": "tenant-001",
+      "chapter_id": "660e8400-e29b-41d4-a716-446655440101",
+      "world_id": "world-001",
+      "title": "First Light",
+      "description": "Dawn breaks as Kira finds the mysterious crystal in her grandmother's attic",
+      "episode_type": "narrative",
+      "status": "available",
+      "sequence_number": 1,
+      "scene_ids": [],
+      "estimated_minutes": 20,
+      "required_previous_episodes": [],
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440202",
+      "tenant_id": "tenant-001",
+      "chapter_id": "660e8400-e29b-41d4-a716-446655440101",
+      "world_id": "world-001",
+      "title": "The Mentor's Warning",
+      "description": "Old Master Theron reveals the truth about Kira's heritage",
+      "episode_type": "cinematic",
+      "status": "locked",
+      "sequence_number": 2,
+      "scene_ids": [],
+      "estimated_minutes": 15,
+      "required_previous_episodes": ["660e8400-e29b-41d4-a716-446655440201"],
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "prologue": [
+    {
+      "id": "880e8400-e29b-41d4-a716-446655440401",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "The Age of Wonder",
+      "description": "A thousand years ago, magic flourished across Eldoria before the great cataclysm",
+      "prologue_type": "backstory",
+      "is_skippable": true,
+      "is_required": false,
+      "content": "Before the Shadow Wars, when the ley lines pulsed with pure mana, the Archmages built wonders that defy description. Cities floated among the clouds, and ordinary folk could work minor miracles...",
+      "scene_ids": [],
+      "character_ids": [],
+      "estimated_minutes": 5,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "epilogue": [
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440501",
+      "tenant_id": "tenant-001",
+      "campaign_id": "campaign-001",
+      "world_id": "world-001",
+      "title": "A New Dawn",
+      "description": "The aftermath of the final confrontation and the future of Eldoria",
+      "epilogue_type": "closing_narrative",
+      "trigger_condition": "always",
+      "is_skippable": false,
+      "content": "With the Dark Lord vanquished and the ley lines restored, Eldoria enters a new age of peace. Kira, now celebrated as the Savior of the Realms, looks toward a horizon filled with hope...",
+      "scene_ids": [],
+      "character_ids": [],
+      "required_ending_id": null,
+      "required_achievement_id": null,
+      "estimated_minutes": 10,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "plot_branch": [
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440601",
+      "tenant_id": "tenant-001",
+      "world_id": "world-001",
+      "campaign_id": "campaign-001",
+      "name": "The Path of Shadows",
+      "description": "Kira chooses to embrace dark magic to defeat the enemy, risking corruption",
+      "branch_type": "major",
+      "status": "locked",
+      "origin_branch_point_id": "bb0e8400-e29b-41d4-a716-446655440701",
+      "story_content": "As the ancient tome of shadows opens before you, you feel its seductive power. The Dark Lord cannot be defeated by ordinary means, but this power comes at a terrible cost...",
+      "consequence_ids": [],
+      "rejoin_point_id": null,
+      "is_reversible": false,
+      "difficulty_modifier": 1.2,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    },
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440602",
+      "tenant_id": "tenant-001",
+      "world_id": "world-001",
+      "campaign_id": "campaign-001",
+      "name": "The Path of Light",
+      "description": "Kira rejects dark magic and seeks a purer, more difficult path to victory",
+      "branch_type": "major",
+      "status": "locked",
+      "origin_branch_point_id": "bb0e8400-e29b-41d4-a716-446655440701",
+      "story_content": "You push away the forbidden tome. There must be another way - a path that doesn't sacrifice your soul. The road ahead will be harder, but your integrity remains intact...",
+      "consequence_ids": [],
+      "rejoin_point_id": null,
+      "is_reversible": false,
+      "difficulty_modifier": 1.0,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ],
+  "branch_point": [
+    {
+      "id": "bb0e8400-e29b-41d4-a716-446655440701",
+      "tenant_id": "tenant-001",
+      "world_id": "world-001",
+      "campaign_id": "campaign-001",
+      "description": "At the heart of the Forbidden Temple, you discover an ancient tome of shadow magic. The Dark Lord's forces are closing in, and ordinary magic has failed. Do you embrace the forbidden power?",
+      "branch_point_type": "choice",
+      "branch_ids": [
+        "aa0e8400-e29b-41d4-a716-446655440601",
+        "aa0e8400-e29b-41d4-a716-446655440602"
+      ],
+      "is_mandatory": true,
+      "is_skippable": false,
+      "condition_expression": null,
+      "skill_check_difficulty": null,
+      "choice_id": null,
+      "location_id": "location-temple-001",
+      "can_revisit": false,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    },
+    {
+      "id": "bb0e8400-e29b-41d4-a716-446655440702",
+      "tenant_id": "tenant-001",
+      "world_id": "world-001",
+      "campaign_id": "campaign-001",
+      "description": "Your companion lies wounded before you. The enemy approaches, and you only have resources to save one person. Your combat training determines who survives.",
+      "branch_point_type": "skill_check",
+      "branch_ids": [
+        "aa0e8400-e29b-41d4-a716-446655440603",
+        "aa0e8400-e29b-41d4-a716-446655440604"
+      ],
+      "is_mandatory": true,
+      "is_skippable": false,
+      "condition_expression": null,
+      "skill_check_difficulty": 15,
+      "choice_id": null,
+      "location_id": "location-battlefield-001",
+      "can_revisit": false,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z",
+      "version": 1
+    }
+  ]
+}
