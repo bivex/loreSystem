@@ -11,7 +11,9 @@
 | `entity-validator` | Валидация типов, полей и связей между сущностями |
 | `<domain>-*` | Специфика конкретной предметной области |
 
-Скилы хранятся в папке `skills/` и регистрируются в `SUBAGENTS_CONFIG.json` в секции `skills.registry`.
+**Путь к скилам:** `.openclaw/workspace/skills/<skill-name>/SKILL.md`
+
+Скилы автоподхватываются OpenClaw из workspace — никаких `--skills` флагов не нужно.
 
 ---
 
@@ -25,13 +27,12 @@ openclaw agent spawn --config SUBAGENTS_CONFIG.json --key "character-architect"
 
 > Скилы, задача и выходной файл берутся автоматически из конфига.
 
-### Вариант 2 — вручную с явным указанием скилов
+### Вариант 2 — вручную с задачей
 
 ```bash
 openclaw agent spawn \
   --task "Extract character entities (character, character_evolution, ...)" \
-  --label "Character Architect" \
-  --skills skills/lore-extraction.md,skills/json-formatter.md,skills/entity-validator.md,skills/character-design.md
+  --label "Character Architect"
 ```
 
 ### Вариант 3 — с переопределением модели/таймаута
@@ -91,38 +92,40 @@ openclaw subagent message send <run-id> -m "Уточни поле X"  # отпр
 
 ## Полный список субагентов
 
-| # | Ключ | Лейбл | Скилы | Сущностей | Файл |
-|---|------|-------|-------|-----------|------|
-| 1 | `narrative-specialist` | Narrative Specialist | lore-extraction, json-formatter, entity-validator, **narrative-writing** | 8 | `entities/narrative.json` |
-| 2 | `character-architect` | Character Architect | lore-extraction, json-formatter, entity-validator, **character-design** | 7 | `entities/character.json` |
-| 3 | `quest-designer` | Quest Designer | lore-extraction, json-formatter, entity-validator, **quest-design** | 9 | `entities/quest.json` |
-| 4 | `progression-engineer` | Progression Engineer | lore-extraction, json-formatter, entity-validator, **progression-design** | 10 | `entities/progression.json` |
-| 5 | `world-geographer` | World Geographer | lore-extraction, json-formatter, entity-validator, **world-building** | 11 | `entities/world.json` |
-| 6 | `environmental-scientist` | Environmental Scientist | lore-extraction, json-formatter, entity-validator, **environmental-design** | 6 | `entities/environment.json` |
-| 7 | `historian` | Historian | lore-extraction, json-formatter, entity-validator, **historical-research** | 10 | `entities/historical.json` |
-| 8 | `political-scientist` | Political Scientist | lore-extraction, json-formatter, entity-validator, **political-analysis** | 13 | `entities/political.json` |
-| 9 | `economist` | Economist | lore-extraction, json-formatter, entity-validator, **economic-modeling** | 13 | `entities/economy.json` |
-| 10 | `faction-analyst` | Faction Analyst | lore-extraction, json-formatter, entity-validator, **faction-design** | 7 | `entities/faction.json` |
-| 11 | `military-strategist` | Military Strategist | lore-extraction, json-formatter, entity-validator, **military-strategy** | 10 | `entities/military.json` |
-| 12 | `religious-scholar` | Religious Scholar | lore-extraction, json-formatter, entity-validator, **religious-lore** | 11 | `entities/religious.json` |
-| 13 | `lore-chronicler` | Lore Chronicler | lore-extraction, json-formatter, entity-validator, **lore-writing** | 8 | `entities/lore.json` |
-| 14 | `content-creator` | Content Creator | lore-extraction, json-formatter, entity-validator, **content-management** | 10 | `entities/content.json` |
-| 15 | `achievement-specialist` | Achievement Specialist | lore-extraction, json-formatter, entity-validator, **achievement-design** | 6 | `entities/achievement.json` |
-| 16 | `audio-director` | Audio Director | lore-extraction, json-formatter, entity-validator, **audio-direction** | 9 | `entities/audio.json` |
-| 17 | `visual-effects-artist` | Visual Effects Artist | lore-extraction, json-formatter, entity-validator, **vfx-design** | 5 | `entities/visual.json` |
-| 18 | `cinematic-director` | Cinematic Director | lore-extraction, json-formatter, entity-validator, **cinematic-direction** | 6 | `entities/cinematic.json` |
-| 19 | `media-analyst` | Media Analyst | lore-extraction, json-formatter, entity-validator, **media-analysis** | 7 | `entities/media.json` |
-| 20 | `transportation-engineer` | Transportation Engineer | lore-extraction, json-formatter, entity-validator, **transport-design** | 9 | `entities/transportation.json` |
-| 21 | `celestial-scientist` | Celestial Scientist | lore-extraction, json-formatter, entity-validator, **celestial-science** | 9 | `entities/celestial.json` |
-| 22 | `biology-specialist` | Biology Specialist | lore-extraction, json-formatter, entity-validator, **biology-design** | 6 | `entities/biology.json` |
-| 23 | `urban-architect` | Urban Architect | lore-extraction, json-formatter, entity-validator, **urban-design** | 8 | `entities/urban.json` |
-| 24 | `research-education-specialist` | Research & Education Specialist | lore-extraction, json-formatter, entity-validator, **research-design** | 7 | `entities/research.json` |
-| 25 | `puzzle-secrets-designer` | Puzzle & Secrets Designer | lore-extraction, json-formatter, entity-validator, **puzzle-design** | 7 | `entities/puzzle.json` |
-| 26 | `ui-content-specialist` | UI/Content Specialist | lore-extraction, json-formatter, entity-validator, **ui-design** | 8 | `entities/ui_content.json` |
-| 27 | `analytics-balance-specialist` | Analytics & Balance Specialist | lore-extraction, json-formatter, entity-validator, **analytics-balance** | 8 | `entities/analytics.json` |
-| 28 | `legendary-items-specialist` | Legendary Items Specialist | lore-extraction, json-formatter, entity-validator, **legendary-items** | 10 | `entities/legendary.json` |
-| 29 | `social-cultural-specialist` | Social & Cultural Specialist | lore-extraction, json-formatter, entity-validator, **social-culture** | 11 | `entities/social_cultural.json` |
-| 30 | `technical-director` | Technical Director (catch-all) | lore-extraction, json-formatter, entity-validator, **technical-systems** | 193 | `entities/technical.json` |
+| # | Ключ | Лейбл | Доменный скил | Сущностей | Файл |
+|---|------|-------|---------------|-----------|------|
+| 1 | `narrative-specialist` | Narrative Specialist | **narrative-writing** | 8 | `entities/narrative.json` |
+| 2 | `character-architect` | Character Architect | **character-design** | 7 | `entities/character.json` |
+| 3 | `quest-designer` | Quest Designer | **quest-design** | 9 | `entities/quest.json` |
+| 4 | `progression-engineer` | Progression Engineer | **progression-design** | 10 | `entities/progression.json` |
+| 5 | `world-geographer` | World Geographer | **world-building** | 11 | `entities/world.json` |
+| 6 | `environmental-scientist` | Environmental Scientist | **environmental-design** | 6 | `entities/environment.json` |
+| 7 | `historian` | Historian | **historical-research** | 10 | `entities/historical.json` |
+| 8 | `political-scientist` | Political Scientist | **political-analysis** | 13 | `entities/political.json` |
+| 9 | `economist` | Economist | **economic-modeling** | 13 | `entities/economy.json` |
+| 10 | `faction-analyst` | Faction Analyst | **faction-design** | 7 | `entities/faction.json` |
+| 11 | `military-strategist` | Military Strategist | **military-strategy** | 10 | `entities/military.json` |
+| 12 | `religious-scholar` | Religious Scholar | **religious-lore** | 11 | `entities/religious.json` |
+| 13 | `lore-chronicler` | Lore Chronicler | **lore-writing** | 8 | `entities/lore.json` |
+| 14 | `content-creator` | Content Creator | **content-management** | 10 | `entities/content.json` |
+| 15 | `achievement-specialist` | Achievement Specialist | **achievement-design** | 6 | `entities/achievement.json` |
+| 16 | `audio-director` | Audio Director | **audio-direction** | 9 | `entities/audio.json` |
+| 17 | `visual-effects-artist` | Visual Effects Artist | **vfx-design** | 5 | `entities/visual.json` |
+| 18 | `cinematic-director` | Cinematic Director | **cinematic-direction** | 6 | `entities/cinematic.json` |
+| 19 | `media-analyst` | Media Analyst | **media-analysis** | 7 | `entities/media.json` |
+| 20 | `transportation-engineer` | Transportation Engineer | **transport-design** | 9 | `entities/transportation.json` |
+| 21 | `celestial-scientist` | Celestial Scientist | **celestial-science** | 9 | `entities/celestial.json` |
+| 22 | `biology-specialist` | Biology Specialist | **biology-design** | 6 | `entities/biology.json` |
+| 23 | `urban-architect` | Urban Architect | **urban-design** | 8 | `entities/urban.json` |
+| 24 | `research-education-specialist` | Research & Education Specialist | **research-design** | 7 | `entities/research.json` |
+| 25 | `puzzle-secrets-designer` | Puzzle & Secrets Designer | **puzzle-design** | 7 | `entities/puzzle.json` |
+| 26 | `ui-content-specialist` | UI/Content Specialist | **ui-design** | 8 | `entities/ui_content.json` |
+| 27 | `analytics-balance-specialist` | Analytics & Balance Specialist | **analytics-balance** | 8 | `entities/analytics.json` |
+| 28 | `legendary-items-specialist` | Legendary Items Specialist | **legendary-items** | 10 | `entities/legendary.json` |
+| 29 | `social-cultural-specialist` | Social & Cultural Specialist | **social-culture** | 11 | `entities/social_cultural.json` |
+| 30 | `technical-director` | Technical Director (catch-all) | **technical-systems** | 193 | `entities/technical.json` |
+
+> Все субагенты также используют базовые скилы: `lore-extraction`, `json-formatter`, `entity-validator`
 | **TOTAL** | | | | **295** | |
 
 ---
@@ -230,9 +233,10 @@ affinity, disposition, honor, karma, social_class, social_mobility, festival, ce
 | `--model` | Модель (`anthropic/claude-sonnet-4`, `anthropic/claude-opus-4`, `zai/glm-4.7`) | из конфига |
 | `--thinking` | Уровень мышления (`low`, `medium`, `high`) | из конфига |
 | `--runTimeoutSeconds` | Таймаут в секундах | 300 |
-| `--skills` | Список путей к скилам через запятую | из конфига |
 | `--task` | Описание задачи | из конфига |
 | `--label` | Человекочитаемый лейбл | из конфига |
+
+> **Скилы** автоподхватываются из `.openclaw/workspace/skills/` — флаг не нужен.
 
 ### Политики инструментов
 
