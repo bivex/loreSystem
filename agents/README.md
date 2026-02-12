@@ -46,26 +46,68 @@ Each subagent specializes in extracting specific entity types from narrative tex
 
 ## Usage
 
-### Invoking a Subagent
+### Invoking a Subagent with OpenClaw
 
-When you need to extract specific entities from narrative text, invoke the appropriate subagent:
+#### Option 1: Direct Command
+
+```bash
+# Spawn a single subagent
+openclaw agent spawn "Extract character entities" --label "Character Architect"
+```
+
+#### Option 2: Using Config Key
+
+```bash
+# Spawn using config key
+openclaw agent spawn --config /path/to/SUBAGENTS_CONFIG.json --key "character-architect"
+```
+
+#### Option 3: Batch Spawn Multiple Subagents
+
+```bash
+# Spawn multiple subagents in parallel
+openclaw agent spawn --config /path/to/SUBAGENTS_CONFIG.json \
+  --key "narrative-specialist" \
+  --key "character-architect" \
+  --key "quest-designer" \
+  --key "world-geographer"
+
+# Or spawn all 30 subagents
+openclaw agent spawn --config /path/to/SUBAGENTS_CONFIG.json --key "*"
+```
+
+#### Option 4: Interactive Chat
+
+You can also invoke subagents naturally in conversation:
 
 ```
-> "Extract narrative entities from Chapter 1: [text]"
-> "Analyze the political systems in this chapter: [text]"
-> "Identify all characters and their relationships: [text]"
+> "Please extract character entities from this chapter: [text]"
+> "Analyze the political systems in: [text]"
+> "Identify all locations and describe them: [text]"
 ```
 
-### Multiple Subagents
+The subagent will process the request and return JSON entities following the loreSystem schema.
 
-For comprehensive extraction, invoke multiple subagents in parallel:
+### Managing Subagents
 
+List active subagents:
+```bash
+/subagents list
 ```
-> "Extract all entities from this chapter using:
-   - narrative-specialist for story structure
-   - character-architect for characters
-   - world-geographer for locations
-   - quest-designer for quests"
+
+Stop a running subagent:
+```bash
+/subagents stop <run-id>
+```
+
+View subagent log/transcript:
+```bash
+/subagents log <run-id> 10
+```
+
+Send follow-up message:
+```bash
+/subagents send <run-id> "Also check for hidden areas"
 ```
 
 ### Input Format
