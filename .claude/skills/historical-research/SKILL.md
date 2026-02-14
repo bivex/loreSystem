@@ -1,15 +1,10 @@
+---
+name: historical-research
+description: Extract historical entities from narrative text. Use when analyzing eras, timelines, calendars, festivals, ceremonies, tournaments, era transitions, and cultural events.
+---
 # historical-research
 
 Domain skill for historian subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract historical entities"
-- "analyze eras and timelines"
-- "identify festivals and ceremonies"
-- "historical events and calendars"
-- "cultural events and tournaments"
 
 ## Domain Expertise
 

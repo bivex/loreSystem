@@ -1,15 +1,10 @@
+---
+name: transport-design
+description: Extract transportation entities from narrative text. Use when analyzing mounts, vehicles, portals, teleporters, airships, spaceships, fast travel systems, and familiars.
+---
 # transport-design
 
 Доменный скилл для Transportation Engineer. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract transportation entities"
-- "analyze mounts and vehicles"
-- "identify travel systems"
-- "process transportation"
-- "transportation engineer analysis"
 
 ## Domain Expertise
 

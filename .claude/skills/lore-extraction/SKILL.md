@@ -1,3 +1,8 @@
+---
+name: lore-extraction
+description: Base extraction rules for all lore subagents. Governs entity identification, contextual analysis, relationship mapping, and JSON output formatting.
+user-invocable: false
+---
 # lore-extraction
 
 Базовый скил для всех loreSystem субагентов. Общие правила извлечения сущностей из нарративного текста.

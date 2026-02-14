@@ -1,16 +1,10 @@
+---
+name: technical-systems
+description: Safety-net catch-all for extracting technical game entities not covered by other skills. Covers 193 entity types across achievements, inventory, audio, visual, cinematic, events, progression, research, media, secrets, art, and transport systems.
+---
 # technical-systems
 
 Доменный скилл для Technical Director. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract technical entities"
-- "analyze game systems"
-- "identify items/equipment"
-- "extract audio/visual systems"
-- "analyze UI/interface elements"
-- "extract achievements/progression"
 
 ## Domain Expertise
 

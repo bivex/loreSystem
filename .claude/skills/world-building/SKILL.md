@@ -1,15 +1,10 @@
+---
+name: world-building
+description: Extract location and geography entities from narrative text. Use when analyzing world geography, dungeons, zones, dimensions, arenas, hubs, open world areas, and spatial connections.
+---
 # world-building
 
 Domain skill for world-geographer subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract location entities"
-- "analyze world geography"
-- "identify locations/areas"
-- "world building analysis"
-- "extract maps/locations"
 
 ## Domain Expertise
 

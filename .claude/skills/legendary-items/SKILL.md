@@ -1,15 +1,10 @@
+---
+name: legendary-items
+description: Extract legendary item entities from narrative text. Use when analyzing mythical weapons, armor, divine items, cursed items, artifact sets, runes, glyphs, and enchantments.
+---
 # legendary-items
 
 Доменный скилл для Legendary Items Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract legendary entities"
-- "analyze legendary items"
-- "identify artifacts and relics"
-- "extract legendary weapon/mythical armor/artifact set"
-- "legendary items analysis"
 
 ## Domain Expertise
 

@@ -1,3 +1,8 @@
+---
+name: json-formatter
+description: JSON formatting rules for lore entity output. Enforces strict JSON, UUID identifiers, loreSystem schema compliance, and proper nesting.
+user-invocable: false
+---
 # json-formatter
 
 Базовый скил для форматирования вывода в JSON.

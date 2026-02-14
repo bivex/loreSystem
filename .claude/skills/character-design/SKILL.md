@@ -1,15 +1,10 @@
+---
+name: character-design
+description: Extract character entities from narrative text. Use when analyzing characters, relationships, psychology, development arcs, voice/mocap data, and character variants.
+---
 # character-design
 
 Domain skill for character-architect subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract character entities"
-- "analyze characters"
-- "identify character relationships"
-- "character development analysis"
-- "extract character evolution"
 
 ## Domain Expertise
 

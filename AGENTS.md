@@ -11,10 +11,72 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 Before doing anything else:
 1. Read `SOUL.md` — this is who you are
 2. Read `USER.md` — this is who you're helping
-3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
-4. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+3. Read `CLAUDE.md` — project context and conventions
+4. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+5. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
 
 Don't ask permission. Just do it.
+
+## Agent Teams
+
+This project is configured for **Claude Code Agent Teams**. The setting `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is enabled in `.claude/settings.json`.
+
+### Team Structure
+
+The project defines **5 domain teams** + **1 lead orchestrator** in `.claude/agents/`:
+
+| Agent | File | Domains |
+|-------|------|---------|
+| **extraction-lead** | `extraction-lead.md` | Orchestration, merging, validation |
+| **narrative-team** | `narrative-team.md` | Stories, characters, quests, lore |
+| **world-team** | `world-team.md` | Geography, environments, urban |
+| **society-team** | `society-team.md` | Factions, politics, religion, history |
+| **systems-team** | `systems-team.md` | Progression, economy, items, military |
+| **technical-team** | `technical-team.md` | Cinematics, audio, VFX, transport |
+
+### How to Start a Team
+
+Tell Claude something like:
+```
+Create an agent team to extract lore from chapter_1.txt.
+Use the extraction-lead agent for coordination.
+Spawn narrative-team, world-team, and society-team as teammates.
+```
+
+Or for a full extraction:
+```
+Extract all entities from chapter_1.txt using a full agent team with all 5 domain specialists.
+Use delegate mode so the lead only coordinates.
+```
+
+### Skills per Team
+
+Each team agent preloads relevant skills from `.claude/skills/`. There are 33 skills total:
+- **30 domain skills** — auto-discoverable by Claude via frontmatter descriptions
+- **3 base skills** — `lore-extraction`, `entity-validator`, `json-formatter` (background knowledge, `user-invocable: false`)
+
+Skills use YAML frontmatter for Claude Code's native discovery system. No custom skill-trigger hooks needed.
+
+### File Ownership
+
+Each teammate writes to their own output file to avoid conflicts:
+- `entities/narrative.json` — narrative-team
+- `entities/world.json` — world-team
+- `entities/society.json` — society-team
+- `entities/systems.json` — systems-team
+- `entities/technical.json` — technical-team
+- `entities/merged_lore.json` — lead (merged output)
+
+### Cross-References
+
+Teammates communicate entity references across domains via a `cross_references` array in their output. The lead merges these during the final validation pass.
+
+### When NOT to Use Teams
+
+- **Single-domain extraction** — just use the skill directly (`/character-design`)
+- **Small text** — overhead isn't worth it for < 2 pages
+- **Code changes** — standard single-session workflow
+- **Testing/debugging** — no parallel benefit
 
 ## Memory
 

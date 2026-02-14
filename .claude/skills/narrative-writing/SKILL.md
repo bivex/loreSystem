@@ -1,15 +1,10 @@
+---
+name: narrative-writing
+description: Extract narrative structure entities from text. Use when analyzing stories, chapters, acts, episodes, prologues, epilogues, plot branches, and story arc progression.
+---
 # narrative-writing
 
 Domain skill for narrative-specialist subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract narrative entities"
-- "analyze story structure"
-- "identify narrative elements"
-- "extract story/chapter/act/episode"
-- "narrative analysis"
 
 ## Domain Expertise
 

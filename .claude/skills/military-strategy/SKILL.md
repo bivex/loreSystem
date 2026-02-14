@@ -1,14 +1,10 @@
+---
+name: military-strategy
+description: Extract military entities from narrative text. Use when analyzing armies, fleets, battalions, weapons, fortifications, siege engines, wars, invasions, and revolutions.
+---
 # military-strategy
 
 Доменный скилл для Military Strategist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract military entities"
-- "analyze warfare elements"
-- "identify armies and weapons"
-- "extract fortification systems"
 
 ## Domain Expertise
 

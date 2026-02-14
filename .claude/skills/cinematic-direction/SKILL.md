@@ -1,15 +1,10 @@
+---
+name: cinematic-direction
+description: Extract cinematic entities from narrative text. Use when analyzing cutscenes, camera paths, transitions, fades, flashbacks, and cinematic pacing.
+---
 # cinematic-direction
 
 Доменный скилл для Cinematic Director. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract cinematic entities"
-- "analyze cutscenes"
-- "identify camera movements"
-- "process cinematic systems"
-- "cinematic director analysis"
 
 ## Domain Expertise
 

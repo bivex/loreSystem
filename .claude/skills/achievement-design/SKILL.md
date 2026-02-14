@@ -1,14 +1,10 @@
+---
+name: achievement-design
+description: Extract achievement entities from narrative text. Use when analyzing trophies, badges, ranks, leaderboards, titles, and progression reward milestones.
+---
 # achievement-design
 
 Доменный скилл для Achievement Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract achievement entities"
-- "analyze trophies and badges"
-- "identify ranks and leaderboards"
-- "extract progression rewards"
 
 ## Domain Expertise
 

@@ -1,15 +1,10 @@
+---
+name: environmental-design
+description: Extract environmental entities from narrative text. Use when analyzing weather patterns, atmosphere, lighting, time periods, natural disasters, and climate systems.
+---
 # environmental-design
 
 Domain skill for environmental-scientist subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract environmental entities"
-- "analyze weather and atmosphere"
-- "identify lighting and time periods"
-- "environmental conditions"
-- "weather patterns and disasters"
 
 ## Domain Expertise
 

@@ -1,15 +1,10 @@
+---
+name: analytics-balance
+description: Extract analytics and game balance entities from narrative text. Use when analyzing player metrics, difficulty curves, drop rates, loot tables, heatmaps, and balance tuning.
+---
 # analytics-balance
 
 Доменный скилл для Analytics Balance Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract analytics entities"
-- "analyze game balance"
-- "identify player metrics"
-- "extract difficulty/loot/drop rate"
-- "analytics analysis"
 
 ## Domain Expertise
 

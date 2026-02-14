@@ -1,15 +1,10 @@
+---
+name: faction-design
+description: Extract faction entities from narrative text. Use when analyzing organizations, hierarchies, ideologies, faction territories, resources, leaders, and inter-faction relationships.
+---
 # faction-design
 
 Доменный скилл для Faction Analyst. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract faction entities"
-- "analyze organizations and groups"
-- "identify faction hierarchies"
-- "faction relationships and territories"
-- "political groups and organizations"
 
 ## Domain Expertise
 

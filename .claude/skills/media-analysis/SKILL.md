@@ -1,15 +1,10 @@
+---
+name: media-analysis
+description: Extract media entities from narrative text. Use when analyzing newspapers, radio, television, internet, social media platforms, propaganda, and rumor systems.
+---
 # media-analysis
 
 Доменный скилл для Media Analyst. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract media entities"
-- "analyze news and information"
-- "identify propaganda"
-- "process media systems"
-- "media analyst analysis"
 
 ## Domain Expertise
 
