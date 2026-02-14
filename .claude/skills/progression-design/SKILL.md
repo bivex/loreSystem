@@ -1,16 +1,10 @@
+---
+name: progression-design
+description: Extract progression entities from narrative text. Use when analyzing skills, perks, attributes, experience, level-ups, talent trees, mastery systems, and character advancement.
+---
 # progression-design
 
 Domain skill for progression-engineer subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract progression entities"
-- "analyze character progression"
-- "extract skills, perks, traits"
-- "identify level-ups and experience"
-- "progression systems"
-- "character growth and advancement"
 
 ## Domain Expertise
 

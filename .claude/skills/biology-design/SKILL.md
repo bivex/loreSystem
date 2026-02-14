@@ -1,15 +1,10 @@
+---
+name: biology-design
+description: Extract biology entities from narrative text. Use when analyzing ecosystems, food chains, migration, hibernation, reproduction, extinction events, and evolution.
+---
 # biology-design
 
 Доменный скилл для Biology Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract biology entities"
-- "analyze ecosystems and wildlife"
-- "identify evolution and extinction"
-- "process biological systems"
-- "biology specialist analysis"
 
 ## Domain Expertise
 

@@ -1,15 +1,10 @@
+---
+name: economic-modeling
+description: Extract economic entities from narrative text. Use when analyzing trade, currency, taxation, supply and demand, pricing, shops, markets, inflation, and loot table weights.
+---
 # economic-modeling
 
 Доменный скилл для Economist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract economic entities"
-- "analyze trade and currency"
-- "identify prices and markets"
-- "economic systems and commerce"
-- "supply, demand, and inflation"
 
 ## Domain Expertise
 

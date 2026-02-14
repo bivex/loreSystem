@@ -1,15 +1,10 @@
+---
+name: political-analysis
+description: Extract political entities from narrative text. Use when analyzing governments, laws, courts, crimes, punishments, treaties, constitutions, and legal systems.
+---
 # political-analysis
 
 Domain skill for political-scientist subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract political entities"
-- "analyze government and law"
-- "identify courts and legal systems"
-- "political structures and treaties"
-- "crimes and justice systems"
 
 ## Domain Expertise
 

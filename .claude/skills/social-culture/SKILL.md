@@ -1,15 +1,10 @@
+---
+name: social-culture
+description: Extract social and cultural entities from narrative text. Use when analyzing social classes, honor, karma, affinity, festivals, ceremonies, tournaments, and social mobility.
+---
 # social-culture
 
 Доменный скилл для Social Cultural Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract social entities"
-- "analyze social systems"
-- "identify cultural practices"
-- "extract affinity/honor/karma/social class"
-- "social/cultural analysis"
 
 ## Domain Expertise
 

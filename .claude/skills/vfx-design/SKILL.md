@@ -1,15 +1,10 @@
+---
+name: vfx-design
+description: Extract visual effects entities from narrative text. Use when analyzing particle systems, shaders, lighting, color palettes, and VFX for magic, combat, and environment.
+---
 # vfx-design
 
 Доменный скилл для Visual Effects Artist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract visual entities"
-- "analyze visual effects"
-- "identify particles and shaders"
-- "process VFX systems"
-- "visual effects analysis"
 
 ## Domain Expertise
 

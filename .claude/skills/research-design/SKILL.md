@@ -1,15 +1,10 @@
+---
+name: research-design
+description: Extract research and education entities from narrative text. Use when analyzing academies, universities, schools, libraries, archives, museums, and research centers.
+---
 # research-design
 
 Доменный скилл для Research Education Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract research entities"
-- "analyze education systems"
-- "identify learning institutions"
-- "extract academy/university/library/archive"
-- "education analysis"
 
 ## Domain Expertise
 

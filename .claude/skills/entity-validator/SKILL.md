@@ -1,3 +1,8 @@
+---
+name: entity-validator
+description: Validation rules for extracted entities. Checks data types, required fields, cross-entity references, and detects duplicates or conflicts.
+user-invocable: false
+---
 # entity-validator
 
 Базовый скил для валидации извлечённых сущностей.

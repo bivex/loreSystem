@@ -1,14 +1,10 @@
+---
+name: religious-lore
+description: Extract religious entities from narrative text. Use when analyzing cults, sects, holy sites, scriptures, rituals, oaths, summons, pacts, curses, blessings, and miracles.
+---
 # religious-lore
 
 Доменный скилл для Religious Scholar. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract religious entities"
-- "analyze cults and sects"
-- "identify holy sites and rituals"
-- "extract miracles and blessings"
 
 ## Domain Expertise
 

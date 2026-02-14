@@ -1,15 +1,10 @@
+---
+name: ui-design
+description: Extract UI and content organization entities from narrative text. Use when analyzing player choices, flowcharts, handouts, tokenboards, tags, templates, and notes.
+---
 # ui-design
 
 Доменный скилл для UI Content Specialist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract UI entities"
-- "analyze user interface elements"
-- "identify content organization"
-- "extract choice/flowchart/handout/tag"
-- "UI/UX analysis"
 
 ## Domain Expertise
 

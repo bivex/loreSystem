@@ -1,15 +1,10 @@
+---
+name: celestial-science
+description: Extract celestial entities from narrative text. Use when analyzing galaxies, nebulae, black holes, star systems, moons, eclipses, solstices, and astronomical phenomena.
+---
 # celestial-science
 
 Доменный скилл для Celestial Scientist. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract celestial entities"
-- "analyze astronomy and space"
-- "identify stars and galaxies"
-- "process celestial systems"
-- "celestial scientist analysis"
 
 ## Domain Expertise
 

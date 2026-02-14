@@ -1,15 +1,10 @@
+---
+name: quest-design
+description: Extract quest entities from narrative text. Use when analyzing quest chains, objectives, moral choices, prerequisites, rewards, quest givers, and branching quest structures.
+---
 # quest-design
 
 Domain skill for quest-designer subagent. Specific extraction rules and expertise.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract quest entities"
-- "analyze quests"
-- "identify quest objectives"
-- "quest design analysis"
-- "extract quest chains/objectives"
 
 ## Domain Expertise
 

@@ -1,14 +1,10 @@
+---
+name: content-management
+description: Extract content management entities from narrative text. Use when analyzing mods, custom maps, user scenarios, localization, translations, subtitles, dubbing, and workshop content.
+---
 # content-management
 
 Доменный скилл для Content Creator. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract content entities"
-- "analyze mods and custom content"
-- "identify localization elements"
-- "extract workshop entries"
 
 ## Domain Expertise
 

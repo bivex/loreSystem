@@ -1,14 +1,10 @@
+---
+name: lore-writing
+description: Extract lore entities from narrative text. Use when analyzing codex entries, bestiary entries, journal pages, dreams, nightmares, memories, secrets, and worldbuilding fragments.
+---
 # lore-writing
 
 Доменный скилл для Lore Chronicler. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract lore entities"
-- "analyze worldbuilding elements"
-- "identify secrets and mysteries"
-- "extract dreams and visions"
 
 ## Domain Expertise
 

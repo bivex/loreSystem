@@ -1,15 +1,10 @@
+---
+name: urban-design
+description: Extract urban planning entities from narrative text. Use when analyzing city districts, wards, quarters, plazas, markets, slums, noble districts, and port areas.
+---
 # urban-design
 
 Доменный скилл для Urban Architect. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract urban entities"
-- "analyze city structure"
-- "identify urban elements"
-- "extract district/ward/market/plaza"
-- "urban planning analysis"
 
 ## Domain Expertise
 

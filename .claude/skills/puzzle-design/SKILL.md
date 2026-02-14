@@ -1,15 +1,10 @@
+---
+name: puzzle-design
+description: Extract puzzle and secret entities from narrative text. Use when analyzing puzzles, riddles, traps, hidden paths, easter eggs, mysteries, and enigmas.
+---
 # puzzle-design
 
 Доменный скилл для Puzzle Secrets Designer. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract puzzle entities"
-- "analyze secrets and mysteries"
-- "identify hidden content"
-- "extract puzzle/riddle/trap/secret"
-- "puzzle design analysis"
 
 ## Domain Expertise
 

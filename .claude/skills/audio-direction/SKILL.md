@@ -1,15 +1,10 @@
+---
+name: audio-direction
+description: Extract audio entities from narrative text. Use when analyzing music themes, sound effects, ambient audio, motifs, dynamic scoring, and silence as narrative device.
+---
 # audio-direction
 
 Доменный скилл для Audio Director. Специфические правила извлечения и экспертиза.
-
-## Trigger Phrases
-
-Invoke this subagent when you hear:
-- "extract audio entities"
-- "analyze music and sound"
-- "identify sound effects"
-- "process audio systems"
-- "audio director analysis"
 
 ## Domain Expertise
 
