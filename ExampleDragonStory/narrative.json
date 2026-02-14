@@ -1,0 +1,827 @@
+{
+  "stories": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440101",
+      "world_id": 1,
+      "name": "The Last Guardian of Ashenfell",
+      "description": "An ancient dragon awakens from thousand-year slumber to face a returning shadow lord. Heroes from across the realm must unite, recover legendary artifacts, and forge new alliances to prevent the corruption from consuming all of Ashenfell.",
+      "story_type": "linear",
+      "content": "Volume One of the Ashenfell Chronicles - covering Zarathax's awakening, the formation of the Alliance of Light, and the reforging of the Celestial Crown through sacrifice and hope.",
+      "choice_ids": [],
+      "connected_world_ids": [],
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "events": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440102",
+      "world_id": 1,
+      "name": "The Awakening",
+      "description": "Zarathax stirs from his thousand-year slumber in the Obsidian Caverns beneath Mount Cinderpeak. His eternal flame has weakened, drained by the spreading Shadowblight corruption.",
+      "start_date": "2026-02-14T10:00:00+00:00",
+      "end_date": null,
+      "outcome": "success",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440107"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440103",
+      "world_id": 1,
+      "name": "First Battle at Obsidian Caverns",
+      "description": "The Dragon Knights mistakenly attack Zarathax's party. Mordren reveals his true allegiance and summons Shadowfiends. The battle ends when Kael discovers Sunfire magic and Seraphina calls a truce.",
+      "start_date": "2026-02-14T10:00:00+00:00",
+      "end_date": "2026-02-14T10:00:00+00:00",
+      "outcome": "success",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440107",
+        "550e8400-e29b-41d4-a716-446655440108",
+        "550e8400-e29b-41d4-a716-446655440109",
+        "550e8400-e29b-41d4-a716-446655440110"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440104",
+      "world_id": 1,
+      "name": "Formation of the Alliance of Light",
+      "description": "King Aldric III officially declares the coalition of Dragon Knights, Keepers of the Ancient Pact, and Zarathax's ancient power to combat the Shadowblight and recover the Celestial Crown fragments.",
+      "start_date": "2026-02-14T10:00:00+00:00",
+      "end_date": "2026-02-14T10:00:00+00:00",
+      "outcome": "success",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440108",
+        "550e8400-e29b-41d4-a716-446655440107"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440105",
+      "world_id": 1,
+      "name": "The Reforging Ritual",
+      "description": "At dawn on the spring equinox, the Alliance combines their power - Seraphina's honor, Mirana's holy light, the Dragon Knights' life force, Zarathax's eternal flame, and Kael wielding the Dawn Blade - to forge a New Crown of pure crystallized light and fire.",
+      "start_date": "2026-02-14T10:00:00+00:00",
+      "end_date": "2026-02-14T10:00:00+00:00",
+      "outcome": "success",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440107",
+        "550e8400-e29b-41d4-a716-446655440108",
+        "550e8400-e29b-41d4-a716-446655440109",
+        "550e8400-e29b-41d4-a716-446655440110"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "characters": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440106",
+      "world_id": 1,
+      "name": "Zarathax",
+      "backstory": "The Ancient Guardian of Ashenfell, Zarathax is over ten thousand years old. He participated in the original sealing of the Shadow Lord Nex'thara alongside the Elder Race and mortal gods. After maintaining the seal for millennia, his eternal flame has weakened from the drain of the Shadowblight corruption. Once gleaming like polished rubies, his scales have dulled to the color of dried blood. He carries the weight of ages in his voice and the burden of guardianship in his heart.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Eternal Flame",
+          "description": "Ancient dragon fire magic that has sustained the seal against Nex'thara for ten thousand years",
+          "power_level": 10
+        },
+        {
+          "name": "Compulsion Magic",
+          "description": "Voice carries the weight of ages, capable of freezing mortals in place with a single command",
+          "power_level": 8
+        },
+        {
+          "name": "Crystallized Flame Prison",
+          "description": "Can seal powerful entities in prisons of crystallized flame, as used against his former mate Vyrnax",
+          "power_level": 7
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440107",
+      "world_id": 1,
+      "name": "Kael Ironheart",
+      "backstory": "A former blacksmith's son who showed remarkable aptitude for fire magic, Kael became the apprentice to High Priestess Mirana of the Temple of Eternal Flame. During the crisis, he discovered he could combine his fire magic with holy light to create Sunfire - a new form of magic capable of burning away shadow creatures. His connection to the Dawn Blade and his role in the Reforging Ritual suggest he may be the new Lightbearer, reborn as something greater than mortal - not quite human, not quite divine.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Fire Magic",
+          "description": "Inborn fire magic aptitude, learned from blacksmith father and temple training",
+          "power_level": 6
+        },
+        {
+          "name": "Sunfire",
+          "description": "Revolutionary combination of fire magic and holy light that burns away shadow creatures",
+          "power_level": 8
+        },
+        {
+          "name": "Lightbearer's Power",
+          "description": "After wielding the Dawn Blade and the New Crown, transformed into something beyond mortal",
+          "power_level": 9
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440108",
+      "world_id": 1,
+      "name": "High Priestess Mirana",
+      "backstory": "Leader of the Keepers of the Ancient Pact, Mirana's order has maintained the sacred covenant between dragonkind and humanity for generations. She watched for Zarathax's awakening her entire life. A woman of deep principle and faith, she was forced to compromise those principles when negotiating with the criminal Vex Shadowmere for the Dawn Blade. Her knowledge of ancient texts and prophecies proved invaluable to the Alliance.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Holy Light",
+          "description": "Divine light magic from the Temple of Eternal Flame",
+          "power_level": 7
+        },
+        {
+          "name": "Ancient Knowledge",
+          "description": "Deep understanding of prophecies, rituals, and the history of the First Sealing",
+          "power_level": 6
+        },
+        {
+          "name": "Collective Prayer Channeling",
+          "description": "Can channel the combined prayers of every temple in the realm",
+          "power_level": 8
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440109",
+      "world_id": 1,
+      "name": "Captain Seraphina Dawnblade",
+      "backstory": "Leader of the Dragon Knights, an elite military order trained in anti-dragon combat. Seraphina carried the burden of recovering the Celestial Crown fragments, which cost her greatly - the transformation of knight-sergeant Thomas into stone, eight good soldiers in the Necropolis, and being forced to kill shadow-corrupted innocents for the Fragment of Compassion. These sacrifices broke something inside her, leading her to offer her honor - her blade that had slain innocents - to be melted down for the Reforging Ritual.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Dragonbane Combat",
+          "description": "Elite military training with weapons forged from meteoric iron enchanted with protective wards",
+          "power_level": 7
+        },
+        {
+          "name": "Leadership",
+          "description": "Command of the kingdom's finest warriors",
+          "power_level": 6
+        },
+        {
+          "name": "Honor Sacrifice",
+          "description": "Willing to sacrifice personal honor and morality for the greater good",
+          "power_level": 5
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440110",
+      "world_id": 1,
+      "name": "King Aldric III",
+      "backstory": "Ruler of Ashenfell from the capital city of Valorheim, King Aldric received troubling reports of villages vanishing into zones of absolute darkness. His royal advisor, Mordren the Gray, proved to be a traitor serving the Shadow Lord. Aldric himself has begun showing signs of shadow corruption - his eyes occasionally flickering with darkness. Despite this, he declared the formation of the Alliance of Light to combat the threat.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Royal Command",
+          "description": "Political authority over the kingdom of Ashenfell",
+          "power_level": 5
+        },
+        {
+          "name": "Magical Communication",
+          "description": "Can communicate across distances through magic",
+          "power_level": 3
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440111",
+      "world_id": 1,
+      "name": "Mordren the Gray",
+      "backstory": "Once the trusted royal advisor to King Aldric III, Mordren revealed his true allegiance as a servant of the Shadow Lord Nex'thara. He bears a black mark on his wrist that blazes with necrotic energy and can summon Shadowfiends. Through shadow corruption, he has gained control over half the noble houses of Ashenfell. His machinations and traps have plagued the Alliance at every turn.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Shadow Corruption",
+          "description": "Necrotic energy from the Shadow Lord, capable of corrupting individuals and granting control over them",
+          "power_level": 8
+        },
+        {
+          "name": "Shadowfiend Summoning",
+          "description": "Can summon creatures of pure darkness to attack enemies",
+          "power_level": 7
+        },
+        {
+          "name": "Teleportation",
+          "description": "Can teleport away from danger",
+          "power_level": 6
+        },
+        {
+          "name": "Political Manipulation",
+          "description": "Controls half the noble houses through shadow corruption",
+          "power_level": 7
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440112",
+      "world_id": 1,
+      "name": "Vyrnax",
+      "backstory": "Once Zarathax's mate, now a Shadow Dragon with scales black as midnight and flame replaced by necrotic energy. She was thought long dead until Zarathax encountered her at the Dragon's Graveyard. The Shadow Lord had sent his servants ahead to defile the sacred site and corrupt her. When Zarathax sealed her in a prison of crystallized flame rather than kill her, the thread of love connecting them remained. His sacrifice during the Reforging Ritual burned away her shadow corruption, and she arrived in time to save him by performing the Rite of Eternal Bonding - giving half her life force to sustain him.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Shadow Dragon Flame",
+          "description": "Necrotic energy replacing the eternal flame, corrupted by the Shadow Lord",
+          "power_level": 7
+        },
+        {
+          "name": "Rite of Eternal Bonding",
+          "description": "Ancient dragon magic of life and death, giving half her life force to bond their flames together",
+          "power_level": 9
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440113",
+      "world_id": 1,
+      "name": "Vex Shadowmere",
+      "backstory": "A treasure hunter who stole the Dawn Blade from the Last Temple decades ago, now leads the Thieves Guild in the port city of Saltmere. A cunning negotiator, she demanded information about the Fragment of Justice in exchange for the blade - knowing Seraphina's next destination and the trap Mordren had set. Though a criminal, her knowledge proved essential to the Alliance.",
+      "status": "active",
+      "abilities": [
+        {
+          "name": "Thieve's Guild Leadership",
+          "description": "Commands the criminal underworld of Saltmere",
+          "power_level": 5
+        },
+        {
+          "name": "Information Brokerage",
+          "description": "Extensive knowledge of artifacts, traps, and faction movements",
+          "power_level": 6
+        },
+        {
+          "name": "Negotiation",
+          "description": "Skilled at extracting value from desperate situations",
+          "power_level": 7
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440114",
+      "world_id": 1,
+      "name": "Thomas",
+      "backstory": "A knight-sergeant under Captain Seraphina Dawnblade. During the quest for the Fragment of Wisdom, the Sphinx of the Azure Desert demanded an answer to an impossible riddle. When Thomas gave the wrong answer, he was transformed into living stone. His petrified form now stands as a testament to the cost of the Alliance's mission.",
+      "status": "inactive",
+      "abilities": [
+        {
+          "name": "Knight Training",
+          "description": "Standard Dragon Knight combat abilities",
+          "power_level": 5
+        }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "character_relationships": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440115",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440106",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440112",
+      "relationship_type": "romantic",
+      "description": "Former mates, their bond survived even her corruption into a Shadow Dragon. When Zarathax couldn't bring himself to kill her, he sealed her instead. The thread of love connecting them remained strong enough that his sacrifice burned away her shadow corruption.",
+      "relationship_level": 95,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440116",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440107",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440108",
+      "relationship_type": "mentor",
+      "description": "Kael is Mirana's apprentice at the Temple of Eternal Flame. She recognized his remarkable fire magic aptitude and has trained him in both magic and the ways of their order.",
+      "relationship_level": 75,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440117",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440109",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440114",
+      "relationship_type": "subordinate",
+      "description": "Thomas was a knight-sergeant under Seraphina's command. His transformation into stone during the quest for the Fragment of Wisdom broke something inside her.",
+      "relationship_level": 60,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440118",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440110",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440111",
+      "relationship_type": "political",
+      "description": "Mordren was King Aldric's trusted royal advisor before revealing his true allegiance to the Shadow Lord. The betrayal cut deep, and Aldric has begun showing signs of the same shadow corruption.",
+      "relationship_level": 20,
+      "is_mutual": false,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440119",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440109",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440111",
+      "relationship_type": "rival",
+      "description": "Seraphina didn't trust Mordren from the beginning, noticing his private meetings with hooded figures and the strange black mark on his wrist. Her suspicions were proven correct when he revealed his true allegiance.",
+      "relationship_level": 10,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440120",
+      "character_from_id": "550e8400-e29b-41d4-a716-446655440106",
+      "character_to_id": "550e8400-e29b-41d4-a716-446655440109",
+      "relationship_type": "ally",
+      "description": "What began as misunderstanding - Seraphina ordering her knights to attack Zarathax - evolved into a truce and then alliance. The former enemies now fight together against the Shadow Lord.",
+      "relationship_level": 70,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "quests": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440121",
+      "world_id": 1,
+      "name": "Recover the Celestial Crown Fragments",
+      "description": "The Celestial Crown was shattered into seven pieces and scattered across the realm. The Alliance must recover all fragments to reforge the crown and help seal the Shadow Lord Nex'thara.",
+      "objectives": [
+        "Recover the Fragment of Wisdom from the Sphinx of the Azure Desert",
+        "Recover the Fragment of Courage from the Necropolis of Fallen Kings",
+        "Recover the Fragment of Compassion from the shadow-corrupted village",
+        "Recover the Fragment of Justice (location known to Vex Shadowmere)",
+        "Recover the remaining three fragments from unknown locations"
+      ],
+      "status": "active",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440109"
+      ],
+      "reward_ids": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440122",
+      "world_id": 1,
+      "name": "Find the Dawn Blade",
+      "description": "The Lightbearer's Dawn Blade was lost three centuries ago during the Purge of Magic. Mirana and Kael must journey to the Last Temple in the Whispering Marshes to recover it.",
+      "objectives": [
+        "Travel through the Whispering Marshes",
+        "Face illusion magic showing worst fears",
+        "Reach the Last Temple",
+        "Discover the blade was stolen by Vex Shadowmere",
+        "Negotiate with the Thieves Guild in Saltmere"
+      ],
+      "status": "completed",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440107",
+        "550e8400-e29b-41d4-a716-446655440108"
+      ],
+      "reward_ids": [
+        "550e8400-e29b-41d4-a716-446655440125"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440123",
+      "world_id": 1,
+      "name": "Restore Zarathax's Eternal Flame",
+      "description": "Zarathax's weakened flame cannot sustain the seal against the Shadow Lord. He must fly to the Dragon's Graveyard to absorb residual fire magic from the remains of ancient dragons.",
+      "objectives": [
+        "Fly to the Dragon's Graveyard",
+        "Absorb residual fire magic from ancient remains",
+        "Face the Shadow Lord's servants who defiled the sacred site",
+        "Confront the corrupted Shadow Dragon Vyrnax"
+      ],
+      "status": "completed",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106"
+      ],
+      "reward_ids": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440124",
+      "world_id": 1,
+      "name": "Forge the New Crown",
+      "description": "Kael's radical proposal - forge a new crown using the three recovered fragments, Zarathax's flame, the holy power of the temple, the courage of the Dragon Knights, and the light within the Dawn Blade. A heresy to the old ways, but these are desperate times.",
+      "objectives": [
+        "Gather at Valorheim on the spring equinox",
+        "Seraphina offers her honor - blade melted down and reformed",
+        "Mirana channels the collective prayer of every temple in the realm",
+        "Dragon Knights stand in a circle, their life force feeding the spell",
+        "Zarathax gives what remains of his eternal flame",
+        "Kael brings the Dawn Blade down on the forge"
+      ],
+      "status": "completed",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440107",
+        "550e8400-e29b-41d4-a716-446655440108",
+        "550e8400-e29b-41d4-a716-446655440109",
+        "550e8400-e29b-41d4-a716-446655440110"
+      ],
+      "reward_ids": [
+        "550e8400-e29b-41d4-a716-446655440126"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440127",
+      "world_id": 1,
+      "name": "Face the Shadow Lord",
+      "description": "With the New Crown forged and Kael transformed into the Lightbearer Reborn, the Alliance of Light must march north to face Mordren and the emerging Shadow Lord Nex'thara. This tale is yet to be told.",
+      "objectives": [
+        "March north with the Alliance of Light",
+        "Face Mordren and his shadow armies",
+        "Confront the Shadow Lord Nex'thara",
+        "Prevent the destruction of all life in Ashenfell"
+      ],
+      "status": "active",
+      "participant_ids": [
+        "550e8400-e29b-41d4-a716-446655440106",
+        "550e8400-e29b-41d4-a716-446655440107",
+        "550e8400-e29b-41d4-a716-446655440108",
+        "550e8400-e29b-41d4-a716-446655440109",
+        "550e8400-e29b-41d4-a716-446655440110"
+      ],
+      "reward_ids": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "quest_objectives": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440128",
+      "world_id": 1,
+      "quest_node_id": "550e8400-e29b-41d4-a716-446655440121",
+      "objective_type": "interact",
+      "description": "Answer the Sphinx's impossible riddle to obtain the Fragment of Wisdom",
+      "target_type": null,
+      "target_id": null,
+      "target_quantity": 1,
+      "current_progress": 0,
+      "status": "failed",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 0,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440129",
+      "world_id": 1,
+      "quest_node_id": "550e8400-e29b-41d4-a716-446655440122",
+      "objective_type": "explore",
+      "description": "Travel through the Whispering Marshes while facing illusion magic",
+      "target_type": "location",
+      "target_id": "CROSS_REF:location:Whispering Marshes:world-team",
+      "target_quantity": 1,
+      "current_progress": 1,
+      "status": "completed",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 0,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440130",
+      "world_id": 1,
+      "quest_node_id": "550e8400-e29b-41d4-a716-446655440122",
+      "objective_type": "talk",
+      "description": "Negotiate with Vex Shadowmere for the Dawn Blade",
+      "target_type": "character",
+      "target_id": "550e8400-e29b-41d4-a716-446655440113",
+      "target_quantity": 1,
+      "current_progress": 1,
+      "status": "completed",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 1,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440131",
+      "world_id": 1,
+      "quest_node_id": "550e8400-e29b-41d4-a716-446655440123",
+      "objective_type": "explore",
+      "description": "Fly to the Dragon's Graveyard to absorb residual fire magic",
+      "target_type": "location",
+      "target_id": "CROSS_REF:location:Dragon's Graveyard:world-team",
+      "target_quantity": 1,
+      "current_progress": 1,
+      "status": "completed",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 0,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440132",
+      "world_id": 1,
+      "quest_node_id": "550e8400-e29b-41d4-a716-446655440124",
+      "objective_type": "use",
+      "description": "Kael brings the Dawn Blade down on the forge to complete the ritual",
+      "target_type": "item",
+      "target_id": "CROSS_REF:item:Dawn Blade:systems-team",
+      "target_quantity": 1,
+      "current_progress": 1,
+      "status": "completed",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 4,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "lore_fragments": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440133",
+      "world_id": 1,
+      "title": "The First Sealing",
+      "content": "Ten thousand years ago, the Shadow Lord Nex'thara nearly destroyed all life. The Elder Race, dragons, and mortal gods combined their power to seal him in the Void Between Worlds. The seal required three anchors: the Dragon's Eternal Flame, the Lightbearer's Dawn Blade, and the Celestial Crown.",
+      "rarity": "legendary",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440134",
+      "world_id": 1,
+      "title": "The Purge of Magic",
+      "content": "Three centuries ago, a great persecution of magic users destroyed the line of Lightbearers. The Dawn Blade was lost, the temples were scattered, and knowledge of the ancient arts was nearly eradicated. This event broke the sacred cycle that had maintained the seal against Nex'thara.",
+      "rarity": "epic",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440135",
+      "world_id": 1,
+      "title": "The Dragon Wars",
+      "content": "An ancient conflict between dragons and mortals that destroyed the dwarven ancestral city of Karak-Thun. The dwarves of Ironpeak Mountains still bear bitter grudges, refusing to join the Alliance of Light because of these ancient wounds.",
+      "rarity": "rare",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440136",
+      "world_id": 1,
+      "title": "The Elder Race",
+      "content": "Beings from the Time Before, predating human civilization. They maintained balance between the material and shadow realms alongside dragons. Their ancient ruins, covered in glowing runes, were revealed when Zarathax emerged from his caverns.",
+      "rarity": "legendary",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440137",
+      "world_id": 1,
+      "title": "Rite of Eternal Bonding",
+      "content": "An ancient dragon ritual of life and death magic. When performed, the caster gives half their life force to sustain another, binding their flames together. Vyrnax performed this ritual to save Zarathax after he collapsed from giving his remaining flame to forge the New Crown.",
+      "rarity": "legendary",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440138",
+      "world_id": 1,
+      "title": "The Keepers of the Ancient Pact",
+      "content": "A religious order that has maintained the sacred covenant between dragonkind and humanity for generations. Their temple, the Temple of Eternal Flame, guards the rituals and knowledge needed to sustain the Dragon's Eternal Flame and the seal against the Shadow Lord.",
+      "rarity": "rare",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440139",
+      "world_id": 1,
+      "title": "The Dragon Knights",
+      "content": "An elite military order trained in anti-dragon combat, ironically named before anyone realized dragons were allies, not enemies. They wield Dragonbane Swords forged from meteoric iron and enchanted with protective wards. Their skills proved useless against shadow creatures, forcing them to adapt.",
+      "rarity": "uncommon",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "foreshadowings": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440140",
+      "story_id": "550e8400-e29b-41d4-a716-446655440101",
+      "scene_id": null,
+      "foreshadowing_type": "symbolic",
+      "subtlety": "moderate",
+      "name": "The Flickering Eyes",
+      "description": "King Aldric's eyes occasionally flickering with darkness foreshadows his potential corruption by Mordren and the Shadow Lord's influence.",
+      "hinted_event_id": null,
+      "is_paid_off": false,
+      "player_discovery_rate": 35.0,
+      "character_ids": [
+        "550e8400-e29b-41d4-a716-446655440110"
+      ],
+      "location_id": "CROSS_REF:location:Valorheim:world-team",
+      "requires_knowledge": [
+        "550e8400-e29b-41d4-a716-446655440134"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440141",
+      "story_id": "550e8400-e29b-41d4-a716-446655440101",
+      "scene_id": null,
+      "foreshadowing_type": "dialog",
+      "subtlety": "low",
+      "name": "The Dawn Blade Resonates",
+      "description": "When Kael first touches the Dawn Blade, it resonates with his magic. This foreshadows that he is the new Lightbearer, confirmed later when he places the New Crown on his head and transforms.",
+      "hinted_event_id": null,
+      "is_paid_off": true,
+      "player_discovery_rate": 50.0,
+      "character_ids": [
+        "550e8400-e29b-41d4-a716-446655440107"
+      ],
+      "location_id": "CROSS_REF:location:Saltmere:world-team",
+      "requires_knowledge": [
+        "550e8400-e29b-41d4-a716-446655440133"
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440142",
+      "story_id": "550e8400-e29b-41d4-a716-446655440101",
+      "scene_id": null,
+      "foreshadowing_type": "symbolic",
+      "subtlety": "high",
+      "name": "The Shadow Raven",
+      "description": "The shadow raven watching from the ruins at the end of Chapter 2 foreshadows that Mordren has spies everywhere and the Alliance is always being watched.",
+      "hinted_event_id": null,
+      "is_paid_off": true,
+      "player_discovery_rate": 25.0,
+      "character_ids": [],
+      "location_id": null,
+      "requires_knowledge": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "quest_objective",
+      "source_id": "550e8400-e29b-41d4-a716-446655440129",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Whispering Marshes - location filled with illusion magic"
+    },
+    {
+      "source_type": "quest_objective",
+      "source_id": "550e8400-e29b-41d4-a716-446655440131",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Dragon's Graveyard - sacred site where ancient dragons go to die"
+    },
+    {
+      "source_type": "quest_objective",
+      "source_id": "550e8400-e29b-41d4-a716-446655440132",
+      "target_type": "item",
+      "target_skill": "legendary-items",
+      "target_hint": "Dawn Blade - legendary weapon of the Lightbearer"
+    },
+    {
+      "source_type": "foreshadowing",
+      "source_id": "550e8400-e29b-41d4-a716-446655440140",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Valorheim - capital city of Ashenfell"
+    },
+    {
+      "source_type": "foreshadowing",
+      "source_id": "550e8400-e29b-41d4-a716-446655440141",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Saltmere - port city with Thieves Guild"
+    },
+    {
+      "source_type": "character",
+      "source_id": "550e8400-e29b-41d4-a716-446655440108",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Keepers of the Ancient Pact - religious order maintaining dragon-human covenant"
+    },
+    {
+      "source_type": "character",
+      "source_id": "550e8400-e29b-41d4-a716-446655440109",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Dragon Knights - elite military order"
+    },
+    {
+      "source_type": "character",
+      "source_id": "550e8400-e29b-41d4-a716-446655440113",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Thieves Guild - criminal organization in Saltmere"
+    },
+    {
+      "source_type": "lore_fragment",
+      "source_id": "550e8400-e29b-41d4-a716-446655440135",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Dwarves of Ironpeak Mountains - bitter from ancient Dragon Wars"
+    },
+    {
+      "source_type": "event",
+      "source_id": "550e8400-e29b-41d4-a716-446655440104",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Alliance of Light - coalition formed by King Aldric III"
+    }
+  ],
+  "_metadata": {
+    "source": "dragon_story_3_chapters.txt",
+    "skill": "narrative-team",
+    "extracted_at": "2026-02-14T10:00:00Z",
+    "entity_count": 42
+  }
+}

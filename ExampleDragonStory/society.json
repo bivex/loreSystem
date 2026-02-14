@@ -1,0 +1,532 @@
+{
+  "factions": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Keepers of the Ancient Pact",
+      "type": "religious_order",
+      "description": "Ancient religious order maintaining the sacred covenant between dragonkind and humanity. Based at the Temple of Eternal Flame.",
+      "leader": "High Priestess Mirana",
+      "territory": "Temple of Eternal Flame",
+      "ideology": "Protect the sacred bond between dragons and humans; maintain the ancient pact that protects the realm",
+      "members": ["Mirana", "Kael Ironheart"],
+      "allies": ["Alliance of Light", "Zarathax"],
+      "enemies": ["Shadowblight", "Mordren the Gray"],
+      "resources": ["Heartstone Crystal", "Phoenix Ash", "Moonwell Spring water"],
+      "founded": "Ancient (pre-dates human civilization)",
+      "status": "active"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655402",
+      "name": "Dragon Knights",
+      "type": "military_order",
+      "description": "Elite military order trained in anti-dragon combat. Ironically named before dragons were revealed as allies rather than enemies.",
+      "leader": "Captain Seraphina Dawnblade",
+      "territory": "Valorheim",
+      "ideology": "Protect the kingdom of Ashenfell with elite martial prowess",
+      "members": ["Captain Seraphina Dawnblade", "Knight-Sergeant Thomas", "20 elite warriors"],
+      "allies": ["Alliance of Light"],
+      "enemies": ["Shadowblight"],
+      "resources": ["Dragonbane Swords", "military equipment"],
+      "equipment": "Dragonbane Swords forged from meteoric iron with protective wards",
+      "status": "active",
+      "casualties": "11 knights (3 wounded by Kael, 1 transformed to stone, 8 killed in Necropolis)"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655403",
+      "name": "Alliance of Light",
+      "type": "coalition",
+      "description": "Grand coalition formed by King Aldric III to combat the Shadowblight threat. Unites the Dragon Knights, Keepers of the Ancient Pact, and Zarathax.",
+      "leader": "King Aldric III",
+      "territory": "Valorheim",
+      "ideology": "Unite all factions of Ashenfell against the Shadow Lord Nex'thara",
+      "members": ["Dragon Knights", "Keepers of the Ancient Pact", "Zarathax", "Kingdom of Valorheim"],
+      "founded": "During the Shadowblight crisis (current era)",
+      "status": "active",
+      "challenges": "Dwarven holds and elven kingdom refused to join"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655404",
+      "name": "Shadowblight",
+      "type": "corrupted_faction",
+      "description": "Corrupted force serving the Shadow Lord Nex'thara. Spawns Shadowfiends and corrupts living beings.",
+      "leader": "Mordren the Gray",
+      "ideology": "Serve the return of Shadow Lord Nex'thara; spread corruption across Ashenfell",
+      "enemies": ["Alliance of Light", "Zarathax", "Keepers of the Ancient Pact"],
+      "status": "active",
+      "tactics": ["Shadowfiend summoning", "corruption of nobles", "traps and assassination"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655405",
+      "name": "Thieves Guild",
+      "type": "criminal_organization",
+      "description": "Criminal organization operating in the port city of Saltmere. Led by Vex Shadowmere.",
+      "leader": "Vex Shadowmere",
+      "territory": "Saltmere",
+      "status": "active",
+      "notable_members": ["Vex Shadowmere"],
+      "assets": ["Dawn Blade (stolen from Last Temple)"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655406",
+      "name": "Kingdom of Valorheim",
+      "type": "kingdom",
+      "description": "Human kingdom ruling Ashenfell. Based in the capital city of Valorheim.",
+      "leader": "King Aldric III",
+      "capital": "Valorheim",
+      "status": "active",
+      "advisor": "Mordren the Gray (secretly traitor)",
+      "military": ["Dragon Knights"],
+      "corruption_level": "High - half of noble houses corrupted by shadow"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655407",
+      "name": "Dwarven Holds of Ironpeak",
+      "type": "independent_kingdom",
+      "description": "Dwarven civilization in the Ironpeak Mountains. Refused to join the Alliance of Light.",
+      "territory": "Ironpeak Mountains",
+      "status": "independent",
+      "alliances": "None (refused Alliance of Light)",
+      "grievance": "Ancient Dragon Wars destroyed their ancestral city of Karak-Thun"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655408",
+      "name": "Elven Kingdom of Silverwood",
+      "type": "independent_kingdom",
+      "description": "Elven civilization that sealed its borders, relying on its own magical defenses.",
+      "territory": "Silverwood",
+      "status": "isolated",
+      "alliances": "None (refused Alliance of Light)",
+      "defense": "Own magical defenses"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655409",
+      "name": "Nomadic Tribes of the Scorching Wastes",
+      "type": "tribal_federation",
+      "description": "Nomadic people of the Scorching Wastes who follow their own gods.",
+      "territory": "Scorching Wastes",
+      "status": "independent",
+      "alliances": "None (reject northern powers)",
+      "religion": "Own tribal gods"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655410",
+      "name": "Elder Race",
+      "type": "ancient_civilization",
+      "description": "Pre-human civilization that maintained balance between material and shadow realms. Built structures covered in glowing runes from the Time Before.",
+      "status": "extinct",
+      "era": "Time Before (predates human civilization)",
+      "achievements": ["Built First Kingdom ruins", "maintained realm balance", "sealed Shadow Lord Nex'thara"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655411",
+      "name": "Shadow Dragons",
+      "type": "corrupted_faction",
+      "description": "Dragons corrupted by Shadow Lord's power, their flames replaced by necrotic energy.",
+      "members": ["Vyrnax (formerly Zarathax's mate)"],
+      "leader": "Shadow Lord Nex'thara",
+      "status": "active",
+      "characteristics": ["Black scales", "necrotic flame instead of fire", "immortality offered by Nex'thara"]
+    }
+  ],
+  "political_entities": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655420",
+      "name": "Kingdom of Ashenfell",
+      "type": "realm",
+      "description": "The realm ruled by King Aldric III, currently threatened by Shadowblight corruption.",
+      "leader": "King Aldric III",
+      "capital": "Valorheim",
+      "government_type": "monarchy",
+      "status": "crisis (Shadowblight spreading)",
+      "advisor": "Mordren the Gray (secretly serving Shadow Lord)",
+      "corruption": "Half of noble houses corrupted by shadow",
+      "military_force": "Dragon Knights"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655421",
+      "name": "Court of King Aldric III",
+      "type": "royal_court",
+      "description": "The royal court of Valorheim, currently infiltrated by shadow corruption.",
+      "monarch": "King Aldric III",
+      "royal_advisor": "Mordren the Gray",
+      "status": "corrupted (advisor traitor, half nobles corrupted, King showing signs of corruption)"
+    }
+  ],
+  "religious_orders": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655430",
+      "name": "Temple of Eternal Flame",
+      "type": "temple",
+      "description": "Religious temple housing the Keepers of the Ancient Pact. Maintains the sacred covenant between dragons and humanity.",
+      "leader": "High Priestess Mirana",
+      "order": "Keepers of the Ancient Pact",
+      "followers": ["Mirana", "Kael Ironheart"],
+      "artifacts": ["Heartstone Crystal", "Phoenix Ash", "Moonwell Spring water"],
+      "teachings": "Dragon-human covenant, protection against Shadowblight",
+      "status": "active"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655431",
+      "name": "Order of the Lightbearer",
+      "type": "ancient_order",
+      "description": "Ancient order that chose a hero each generation to wield the Dawn Blade. The line was broken during the Purge of Magic three centuries ago.",
+      "status": "discontinued (line broken 3 centuries ago)",
+      "artifact": "Dawn Blade",
+      "note": "Kael Ironheart may be the new Lightbearer"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655432",
+      "name": "Purge of Magic",
+      "type": "historical_event",
+      "description": "Historical event three centuries ago that broke the Lightbearer line and resulted in the loss of the Dawn Blade.",
+      "era": "Three centuries ago",
+      "impact": ["Broke Lightbearer line", "Lost Dawn Blade", "Shattered Celestial Crown into seven pieces"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655433",
+      "name": "Rite of Eternal Bonding",
+      "type": "ritual",
+      "description": "Ancient dragon ritual that binds two dragons' life forces together. Vyrnax performed this to save Zarathax, giving half her life force to sustain him.",
+      "practitioners": "Dragons",
+      "effect": "Binds flames and life forces of two dragons; neither fully powerful but both alive",
+      "performed_by": "Vyrnax on Zarathax"
+    }
+  ],
+  "social_structures": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440",
+      "name": "Social Mobility in Ashenfell",
+      "type": "social_class_system",
+      "description": "The realm shows evidence of social mobility - Kael Ironheart rose from blacksmith's son to apprentice priestess due to magical aptitude.",
+      "examples": [
+        "Kael Ironheart: blacksmith's son → apprentice at Temple of Eternal Flame (fire magic aptitude)",
+        "Vex Shadowmere: treasure hunter → leader of Thieves Guild"
+      ],
+      "mobility_type": "merit-based (magical aptitude, skill)"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655441",
+      "name": "Military Honor System",
+      "type": "honor_system",
+      "description": "Dragon Knights operate on a code of honor. Seraphina was broken by having to kill innocents, showing the weight placed on honorable conduct.",
+      "practitioners": "Dragon Knights",
+      "values": ["Honor", "Protection of innocents", "Sacrifice"],
+      "code_breach_consequences": "Psychological trauma, broken spirit"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655442",
+      "name": "Lightbearer Transformation",
+      "type": "transformation",
+      "description": "Kael Ironheart transformed from mortal to something greater - not quite human, not quite divine - upon placing the New Crown on his head.",
+      "subject": "Kael Ironheart",
+      "transformation_type": "Transcendent",
+      "result": "The Lightbearer Reborn",
+      "nature": "Neither fully human nor divine, something greater"
+    }
+  ],
+  "historical_events": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655450",
+      "name": "First Sealing of Nex'thara",
+      "type": "historical_battle",
+      "era": "Ten thousand years ago",
+      "description": "The Elder Race, dragons, and ancestors' gods combined their power to seal the Shadow Lord Nex'thara in the Void Between Worlds.",
+      "participants": ["Elder Race", "Dragons", "Ancestors' gods"],
+      "opponent": "Shadow Lord Nex'thara",
+      "outcome": "Nex'thara sealed in Void Between Worlds",
+      "anchors_required": ["Dragon's Eternal Flame", "Lightbearer's Dawn Blade", "Celestial Crown"],
+      "location": "Void Between Worlds"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655451",
+      "name": "Dragon Wars",
+      "type": "war",
+      "era": "Ancient",
+      "description": "Ancient conflict that destroyed the dwarven ancestral city of Karak-Thun. The dwarves of Ironpeak Mountains remain bitter about this.",
+      "impact": ["Destruction of Karak-Thun", "Dwarven resentment against dragons"],
+      "consequences": "Dwarven holds refused to join Alliance of Light"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655452",
+      "name": "Destruction of Karak-Thun",
+      "type": "destruction",
+      "era": "Ancient (during Dragon Wars)",
+      "description": "Dwarven ancestral city destroyed during the Dragon Wars.",
+      "location": "Ironpeak Mountains region",
+      "consequences": "Dwarven bitterness toward dragons; refusal to join Alliance of Light"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655453",
+      "name": "Purge of Magic",
+      "type": "persecution",
+      "era": "Three centuries ago",
+      "description": "Event that broke the Lightbearer line and scattered the Celestial Crown into seven pieces.",
+      "impact": ["Line of Lightbearers broken", "Dawn Blade lost", "Celestial Crown shattered into seven fragments"],
+      "duration_impact": "Three centuries of vulnerability"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655454",
+      "name": "Awakening of Zarathax",
+      "type": "event",
+      "date": "Current era",
+      "description": "Ancient dragon Zarathax awoke from thousand-year slumber as his eternal flame weakened due to Shadowblight corruption.",
+      "location": "Obsidian Caverns beneath Mount Cinderpeak",
+      "significance": "Triggered the formation of the Alliance of Light",
+      "participants": ["Zarathax", "Mirana", "Kael Ironheart"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655455",
+      "name": "Formation of the Alliance of Light",
+      "type": "political_event",
+      "date": "Current era",
+      "description": "King Aldric III declared the formation of the Alliance of Light to combat the Shadowblight.",
+      "members": ["Dragon Knights", "Keepers of the Ancient Pact", "Zarathax", "Kingdom of Valorheim"],
+      "purpose": "Unite fractured factions of Ashenfell against Shadow Lord Nex'thara",
+      "challenges": ["Dwarven holds refused", "Elven kingdom sealed borders", "Nomadic tribes rejected northern powers"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655456",
+      "name": "Battle at the Obsidian Caverns",
+      "type": "battle",
+      "date": "Current era",
+      "description": "First battle where Dragon Knights, Keepers, and Zarathax fought together against Mordren's Shadowfiends. Kael discovered Sunfire magic.",
+      "participants": ["Dragon Knights", "Keepers of the Ancient Pact", "Zarathax", "Mordren the Gray", "Shadowfiends"],
+      "outcome": "Mordren retreated, alliance formed",
+      "discovery": "Sunfire magic (fire + holy light) by Kael"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655457",
+      "name": "Quest for the Celestial Crown",
+      "type": "quest",
+      "duration": "Three months",
+      "description": "Three-part quest to recover the seven fragments of the Celestial Crown, find the Dawn Blade, and restore Zarathax's flame.",
+      "objectives": [
+        "Recover seven fragments of Celestial Crown (Seraphina's path)",
+        "Find the Dawn Blade (Mirana and Kael's path)",
+        "Restore Zarathax's flame (Zarathax's path)"
+      ],
+      "outcome": "Three fragments recovered, Dawn Blade acquired, Zarathax nearly died",
+      "result": "New Crown forged through sacrifice"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655458",
+      "name": "Battle of Dragon's Graveyard",
+      "type": "battle",
+      "date": "During the quest",
+      "location": "Dragon's Graveyard",
+      "description": "Zarathax confronted his former mate Vyrnax, now a Shadow Dragon. He couldn't kill her and instead sealed her in crystallized flame at great cost to his own life.",
+      "participants": ["Zarathax", "Vyrnax (Shadow Dragon)"],
+      "outcome": "Vyrnax sealed, Zarathax nearly died",
+      "significance": "Cost Zarathax most of his remaining flame"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655459",
+      "name": "Forging of the New Crown",
+      "type": "ritual",
+      "date": "Spring equinox at dawn",
+      "location": "Valorheim",
+      "description": "Desperate ritual forging a New Crown from three fragments, Zarathax's flame, temple power, knight courage, and Dawn Blade light. Kael transformed into the Lightbearer Reborn.",
+      "participants": ["All Alliance of Light members"],
+      "components": [
+        "Three crown fragments",
+        "Zarathax's eternal flame",
+        "Holy power of the temple",
+        "Courage of Dragon Knights",
+        "Light within Dawn Blade"
+      ],
+      "outcome": "New Crown formed; Kael became Lightbearer Reborn; Zarathax collapsed; Vyrnax purified",
+      "result": "Hope rekindled for Ashenfell"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655460",
+      "name": "Second Sealing Preparation",
+      "type": "upcoming_event",
+      "description": "The Alliance of Light marches north to face Mordren and the emerging Shadow Lord. Documented in the Chronicles of the Second Sealing.",
+      "participants": ["Alliance of Light", "Mordren", "Shadow Lord Nex'thara"],
+      "documented_by": "Mirana (Chronicles of the Second Sealing)",
+      "status": "Beginning"
+    }
+  ],
+  "cross_references": [
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Obsidian Caverns",
+      "note": "Beneath Mount Cinderpeak - where Zarathax slept"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Mount Cinderpeak",
+      "note": "Mountain containing Zarathax's caverns"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Valorheim",
+      "note": "Capital city of Ashenfell"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Temple of Eternal Flame",
+      "note": "Headquarters of Keepers of the Ancient Pact"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Ironpeak Mountains",
+      "note": "Dwarven territory"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Silverwood",
+      "note": "Elven kingdom"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Scorching Wastes",
+      "note": "Nomadic tribal territory"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Karos-Thun",
+      "note": "Destroyed dwarven ancestral city"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Saltmere",
+      "note": "Port city, base of Thieves Guild"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Whispering Marshes",
+      "note": "Location of Last Temple, filled with illusion magic"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Dragon's Graveyard",
+      "note": "Sacred site where dragons go to die"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Zarathax",
+      "note": "Ancient dragon, last of his kind"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Mirana",
+      "note": "High Priestess of Temple of Eternal Flame"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Kael Ironheart",
+      "note": "Apprentice priestess, former blacksmith's son, became Lightbearer Reborn"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "King Aldric III",
+      "note": "King of Ashenfell"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Mordren the Gray",
+      "note": "Royal advisor, traitor serving Shadow Lord"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Seraphina Dawnblade",
+      "note": "Captain of Dragon Knights"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Vyrnax",
+      "note": "Shadow Dragon, Zarathax's former mate"
+    },
+    {
+      "domain": "character-team",
+      "entity_type": "character",
+      "name": "Vex Shadowmere",
+      "note": "Leader of Thieves Guild"
+    },
+    {
+      "domain": "items-team",
+      "entity_type": "artifact",
+      "name": "Dawn Blade",
+      "note": "Legendary weapon of the Lightbearer"
+    },
+    {
+      "domain": "items-team",
+      "entity_type": "artifact",
+      "name": "Celestial Crown",
+      "note": "Shattered into seven fragments, later reforged as New Crown"
+    },
+    {
+      "domain": "items-team",
+      "entity_type": "artifact",
+      "name": "New Crown",
+      "note": "Forged from sacrifice, crystallized light and fire"
+    },
+    {
+      "domain": "items-team",
+      "entity_type": "artifact",
+      "name": "Dragonbane Swords",
+      "note": "Forged from meteoric iron with protective wards"
+    },
+    {
+      "domain": "magic-team",
+      "entity_type": "magic",
+      "name": "Sunfire",
+      "note": "Combined fire and holy light magic, discovered by Kael"
+    },
+    {
+      "domain": "magic-team",
+      "entity_type": "magic",
+      "name": "Shadowblight",
+      "note": "Corruption spreading across Ashenfell"
+    },
+    {
+      "domain": "magic-team",
+      "entity_type": "magic",
+      "name": "Eternal Flame",
+      "note": "Power sustaining Zarathax, one of three anchors"
+    },
+    {
+      "domain": "enemy-team",
+      "entity_type": "enemy",
+      "name": "Nex'thara",
+      "note": "Shadow Lord, ancient evil sealed in Void Between Worlds"
+    },
+    {
+      "domain": "enemy-team",
+      "entity_type": "enemy",
+      "name": "Shadowfiends",
+      "note": "Creatures of pure darkness summoned by Mordren"
+    },
+    {
+      "domain": "enemy-team",
+      "entity_type": "enemy",
+      "name": "Sphinx of the Azure Desert",
+      "note": "Guardian of Fragment of Wisdom"
+    },
+    {
+      "domain": "enemy-team",
+      "entity_type": "enemy",
+      "name": "Lich-Lord of the Necropolis",
+      "note": "Holder of Fragment of Courage"
+    }
+  ]
+}

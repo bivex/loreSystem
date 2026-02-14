@@ -1,0 +1,388 @@
+{
+  "progression_systems": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Fire Magic",
+      "type": "skill_tree",
+      "element": "fire",
+      "description": "Fire magic with aptitude for blacksmith's sons and defensive applications",
+      "abilities": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440002",
+          "name": "Fire Barrier",
+          "type": "defensive",
+          "effect": "Creates protective barrier of flame",
+          "side_effect": "Can accidentally injure allies if misused"
+        }
+      ],
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Kael Ironheart",
+        "note": "Shows remarkable aptitude for fire magic"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-4466554403",
+      "name": "Sunfire",
+      "type": "fusion_magic",
+      "elements": ["fire", "holy"],
+      "description": "Combined fire and holy light magic that burns away shadow creatures",
+      "discovery_method": "accidental_combination",
+      "effectiveness": "high_vs_shadow",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Kael Ironheart",
+        "note": "Discovered Sunfire by combining fire magic with Mirana's holy light"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-4466554404",
+      "name": "Compulsion Magic",
+      "type": "voice_ability",
+      "source": "dragon_ancience",
+      "effect": "Freezes targets in place with voice carrying weight of ages",
+      "duration": "temporary",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Zarathax",
+        "note": "Ancient dragon uses compulsion magic in voice"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-4466554405",
+      "name": "Rite of Eternal Bonding",
+      "type": "ritual",
+      "cost": "half_life_force",
+      "effect": "Binds two life forces together, sharing vitality",
+      "outcome": "Both participants survive with reduced individual power",
+      "requirements": [
+        "dragon_magic",
+        "life_and_death_affinity",
+        "emotional_bond"
+      ],
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Vyrnax",
+        "note": "Used Rite of Eternal Bonding to save Zarathax"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-4466554406",
+      "name": "Lightbearer Transformation",
+      "type": "transformation",
+      "trigger": "wielding_Dawn_Blade",
+      "effect": "Mortal form replaced with divine-human hybrid",
+      "requirements": [
+        "Dawn_Blade",
+        "hope",
+        "sacrifice"
+      ],
+      "outcome": "Lightbearer Reborn",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Kael Ironheart",
+        "note": "Transformed into Lightbearer Reborn"
+      }
+    }
+  ],
+  "legendary_items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655407",
+      "name": "Celestial Crown",
+      "type": "artifact",
+      "rarity": "legendary",
+      "components": "mortal_hope + celestial_power",
+      "current_state": "shattered_into_fragments",
+      "fragments": 7,
+      "purpose": "One of three anchors sealing the Shadow Lord Nex'thara",
+      "fragments_found": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655408",
+          "name": "Fragment of Wisdom",
+          "location": "Azure Desert",
+          "guardian": "Sphinx",
+          "acquisition_cost": "riddle_answer",
+          "consequence": "wrong_answer = transformation_to_stone"
+        },
+        {
+          "id": "550e8400-e29b-41d4-a716-446655409",
+          "name": "Fragment of Courage",
+          "location": "Necropolis of Fallen Kings",
+          "guardian": "lich_lord",
+          "acquisition_cost": "military_battle",
+          "casualties": "8_soldiers"
+        },
+        {
+          "id": "550e8400-e29b-41d4-a716-446655410",
+          "name": "Fragment of Compassion",
+          "location": "corrupted_village",
+          "acquisition_cost": "killing_innocents",
+          "psychological_impact": "trauma"
+        }
+      ],
+      "fragments_unlocated": 4,
+      "fragment_names": ["Justice", "Unknown 1", "Unknown 2", "Unknown 3"]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655411",
+      "name": "Dawn Blade",
+      "type": "legendary_weapon",
+      "rarity": "legendary",
+      "classification": "chosen_hero_weapon",
+      "title_requirement": "Lightbearer",
+      "properties": [
+        "resonates_with_lightbearer_magic",
+        "holy_affinity",
+        "light_element"
+      ],
+      "history": "Stolen from Last Temple by Vex Shadowmere decades ago",
+      "current_location": "Saltmere (Thieves Guild)",
+      "acquisition": "traded_for_Fragment_of_Justice_location",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Kael Ironheart",
+        "note": "Dawn Blade resonates with Kael's magic, suggesting he's the new Lightbearer"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655412",
+      "name": "New Crown",
+      "type": "reforged_artifact",
+      "rarity": "unique",
+      "composition": "crystallized_light_and_fire",
+      "materials_used": [
+        "3_celestial_crown_fragments",
+        "Zarathax_eternal_flame",
+        "temple_holy_power",
+        "Dragon_Knight_courage",
+        "Dawn_Blade_light",
+        "mortal_hope"
+      ],
+      "creation_date": "spring_equinox_dawn",
+      "properties": [
+        "hums_with_sacrifice_power",
+        "hums_with_hope_power"
+      ],
+      "wielder": "Kael Ironheart (Lightbearer Reborn)"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655413",
+      "name": "Dragonbane Sword",
+      "type": "military_weapon",
+      "rarity": "rare",
+      "composition": "meteoric_iron",
+      "enchantments": "protective_wards",
+      "purpose": "anti-dragon_combat",
+      "effectiveness": "useless_vs_shadow_creatures",
+      "quantity": 20,
+      "users": "Dragon_Knights"
+    }
+  ],
+  "military_organizations": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655414",
+      "name": "Dragon Knights",
+      "type": "military_order",
+      "size": 20,
+      "classification": "elite_warriors",
+      "specialization": "anti-dragon_combat",
+      "equipment": "Dragonbane_Swords",
+      "leadership": {
+        "role": "Captain",
+        "name": "Seraphina Dawnblade",
+        "cross_ref": {
+          "domain": "narrative-team",
+          "entity_type": "character"
+        }
+      },
+      "notable_casualties": {
+        "killed_by_Sphinx": "Knight-Sergeant Thomas (transformed to stone)",
+        "killed_in_Necropolis": "8_soldiers"
+      },
+      "alliances": [
+        "Alliance of Light"
+      ],
+      "origin_note": "Named before dragons were recognized as allies, not enemies"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655415",
+      "name": "Alliance of Light",
+      "type": "coalition",
+      "members": [
+        "Dragon Knights",
+        "Keepers of the Ancient Pact",
+        "Zarathax (ancient dragon)"
+      ],
+      "founding_reason": "oppose_Shadow_Lord_return",
+      "challenges": [
+        "Dwarven_Ironpeak_refusal",
+        "Elven_Silverwood_isolation",
+        "Scorching_Wastes_tribal_rejection"
+      ],
+      "objective": "Seal_Nexthara",
+      "creator": "King_Aldric_III"
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655416",
+      "name": "Shadowfiends",
+      "type": "creature_faction",
+      "composition": "pure_darkness_creatures",
+      "abilities": [
+        "necrotic_energy",
+        "summoning",
+        "corruption"
+      ],
+      "summoner": "Mordren_the_Gray",
+      "weakness": "Sunfire_magic",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Mordren the Gray"
+      }
+    }
+  ],
+  "economic_elements": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655417",
+      "name": "Thieves Guild Trade",
+      "type": "information_market",
+      "location": "Saltmere",
+      "leader": "Vex Shadowmere",
+      "transaction_type": "information_for_information",
+      "example_trade": "Dawn_Blade for Fragment_of_Justice_location",
+      "asset": "Dawn_Blade_stolen_decades_ago",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Vex Shadowmere"
+      }
+    }
+  ],
+  "puzzles": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655418",
+      "name": "Sphinx Riddle",
+      "type": "riddle",
+      "location": "Azure Desert",
+      "guardian": "Sphinx",
+      "reward": "Fragment of Wisdom",
+      "punishment": "transformation_to_living_stone",
+      "difficulty": "impossible",
+      "failures": [
+        {
+          "character": "Knight-Sergeant Thomas",
+          "fate": "transformed to stone"
+        }
+      ],
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Thomas"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655419",
+      "name": "Whispering Marshes Illusions",
+      "type": "psychological_trial",
+      "location": "Whispering Marshes",
+      "mechanic": "shows_worst_fears",
+      "examples": [
+        "Kael sees family burning in shadows",
+        "Mirana witnesses order's fall"
+      ],
+      "solution": "perseverance_through_fear",
+      "destination": "Last Temple",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_types": ["character", "character"],
+        "names": ["Kael Ironheart", "Mirana"],
+        "note": "Both faced personal fears in marsh illusions"
+      }
+    }
+  ],
+  "achievements": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655420",
+      "name": "Lightbearer Reborn",
+      "type": "milestone",
+      "description": "Transform from mortal to divine-human hybrid by wielding Dawn Blade",
+      "recipient": "Kael Ironheart",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Kael Ironheart"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655421",
+      "name": "Crown Fragment Recovery",
+      "type": "quest_progress",
+      "fragments_recovered": 3,
+      "fragments_remaining": 4,
+      "casualty_cost": "9_knights",
+      "time_period": "3_months"
+    }
+  ],
+  "cross_references": [
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Obsidian Caverns",
+      "note": "Beneath Mount Cinderpeak, Zarathax's lair"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Mount Cinderpeak",
+      "note": "Dragon awakening location"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Valorheim",
+      "note": "Capital city of Ashenfell"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Temple of Eternal Flame",
+      "note": "Home of Keepers of the Ancient Pact"
+    },
+    {
+      "domain": "narrative-team",
+      "entity_type": "organization",
+      "name": "Keepers of the Ancient Pact",
+      "note": "Maintain covenant between dragonkind and humanity"
+    },
+    {
+      "domain": "narrative-team",
+      "entity_type": "character",
+      "name": "Zarathax",
+      "note": "Ancient dragon, last of his kind"
+    },
+    {
+      "domain": "narrative-team",
+      "entity_type": "character",
+      "name": "Mordren the Gray",
+      "note": "Royal advisor, Shadow Lord servant"
+    },
+    {
+      "domain": "world-team",
+      "entity_type": "location",
+      "name": "Dragon's Graveyard",
+      "note": "Where ancient dragons go to die"
+    },
+    {
+      "domain": "narrative-team",
+      "entity_type": "character",
+      "name": "Vyrnax",
+      "note": "Shadow dragon, former mate of Zarathax"
+    }
+  ]
+}

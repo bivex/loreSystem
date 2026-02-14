@@ -1,0 +1,330 @@
+{
+  "realm": {
+    "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+    "name": "Ashenfell",
+    "type": "realm",
+    "description": "The primary setting of the story, a fantasy realm under threat from the Shadowblight corruption spreading from the north",
+    "status": "threatened",
+    "threat": "Shadowblight corruption"
+  },
+  "locations": [
+    {
+      "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      "name": "Obsidian Caverns",
+      "type": "dungeon",
+      "parent_location": "Mount Cinderpeak",
+      "description": "Deep caverns beneath Mount Cinderpeak where Zarathax slumbered for a thousand years",
+      "environment": {
+        "lighting": "dark",
+        "atmosphere": "sulfurous smoke billows from caves during awakening",
+        "features": ["ancient dragon lair", "eternal flame magic", "underground"]
+      },
+      "level_range": "unknown",
+      "danger_level": "variable",
+      "inhabitants": ["Zarathax (dragon)"]
+    },
+    {
+      "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+      "name": "Mount Cinderpeak",
+      "type": "mountain",
+      "description": "Volcanic mountain home to the Obsidian Caverns, site of Zarathax's lair",
+      "environment": {
+        "biome": "volcanic mountain",
+        "features": ["tremors during dragon awakening", "sulfurous smoke", "ancient ruins revealed"]
+      },
+      "connections": [
+        {
+          "target_id": "Valorheim",
+          "direction": "south",
+          "travel_time": "unknown",
+          "description": "Capital city to the south"
+        }
+      ]
+    },
+    {
+      "id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+      "name": "Temple of Eternal Flame",
+      "type": "temple",
+      "parent_location": "unknown",
+      "description": "Sacred temple of the Keepers of the Ancient Pact order, maintains covenant between dragonkind and humanity",
+      "environment": {
+        "atmosphere": "sacred",
+        "features": ["ritual components stored", "ancient texts", "holy magic"]
+      },
+      "inhabitants": ["High Priestess Mirana", "Keepers of the Ancient Pact"],
+      "nearby_locations": ["Moonwell Spring"]
+    },
+    {
+      "id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b",
+      "name": "Moonwell Spring",
+      "type": "spring",
+      "description": "Magical spring source of water used in rituals",
+      "environment": {
+        "features": ["magical water properties"]
+      }
+    },
+    {
+      "id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c",
+      "name": "Valorheim",
+      "type": "city",
+      "subtype": "capital",
+      "description": "Capital city of the realm, seat of King Aldric III",
+      "environment": {
+        "atmosphere": "royal",
+        "features": ["king's court", "Dragon Knights garrison"]
+      },
+      "population_center": true,
+      "political_status": "threatened",
+      "corruption_level": "half of noble houses controlled by shadow corruption",
+      "ruler": "King Aldric III",
+      "inhabitants": ["King Aldric III", "Mordren the Gray", "Dragon Knights"]
+    },
+    {
+      "id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d",
+      "name": "Northern Border Villages",
+      "type": "region",
+      "description": "Villages on the northern border that are disappearing, replaced by zones of absolute darkness",
+      "environment": {
+        "atmosphere": "corrupted",
+        "threat": "zones of absolute darkness consuming all who entered",
+        "status": "vanishing"
+      },
+      "danger_level": "extreme",
+      "threat_source": "Shadow Lord Nex'thara's emerging power"
+    },
+    {
+      "id": "b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e",
+      "name": "Ancient Ruins of the First Kingdom",
+      "type": "ruins",
+      "description": "Structures predating human civilization revealed when Zarathax emerged, covered in glowing runes from the Time Before",
+      "environment": {
+        "atmosphere": "ancient",
+        "lighting": "glowing runes",
+        "features": ["glowing runes", "Time Before artifacts", "material and shadow realm balance"]
+      },
+      "historical_period": "Time Before",
+      "significance": "Meeting place for the Alliance of Light"
+    },
+    {
+      "id": "c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f",
+      "name": "Ironpeak Mountains",
+      "type": "mountain_range",
+      "description": "Mountain range containing dwarven holds, refused to join the Alliance",
+      "political_status": "independent",
+      "inhabitants": ["dwarves"],
+      "historical_grudge": "bitter about Dragon Wars that destroyed ancestral city of Karak-Thun",
+      "cross_ref": {
+        "domain": "society-team",
+        "entity_type": "faction",
+        "name": "dwarven holds",
+        "note": "Refused to join Alliance due to ancient grudge"
+      }
+    },
+    {
+      "id": "d0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a",
+      "name": "Karak-Thun",
+      "type": "ruins",
+      "description": "Ancestral dwarven city destroyed during the Dragon Wars",
+      "status": "destroyed",
+      "historical_significance": "Source of dwarven bitterness toward dragons"
+    },
+    {
+      "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
+      "name": "Silverwood",
+      "type": "kingdom",
+      "subtype": "elven",
+      "description": "Elven kingdom that sealed its borders, trusting in its own magical defenses",
+      "political_status": "isolationist",
+      "environment": {
+        "features": ["magical defenses", "sealed borders"]
+      },
+      "cross_ref": {
+        "domain": "society-team",
+        "entity_type": "faction",
+        "name": "elven kingdom",
+        "note": "Elven kingdom of Silverwood"
+      }
+    },
+    {
+      "id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
+      "name": "Scorching Wastes",
+      "type": "region",
+      "description": "Desert wasteland region home to nomadic tribes",
+      "environment": {
+        "biome": "desert",
+        "features": ["scorching heat"]
+      },
+      "inhabitants": ["nomadic tribes"],
+      "political_status": "independent",
+      "cross_ref": {
+        "domain": "society-team",
+        "entity_type": "faction",
+        "name": "nomadic tribes",
+        "note": "Reject northern powers, follow their own gods"
+      }
+    },
+    {
+      "id": "a3b4c5d6-e7f8-4f9a-0b1c-2d3e4f5a6b7c",
+      "name": "Whispering Marshes",
+      "type": "region",
+      "subtype": "swamp",
+      "description": "Swamp region filled with illusion magic that shows worst fears",
+      "environment": {
+        "biome": "swamp",
+        "atmosphere": "illusion magic present",
+        "danger_level": "high",
+        "features": ["illusion magic", "shows worst fears to visitors"]
+      },
+      "locations": [
+        {
+          "name": "Last Temple",
+          "description": "Ruined temple where Dawn Blade was kept before being stolen"
+        }
+      ]
+    },
+    {
+      "id": "b4c5d6e7-f8a9-4f0b-1c2d-3e4f5a6b7c8d",
+      "name": "Last Temple",
+      "type": "temple",
+      "parent_location": "Whispering Marshes",
+      "status": "ruined",
+      "description": "Temple in the marshes that once held the Dawn Blade, now ruined",
+      "historical_significance": "Original location of Dawn Blade before theft"
+    },
+    {
+      "id": "c5d6e7f8-a9b0-4f1c-2d3e-4f5a6b7c8d9e",
+      "name": "Dragon's Graveyard",
+      "type": "dungeon",
+      "description": "Sacred site where ancient dragons go to die, contains remains of ancient dragons",
+      "environment": {
+        "atmosphere": "sacred but corrupted",
+        "danger_level": "extreme",
+        "features": ["remains of ancient dragons", "residual fire magic", "defiled by Shadow Lord's servants"]
+      },
+      "status": "corrupted",
+      "threat": "Shadow Lord sent servants to defile the site"
+    },
+    {
+      "id": "d6e7f8a9-b0c1-4f2d-3e4f-5a6b7c8d9e0f",
+      "name": "Azure Desert",
+      "type": "region",
+      "subtype": "desert",
+      "description": "Desert region containing the Sphinx",
+      "environment": {
+        "biome": "desert",
+        "features": ["sphinx guardian"]
+      },
+      "guardian": "Sphinx of the Azure Desert"
+    },
+    {
+      "id": "e7f8a9b0-c1d2-4f3e-4f5a-6b7c8d9e0f1a",
+      "name": "Necropolis of Fallen Kings",
+      "type": "dungeon",
+      "description": "Necropolis containing a lich-lord who guards the Fragment of Courage",
+      "environment": {
+        "atmosphere": "undead",
+        "danger_level": "extreme",
+        "features": ["lich-lord", "undead inhabitants"]
+      },
+      "guardian": "lich-lord"
+    },
+    {
+      "id": "f8a9b0c1-d2e3-4f4f-5a6b-7c8d9e0f1a2b",
+      "name": "Saltmere",
+      "type": "city",
+      "subtype": "port",
+      "description": "Port city home to the Thieves Guild led by Vex Shadowmere",
+      "environment": {
+        "features": ["port", "criminal underground"]
+      },
+      "inhabitants": ["Vex Shadowmere", "Thieves Guild"],
+      "political_status": "criminal influence",
+      "cross_ref": {
+        "domain": "narrative-team",
+        "entity_type": "character",
+        "name": "Vex Shadowmere",
+        "note": "Leader of Thieves Guild in Saltmere"
+      }
+    },
+    {
+      "id": "a9b0c1d2-e3f4-4f5a-6b7c-8d9e0f1a2b3c",
+      "name": "Void Between Worlds",
+      "type": "dimension",
+      "description": "Interdimensional space where Shadow Lord Nex'thara was sealed",
+      "environment": {
+        "features": ["prison dimension"]
+      },
+      "prisoner": "Shadow Lord Nex'thara",
+      "status": "seal breaking"
+    }
+  ],
+  "environmental_effects": [
+    {
+      "id": "b0c1d2e3-f4a5-4f6b-7c8d-9e0f1a2b3c4d",
+      "name": "Shadowblight",
+      "type": "corruption",
+      "description": "Corruption spreading across Ashenfell from the north, draining magic and consuming all it touches",
+      "effects": [
+        "Zones of absolute darkness",
+        "Consumes all who enter",
+        "Drains magical energy",
+        "Transforms creatures into shadow versions",
+        "Villages vanishing entirely"
+      ],
+      "source": "Shadow Lord Nex'thara",
+      "spread_pattern": "from north"
+    },
+    {
+      "id": "c1d2e3f4-a5b6-4f7c-8d9e-0f1a2b3c4d5e",
+      "name": "Eternal Flame",
+      "type": "magical_effect",
+      "description": "Ancient fire magic burning in Zarathax's chest, one of three anchors sealing the Shadow Lord",
+      "status": "weakening",
+      "significance": "One of three seals preventing Nex'thara's return"
+    },
+    {
+      "id": "d2e3f4a5-b6c7-4f8d-9e0f-1a2b3c4d5e6f",
+      "name": "Sunfire",
+      "type": "magical_effect",
+      "description": "New form of magic combining fire magic with holy light, effective against shadow creatures",
+      "created_by": "Kael Ironheart",
+      "components": ["fire magic", "holy light"],
+      "effectiveness": "burns away shadows"
+    },
+    {
+      "id": "e3f4a5b6-c7d8-4f9e-0f1a-2b3c4d5e6f7a",
+      "name": "Compulsion Magic",
+      "type": "magical_effect",
+      "description": "Dragon's voice carries magical weight that can freeze mortals in place",
+      "wielder": "Zarathax",
+      "effect": "Freezes all who hear in place"
+    }
+  ],
+  "spatial_relationships": [
+    {
+      "from": "Mount Cinderpeak",
+      "to": "Valorheim",
+      "direction": "south",
+      "travel_time": "unknown",
+      "description": "Capital city lies to the south of the mountain"
+    },
+    {
+      "from": "Valorheim",
+      "to": "Northern Border Villages",
+      "direction": "north",
+      "description": "Corrupted villages lie to the north of the capital"
+    },
+    {
+      "from": "Ironpeak Mountains",
+      "to": "Mount Cinderpeak",
+      "spatial_relationship": "separate mountain ranges",
+      "note": "Dwarven holds in separate mountains refused Alliance"
+    },
+    {
+      "from": "Dragon's Graveyard",
+      "to": "Mount Cinderpeak",
+      "travel_time": "barely made it back",
+      "description": "Zarathax barely returned from the graveyard to his mountain lair after exhausting his power"
+    }
+  ]
+}
