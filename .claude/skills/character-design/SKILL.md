@@ -4,92 +4,78 @@ description: Extract character entities from narrative text. Use when analyzing 
 ---
 # character-design
 
-Domain skill for character-architect subagent. Specific extraction rules and expertise.
+Domain skill for character extraction.
 
-## Domain Expertise
+## Entity Types
 
-Character psychology, development, and relationships:
-- **Character psychology**: Motivations, fears, desires, personality traits
-- **Character development**: Growth arcs, transformation, redemption
-- **Relationships**: Friends, rivals, family, romantic, allies, enemies
-- **Voice/performance**: Voice acting, mannerisms, physicality
-- **Character variants**: Alternate timelines, versions, appearances
+| Type | Description |
+|------|-------------|
+| `character` | Main character entity with name, role, personality, motivation |
+| `character_evolution` | Character development arc or growth moment |
+| `character_profile_entry` | Backstory detail or profile information |
+| `character_relationship` | Relationship between two characters |
+| `character_variant` | Alternate version, iteration, or form |
+| `voice_actor` | Voice acting information |
+| `motion_capture` | Motion capture performance data |
 
-## Entity Types (7 total)
+## Extraction Rules
 
-- **character** - Main character entities
-- **character_evolution** - Character development arcs
-- **character_profile_entry** - Character details/backstory
-- **character_relationship** - Relationships between characters
-- **character_variant** - Alternate versions/iterations
-- **voice_actor** - Voice acting information
-- **motion_capture** - Motion capture data
+1. **Identify characters**: Named characters with dialogue/actions, referred-to characters, groups
+2. **Extract details**: Name, role, status, personality traits, motivations, goals
+3. **Track development**: Growth moments, realizations, motivation changes
+4. **Map relationships**: Type (friend, rival, family, romantic), strength, dynamics
+5. **Note variants**: Alternate forms, timelines, disguises
 
-## Processing Guidelines
+## Domain Constraints
 
-When extracting character entities from chapter text:
-
-1. **Identify characters**
-   - Named characters with dialogue or actions
-   - Referred-to characters (mentioned by others)
-   - Character archetypes or groups
-
-2. **Extract character details**
-   - Name, role, status, location
-   - Personality traits, motivations, goals
-   - Relationships with other characters
-   - Voice/performance cues (if applicable)
-
-3. **Track character development**
-   - Growth moments, realizations, decisions
-   - Changes in motivation or worldview
-   - New relationships or broken bonds
-
-4. **Create entities** following loreSystem schema
+- `backstory`: minimum 100 characters
+- `ability.power_level`: integer 1–10
+- `combat_stats`: attack, defense, health, speed ≥ 0
+- `status`: "active" or "inactive"
 
 ## Output Format
 
-Generate `entities/character.json` with all extracted entities:
+Write to `entities/narrative.json` (narrative-team file):
 
 ```json
 {
-  "character": {
-    "id": "uuid",
-    "name": "Kira",
-    "role": "protagonist",
-    "personality": ["brave", "curious", "stubborn"],
-    "motivation": "Find her missing brother"
-  },
-  "character_evolution": {
-    "id": "uuid",
-    "character_id": "...",
-    "stage": "awakening",
-    "description": "Realizes her journey has just begun"
-  },
-  "character_relationship": {
-    "id": "uuid",
-    "character_a_id": "...",
-    "character_b_id": "...",
-    "type": "friend",
-    "strength": "strong"
-  }
+  "character": [
+    {
+      "id": "uuid",
+      "name": "Kira",
+      "description": "A brave young warrior searching for her missing brother",
+      "role": "protagonist",
+      "personality": ["brave", "curious", "stubborn"],
+      "motivation": "Find her missing brother",
+      "status": "active"
+    }
+  ],
+  "character_relationship": [
+    {
+      "id": "uuid",
+      "name": "Kira-Marcus Bond",
+      "description": "Strong friendship forged through shared battles",
+      "character_a_id": "kira-uuid",
+      "character_b_id": "marcus-uuid",
+      "type": "friend",
+      "strength": "strong"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "character",
+      "source_id": "kira-uuid",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Eldoria Village — Kira's home village"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "character-design", "extracted_at": "...", "entity_count": 2 }
 }
 ```
 
 ## Key Considerations
 
-- **Uniqueness**: Each character has unique ID (name variations reference same ID)
-- **Relationships**: Capture both explicit and implicit relationships
-- **Development**: Track incremental changes, not just major turning points
-- **Voice/performance**: Only include if text contains relevant details
-
-## Example
-
-**Input:**
-> "Kira looked at Marcus. 'You've always been there for me,' she whispered. He smiled. The hesitation in her voice was gone now. She knew what she had to do."
-
-**Extract:**
-- Character: Kira (growth, confidence)
-- Character: Marcus (supportive ally)
-- Relationship: Kira-Marcus (friend, strong bond)
-- Evolution: Kira's confidence/hesitation resolved
+- **Uniqueness**: Each character has a unique ID; name variations reference the same ID
+- **Implicit relationships**: Track both explicit and implied connections
+- **Cross-references**: Locations, factions, items mentioned with characters → cross_references

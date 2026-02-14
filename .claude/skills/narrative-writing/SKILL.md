@@ -1,78 +1,61 @@
 ---
 name: narrative-writing
-description: Extract narrative structure entities from text. Use when analyzing stories, chapters, acts, episodes, prologues, epilogues, plot branches, and story arc progression.
+description: Extract narrative structure entities from text. Use when analyzing stories, chapters, acts, episodes, prologues, epilogues, plot branches, campaigns, events, and story arc progression.
 ---
 # narrative-writing
 
-Domain skill for narrative-specialist subagent. Specific extraction rules and expertise.
+Domain skill for narrative structure extraction.
 
-## Domain Expertise
+## Entity Types
 
-Narrative structure, storytelling, and dramatic elements:
-- **Narrative structure**: Three-act structure, hero's journey, story arcs
-- **Dramaturgy**: Pacing, tension, climaxes, resolutions
-- **Chapter organization**: How chapters build on each other
-- **Plot branching**: When and how stories diverge
-- **Prologues/epilogues**: Setup and payoff, framing devices
+| Type | Description |
+|------|-------------|
+| `story` | Main narrative container |
+| `chapter` | Individual story chapter |
+| `act` | Major story division (three-act structure) |
+| `episode` | Story episode or subdivision |
+| `prologue` | Introduction, backstory setup |
+| `epilogue` | Conclusion, aftermath |
+| `plot_branch` | Story branch or divergence |
+| `branch_point` | Decision point in narrative |
+| `alternate_reality` | Alternative timeline or reality |
+| `consequence` | Outcome of a decision or event |
+| `ending` | Story ending variant |
+| `campaign` | Multi-story campaign container |
+| `event` | Narrative event or incident |
+| `event_chain` | Sequence of linked events |
 
-## Entity Types (8 total)
+## Extraction Rules
 
-- **story** - Main narrative container
-- **chapter** - Individual story chapters
-- **act** - Story acts (major divisions)
-- **episode** - Story episodes (subdivisions)
-- **prologue** - Introduction/backstory
-- **epilogue** - Conclusion/aftermath
-- **plot_branch** - Story branch points
-- **branch_point** - Decision points in narrative
-
-## Processing Guidelines
-
-When extracting narrative entities from chapter text:
-
-1. **Identify story structure**
-   - Is this a new story or continuation?
-   - What act/chapter/episode does this represent?
-   - Are there prologue/epilogue elements?
-
-2. **Extract narrative elements**
-   - Story arc progression
-   - Chapter boundaries and transitions
-   - Branching decisions or multiple outcomes
-   - Setup/payoff moments
-
-3. **Create entities** following loreSystem schema
-
-4. **Link entities**
-   - All chapters reference their story
-   - Episodes reference their chapters
-   - Branch points reference their parent entities
+1. **Identify narrative structure**: Is this a new story or continuation? What act/chapter/episode?
+2. **Extract hierarchy**: Stories contain acts, acts contain chapters, chapters contain episodes
+3. **Track branching**: Decision points, alternative paths, multiple outcomes
+4. **Link events**: Events chain together; track cause-and-effect sequences
+5. **Note pacing**: Where acts break, where tension rises/falls
 
 ## Output Format
 
-Generate `entities/narrative.json` with all extracted entities:
+Write to `entities/narrative.json`:
 
 ```json
 {
-  "story": { "id": "uuid", "title": "...", "summary": "..." },
-  "chapter": { "id": "uuid", "story_id": "...", "number": 1, "title": "..." },
-  "act": { "id": "uuid", "story_id": "...", "number": 1, "title": "..." }
+  "story": [
+    { "id": "uuid", "name": "The Shadow War", "description": "...", "type": "linear" }
+  ],
+  "chapter": [
+    { "id": "uuid", "name": "Chapter 1: Awakening", "description": "...", "story_id": "story-uuid", "number": 1 }
+  ],
+  "event": [
+    { "id": "uuid", "name": "The Great Battle", "description": "...", "outcome": "ongoing" }
+  ],
+  "cross_references": [],
+  "_metadata": { "source": "...", "skill": "narrative-writing", "extracted_at": "...", "entity_count": 3 }
 }
 ```
 
 ## Key Considerations
 
-- **Continuity**: Ensure chapter numbers and references are consistent
-- **Pacing**: Identify where acts/episodes should break
-- **Branching**: Capture all possible narrative paths
-- **Thematic elements**: Note recurring themes, motifs, symbolism
-
-## Example
-
-**Input:**
-> "Chapter 7: The Awakening. As dawn broke over Eldoria, Kira realized her journey was just beginning. Two paths lay before her..."
-
-**Extract:**
-- Chapter 7 with proper ordering
-- Potential plot branch (two paths before Kira)
-- Act structure (beginning vs middle of story)
+- **Continuity**: Chapter numbers and story references must be consistent
+- **Hierarchy**: All chapters reference their story; episodes reference chapters
+- **Branching**: Capture all possible narrative paths at branch points
+- **Events own characters by reference**: Characters mentioned in events go to cross_references targeting character-design

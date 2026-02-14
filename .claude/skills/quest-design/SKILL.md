@@ -4,103 +4,69 @@ description: Extract quest entities from narrative text. Use when analyzing ques
 ---
 # quest-design
 
-Domain skill for quest-designer subagent. Specific extraction rules and expertise.
+Domain skill for quest structure extraction.
 
-## Domain Expertise
+## Entity Types
 
-Game design, quest structures, and player objectives:
-- **Quest design**: Main quests, side quests, radiant quests
-- **Quest structure**: Chains, branching, multi-stage quests
-- **Objectives**: Kill, collect, talk, explore, defend, escort
-- **Rewards**: XP, items, reputation, story progression
-- **Moral systems**: Paragon/renegade, karma, alignment choices
+| Type | Description |
+|------|-------------|
+| `quest` | Main quest container |
+| `quest_chain` | Sequence of linked quests |
+| `quest_node` | Individual step within a quest chain |
+| `quest_giver` | NPC who assigns the quest |
+| `quest_objective` | Specific goal within a quest |
+| `quest_prerequisite` | Requirement to start a quest |
+| `quest_reward_tier` | Reward tier or level for completion |
+| `quest_tracker` | Progress tracking state |
+| `moral_choice` | Player moral decision point |
 
-## Entity Types (9 total)
+## Domain Constraints
 
-- **quest** - Main quest containers
-- **quest_chain** - Sequenced quests
-- **quest_node** - Individual quest steps
-- **quest_giver** - NPCs who assign quests
-- **quest_objective** - Specific goals
-- **quest_prerequisite** - Requirements to start
-- **quest_reward_tier** - Reward tiers
-- **quest_tracker** - Progress tracking
-- **moral_choice** - Player moral decisions
-
-## Processing Guidelines
-
-When extracting quest entities from chapter text:
-
-1. **Identify quest opportunities**
-   - Tasks characters are asked to complete
-   - Objectives mentioned or implied
-   - Rewards offered or promised
-   - Moral decisions presented
-
-2. **Extract quest details**
-   - Quest name, description, giver
-   - Objectives (collect, kill, talk, explore)
-   - Prerequisites (level, items, story progress)
-   - Rewards (XP, items, reputation)
-   - Moral implications (helpful vs harmful)
-
-3. **Structure quest chains**
-   - Which quests lead to others
-   - Branching paths
-   - Optional vs mandatory steps
-
-4. **Create entities** following loreSystem schema
+- `quest.status`: active, completed, failed, cancelled
+- `objective.type`: kill, collect, interact, deliver, escort, defend, explore, talk, craft, use
+- `objective.status`: not_started, in_progress, completed, failed
+- `prerequisite.type`: level, quest, item, skill, location, reputation, custom
 
 ## Output Format
 
-Generate `entities/quest.json` with all extracted entities:
+Write to `entities/narrative.json` (narrative-team file):
 
 ```json
 {
-  "quest": {
-    "id": "uuid",
-    "name": "Find Lost Brother",
-    "type": "main",
-    "description": "Kira must find her missing brother",
-    "quest_giver": "Elder Theron"
-  },
-  "quest_chain": {
-    "id": "uuid",
-    "root_quest_id": "...",
-    "next_quest_id": "..."
-  },
-  "quest_objective": {
-    "id": "uuid",
-    "quest_id": "...",
-    "description": "Speak to village elder",
-    "type": "talk"
-  },
-  "moral_choice": {
-    "id": "uuid",
-    "quest_id": "...",
-    "description": "Save village or pursue your brother?",
-    "alignment_impact": "neutral",
-    "consequence": "affects reputation with faction"
-  }
+  "quest": [
+    {
+      "id": "uuid",
+      "name": "Find Lost Brother",
+      "description": "Kira must find her missing brother near the Ancient Ruins",
+      "type": "main",
+      "status": "active"
+    }
+  ],
+  "quest_objective": [
+    {
+      "id": "uuid",
+      "name": "Speak to village elder",
+      "description": "Ask Elder Theron about the brother's last known location",
+      "quest_id": "quest-uuid",
+      "type": "talk",
+      "status": "not_started"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "quest",
+      "source_id": "quest-uuid",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Ancient Ruins — quest destination"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "quest-design", "extracted_at": "...", "entity_count": 2 }
 }
 ```
 
 ## Key Considerations
 
-- **Implicit quests**: Some objectives may be implied, not explicitly stated
+- **Implicit quests**: Some objectives are implied, not explicitly stated
 - **Moral ambiguity**: Not all choices are clearly good/bad
-- **Quest givers**: May be NPCs, systems, or circumstances
-- **Rewards**: Story progression is often more valuable than items
-
-## Example
-
-**Input:**
-> "The elder looked at Kira. 'Your brother was last seen near Ancient Ruins. If you find him, bring me proof, and I'll reward you. But be warned: the path is dangerous.'"
-
-**Extract:**
-- Quest: Find Lost Brother (main quest)
-- Quest giver: Elder Theron
-- Objective: Go to Ancient Ruins, find brother
-- Objective: Bring proof to elder
-- Prerequisite: Dangerous path (implies level/power requirement)
-- Reward: Unclear (implies item/reputation from elder)
+- **Cross-references**: Characters, locations, items mentioned in quests → cross_references to their owning skills

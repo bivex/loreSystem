@@ -1,60 +1,68 @@
 ---
 name: lore-writing
-description: Extract lore entities from narrative text. Use when analyzing codex entries, bestiary entries, journal pages, dreams, nightmares, memories, secrets, and worldbuilding fragments.
+description: Extract lore and narrative device entities from text. Use when analyzing codex entries, bestiary entries, journals, dreams, nightmares, memories, secrets, foreshadowing, and plot devices.
 ---
 # lore-writing
 
-Доменный скилл для Lore Chronicler. Специфические правила извлечения и экспертиза.
+Domain skill for lore knowledge and narrative device extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Worldbuilding**: History, culture, myths, legends
-- **Secrets**: Hidden knowledge, forbidden lore, mysteries
-- **Bestiary**: Creatures, monsters, flora, fauna
-- **Dreams/visions**: Prophetic dreams, nightmares, visions
-- **Journaling**: Character reflections, discoveries, notes
+| Type | Description |
+|------|-------------|
+| `lore_fragment` | Piece of world lore or historical knowledge |
+| `codex_entry` | Codex or encyclopedia entry |
+| `journal_page` | Journal, diary, or log entry |
+| `bestiary_entry` | Creature or monster description |
+| `memory` | Character memory or recollection |
+| `dream` | Dream or prophetic vision |
+| `nightmare` | Nightmare or dark vision |
+| `foreshadowing` | Narrative foreshadowing element |
+| `chekhovs_gun` | Setup element that must pay off later |
+| `red_herring` | Misleading narrative element |
+| `deus_ex_machina` | Unexpected resolution device |
+| `flash_forward` | Future glimpse or time skip |
+| `plot_device` | General narrative mechanism |
+| `lore_axioms` | Fundamental world rules or laws |
 
-## Entity Types (8 total)
+## Extraction Rules
 
-- **lore_fragment** - Pieces of lore
-- **codex_entry** - Codex entries
-- **journal_page** - Journal pages
-- **bestiary_entry** - Creature descriptions
-- **memory** - Character memories
-- **dream** - Dreams and visions
-- **nightmare** - Nightmares
-- **secret_area** - Secret locations
+1. **Lore fragments**: Historical references, myths, legends, folklore mentioned in passing
+2. **Bestiary**: Creature abilities, behaviors, habitats, weaknesses
+3. **Dreams/visions**: Symbolism, prophetic content, emotional context
+4. **Narrative devices**: Foreshadowing setups, Chekhov's guns, red herrings
+5. **World rules**: Fundamental axioms that govern the world's logic
 
-## Processing Guidelines
+## Output Format
 
-When extracting lore entities from chapter text:
+Write to `entities/narrative.json` (narrative-team file):
 
-1. **Identify lore elements**:
-   - Historical references mentioned in passing
-   - Myths, legends, folklore
-   - Creature descriptions (beasts, monsters)
-   - Dreams, visions, prophetic moments
-   - Secrets, mysteries, forbidden knowledge
-   - Journals, diaries, notes
-
-2. **Extract lore details**:
-   - Historical fragments, cultural notes
-   - Creature abilities, behaviors, habitats
-   - Dream/vision symbolism and meaning
-   - Secret locations and their contents
-   - Journal reflections and discoveries
-
-3. **Organize lore connections**:
-   - Link fragments to larger stories
-   - Connect dreams to predictions/foreshadowing
-   - Reference historical contexts
-   - Note recurring symbols or themes
-
-4. **Create schema-compliant entities** with proper JSON structure
+```json
+{
+  "lore_fragment": [
+    {
+      "id": "uuid",
+      "name": "The Old War Legend",
+      "description": "A legend about the ancient war between mages and warriors"
+    }
+  ],
+  "foreshadowing": [
+    {
+      "id": "uuid",
+      "name": "The Cracked Amulet",
+      "description": "The amulet shows a crack — hints at its eventual breaking",
+      "setup_chapter": "chapter_3",
+      "expected_payoff": "amulet breaks in climax"
+    }
+  ],
+  "cross_references": [],
+  "_metadata": { "source": "...", "skill": "lore-writing", "extracted_at": "...", "entity_count": 2 }
+}
+```
 
 ## Key Considerations
 
-- **Fragmentary nature**: Lore often comes in small pieces
-- **Unreliable narrators**: Stories may be biased or inaccurate
-- **Symbolic dreams**: Not all dreams are literal
-- **Lost knowledge**: Some lore may be incomplete or forgotten
+- **Fragmentary nature**: Lore often comes in small, incomplete pieces
+- **Unreliable narrators**: Stories within stories may be biased or inaccurate
+- **Symbolic dreams**: Not all dream content is literal
+- **Cross-references**: Creatures, locations, characters → cross_references to owning skills

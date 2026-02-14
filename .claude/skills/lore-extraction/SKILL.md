@@ -5,15 +5,35 @@ user-invocable: false
 ---
 # lore-extraction
 
-Базовый скил для всех loreSystem субагентов. Общие правила извлечения сущностей из нарративного текста.
+Base skill for all loreSystem extraction subagents. Common rules for extracting entities from narrative text.
 
-## Правила извлечения
+## Extraction Pipeline
 
-1. **Идентификация сущностей**: Ищи упоминания сущностей в тексте
-2. **Контекстный анализ**: Используй окружающий контекст для точного извлечения полей
-3. **Связи между сущностями**: Записывай связи (relationship) между сущностями
-4. **Валидация данных**: Проверяй соответствие типов и обязательных полей
+1. **Read** the source text completely before extracting
+2. **Identify** entities — look for named things, described systems, relationships
+3. **Classify** each entity to its correct type from the entity ownership map
+4. **Extract** fields — name, description, type-specific attributes
+5. **Link** related entities via ID references or cross-references
+6. **Validate** against domain model constraints
+7. **Output** as JSON following the json-formatter schema
 
-## Выход
+## Entity Identification Rules
 
-Результат всегда в формате JSON, соответствующий loreSystem схеме.
+- Named entities (proper nouns, titles) → extract with exact name
+- Described systems (magic system, economy) → extract with descriptive name
+- Implied entities (unnamed but significant) → extract with contextual name
+- Groups/collections → extract as single entity with members in description
+
+## Cross-Domain References
+
+When text mentions an entity owned by another skill:
+- Do NOT create the entity — it belongs to the other skill
+- Add a `cross_references` entry pointing to the other skill
+- Include enough context in `target_hint` for the lead to merge
+
+## Quality Rules
+
+- Extract only what the text explicitly states or strongly implies
+- Do not invent details not supported by the text
+- Mark uncertain extractions with `"confidence": "low"` in metadata
+- Prefer fewer high-quality entities over many low-quality ones
