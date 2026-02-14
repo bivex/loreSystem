@@ -38,33 +38,40 @@ Write to `entities/society.json` (society-team file):
 
 ```json
 {
-  "social_class": [
+  "social_classes": [
     {
-      "id": "uuid",
-      "name": "Noble Caste",
-      "description": "Hereditary aristocratic class with political privileges",
-      "rank": 1
+      "id": "2d9a3c9e-78a9-4b5d-9c5e-0f6d5b3b9f2a",
+      "tenant_id": "t-1",
+      "character_id": "c-1",
+      "class_name": "noble",
+      "tier": 7,
+      "title": "Lord",
+      "benefits": ["land ownership", "council vote"],
+      "restrictions": ["must serve in court"],
+      "hereditary": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
   ],
-  "festival": [
+  "festivals": [
     {
-      "id": "uuid",
+      "id": "7c9a3b21-3b54-4c9a-9c2a-6f18d0f1b6c2",
+      "tenant_id": "t-1",
       "name": "Festival of Lights",
-      "description": "Annual winter festival remembering those lost in the Great War",
-      "frequency": "annual",
-      "season": "winter"
+      "festival_type": "memorial",
+      "location_id": "l-1",
+      "start_date": "2026-12-20T00:00:00+00:00",
+      "end_date": "2026-12-27T00:00:00+00:00",
+      "organizer_id": "c-1",
+      "participants": ["c-2", "c-3"],
+      "rewards": { "honor": 10 },
+      "traditions": ["lantern release", "oath of remembrance"],
+      "is_annual": true,
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
-  ],
-  "cross_references": [
-    {
-      "source_type": "festival",
-      "source_id": "uuid",
-      "target_type": "era",
-      "target_skill": "historical-research",
-      "target_hint": "Festival commemorates the Great War era"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "social-culture", "extracted_at": "...", "entity_count": 2 }
+  ]
 }
 ```
 
@@ -73,4 +80,4 @@ Write to `entities/society.json` (society-team file):
 - **Social stratification**: Clear hierarchies with barriers between classes
 - **Reputation effects**: Honor/karma/reputation affect NPC interactions
 - **Cultural values**: Festivals reflect what society values most
-- **Cross-references**: Historical eras → historical-research; locations → world-building
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

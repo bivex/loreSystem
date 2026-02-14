@@ -35,35 +35,50 @@ Write to `entities/society.json` (society-team file):
 
 ```json
 {
-  "era": [
+  "eras": [
     {
-      "id": "uuid",
+      "id": 1,
+      "world_id": 1,
       "name": "Age of Magic",
       "description": "Ancient era when sorcerers ruled the skies",
-      "timeframe": "ancient",
-      "status": "past"
+      "start_date": "1026-01-01T00:00:00+00:00",
+      "end_date": "1526-01-01T00:00:00+00:00",
+      "parent_era_id": null,
+      "child_era_ids": [],
+      "major_events": ["Great War"],
+      "cultural_notes": "Magic was central to society",
+      "technological_level": "Arcane",
+      "is_ongoing": false,
+      "color_code": "#5b3bff",
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "era_transition": [
+  "era_transitions": [
     {
-      "id": "uuid",
+      "id": 2,
+      "world_id": 1,
       "name": "The Great War Transition",
       "description": "Magic waned after the Great War, ending the Age of Magic",
-      "from_era_id": "era-uuid-1",
-      "to_era_id": "era-uuid-2",
-      "cause": "Great War"
+      "from_era_id": 1,
+      "to_era_id": 3,
+      "transition_date": "1526-01-01T00:00:00+00:00",
+      "transition_type": "catastrophic",
+      "trigger_events": ["Great War"],
+      "key_figures": [5],
+      "social_impact": "Collapse of mage houses",
+      "economic_impact": null,
+      "political_impact": null,
+      "magical_impact": "Mana scarcity",
+      "stories_and_legends": ["The Last Spell"],
+      "artifacts": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "cross_references": [
-    {
-      "source_type": "era_transition",
-      "source_id": "uuid",
-      "target_type": "war",
-      "target_skill": "military-strategy",
-      "target_hint": "The Great War that caused the era transition"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "historical-research", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 3
 }
 ```
 
@@ -71,4 +86,4 @@ Write to `entities/society.json` (society-team file):
 
 - **Relative time**: Not all systems use absolute dates (cycles, ages)
 - **Multiple perspectives**: History may differ by culture (victors write history)
-- **Cross-references**: Wars → military-strategy; rulers → character-design; ceremonies → social-culture
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

@@ -28,12 +28,12 @@ Base skill for all loreSystem extraction subagents. Common rules for extracting 
 
 When text mentions an entity owned by another skill:
 - Do NOT create the entity — it belongs to the other skill
-- Add a `cross_references` entry pointing to the other skill
-- Include enough context in `target_hint` for the lead to merge
+- Record the reference in a separate draft note for the lead to merge
+- Include enough context (name, location, relation) for reconciliation
 
 ## Quality Rules
 
 - Extract only what the text explicitly states or strongly implies
 - Do not invent details not supported by the text
-- Mark uncertain extractions with `"confidence": "low"` in metadata
+- If unsure, add a short comment in your draft note (not in the JSON export)
 - Prefer fewer high-quality entities over many low-quality ones

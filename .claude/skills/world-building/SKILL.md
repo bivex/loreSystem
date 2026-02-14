@@ -24,7 +24,7 @@ Domain skill for location and geography extraction.
 
 ## Domain Constraints
 
-- `location.type`: building, house, barn, temple, castle, dungeon, cave, forest, mountain, city, village, shop, tavern, ruins, landmark, other
+- `location_type`: building, house, barn, temple, castle, dungeon, cave, forest, mountain, city, village, shop, tavern, ruins, landmark, other
 - `name`: max 255 characters
 
 ## Extraction Rules

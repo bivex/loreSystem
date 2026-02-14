@@ -57,36 +57,63 @@ When extracting progression entities from chapter text:
 
 ## Output Format
 
-Generate `entities/progression.json` with schema-compliant entities following this structure:
+Generate `entities/progression.json` with plural collections and domain fields:
+
 ```json
 {
-  "skill": {
-    "id": "uuid",
-    "name": "Shadow Strike",
-    "type": "active",
-    "description": "Deal 200% damage from stealth",
-    "prerequisite": "stealth_level_5"
-  },
-  "perk": {
-    "id": "uuid",
-    "name": "Eagle Eye",
-    "type": "passive",
-    "effect": "+50% detection range"
-  },
-  "attribute": {
-    "id": "uuid",
-    "character_id": "...",
-    "name": "agility",
-    "current_value": 75,
-    "max_value": 100
-  },
-  "progression_event": {
-    "id": "uuid",
-    "character_id": "...",
-    "type": "level_up",
-    "description": "Kira reached level 15",
-    "timestamp": "chapter_7"
-  }
+  "skills": [
+    {
+      "id": 1,
+      "character_id": 3,
+      "name": "Shadow Strike",
+      "description": "Deal 200% damage from stealth",
+      "skill_type": "active",
+      "category": "combat",
+      "rarity": "rare",
+      "level": 1,
+      "max_level": 10,
+      "experience": 0,
+      "experience_to_next": 100,
+      "power": 2.0,
+      "mastery": 0,
+      "cooldown_seconds": 12,
+      "mana_cost": 20,
+      "prerequisite_skill_ids": [],
+      "minimum_level": 5,
+      "icon_id": null,
+      "tags": ["stealth"],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "attributes": [
+    {
+      "id": 2,
+      "character_id": 3,
+      "name": "agility",
+      "description": "Increases movement speed",
+      "attribute_type": "physical",
+      "scale_type": "linear",
+      "base_value": 75,
+      "current_value": 75,
+      "maximum_value": 100,
+      "flat_bonus": 0,
+      "percentage_bonus": 0,
+      "temporary_bonus": null,
+      "is_derived": false,
+      "derivation_formula": null,
+      "source_attributes": [],
+      "minimum_value": 0,
+      "display_name": "Agility",
+      "icon_id": null,
+      "tags": ["movement"],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ],
+  "next_id": 3
 }
 ```
 
@@ -103,42 +130,34 @@ Generate `entities/progression.json` with schema-compliant entities following th
 **Input:**
 > "Kira felt different. The training had paid off. She could now move faster, see further. The elder's teachings about shadow arts had unlocked something within her—she could strike from darkness like never before."
 
-**Extract:**
+**Extract (short):**
 ```json
 {
-  "progression_event": {
-    "id": "uuid",
-    "character_id": "kira",
-    "type": "training_complete",
-    "description": "Kira completed the elder's training"
-  },
-  "attribute": {
-    "id": "uuid",
-    "character_id": "kira",
-    "name": "agility",
-    "current_value": "increased",
-    "description": "Can now move faster"
-  },
-  "attribute": {
-    "id": "uuid",
-    "character_id": "kira",
-    "name": "perception",
-    "current_value": "increased",
-    "description": "Can now see further"
-  },
-  "skill": {
-    "id": "uuid",
-    "character_id": "kira",
-    "name": "Shadow Strike",
-    "type": "active",
-    "description": "Strike from darkness with enhanced power"
-  },
-  "mastery": {
-    "id": "uuid",
-    "character_id": "kira",
-    "name": "Shadow Arts",
-    "level": "unlocked",
-    "description": "Elder's teachings unlocked shadow arts potential"
-  }
+  "skills": [
+    {
+      "id": 10,
+      "character_id": 3,
+      "name": "Shadow Strike",
+      "description": "Strike from darkness with enhanced power",
+      "skill_type": "active",
+      "category": "combat",
+      "rarity": "rare",
+      "level": 1,
+      "max_level": 10,
+      "experience": 0,
+      "experience_to_next": 100,
+      "power": 1.8,
+      "mastery": 0,
+      "cooldown_seconds": 12,
+      "mana_cost": 20,
+      "prerequisite_skill_ids": [],
+      "minimum_level": 5,
+      "icon_id": null,
+      "tags": ["shadow"],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
+  ]
 }
 ```

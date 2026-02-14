@@ -1,6 +1,6 @@
 ---
 name: json-formatter
-description: JSON formatting rules for lore entity output. Enforces strict JSON, UUID identifiers, arrays per entity type, cross-references, and loreSystem schema compliance.
+description: JSON formatting rules for lore entity output. Enforces export-compatible JSON, plural collections, consistent IDs, and domain field names.
 user-invocable: false
 ---
 # json-formatter
@@ -12,7 +12,7 @@ Base skill for JSON output formatting. All extraction skills produce JSON that c
 1. **Valid JSON**: Output must be parseable JSON — no trailing commas, no comments.
 2. **Export schema**: Use the GUI export format defined in `src/presentation/gui/lore_data.py`.
 3. **Plural collections**: Each entity collection is a top-level key with a plural name and an array value (e.g., `worlds`, `characters`, `locations`).
-4. **IDs are numeric**: Use integer IDs and keep them consistent across references. If you generate new IDs, include `next_id` as max+1.
+4. **IDs are consistent**: Use integer IDs for GUI export collections. For entity types that use UUIDs in the domain model, use UUID strings consistently across references.
 5. **Field names**: Use exact domain field names (snake_case). Do not invent `type` or `entity_type` unless that field exists in the domain model.
 6. **Dates**: Use ISO 8601 strings for timestamps (`created_at`, `updated_at`, `start_date`, `end_date`).
 
@@ -35,17 +35,24 @@ Base skill for JSON output formatting. All extraction skills produce JSON that c
   "handouts": [],
   "inspirations": [],
   "environments": [],
+  "banners": [],
+  "character_relationships": [],
   "factions": [],
+  "shops": [],
   "maps": [],
   "notes": [],
   "requirements": [],
   "sessions": [],
   "tokenboards": [],
+  "pity": [],
+  "pulls": [],
+  "player_profiles": [],
   "currencies": [],
   "rewards": [],
   "purchases": [],
   "event_chains": [],
   "faction_memberships": [],
+  "lore_axioms": [],
   "music_controls": [],
   "music_states": [],
   "music_themes": [],

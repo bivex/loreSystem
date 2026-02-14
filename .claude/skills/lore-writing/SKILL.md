@@ -39,24 +39,40 @@ Write to `entities/narrative.json` (narrative-team file):
 
 ```json
 {
-  "lore_fragment": [
+  "lore_fragments": [
     {
-      "id": "uuid",
-      "name": "The Old War Legend",
-      "description": "A legend about the ancient war between mages and warriors"
+      "id": 1,
+      "world_id": 1,
+      "title": "The Old War Legend",
+      "content": "A legend about the ancient war between mages and warriors",
+      "rarity": "common",
+      "is_discoverable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "foreshadowing": [
+  "foreshadowings": [
     {
-      "id": "uuid",
+      "id": 2,
+      "story_id": 10,
+      "scene_id": 11,
+      "foreshadowing_type": "symbolic",
+      "subtlety": "moderate",
       "name": "The Cracked Amulet",
       "description": "The amulet shows a crack — hints at its eventual breaking",
-      "setup_chapter": "chapter_3",
-      "expected_payoff": "amulet breaks in climax"
+      "hinted_event_id": null,
+      "is_paid_off": false,
+      "player_discovery_rate": 40.0,
+      "character_ids": [3],
+      "location_id": 5,
+      "requires_knowledge": [1],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "cross_references": [],
-  "_metadata": { "source": "...", "skill": "lore-writing", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 3
 }
 ```
 
@@ -65,4 +81,4 @@ Write to `entities/narrative.json` (narrative-team file):
 - **Fragmentary nature**: Lore often comes in small, incomplete pieces
 - **Unreliable narrators**: Stories within stories may be biased or inaccurate
 - **Symbolic dreams**: Not all dream content is literal
-- **Cross-references**: Creatures, locations, characters → cross_references to owning skills
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

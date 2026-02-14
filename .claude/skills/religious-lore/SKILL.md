@@ -36,34 +36,41 @@ Write to `entities/society.json` (society-team file):
 
 ```json
 {
-  "cult": [
+  "cults": [
     {
-      "id": "uuid",
+      "id": "b2d3a0f1-3a1c-4d3e-9a4b-2c3d4e5f6a7b",
+      "tenant_id": "t-1",
       "name": "Order of the Void",
-      "description": "Secretive cult worshipping the entities beyond the stars",
-      "alignment": "evil"
+      "deity_id": "d-1",
+      "leader_id": "c-1",
+      "secret_knowledge": ["Star-binding rites"],
+      "rituals": ["Night of Silence"],
+      "membership_count": 120,
+      "secrecy_level": 85,
+      "alignment": "evil",
+      "headquarters_location_id": "l-1",
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
   ],
-  "curse": [
+  "curses": [
     {
-      "id": "uuid",
-      "name": "Curse of the Blood Moon",
-      "description": "Transforms the afflicted under moonlight",
-      "trigger": "blood_moon",
-      "effect": "transformation",
-      "duration": "permanent until lifted"
+      "id": "c7b6a5d4-3e2f-4a1b-9c8d-7e6f5a4b3c2d",
+      "tenant_id": "t-1",
+      "character_id": "c-2",
+      "curse_name": "Curse of the Blood Moon",
+      "source_id": "d-1",
+      "severity": 80,
+      "effects": ["transformation"],
+      "symptoms": ["nightmares", "fever"],
+      "duration": "until_cured",
+      "removal_conditions": ["Moonlit ritual"],
+      "spread_type": "none",
+      "cure_methods": ["Holy water"],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
-  ],
-  "cross_references": [
-    {
-      "source_type": "holy_site",
-      "source_id": "uuid",
-      "target_type": "location",
-      "target_skill": "world-building",
-      "target_hint": "Temple of the Void — also a physical location"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "religious-lore", "extracted_at": "...", "entity_count": 2 }
+  ]
 }
 ```
 
@@ -72,4 +79,4 @@ Write to `entities/society.json` (society-team file):
 - **Multiple faiths**: Worlds often have competing religions
 - **Lost religions**: Ancient faiths may have faded — extract remnants
 - **Heretical practices**: Cults vs mainstream religion
-- **Cross-references**: Holy sites → world-building; cult leaders → character-design; religious factions → faction-design
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

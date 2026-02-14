@@ -33,33 +33,36 @@ Write to `entities/world.json` (world-team file):
 
 ```json
 {
-  "district": [
+  "districts": [
     {
-      "id": "uuid",
+      "id": "4dbf72a5-1a2b-4b3c-9d4e-5f6a7b8c9d0e",
+      "tenant_id": "t-1",
       "name": "Merchant Quarter",
-      "description": "Bustling commercial district with shops and warehouses",
-      "wealth_level": "middle",
-      "population": "high"
+      "city_id": "l-1",
+      "district_type": "commercial",
+      "population": 12000,
+      "safety_level": 0.6,
+      "prosperity_level": 0.8,
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
   ],
   "slums": [
     {
-      "id": "uuid",
+      "id": "c2d8b8a1-9e7b-4c6d-8a1b-2c3d4e5f6a7b",
+      "tenant_id": "t-1",
       "name": "The Warrens",
-      "description": "Overcrowded slum district near the southern wall",
-      "conditions": "poor"
+      "city_id": "l-1",
+      "district_type": "slums",
+      "population": 25000,
+      "safety_level": 0.2,
+      "prosperity_level": 0.1,
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
-  ],
-  "cross_references": [
-    {
-      "source_type": "district",
-      "source_id": "uuid",
-      "target_type": "location",
-      "target_skill": "world-building",
-      "target_hint": "Part of Eldoria City"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "urban-design", "extracted_at": "...", "entity_count": 2 }
+  ]
 }
 ```
 
@@ -68,4 +71,4 @@ Write to `entities/world.json` (world-team file):
 - **Social inequality**: Slums vs noble districts show wealth gap
 - **Mixed use**: Many areas are residential + commercial
 - **Historical layers**: Cities have old and new sections
-- **Cross-references**: Parent locations → cross_references to world-building
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
