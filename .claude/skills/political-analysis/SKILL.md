@@ -113,4 +113,4 @@ Write to `entities/society.json` (society-team file):
 - **Implicit laws**: Cultural norms not written as statutes
 - **Power corruption**: Official systems vs actual power (de jure vs de facto)
 - **Multiple legal systems**: Different groups may have different laws
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

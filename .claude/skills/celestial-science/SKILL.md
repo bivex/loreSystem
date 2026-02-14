@@ -4,7 +4,7 @@ description: Extract celestial entities from narrative text. Use when analyzing 
 ---
 # celestial-science
 
-Доменный скилл для Celestial Scientist. Специфические правила извлечения и экспертиза.
+Domain skill for Celestial Scientist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

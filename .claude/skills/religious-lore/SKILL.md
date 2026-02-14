@@ -79,4 +79,4 @@ Write to `entities/society.json` (society-team file):
 - **Multiple faiths**: Worlds often have competing religions
 - **Lost religions**: Ancient faiths may have faded — extract remnants
 - **Heretical practices**: Cults vs mainstream religion
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

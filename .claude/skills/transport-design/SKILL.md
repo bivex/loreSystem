@@ -4,7 +4,7 @@ description: Extract transportation entities from narrative text. Use when analy
 ---
 # transport-design
 
-Доменный скилл для Transportation Engineer. Специфические правила извлечения и экспертиза.
+Domain skill for Transportation Engineer. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

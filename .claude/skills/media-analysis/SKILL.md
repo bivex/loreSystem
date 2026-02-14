@@ -4,7 +4,7 @@ description: Extract media entities from narrative text. Use when analyzing news
 ---
 # media-analysis
 
-Доменный скилл для Media Analyst. Специфические правила извлечения и экспертиза.
+Domain skill for Media Analyst. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

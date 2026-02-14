@@ -4,7 +4,7 @@ description: Extract cinematic entities from narrative text. Use when analyzing 
 ---
 # cinematic-direction
 
-Доменный скилл для Cinematic Director. Специфические правила извлечения и экспертиза.
+Domain skill for Cinematic Director. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

@@ -63,4 +63,4 @@ Write to `entities/world.json`:
 - **Nested locations**: A town inside a forest inside a kingdom — track hierarchy
 - **Connections**: How locations connect (paths, portals, boundaries)
 - **Scale**: Relative sizes help establish world geography
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

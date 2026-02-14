@@ -76,4 +76,4 @@ Write to `entities/narrative.json` (narrative-team file):
 
 - **Implicit quests**: Some objectives are implied, not explicitly stated
 - **Moral ambiguity**: Not all choices are clearly good/bad
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

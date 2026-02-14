@@ -78,4 +78,4 @@ Write to `entities/society.json`:
 - **Overlapping membership**: Characters may belong to multiple factions
 - **Hidden factions**: Some operate in secret — extract even unnamed ones
 - **Dynamic relationships**: Alliances shift; note current state from text
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

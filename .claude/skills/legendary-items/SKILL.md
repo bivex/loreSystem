@@ -4,7 +4,7 @@ description: Extract legendary item entities from narrative text. Use when analy
 ---
 # legendary-items
 
-Доменный скилл для Legendary Items Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for Legendary Items Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

@@ -84,4 +84,4 @@ Write to `entities/world.json` (world-team file):
 - **Mood impact**: Environment affects narrative tone (storms = tension, dawn = hope)
 - **Narrative function**: Weather often mirrors story events (pathetic fallacy)
 - **Temporal flow**: Track time progression and environmental changes through text
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

@@ -4,7 +4,7 @@ description: Extract content management entities from narrative text. Use when a
 ---
 # content-management
 
-Доменный скилл для Content Creator. Специфические правила извлечения и экспертиза.
+Domain skill for Content Creator. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

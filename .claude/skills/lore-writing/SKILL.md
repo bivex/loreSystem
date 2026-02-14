@@ -81,4 +81,4 @@ Write to `entities/narrative.json` (narrative-team file):
 - **Fragmentary nature**: Lore often comes in small, incomplete pieces
 - **Unreliable narrators**: Stories within stories may be biased or inaccurate
 - **Symbolic dreams**: Not all dream content is literal
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

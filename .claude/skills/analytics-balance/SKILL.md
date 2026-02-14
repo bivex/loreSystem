@@ -4,7 +4,7 @@ description: Extract analytics and game balance entities from narrative text. Us
 ---
 # analytics-balance
 
-Доменный скилл для Analytics Balance Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for Analytics Balance Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

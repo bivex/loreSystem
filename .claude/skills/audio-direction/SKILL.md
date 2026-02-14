@@ -4,7 +4,7 @@ description: Extract audio entities from narrative text. Use when analyzing musi
 ---
 # audio-direction
 
-Доменный скилл для Audio Director. Специфические правила извлечения и экспертиза.
+Domain skill for Audio Director. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

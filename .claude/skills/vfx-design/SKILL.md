@@ -4,7 +4,7 @@ description: Extract visual effects entities from narrative text. Use when analy
 ---
 # vfx-design
 
-Доменный скилл для Visual Effects Artist. Специфические правила извлечения и экспертиза.
+Domain skill for Visual Effects Artist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

@@ -4,7 +4,7 @@ description: Extract research and education entities from narrative text. Use wh
 ---
 # research-design
 
-Доменный скилл для Research Education Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for Research Education Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

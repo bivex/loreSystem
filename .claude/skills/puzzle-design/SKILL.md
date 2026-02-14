@@ -4,7 +4,7 @@ description: Extract puzzle and secret entities from narrative text. Use when an
 ---
 # puzzle-design
 
-Доменный скилл для Puzzle Secrets Designer. Специфические правила извлечения и экспертиза.
+Domain skill for Puzzle Secrets Designer. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

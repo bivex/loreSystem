@@ -80,4 +80,4 @@ Write to `entities/society.json` (society-team file):
 - **Social stratification**: Clear hierarchies with barriers between classes
 - **Reputation effects**: Honor/karma/reputation affect NPC interactions
 - **Cultural values**: Festivals reflect what society values most
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

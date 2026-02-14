@@ -4,7 +4,7 @@ description: Safety-net catch-all for extracting technical game entities not cov
 ---
 # technical-systems
 
-Доменный скилл для Technical Director. Специфические правила извлечения и экспертиза.
+Domain skill for Technical Director. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

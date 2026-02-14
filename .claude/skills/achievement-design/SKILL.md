@@ -4,7 +4,7 @@ description: Extract achievement entities from narrative text. Use when analyzin
 ---
 # achievement-design
 
-Доменный скилл для Achievement Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for Achievement Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

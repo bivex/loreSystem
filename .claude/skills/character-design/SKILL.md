@@ -44,7 +44,7 @@ Write to `entities/narrative.json` (narrative-team file):
       "id": 1,
       "world_id": 1,
       "name": "Kira",
-      "backstory": "... минимум 100 символов ...",
+      "backstory": "... minimum 100 characters ...",
       "status": "active",
       "abilities": [
         { "name": "Flame Mastery", "description": "...", "power_level": 8 }
@@ -76,4 +76,4 @@ Write to `entities/narrative.json` (narrative-team file):
 
 - **Uniqueness**: Each character has a unique ID; name variations reference the same ID
 - **Implicit relationships**: Track both explicit and implied connections
-- **Cross-references**: Если нужно, фиксируй связи отдельным списком в черновиках, но финальный JSON должен быть совместим с `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must be compatible with `LoreData.from_dict`.

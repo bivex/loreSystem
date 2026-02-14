@@ -86,4 +86,4 @@ Write to `entities/society.json` (society-team file):
 
 - **Relative time**: Not all systems use absolute dates (cycles, ages)
 - **Multiple perspectives**: History may differ by culture (victors write history)
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

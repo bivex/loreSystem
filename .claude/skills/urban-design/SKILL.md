@@ -71,4 +71,4 @@ Write to `entities/world.json` (world-team file):
 - **Social inequality**: Slums vs noble districts show wealth gap
 - **Mixed use**: Many areas are residential + commercial
 - **Historical layers**: Cities have old and new sections
-- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
+- **Cross-references**: If needed, track relationships separately in drafts, but final JSON must match `LoreData.from_dict`.

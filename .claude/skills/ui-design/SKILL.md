@@ -4,7 +4,7 @@ description: Extract UI and content organization entities from narrative text. U
 ---
 # ui-design
 
-Доменный скилл для UI Content Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for UI Content Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

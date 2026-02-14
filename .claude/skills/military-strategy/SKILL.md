@@ -4,7 +4,7 @@ description: Extract military entities from narrative text. Use when analyzing a
 ---
 # military-strategy
 
-Доменный скилл для Military Strategist. Специфические правила извлечения и экспертиза.
+Domain skill for Military Strategist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

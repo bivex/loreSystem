@@ -4,7 +4,7 @@ description: Extract economic entities from narrative text. Use when analyzing t
 ---
 # economic-modeling
 
-Доменный скилл для Economist. Специфические правила извлечения и экспертиза.
+Domain skill for Economist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 

@@ -4,7 +4,7 @@ description: Extract biology entities from narrative text. Use when analyzing ec
 ---
 # biology-design
 
-Доменный скилл для Biology Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for Biology Specialist. Specific extraction rules and expertise.
 
 ## Domain Expertise
 
