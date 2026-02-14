@@ -33,35 +33,42 @@ Write to `entities/narrative.json` (narrative-team file):
 
 ```json
 {
-  "quest": [
+  "quests": [
     {
-      "id": "uuid",
+      "id": 1,
+      "world_id": 1,
       "name": "Find Lost Brother",
       "description": "Kira must find her missing brother near the Ancient Ruins",
-      "type": "main",
-      "status": "active"
+      "objectives": ["Speak to village elder"],
+      "status": "active",
+      "participant_ids": [3],
+      "reward_ids": [],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "quest_objective": [
+  "quest_objectives": [
     {
-      "id": "uuid",
-      "name": "Speak to village elder",
+      "id": 2,
+      "world_id": 1,
+      "quest_node_id": 1,
+      "objective_type": "talk",
       "description": "Ask Elder Theron about the brother's last known location",
-      "quest_id": "quest-uuid",
-      "type": "talk",
-      "status": "not_started"
+      "target_type": null,
+      "target_id": null,
+      "target_quantity": 1,
+      "current_progress": 0,
+      "status": "not_started",
+      "is_optional": false,
+      "is_hidden": false,
+      "order_index": 0,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "cross_references": [
-    {
-      "source_type": "quest",
-      "source_id": "quest-uuid",
-      "target_type": "location",
-      "target_skill": "world-building",
-      "target_hint": "Ancient Ruins — quest destination"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "quest-design", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 3
 }
 ```
 
@@ -69,4 +76,4 @@ Write to `entities/narrative.json` (narrative-team file):
 
 - **Implicit quests**: Some objectives are implied, not explicitly stated
 - **Moral ambiguity**: Not all choices are clearly good/bad
-- **Cross-references**: Characters, locations, items mentioned in quests → cross_references to their owning skills
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

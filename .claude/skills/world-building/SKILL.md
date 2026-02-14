@@ -41,32 +41,20 @@ Write to `entities/world.json`:
 
 ```json
 {
-  "location": [
+  "locations": [
     {
-      "id": "uuid",
+      "id": 1,
+      "world_id": 1,
       "name": "Eldoria Village",
       "description": "Peaceful village in the Eldorian Valley",
-      "type": "village"
+      "location_type": "village",
+      "parent_location_id": null,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "dungeon": [
-    {
-      "id": "uuid",
-      "name": "Ancient Ruins",
-      "description": "Crumbling ruins filled with traps and monsters",
-      "danger_level": "high"
-    }
-  ],
-  "cross_references": [
-    {
-      "source_type": "location",
-      "source_id": "uuid",
-      "target_type": "faction",
-      "target_skill": "faction-design",
-      "target_hint": "Eldorian Council controls this village"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "world-building", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 2
 }
 ```
 
@@ -75,4 +63,4 @@ Write to `entities/world.json`:
 - **Nested locations**: A town inside a forest inside a kingdom — track hierarchy
 - **Connections**: How locations connect (paths, portals, boundaries)
 - **Scale**: Relative sizes help establish world geography
-- **Cross-references**: Characters, factions, events at locations → cross_references
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

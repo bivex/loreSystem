@@ -39,38 +39,36 @@ Write to `entities/narrative.json` (narrative-team file):
 
 ```json
 {
-  "character": [
+  "characters": [
     {
-      "id": "uuid",
+      "id": 1,
+      "world_id": 1,
       "name": "Kira",
-      "description": "A brave young warrior searching for her missing brother",
-      "role": "protagonist",
-      "personality": ["brave", "curious", "stubborn"],
-      "motivation": "Find her missing brother",
-      "status": "active"
+      "backstory": "... минимум 100 символов ...",
+      "status": "active",
+      "abilities": [
+        { "name": "Flame Mastery", "description": "...", "power_level": 8 }
+      ],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "character_relationship": [
+  "character_relationships": [
     {
-      "id": "uuid",
-      "name": "Kira-Marcus Bond",
+      "id": 2,
+      "character_from_id": 1,
+      "character_to_id": 3,
+      "relationship_type": "friend",
       "description": "Strong friendship forged through shared battles",
-      "character_a_id": "kira-uuid",
-      "character_b_id": "marcus-uuid",
-      "type": "friend",
-      "strength": "strong"
+      "relationship_level": 60,
+      "is_mutual": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "cross_references": [
-    {
-      "source_type": "character",
-      "source_id": "kira-uuid",
-      "target_type": "location",
-      "target_skill": "world-building",
-      "target_hint": "Eldoria Village — Kira's home village"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "character-design", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 3
 }
 ```
 
@@ -78,4 +76,4 @@ Write to `entities/narrative.json` (narrative-team file):
 
 - **Uniqueness**: Each character has a unique ID; name variations reference the same ID
 - **Implicit relationships**: Track both explicit and implied connections
-- **Cross-references**: Locations, factions, items mentioned with characters → cross_references
+- **Cross-references**: Если нужно, фиксируй связи отдельным списком в черновиках, но финальный JSON должен быть совместим с `LoreData.from_dict`.

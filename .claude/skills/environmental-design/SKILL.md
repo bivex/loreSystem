@@ -41,26 +41,41 @@ Write to `entities/world.json` (world-team file):
 
 ```json
 {
-  "weather_pattern": [
+  "environments": [
     {
-      "id": "uuid",
-      "name": "Approaching Storm",
+      "id": 1,
+      "world_id": 1,
+      "location_id": 10,
+      "name": "Stormy Night",
       "description": "Dark clouds gathering from the north, storm imminent",
-      "type": "storm",
-      "intensity": "severe"
+      "time_of_day": "night",
+      "weather": "stormy",
+      "lighting": "dim",
+      "temperature": "chilly",
+      "sounds": "distant thunder",
+      "smells": "wet earth",
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "time_period": [
+  "weather_patterns": [
     {
-      "id": "uuid",
-      "name": "Early Morning",
-      "description": "Dawn breaking, golden light through canopy",
-      "time_of_day": "dawn",
-      "season": "spring"
+      "id": 2,
+      "tenant_id": 1,
+      "name": "Approaching Storm",
+      "pattern_type": "storm",
+      "severity": 0.9,
+      "duration_minutes": 180,
+      "affected_regions": [10],
+      "conditions": { "wind": "strong", "precipitation": "heavy" },
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00"
     }
   ],
-  "cross_references": [],
-  "_metadata": { "source": "...", "skill": "environmental-design", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 3
 }
 ```
 
@@ -69,4 +84,4 @@ Write to `entities/world.json` (world-team file):
 - **Mood impact**: Environment affects narrative tone (storms = tension, dawn = hope)
 - **Narrative function**: Weather often mirrors story events (pathetic fallacy)
 - **Temporal flow**: Track time progression and environmental changes through text
-- **Cross-references**: Locations where events occur → cross_references to world-building
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.

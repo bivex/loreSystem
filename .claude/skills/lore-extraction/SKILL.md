@@ -12,8 +12,8 @@ Base skill for all loreSystem extraction subagents. Common rules for extracting 
 1. **Read** the source text completely before extracting
 2. **Identify** entities — look for named things, described systems, relationships
 3. **Classify** each entity to its correct type from the entity ownership map
-4. **Extract** fields — name, description, type-specific attributes
-5. **Link** related entities via ID references or cross-references
+## Выход
+Результат всегда в формате JSON, совместимом с экспортом `LoreData.to_dict` (см. `src/presentation/gui/lore_data.py`).
 6. **Validate** against domain model constraints
 7. **Output** as JSON following the json-formatter schema
 

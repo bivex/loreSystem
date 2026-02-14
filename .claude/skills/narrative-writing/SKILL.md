@@ -39,17 +39,38 @@ Write to `entities/narrative.json`:
 
 ```json
 {
-  "story": [
-    { "id": "uuid", "name": "The Shadow War", "description": "...", "type": "linear" }
+  "stories": [
+    {
+      "id": 1,
+      "world_id": 1,
+      "name": "The Shadow War",
+      "description": "...",
+      "story_type": "linear",
+      "content": "...",
+      "choice_ids": [],
+      "connected_world_ids": [],
+      "is_active": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
   ],
-  "chapter": [
-    { "id": "uuid", "name": "Chapter 1: Awakening", "description": "...", "story_id": "story-uuid", "number": 1 }
+  "events": [
+    {
+      "id": 2,
+      "world_id": 1,
+      "name": "The Great Battle",
+      "description": "...",
+      "start_date": "2026-02-14T10:00:00+00:00",
+      "end_date": null,
+      "outcome": "ongoing",
+      "participant_ids": [3],
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
+    }
   ],
-  "event": [
-    { "id": "uuid", "name": "The Great Battle", "description": "...", "outcome": "ongoing" }
-  ],
-  "cross_references": [],
-  "_metadata": { "source": "...", "skill": "narrative-writing", "extracted_at": "...", "entity_count": 3 }
+  "next_id": 3
 }
 ```
 
@@ -58,4 +79,4 @@ Write to `entities/narrative.json`:
 - **Continuity**: Chapter numbers and story references must be consistent
 - **Hierarchy**: All chapters reference their story; episodes reference chapters
 - **Branching**: Capture all possible narrative paths at branch points
-- **Events own characters by reference**: Characters mentioned in events go to cross_references targeting character-design
+- **Events own characters by reference**: Characters mentioned in events must appear in `participant_ids`.

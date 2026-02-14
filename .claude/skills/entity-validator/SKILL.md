@@ -9,14 +9,11 @@ Base skill for validating extracted lore entities against the domain model.
 
 ## Validation Checks
 
-1. **Required fields**: Every entity must have `id`, `name`, `description`
+1. **Export format**: Verify that the top level contains only collections from the schema `lore_data.py` and `next_id`
 2. **Data types**: Verify string, number, boolean, array, object types match schema
-3. **UUID format**: All `id` fields must be valid UUID v4
-4. **Name length**: Max 255 characters, non-empty
-5. **Enum values**: Use only values defined in `src/domain/value_objects/common.py`
-6. **Cross-references**: All referenced entity IDs must exist (within file or in cross_references)
-7. **No duplicates**: Same entity type + name combination must not appear twice
-8. **Entity ownership**: Each entity type must only appear in its owning skill's output
+3. **Required fields**: Every entity must have all required fields corresponding to the domain model
+4. **Cross-references**: All referenced entity IDs must exist and refer to numeric `id`
+5. **No duplicates**: Same entity type + name combination must not appear twice
 
 ## Domain Constraints
 

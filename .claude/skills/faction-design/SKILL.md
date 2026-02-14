@@ -39,34 +39,37 @@ Write to `entities/society.json`:
 
 ```json
 {
-  "faction": [
+  "factions": [
     {
-      "id": "uuid",
+      "id": 1,
+      "world_id": 1,
       "name": "Shadow Brotherhood",
       "description": "Secret criminal organization operating in the underworld",
       "type": "criminal",
-      "alignment": "evil"
+      "alignment": "evil",
+      "leader_character_id": null,
+      "member_character_ids": [],
+      "allied_faction_ids": [],
+      "enemy_faction_ids": [],
+      "headquarters_location_id": null,
+      "controlled_location_ids": [],
+      "reputation_hostile_threshold": -500,
+      "reputation_neutral_threshold": 0,
+      "reputation_friendly_threshold": 500,
+      "reputation_exalted_threshold": 1000,
+      "vendor_discount_at_friendly": 10.0,
+      "vendor_discount_at_exalted": 25.0,
+      "exclusive_items_unlocked_at": 750,
+      "faction_icon_path": null,
+      "faction_color": null,
+      "is_hidden": false,
+      "is_joinable": true,
+      "created_at": "2026-02-14T10:00:00+00:00",
+      "updated_at": "2026-02-14T10:00:00+00:00",
+      "version": 1
     }
   ],
-  "faction_leader": [
-    {
-      "id": "uuid",
-      "name": "The Hooded Master",
-      "description": "Mysterious leader of the Shadow Brotherhood",
-      "faction_id": "faction-uuid",
-      "rank": "supreme_leader"
-    }
-  ],
-  "cross_references": [
-    {
-      "source_type": "faction_leader",
-      "source_id": "uuid",
-      "target_type": "character",
-      "target_skill": "character-design",
-      "target_hint": "The Hooded Master — also a character entity"
-    }
-  ],
-  "_metadata": { "source": "...", "skill": "faction-design", "extracted_at": "...", "entity_count": 2 }
+  "next_id": 2
 }
 ```
 
@@ -75,4 +78,4 @@ Write to `entities/society.json`:
 - **Overlapping membership**: Characters may belong to multiple factions
 - **Hidden factions**: Some operate in secret — extract even unnamed ones
 - **Dynamic relationships**: Alliances shift; note current state from text
-- **Cross-references**: Faction leaders → character-design; territories → world-building
+- **Cross-references**: Если нужно, фиксируй связи отдельно в черновиках, но финальный JSON должен соответствовать `LoreData.from_dict`.
