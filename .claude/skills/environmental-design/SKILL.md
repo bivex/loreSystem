@@ -1,143 +1,72 @@
 ---
 name: environmental-design
-description: Extract environmental entities from narrative text. Use when analyzing weather patterns, atmosphere, lighting, time periods, natural disasters, and climate systems.
+description: Extract environmental entities from narrative text. Use when analyzing weather, atmosphere, lighting, time periods, natural disasters, cataclysms, plagues, and world events.
 ---
 # environmental-design
 
-Domain skill for environmental-scientist subagent. Specific extraction rules and expertise.
+Domain skill for environmental conditions and events extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Climate systems**: Biomes, weather patterns, seasonal changes, meteorological phenomena
-- **Atmosphere**: Air quality, pressure, composition, fog, mist, haze
-- **Lighting**: Day/night cycles, ambient light, shadows, color temperature
-- **Time**: Time of day (dawn, noon, dusk, night), seasons, epochs
-- **Disasters**: Storms, floods, earthquakes, cataclysms, natural disasters
+| Type | Description |
+|------|-------------|
+| `environment` | General environmental setting or biome |
+| `weather_pattern` | Weather system or meteorological condition |
+| `atmosphere` | Atmospheric condition (fog, pressure, air quality) |
+| `lighting` | Lighting condition (natural or magical) |
+| `time_period` | Time of day or seasonal context |
+| `disaster` | Natural disaster (storm, flood, earthquake) |
+| `cataclysm` | Major catastrophic event |
+| `world_event` | Significant world-scale event |
+| `seasonal_event` | Recurring seasonal occurrence |
+| `plague` | Disease outbreak or epidemic |
 
-## Entity Types (6 total)
+## Domain Constraints
 
-- **environment** - General environmental settings, biome classifications
-- **weather_pattern** - Weather systems, meteorological conditions
-- **atmosphere** - Atmospheric conditions, air quality, pressure
-- **lighting** - Lighting conditions, illumination levels
-- **time_period** - Time of day, seasonal contexts
-- **disaster** - Natural disasters, catastrophic events
+- `time_of_day`: day, night, dawn, dusk
+- `weather`: clear, rainy, stormy, foggy
+- `lighting`: bright, dim, dark, magical
 
-## Processing Guidelines
+## Extraction Rules
 
-When extracting environmental entities from chapter text:
-
-1. **Identify environmental conditions**:
-   - Weather descriptions (rain, snow, clear sky, storm clouds)
-   - Time of day (dawn, noon, dusk, midnight)
-   - Season (winter, summer, autumn, spring)
-   - Atmosphere (foggy, oppressive, peaceful, tense)
-
-2. **Extract environmental details**:
-   - Weather intensity and duration (light rain, torrential downpour)
-   - Lighting conditions (bright daylight, dim twilight, pitch black night)
-   - Temperature (freezing cold, sweltering hot, temperate)
-   - Unusual events (approaching storms, natural disasters)
-
-3. **Track environmental changes**:
-   - Weather shifts (clear sky turning stormy)
-   - Time progression (dawn to dusk transitions)
-   - Seasonal context (winter snows, summer heat)
-   - Atmospheric pressure changes (calm before storm)
-
-4. **Contextualize environment**:
-   - How environment affects mood and atmosphere
-   - Environmental symbolism (storms = turmoil, dawn = new beginning)
-   - Consistency of weather (no instant changes without cause)
-   - Environment's narrative function
+1. **Weather**: Rain, snow, storms, clear sky — note intensity and duration
+2. **Time**: Dawn, noon, dusk, midnight — track progression through text
+3. **Atmosphere**: Fog, oppressive heat, crisp air — sensory details
+4. **Disasters**: Storms, floods, earthquakes — scale, impact, duration
+5. **World events**: Wars, plagues, seasonal celebrations — scope and significance
 
 ## Output Format
 
-Generate `entities/environment.json` with schema-compliant entities following this structure:
+Write to `entities/world.json` (world-team file):
+
 ```json
 {
-  "weather_pattern": {
-    "id": "uuid",
-    "name": "Eldorian Rain",
-    "type": "rain",
-    "intensity": "moderate",
-    "duration": "several hours"
-  },
-  "atmosphere": {
-    "id": "uuid",
-    "name": "Morning Mist",
-    "type": "foggy",
-    "visibility": "reduced",
-    "pressure": "low"
-  },
-  "lighting": {
-    "id": "uuid",
-    "name": "Dawn Light",
-    "type": "natural",
-    "intensity": "rising",
-    "color": "golden"
-  },
-  "time_period": {
-    "id": "uuid",
-    "name": "Early Morning",
-    "time_of_day": "dawn",
-    "season": "spring"
-  }
+  "weather_pattern": [
+    {
+      "id": "uuid",
+      "name": "Approaching Storm",
+      "description": "Dark clouds gathering from the north, storm imminent",
+      "type": "storm",
+      "intensity": "severe"
+    }
+  ],
+  "time_period": [
+    {
+      "id": "uuid",
+      "name": "Early Morning",
+      "description": "Dawn breaking, golden light through canopy",
+      "time_of_day": "dawn",
+      "season": "spring"
+    }
+  ],
+  "cross_references": [],
+  "_metadata": { "source": "...", "skill": "environmental-design", "extracted_at": "...", "entity_count": 2 }
 }
 ```
 
 ## Key Considerations
 
-- **Mood impact**: Environment affects narrative tone and emotional atmosphere
-- **Narrative function**: Weather often mirrors or contrasts story events (pathetic fallacy)
-- **Consistency**: Weather doesn't change instantly without narrative cause
-- **Symbolism**: Storms represent turmoil, dawn represents new beginning, etc.
-- **Temporal flow**: Track time progression and environmental changes
-- **Sensory details**: Include temperature, visibility, and atmospheric qualities
-
-## Example
-
-**Input:**
-> "Dawn broke over Eldoria. The mist clung to the forest floor, reducing visibility to a few feet. Golden light filtered through the canopy. It was cold, the air crisp with the promise of spring. Above, clouds gathered—storm was coming."
-
-**Extract:**
-```json
-{
-  "time_period": {
-    "id": "uuid",
-    "name": "Early Morning",
-    "time_of_day": "dawn",
-    "season": "spring",
-    "description": "Dawn breaking over Eldoria"
-  },
-  "atmosphere": {
-    "id": "uuid",
-    "name": "Morning Mist",
-    "type": "fog",
-    "visibility": "reduced",
-    "description": "Mist clung to forest floor, reducing visibility to a few feet"
-  },
-  "lighting": {
-    "id": "uuid",
-    "name": "Golden Dawn Light",
-    "type": "natural",
-    "intensity": "rising",
-    "color": "golden",
-    "description": "Golden light filtered through the canopy"
-  },
-  "weather_pattern": {
-    "id": "uuid",
-    "name": "Approaching Storm",
-    "type": "storm",
-    "status": "gathering",
-    "description": "Clouds gathered above, storm approaching"
-  },
-  "environment": {
-    "id": "uuid",
-    "name": "Spring Forest",
-    "type": "forest",
-    "temperature": "cold",
-    "description": "Crisp spring air, forest setting"
-  }
-}
-```
+- **Mood impact**: Environment affects narrative tone (storms = tension, dawn = hope)
+- **Narrative function**: Weather often mirrors story events (pathetic fallacy)
+- **Temporal flow**: Track time progression and environmental changes through text
+- **Cross-references**: Locations where events occur → cross_references to world-building

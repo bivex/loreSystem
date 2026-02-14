@@ -1,146 +1,74 @@
 ---
 name: historical-research
-description: Extract historical entities from narrative text. Use when analyzing eras, timelines, calendars, festivals, ceremonies, tournaments, era transitions, and cultural events.
+description: Extract historical entities from narrative text. Use when analyzing eras, timelines, calendars, holidays, seasons, alliances, empires, kingdoms, and era transitions.
 ---
 # historical-research
 
-Domain skill for historian subagent. Specific extraction rules and expertise.
+Domain skill for historical and chronological extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Historical periods**: Eras, ages, epochs, historical timelines
-- **Chronology**: Timelines, cause-effect relationships, historical flow
-- **Cultural events**: Festivals, tournaments, ceremonies, celebrations
-- **Calendars**: Different timekeeping systems, calendar formats
-- **Historical transitions**: Wars, revolutions, golden ages, era changes
+| Type | Description |
+|------|-------------|
+| `era` | Historical era, age, or epoch |
+| `era_transition` | Transition between eras |
+| `timeline` | Chronological sequence of events |
+| `calendar` | Calendar or timekeeping system |
+| `holiday` | Holiday or special date |
+| `season` | Named season or time of year |
+| `alliance` | Historical or political alliance |
+| `empire` | Empire or major state entity |
+| `kingdom` | Kingdom or sovereign territory |
+| `nation` | Nation or country |
 
-## Entity Types (10 total)
+## Extraction Rules
 
-- **era** - Historical eras, ages, time periods
-- **era_transition** - Era transitions, period changes
-- **timeline** - Timelines, chronological sequences
-- **calendar** - Calendar systems, timekeeping
-- **festival** - Festivals, recurring celebrations
-- **celebration** - Celebrations, joyous events
-- **ceremony** - Ceremonies, ritual observances
-- **exhibition** - Exhibitions, displays, showcases
-- **tournament** - Tournaments, competitions
-- **competition** - Competitions, contests
-
-## Processing Guidelines
-
-When extracting historical entities from chapter text:
-
-1. **Identify historical references**:
-   - Past eras mentioned (Age of Magic, Great War era, Industrial Age)
-   - Historical events described (wars, revolutions, discoveries)
-   - Cultural traditions or rituals (annual festivals, ceremonies)
-   - Calendar systems or time references (lunar calendar, solar cycle)
-
-2. **Extract historical details**:
-   - Era names, timeframes, characteristics (Golden Age, Dark Times)
-   - Timeline events, dates, sequences (what happened when)
-   - Cultural practices, festivals, traditions (annual celebrations)
-   - Calendar systems, holidays, special dates
-
-3. **Contextualize in history**:
-   - When did events happen relative to each other (chronological order)
-   - What caused era transitions (wars, discoveries, cataclysms)
-   - How historical context affects current story events
-   - Multiple perspectives on history (different cultures may have different accounts)
-
-4. **Analyze cultural significance**:
-   - Meaning behind festivals and ceremonies
-   - Historical importance of tournaments
-   - Cultural memory and historical identity
-   - How the past influences the present
+1. **Eras**: Named periods (Age of Magic, Dark Times) — extract with timeframe
+2. **Transitions**: What caused era changes (wars, discoveries, cataclysms)
+3. **Timelines**: Chronological sequence of mentioned events
+4. **Calendars**: Timekeeping systems, named months, cycles
+5. **States**: Empires, kingdoms, nations — with their boundaries and rulers
 
 ## Output Format
 
-Generate `entities/historical.json` with schema-compliant entities following this structure:
+Write to `entities/society.json` (society-team file):
+
 ```json
 {
-  "era": {
-    "id": "uuid",
-    "name": "Age of Magic",
-    "start_date": "ancient",
-    "end_date": "pre-great_war",
-    "description": "Time when magic was abundant"
-  },
-  "era_transition": {
-    "id": "uuid",
-    "from_era_id": "...",
-    "to_era_id": "...",
-    "cause": "Great War",
-    "description": "Magic waned after the Great War"
-  },
-  "timeline": {
-    "id": "uuid",
-    "name": "Eldorian History",
-    "events": ["Age of Magic", "Great War", "Age of Restoration"]
-  },
-  "festival": {
-    "id": "uuid",
-    "name": "Festival of Lights",
-    "frequency": "annual",
-    "season": "winter",
-    "significance": "Remembers the lost"
-  }
+  "era": [
+    {
+      "id": "uuid",
+      "name": "Age of Magic",
+      "description": "Ancient era when sorcerers ruled the skies",
+      "timeframe": "ancient",
+      "status": "past"
+    }
+  ],
+  "era_transition": [
+    {
+      "id": "uuid",
+      "name": "The Great War Transition",
+      "description": "Magic waned after the Great War, ending the Age of Magic",
+      "from_era_id": "era-uuid-1",
+      "to_era_id": "era-uuid-2",
+      "cause": "Great War"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "era_transition",
+      "source_id": "uuid",
+      "target_type": "war",
+      "target_skill": "military-strategy",
+      "target_hint": "The Great War that caused the era transition"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "historical-research", "extracted_at": "...", "entity_count": 2 }
 }
 ```
 
 ## Key Considerations
 
-- **Relative time**: Not all systems use absolute dates (some use "cycles" or "ages")
-- **Cultural significance**: Festivals often have deeper meanings beyond celebration
-- **Historical impact**: Past events affect current story state and character motivations
+- **Relative time**: Not all systems use absolute dates (cycles, ages)
 - **Multiple perspectives**: History may differ by culture (victors write history)
-- **Chronological context**: Establish what came before and after
-- **Historical memory**: How characters remember and relate to the past
-
-## Example
-
-**Input:**
-> "The elder spoke of the Age of Magic, when sorcerers ruled the skies. But the Great War changed everything. Now, in the Age of Restoration, we gather each winter for the Festival of Lights, remembering those lost."
-
-**Extract:**
-```json
-{
-  "era": {
-    "id": "uuid",
-    "name": "Age of Magic",
-    "timeframe": "ancient",
-    "characteristics": "sorcerers ruled the skies, magic abundant",
-    "status": "past"
-  },
-  "era": {
-    "id": "uuid",
-    "name": "Age of Restoration",
-    "timeframe": "current",
-    "characteristics": "post-war rebuilding",
-    "status": "current"
-  },
-  "era_transition": {
-    "id": "uuid",
-    "name": "The Great War Transition",
-    "from_era": "Age of Magic",
-    "to_era": "Age of Restoration",
-    "cause": "Great War",
-    "description": "Magic waned, world changed forever"
-  },
-  "festival": {
-    "id": "uuid",
-    "name": "Festival of Lights",
-    "frequency": "annual",
-    "season": "winter",
-    "significance": "Remembers those lost in the Great War",
-    "traditions": "gathering, lighting lights"
-  },
-  "timeline": {
-    "id": "uuid",
-    "name": "Eldorian Historical Timeline",
-    "sequence": ["Age of Magic", "Great War", "Age of Restoration"],
-    "description": "Major eras of Eldorian history"
-  }
-}
-```
+- **Cross-references**: Wars → military-strategy; rulers → character-design; ceremonies → social-culture

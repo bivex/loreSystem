@@ -1,63 +1,76 @@
 ---
 name: social-culture
-description: Extract social and cultural entities from narrative text. Use when analyzing social classes, honor, karma, affinity, festivals, ceremonies, tournaments, and social mobility.
+description: Extract social and cultural entities from narrative text. Use when analyzing social classes, honor, karma, reputation, festivals, ceremonies, tournaments, competitions, and social mobility.
 ---
 # social-culture
 
-Доменный скилл для Social Cultural Specialist. Специфические правила извлечения и экспертиза.
+Domain skill for social systems and cultural event extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Social systems**: Class structures, mobility, hierarchies
-- **Relationships**: Affinity, disposition, favor, reputation
-- **Moral systems**: Honor, karma, alignment systems
-- **Cultural practices**: Festivals, ceremonies, rituals
-- **Social events**: Tournaments, competitions, celebrations
+| Type | Description |
+|------|-------------|
+| `social_class` | Social class or caste |
+| `social_mobility` | Social advancement or demotion mechanism |
+| `affinity` | Affinity or positive disposition |
+| `disposition` | General attitude or stance |
+| `honor` | Honor system or code |
+| `karma` | Karma or moral balance system |
+| `reputation` | Reputation level or standing |
+| `festival` | Festival or recurring cultural event |
+| `celebration` | One-time celebration or joyous event |
+| `ceremony` | Formal ceremony or ritual observance |
+| `concert` | Musical performance event |
+| `competition` | Contest or competitive event |
+| `tournament` | Organized tournament or championship |
 
-## Entity Types (11 total)
+## Extraction Rules
 
-- **affinity** - Affinity
-- **disposition** - Disposition
-- **honor** - Honor
-- **karma** - Karma
-- **social_class** - Social classes
-- **social_mobility** - Social mobility
-- **festival** - Festivals
-- **celebration** - Celebrations
-- **ceremony** - Ceremonies
-- **competition** - Competitions
-- **tournament** - Tournaments
+1. **Social structure**: Class hierarchy, barriers, privileges
+2. **Moral systems**: Honor codes, karma rules, reputation effects
+3. **Cultural events**: Festivals, ceremonies — meaning, frequency, significance
+4. **Social mobility**: Can people change class? How?
+5. **Reputation**: How it's gained/lost, what it affects
 
-## Processing Guidelines
+## Output Format
 
-When extracting social and cultural entities from chapter text:
+Write to `entities/society.json` (society-team file):
 
-1. **Identify social/cultural elements**:
-   - Social class or hierarchy mentioned
-   - Honor, karma, or reputation references
-   - Affinity or disposition toward factions/characters
-   - Festivals, ceremonies, celebrations
-   - Tournaments or competitions
-
-2. **Extract social/cultural details**:
-   - Social classes and their characteristics
-   - Honor/karma systems and rules
-   - Affinity/disposition levels and effects
-   - Cultural practices and traditions
-   - Social mobility and advancement
-
-3. **Analyze social/cultural context**:
-   - Social stratification
-   - Cultural values and norms
-   - Social mobility potential
-   - Moral or ethical systems
-
-4. **Create schema-compliant entities** with proper JSON structure
+```json
+{
+  "social_class": [
+    {
+      "id": "uuid",
+      "name": "Noble Caste",
+      "description": "Hereditary aristocratic class with political privileges",
+      "rank": 1
+    }
+  ],
+  "festival": [
+    {
+      "id": "uuid",
+      "name": "Festival of Lights",
+      "description": "Annual winter festival remembering those lost in the Great War",
+      "frequency": "annual",
+      "season": "winter"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "festival",
+      "source_id": "uuid",
+      "target_type": "era",
+      "target_skill": "historical-research",
+      "target_hint": "Festival commemorates the Great War era"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "social-culture", "extracted_at": "...", "entity_count": 2 }
+}
+```
 
 ## Key Considerations
 
-- **Social stratification**: Classes have clear hierarchies and barriers
-- **Mobility**: Can people change social class? How difficult?
-- **Reputation**: Honor/karma affects how NPCs treat players
-- **Cultural values**: Festivals/ceremonies reflect what society values
-- **Moral systems**: Karma/honor provide frameworks for "good" behavior
+- **Social stratification**: Clear hierarchies with barriers between classes
+- **Reputation effects**: Honor/karma/reputation affect NPC interactions
+- **Cultural values**: Festivals reflect what society values most
+- **Cross-references**: Historical eras → historical-research; locations → world-building

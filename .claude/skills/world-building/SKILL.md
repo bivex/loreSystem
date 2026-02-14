@@ -4,99 +4,75 @@ description: Extract location and geography entities from narrative text. Use wh
 ---
 # world-building
 
-Domain skill for world-geographer subagent. Specific extraction rules and expertise.
+Domain skill for location and geography extraction.
 
-## Domain Expertise
+## Entity Types
 
-Geography, landscapes, and world structures:
-- **World geography**: Mountains, forests, deserts, oceans
-- **Location types**: Towns, dungeons, zones, instances
-- **Scale**: Distance, size, traversal time
-- **Environment**: Terrain, elevation, climate zones
-- **Exotic spaces**: Dimensions, pocket realities, celestial areas
+| Type | Description |
+|------|-------------|
+| `location` | General location (city, village, landmark) |
+| `hub_area` | Central hub, town, or safe zone |
+| `instance` | Instanced area (separate from open world) |
+| `dungeon` | Dungeon or dangerous enclosed area |
+| `raid` | Raid encounter area |
+| `arena` | Combat arena or PvP zone |
+| `open_world_zone` | Open world explorable area |
+| `underground` | Underground or subterranean area |
+| `skybox` | Sky or space area |
+| `dimension` | Alternate dimension or plane |
+| `pocket_dimension` | Small pocket dimension or demiplane |
 
-## Entity Types (11 total)
+## Domain Constraints
 
-- **location** - General locations
-- **hub_area** - Central hubs/towns
-- **instance** - Instanced areas
-- **dungeon** - Dungeons/raids
-- **raid** - Raid encounters
-- **arena** - Combat arenas
-- **open_world_zone** - Open world areas
-- **underground** - Underground areas
-- **skybox** - Sky/space areas
-- **dimension** - Alternate dimensions
-- **pocket_dimension** - Pocket dimensions
+- `location.type`: building, house, barn, temple, castle, dungeon, cave, forest, mountain, city, village, shop, tavern, ruins, landmark, other
+- `name`: max 255 characters
 
-## Processing Guidelines
+## Extraction Rules
 
-When extracting location entities from chapter text:
-
-1. **Identify locations**
-   - Named places (Eldoria, Ancient Ruins)
-   - Described areas (the forest to the east, the dark cave)
-   - Implied spaces (the journey, the path ahead)
-
-2. **Extract location details**
-   - Name, type, biome
-   - Size, scale, layout
-   - Connections to other locations
-   - Unique features, dangers, resources
-
-3. **Classify location types**
-   - Hub areas (towns, safe zones)
-   - Dungeons (instanced, dangerous)
-   - Open world zones (explorable)
-   - Dimensions/pocket spaces (exotic)
-
-4. **Create entities** following loreSystem schema
+1. **Named places**: Cities, ruins, forests, mountains — extract with exact name
+2. **Described areas**: "the dark cave", "the forest to the east" — create descriptive name
+3. **Classify type**: Hub (safe), dungeon (dangerous), open world (explorable), exotic (dimensions)
+4. **Map connections**: How locations connect — paths, portals, boundaries, adjacency
+5. **Note atmosphere**: Dangerous, peaceful, mysterious, abandoned
 
 ## Output Format
 
-Generate `entities/world.json` with all extracted entities:
+Write to `entities/world.json`:
 
 ```json
 {
-  "location": {
-    "id": "uuid",
-    "name": "Eldoria Village",
-    "type": "hub_area",
-    "biome": "temperate_forest",
-    "description": "Peaceful village in the Eldorian Valley"
-  },
-  "dungeon": {
-    "id": "uuid",
-    "name": "Ancient Ruins",
-    "type": "dungeon",
-    "level_range": "15-20",
-    "danger_level": "high"
-  },
-  "open_world_zone": {
-    "id": "uuid",
-    "name": "Eldorian Forest",
-    "type": "open_world",
-    "size": "large",
-    "biome": "temperate_forest"
-  }
+  "location": [
+    {
+      "id": "uuid",
+      "name": "Eldoria Village",
+      "description": "Peaceful village in the Eldorian Valley",
+      "type": "village"
+    }
+  ],
+  "dungeon": [
+    {
+      "id": "uuid",
+      "name": "Ancient Ruins",
+      "description": "Crumbling ruins filled with traps and monsters",
+      "danger_level": "high"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "location",
+      "source_id": "uuid",
+      "target_type": "faction",
+      "target_skill": "faction-design",
+      "target_hint": "Eldorian Council controls this village"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "world-building", "extracted_at": "...", "entity_count": 2 }
 }
 ```
 
 ## Key Considerations
 
-- **Nested locations**: A town might be in a forest, which is in a kingdom
-- **Connections**: Mention how locations connect (paths, portals, boundaries)
-- **Scale**: Relative size helps establish world scale
-- **Atmosphere**: Dangerous, peaceful, mysterious, etc.
-
-## Example
-
-**Input:**
-> "Kira stood at the edge of Eldoria Village. To the north, the Ancient Ruins loomed darkly. Between them lay the vast Eldorian Forest, stretching for miles. Somewhere in that forest, her brother waited."
-
-**Extract:**
-- Location: Eldoria Village (hub_area, safe)
-- Location: Ancient Ruins (dungeon, dangerous)
-- Location: Eldorian Forest (open_world_zone, vast)
-- Connections: Village <-> Forest <-> Ruins (north)
-- Atmosphere: Village (safe), Ruins (dark/dangerous)
+- **Nested locations**: A town inside a forest inside a kingdom — track hierarchy
+- **Connections**: How locations connect (paths, portals, boundaries)
+- **Scale**: Relative sizes help establish world geography
+- **Cross-references**: Characters, factions, events at locations → cross_references

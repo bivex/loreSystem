@@ -4,58 +4,68 @@ description: Extract urban planning entities from narrative text. Use when analy
 ---
 # urban-design
 
-Доменный скилл для Urban Architect. Специфические правила извлечения и экспертиза.
+Domain skill for urban planning and city structure extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Urban planning**: Districts, wards, zoning, infrastructure
-- **City design**: Markets, plazas, residential areas
-- **Architecture**: Building styles, materials, eras
-- **Social segregation**: Wealth distribution, noble vs common areas
-- **Infrastructure**: Roads, utilities, ports, markets
+| Type | Description |
+|------|-------------|
+| `district` | Named city district or neighborhood |
+| `ward` | Administrative ward or section |
+| `quarter` | City quarter (e.g., merchant quarter) |
+| `plaza` | Public plaza or gathering space |
+| `market_square` | Market area or trade hub |
+| `slums` | Impoverished area |
+| `noble_district` | Wealthy or aristocratic area |
+| `port_district` | Waterfront or harbor area |
 
-## Entity Types (8 total)
+## Extraction Rules
 
-- **district** - City districts
-- **ward** - Wards
-- **quarter** - Quarters
-- **plaza** - Plazas
-- **market_square** - Market squares
-- **slums** - Slums
-- **noble_district** - Noble districts
-- **port_district** - Port districts
+1. **Named districts**: Extract with exact name and characteristics
+2. **Social geography**: Map wealth distribution across the city
+3. **Infrastructure**: Roads, walls, gates, utilities mentioned
+4. **Activity zones**: Commercial, residential, religious, industrial areas
+5. **Historical layers**: Old vs new city sections
 
-## Processing Guidelines
+## Output Format
 
-When extracting urban entities from chapter text:
+Write to `entities/world.json` (world-team file):
 
-1. **Identify urban elements**:
-   - Districts or neighborhood names
-   - Markets, plazas, public spaces
-   - Slums, poor areas mentioned
-   - Noble or wealthy districts
-   - Port or waterfront areas
-   - Ward or quarter divisions
-
-2. **Extract urban details**:
-   - District characteristics, population, wealth level
-   - Market types, goods traded, operating hours
-   - Plaza functions, monuments, gathering places
-   - Slum conditions, population density, problems
-   - Noble district features, luxury, security
-
-3. **Analyze urban context**:
-   - City size and scale
-   - Wealth distribution and inequality
-   - Infrastructure quality and maintenance
-   - Social divisions and segregation
-
-4. **Create schema-compliant entities** with proper JSON structure
+```json
+{
+  "district": [
+    {
+      "id": "uuid",
+      "name": "Merchant Quarter",
+      "description": "Bustling commercial district with shops and warehouses",
+      "wealth_level": "middle",
+      "population": "high"
+    }
+  ],
+  "slums": [
+    {
+      "id": "uuid",
+      "name": "The Warrens",
+      "description": "Overcrowded slum district near the southern wall",
+      "conditions": "poor"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "district",
+      "source_id": "uuid",
+      "target_type": "location",
+      "target_skill": "world-building",
+      "target_hint": "Part of Eldoria City"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "urban-design", "extracted_at": "...", "entity_count": 2 }
+}
+```
 
 ## Key Considerations
 
 - **Social inequality**: Slums vs noble districts show wealth gap
-- **Infrastructure quality**: Varies dramatically by district
 - **Mixed use**: Many areas are residential + commercial
-- **Historical layers**: Cities may have old and new sections
-- **Zoning**: Some districts specialize (religious, industrial, port)
+- **Historical layers**: Cities have old and new sections
+- **Cross-references**: Parent locations → cross_references to world-building

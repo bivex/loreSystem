@@ -1,63 +1,78 @@
 ---
 name: faction-design
-description: Extract faction entities from narrative text. Use when analyzing organizations, hierarchies, ideologies, faction territories, resources, leaders, and inter-faction relationships.
+description: Extract faction entities from narrative text. Use when analyzing organizations, hierarchies, ideologies, territories, resources, leaders, banners, and inter-faction relationships.
 ---
 # faction-design
 
-Доменный скилл для Faction Analyst. Специфические правила извлечения и экспертиза.
+Domain skill for faction and organization extraction.
 
-## Domain Expertise
+## Entity Types
 
-- **Faction types**: Governments, guilds, cults, criminal organizations, rebels
-- **Group dynamics**: Internal politics, leadership struggles, faction divisions
-- **Ideologies**: Beliefs, goals, motivations, worldviews
-- **Territory**: Geographical control, influence zones, borders
-- **Resources**: Wealth, military power, information, magic, technology
+| Type | Description |
+|------|-------------|
+| `faction` | Organization, guild, cult, or group |
+| `faction_hierarchy` | Internal power structure |
+| `faction_ideology` | Beliefs, goals, worldview |
+| `faction_leader` | Leadership position or person |
+| `faction_membership` | Member roster or membership info |
+| `faction_resource` | Controlled resources and assets |
+| `faction_territory` | Controlled or influenced territory |
+| `banner` | Faction banner, emblem, or symbol |
 
-## Entity Types (7 total)
+## Domain Constraints
 
-- **faction** - Factions and organizations
-- **faction_hierarchy** - Faction hierarchy structures
-- **faction_ideology** - Faction beliefs, ideologies
-- **faction_leader** - Faction leaders
-- **faction_membership** - Faction members
-- **faction_resource** - Faction resources, assets
-- **faction_territory** - Faction territories, controlled areas
+- `faction.type`: political, religious, military, criminal, magical, merchant, secret, monster
+- `faction.alignment`: good, neutral, evil, chaotic
+- `faction_membership.reputation`: integer -1000 to 1000
 
-## Processing Guidelines
+## Extraction Rules
 
-When extracting faction entities from chapter text:
+1. **Named groups**: Guilds, armies, cults, orders — extract with exact name
+2. **Implied groups**: Bandits, rebels, authorities — create descriptive name
+3. **Hierarchy**: Who leads, how power is organized, ranks
+4. **Relationships**: Allies, enemies, neutral parties between factions
+5. **Resources**: Wealth, military power, information, magic, territory
 
-1. **Identify factions**:
-   - Named groups (Eldorian Council, Shadow Brotherhood, Rebellion)
-   - Organizations mentioned (guilds, armies, cults, orders)
-   - Implied groups (bandits, rebels, authorities, resistance)
-   - Informal groups (village elders, merchant alliance)
+## Output Format
 
-2. **Extract faction details**:
-   - Faction name, type, ideology (what do they believe)
-   - Leadership structure (who leads, how is power organized)
-   - Members and their roles (leaders, advisors, foot soldiers)
-   - Territory controlled (where do they operate)
-   - Resources and power (wealth, military, magic, influence)
+Write to `entities/society.json`:
 
-3. **Analyze faction relationships**:
-   - Allies and enemies (who supports or opposes whom)
-   - Neutral parties (uninvolved or Switzerland-types)
-   - Internal divisions or conflicts (factions within factions)
-   - Power dynamics (dominant vs subservient groups)
-
-4. **Contextualize politically**:
-   - How factions relate to government (official vs underground)
-   - Geographic control and influence (where is power concentrated)
-   - Resource competition (what are they fighting over)
-   - Historical relationships (old alliances, ancient feuds)
+```json
+{
+  "faction": [
+    {
+      "id": "uuid",
+      "name": "Shadow Brotherhood",
+      "description": "Secret criminal organization operating in the underworld",
+      "type": "criminal",
+      "alignment": "evil"
+    }
+  ],
+  "faction_leader": [
+    {
+      "id": "uuid",
+      "name": "The Hooded Master",
+      "description": "Mysterious leader of the Shadow Brotherhood",
+      "faction_id": "faction-uuid",
+      "rank": "supreme_leader"
+    }
+  ],
+  "cross_references": [
+    {
+      "source_type": "faction_leader",
+      "source_id": "uuid",
+      "target_type": "character",
+      "target_skill": "character-design",
+      "target_hint": "The Hooded Master — also a character entity"
+    }
+  ],
+  "_metadata": { "source": "...", "skill": "faction-design", "extracted_at": "...", "entity_count": 2 }
+}
+```
 
 ## Key Considerations
 
-- **Loose organizations**: Not all groups have formal structures (bandits, mobs)
-- **Overlapping membership**: Characters may belong to multiple factions (double agents)
-- **Hidden factions**: Some groups may operate in secret (cults, conspiracies)
-- **Dynamic relationships**: Alliances can shift, enemies can become allies
-- **Power vs authority**: Official power vs actual control (de facto vs de jure)
-- **Influence zones**: Territory may be controlled, influenced, or contested
+- **Overlapping membership**: Characters may belong to multiple factions
+- **Hidden factions**: Some operate in secret — extract even unnamed ones
+- **Dynamic relationships**: Alliances shift; note current state from text
+- **Cross-references**: Faction leaders → character-design; territories → world-building
