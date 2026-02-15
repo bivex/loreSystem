@@ -40,7 +40,7 @@
 ### Installation
 
 ```bash
-git clone <repo-url> && cd loreSystem
+git clone https://github.com/bivex/loreSystem && cd loreSystem
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -427,7 +427,23 @@ Connect from Claude Code, Claude Desktop, or any MCP client. See [MCP Server doc
 
 ---
 
-## 🧪 Testing
+## � Community Standards
+
+This project follows recommended community standards for open-source development:
+
+| Standard | Status | Description |
+|----------|--------|-------------|
+| **README** | ✅ | Comprehensive project documentation |
+| **Code of Conduct** | ✅ [📄](CODE_OF_CONDUCT.md) | Community guidelines and expectations |
+| **Contributing** | ✅ [📝](CONTRIBUTING.md) | How to contribute to the project |
+| **License** | ✅ [📜](LICENSE) | Project licensing information |
+| **Security Policy** | ✅ [🔒](SECURITY.md) | Security vulnerability reporting |
+| **Issue Templates** | ✅ [📋](.github/ISSUE_TEMPLATE/) | Standardized issue reporting |
+| **Pull Request Template** | ✅ [🔄](.github/PULL_REQUEST_TEMPLATE.md) | Standardized PR submissions |
+
+---
+
+## �🧪 Testing
 
 ```bash
 # Full test suite with coverage
