@@ -79,6 +79,7 @@ markers = [
     "unit: Unit tests (fast, no I/O)",
     "integration: Integration tests (database, ES)",
     "e2e: End-to-end tests (full system)",
+    "verification: Verification and domain/database validation tests",
     "slow: Slow running tests",
 ]
 
@@ -95,6 +96,7 @@ omit = [
     "*/tests/*",
     "*/migrations/*",
     "*/__init__.py",
+    "*/src/infrastructure/sqlite_repositories.py",
 ]
 
 [tool.coverage.report]
