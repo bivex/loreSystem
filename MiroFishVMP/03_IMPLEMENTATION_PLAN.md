@@ -1,5 +1,15 @@
 # Пошаговый план внедрения
 
+## Фаза 0. Зафиксировать реальную модель MiroFish
+
+Перед кодом нужно принять архитектурный факт:
+
+- `MiroFish` — это social simulation engine
+- он работает через цепочку `ontology -> graph -> profile -> runtime`
+- он ожидает не весь lore-мир, а набор акторов и их социальный контекст
+
+Итог фазы: команда не пытается интегрировать `loreSystem` как будто `MiroFish` — это универсальный world database.
+
 ## Фаза 1. Определить границы MVP
 
 Сначала фиксируем первый сценарий и минимальный scope.
@@ -12,6 +22,7 @@
 - локации
 - стартовые события
 - цели агентов
+- представительские аккаунты фракций или институтов
 
 ### Что сознательно откладываем
 
@@ -32,18 +43,40 @@
 
 Результат фазы: `loreSystem` умеет стабильно отдавать мир в едином формате.
 
-## Фаза 3. Подготовить импорт в MiroFish
+## Фаза 3. Построить social projection layer
 
 Нужно реализовать:
 
-1. loader world bundle
-2. преобразование в агентов и environment nodes
+1. projection rules: кто становится актером, а кто нет
+2. преобразование `Faction -> organization/official_account`
+3. преобразование `Character -> actor`
+4. перенос `relationships`, `event seeds`, `world rules`
+5. сохранение `canonical_id -> projection_id`
+
+Результат фазы: из канонического мира получается детерминированный набор social-simulation actors.
+
+## Фаза 4. Подготовить импорт в MiroFish
+
+Нужно реализовать:
+
+1. loader projection bundle
+2. преобразование в graph entities / profiles / config
 3. инициализацию social graph
 4. загрузку memories/goals/rules
 
-Результат фазы: MiroFish умеет запускать симуляцию на данных из loreSystem.
+Результат фазы: MiroFish умеет запускать симуляцию на данных из `loreSystem`, не переизобретая канон из сырого текста.
 
-## Фаза 4. Подготовить формат результатов
+### Предпочтительный путь для MVP
+
+Для первой версии предпочтительно подключаться к тем частям `MiroFish`, которые ближе к runtime:
+
+- `OasisProfileGenerator`
+- `SimulationConfigGenerator`
+- `run_twitter_simulation.py` / `run_reddit_simulation.py`
+
+А native путь `raw text -> OntologyGenerator -> GraphBuilderService` оставить как опциональный режим для standalone-использования.
+
+## Фаза 5. Подготовить формат результатов
 
 Нужно реализовать:
 
@@ -54,7 +87,7 @@
 
 Результат фазы: симуляция выдает не сырой лог, а структурированный пакет результатов.
 
-## Фаза 5. Импорт результатов обратно в loreSystem
+## Фаза 6. Импорт результатов обратно в loreSystem
 
 Нужно реализовать:
 
@@ -65,7 +98,7 @@
 
 Результат фазы: результаты симуляции доступны внутри loreSystem и не ломают канон.
 
-## Фаза 6. Простой пользовательский поток
+## Фаза 7. Простой пользовательский поток
 
 Минимальный flow в UI/CLI:
 
@@ -75,6 +108,19 @@
 4. задать `what-if` переменные
 5. запустить `N runs`
 6. получить `prediction report` и `timeline branches`
+
+## Точки интеграции в коде MiroFish
+
+На что ориентироваться при реальной интеграции:
+
+- `backend/app/services/ontology_generator.py` — standalone ontology generation
+- `backend/app/services/graph_builder.py` — dynamic model creation для Zep
+- `backend/app/services/oasis_profile_generator.py` — entity -> profile
+- `backend/app/services/simulation_manager.py` — основной glue-layer
+- `backend/app/services/simulation_config_generator.py` — behavior config
+- `backend/scripts/run_twitter_simulation.py` — Twitter runtime
+- `backend/scripts/run_reddit_simulation.py` — Reddit runtime
+- `backend/app/services/report_agent.py` — post-simulation analysis, не ingestion layer
 
 ## Распределение работ по направлениям
 
@@ -88,7 +134,8 @@
 
 ### Simulation / MiroFish
 
-- bundle ingestion
+- projection bundle ingestion
+- profile/config generation
 - agent instantiation
 - run orchestration
 - result normalization
@@ -108,6 +155,7 @@
 
 - зафиксировать контракт данных
 - сделать exporter из loreSystem
+- сделать social projection layer
 - сделать importer в MiroFish
 - запустить первый end-to-end сценарий
 
@@ -125,7 +173,7 @@
 Успех есть только тогда, когда:
 
 - есть четкий canonical world model
-- есть воспроизводимый simulation bundle
+- есть воспроизводимый projection/simulation bundle
 - есть сравнимые scenario runs
 - есть структурированный prediction output
 

@@ -39,6 +39,13 @@
 
 Это не источник истины, а машина сценарного прогноза.
 
+После анализа кода `MiroFish` это уточняется так:
+
+- он создает **social-simulation ontology**, а не полный world ontology
+- его сущности — это прежде всего **те, кто может говорить/влиять/реагировать**
+- итоговые runtime-агенты создаются не напрямую из текста, а через цепочку `ontology -> graph -> profile -> OASIS runtime`
+- `ReportAgent` занимается анализом результатов, а не построением мира
+
 ### Adapter Layer = Переводчик между мирами
 
 Нужны два независимых направления:
@@ -60,10 +67,13 @@ Source Text / Reports / Stories
      Canonical World Bundle
             |
             v
-     Integration Adapter Layer
+      Social Projection Layer
             |
             v
-       MiroFish Simulation
+   MiroFish Graph/Profile Prep
+            |
+            v
+        OASIS Simulation
             |
             v
    Scenario Events / State Deltas
@@ -72,18 +82,44 @@ Source Text / Reports / Stories
       loreSystem Scenario Store
 ```
 
-## 4. Минимальный технический вариант
+## 4. Что реально происходит внутри MiroFish
+
+Внутренний пайплайн `MiroFish` выглядит так:
+
+1. `OntologyGenerator` создает `entity_types` и `edge_types`
+2. `GraphBuilderService.set_ontology(...)` динамически создает model classes и регистрирует их в Zep
+3. Zep строит экземпляры сущностей и связей по тексту
+4. `OasisProfileGenerator` превращает graph entities в `OasisAgentProfile`
+5. `SimulationConfigGenerator` генерирует агентную активность и event config
+6. `run_twitter_simulation.py` / `run_reddit_simulation.py` создают OASIS runtime agent graph
+7. `ReportAgent` и `zep_tools` анализируют результаты
+
+Следствие: интеграция с `loreSystem` должна подавать в `MiroFish` не весь мир, а **проекцию мира в социально-активных акторов**.
+
+## 5. Минимальный технический вариант
 
 На старте лучше использовать **loose coupling**:
 
 - `loreSystem` экспортирует JSON bundle
-- `MiroFish` читает bundle
+- adapter строит из него **social projection bundle**
+- `MiroFish` читает projection bundle
 - `MiroFish` отдает JSON result bundle
 - `loreSystem` импортирует только значимые результаты
 
 Это быстрее и безопаснее, чем сразу строить общий runtime.
 
-## 5. Рекомендуемая структура интеграции
+## 6. Рекомендуемая стратегия интеграции
+
+Для интегрированного режима рекомендуется такой приоритет:
+
+1. `loreSystem` строит канон мира
+2. adapter строит **speaker-capable projection**
+3. MiroFish получает уже структурированных акторов, связи и события
+4. MiroFish генерирует профили, конфиг и runtime-агентов
+
+На MVP не стоит делать ставку на native путь `MiroFish`, где ontology заново выводится из сырого текста. Этот путь хорош для standalone-режима, но в связке с `loreSystem` создает лишнюю недетерминированность.
+
+## 7. Рекомендуемая структура интеграции
 
 Если делать внутри `loreSystem`, то логично выделить:
 
@@ -97,24 +133,32 @@ Source Text / Reports / Stories
 
 - `integration_bridge/`
   - `export_world_bundle.py`
+  - `build_social_projection.py`
   - `import_simulation_results.py`
   - `schemas/`
   - `mappers/`
 
-## 6. Какие данные идут в симуляцию
+## 8. Какие данные идут в симуляцию
 
-В MiroFish должны попадать не все данные loreSystem, а только данные, нужные для динамики:
+В MiroFish должны попадать не все данные loreSystem, а только данные, нужные для динамики и представимые как субъекты или их контекст:
 
-- актеры мира
-- их роли и цели
+- актеры мира, способные говорить или действовать
+- представительские аккаунты организаций/фракций
+- их роли, цели и stance seeds
 - групповые принадлежности
 - социальные связи
 - пространственный контекст
-- ресурсы и ограничения
 - стартовые события
 - правила и запреты мира
 
-## 7. Какие данные возвращаются обратно
+Не должны напрямую становиться агентами:
+
+- артефакты
+- чистые локации
+- абстрактные законы без носителя
+- lore fragments без связанного актора
+
+## 9. Какие данные возвращаются обратно
 
 Возвращать нужно не весь внутренний лог симуляции, а только артефакты высокого уровня:
 
@@ -125,7 +169,7 @@ Source Text / Reports / Stories
 - `alternative_timelines`
 - `prediction_summary`
 
-## 8. Что хранить отдельно
+## 10. Что хранить отдельно
 
 Нужно строго разделить:
 
@@ -136,16 +180,17 @@ Source Text / Reports / Stories
 
 Иначе канон быстро смешается с гипотезами.
 
-## 9. Верный порядок реализации
+## 11. Верный порядок реализации
 
 1. Сначала общий exchange contract
 2. Потом exporter из loreSystem
-3. Потом importer в MiroFish
-4. Потом result bundle из MiroFish
-5. Потом importer результатов обратно в loreSystem
-6. Только после этого UI и orchestration
+3. Потом social projection layer
+4. Потом importer/adapter в MiroFish
+5. Потом result bundle из MiroFish
+6. Потом importer результатов обратно в loreSystem
+7. Только после этого UI и orchestration
 
-## 10. Ключевой архитектурный принцип
+## 12. Ключевой архитектурный принцип
 
 `loreSystem` должен отвечать на вопрос **"что существует в мире"**.
 

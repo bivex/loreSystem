@@ -6,7 +6,7 @@
 
 ## 2. Минимальный набор сущностей для MVP
 
-Для первого релиза достаточно 6 групп:
+Для первого релиза достаточно 6 канонических групп:
 
 - `characters`
 - `factions`
@@ -16,6 +16,8 @@
 - `goals`
 
 Все остальные сущности подключаются позже.
+
+Но это еще не значит, что все они напрямую попадут в runtime `MiroFish`.
 
 ## 3. Канонический bundle на выходе из loreSystem
 
@@ -39,7 +41,32 @@
 }
 ```
 
-## 4. Обязательные поля у сущностей
+Этот bundle — источник истины. Он не обязан совпадать 1:1 с тем, что будет загружено в `MiroFish`.
+
+## 4. Projection bundle для MiroFish
+
+После анализа `MiroFish` рекомендуется промежуточный формат: не просто `world bundle`, а **social projection bundle**.
+
+Рекомендуемая структура:
+
+```json
+{
+  "schema_version": "1.0",
+  "world_id": "world-uuid",
+  "world_version": "v1",
+  "scenario_id": "scenario-uuid",
+  "actors": [],
+  "organizations": [],
+  "social_edges": [],
+  "context_locations": [],
+  "event_seeds": [],
+  "world_rules": []
+}
+```
+
+Идея простая: сначала мы проецируем канон в набор **говорящих акторов и их контекст**, а уже потом этот набор попадает в `MiroFish`.
+
+## 5. Обязательные поля у сущностей
 
 Минимальный обязательный набор:
 
@@ -54,17 +81,44 @@
 - `confidence`
 - `status`
 
-## 5. Маппинг сущностей
+Для projection-слоя дополнительно обязательны:
+
+- `canonical_id`
+- `canonical_type`
+- `speaker_mode` — `individual | representative | official_account | observer`
+- `represented_entity_id` — если агент говорит от имени фракции/организации
+
+## 6. Правила проекции и маппинг сущностей
 
 ### Из loreSystem в MiroFish
 
-- `Character` -> `agent`
-- `Faction` -> `group`
-- `Location` -> `environment_node`
+- `Character` -> `actor`, если это действующий и говорящий субъект
+- `Faction` -> `organization` или `official_account`, а не обязательно отдельный персонаж
+- `Faction Leader / Spokesperson` -> `representative actor`
+- `Location` -> `context_location`, но не агент
 - `Relationship` -> `social_edge`
-- `Quest/Event` -> `objective` или `trigger`
-- `Law/Culture/Religion` -> `world_rule`
-- `LoreFragment/Memory` -> `agent_memory_seed`
+- `Quest/Event` -> `event_seed` или `trigger`
+- `Law/Culture/Religion` -> `world_rule`, если влияет на поведение агентов
+- `LoreFragment/Memory` -> `memory_seed`, только если привязано к актеру
+
+### Что не должно напрямую становиться агентом
+
+- `Artifact`
+- `Dungeon`
+- `PureLocation`
+- `Calendar/Era`
+- `AbstractBelief` без носителя
+
+### Как это соотносится с нативной моделью MiroFish
+
+Внутри `MiroFish` дальше могут появляться:
+
+- `entity_types` / `edge_types` на уровне ontology
+- graph entities в Zep
+- `OasisAgentProfile`
+- runtime agents в OASIS
+
+Но canonical truth по-прежнему остается на стороне `loreSystem`.
 
 ### Из MiroFish обратно в loreSystem
 
@@ -74,14 +128,19 @@
 - `conflict_outcome` -> `world_event`
 - `trajectory_summary` -> `prediction_report`
 
-## 6. Правила идентификаторов
+## 7. Правила идентификаторов
 
 - canonical IDs всегда генерирует `loreSystem`
 - MiroFish обязан хранить ссылку на исходный canonical ID
 - simulation-only сущности получают отдельный `simulation_id`
 - нельзя подменять canonical ID временными идентификаторами симуляции
 
-## 7. Правила версии данных
+Дополнительно:
+
+- каждый runtime agent должен быть трассируем до `canonical_id`
+- если создается представительский аккаунт, нужен отдельный `projection_id`, но ссылка на представляемую сущность обязательна
+
+## 8. Правила версии данных
 
 В каждом bundle нужны:
 
@@ -93,7 +152,7 @@
 
 Это позволит сравнивать результаты разных прогонов и не терять совместимость.
 
-## 8. Result bundle от MiroFish
+## 9. Result bundle от MiroFish
 
 Рекомендуемая структура:
 
@@ -111,7 +170,12 @@
 }
 ```
 
-## 9. Что нельзя импортировать обратно автоматически
+Желательно также хранить:
+
+- `platform_runs` — twitter/reddit/parallel
+- `agent_trace_refs` — связь runtime agent -> projection -> canonical entity
+
+## 10. Что нельзя импортировать обратно автоматически
 
 Без ручного подтверждения или отдельной политики нельзя сразу превращать в канон:
 
@@ -126,7 +190,7 @@
 - агрегированные устойчивые изменения
 - явно принятые пользователем дельты
 
-## 10. Золотое правило контракта
+## 11. Золотое правило контракта
 
 `loreSystem` хранит **мир как есть**.
 
