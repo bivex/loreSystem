@@ -97,3 +97,21 @@ Glue-layer:
 - `backend/scripts/run_twitter_simulation.py`
 - `backend/scripts/run_reddit_simulation.py`
 - `backend/app/services/report_agent.py`
+
+## 10. Где смотреть модели и prompt-layer'ы
+
+Отдельный разбор того,
+
+- какие модели реально вызываются,
+- где именно лежат prompt'ы,
+- какие prompt-layer'ы надо будет менять при интеграции,
+
+вынесен в `07_MODELS_AND_PROMPTS.md`.
+
+Это важно, потому что `MiroFish` меняется не только на уровне DTO/adapter'ов, но и на уровне:
+
+- ontology prompt
+- persona/profile prompt
+- simulation behavior prompt
+- report prompt
+- runtime model routing

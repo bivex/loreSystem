@@ -24,6 +24,7 @@
 - `01_ARCHITECTURE.md` — правильная целевая архитектура интеграции
 - `02_DATA_CONTRACT.md` — единый контракт данных и правила маппинга
 - `06_MIROFISH_REVERSE_ENGINEERING.md` — что реально показал разбор кода `MiroFish`
+- `07_MODELS_AND_PROMPTS.md` — какие модели и prompt-layer'ы реально используются в `MiroFish`
 - `03_IMPLEMENTATION_PLAN.md` — пошаговый план внедрения
 - `04_CHECKLIST_AND_ACCEPTANCE.md` — чеклист, риски и критерии готовности
 - `05_FIRST_DEMO_SCENARIO.md` — первый демонстрационный сценарий, с которого стоит начинать
@@ -33,9 +34,10 @@
 1. `01_ARCHITECTURE.md`
 2. `02_DATA_CONTRACT.md`
 3. `06_MIROFISH_REVERSE_ENGINEERING.md`
-4. `03_IMPLEMENTATION_PLAN.md`
-5. `05_FIRST_DEMO_SCENARIO.md`
-6. `04_CHECKLIST_AND_ACCEPTANCE.md`
+4. `07_MODELS_AND_PROMPTS.md`
+5. `03_IMPLEMENTATION_PLAN.md`
+6. `05_FIRST_DEMO_SCENARIO.md`
+7. `04_CHECKLIST_AND_ACCEPTANCE.md`
 
 ## Главная идея
 
@@ -67,6 +69,27 @@
 Из этого следует ключевое правило интеграции:
 
 > в `MiroFish` нужно передавать не весь lore-мир, а только **speakable / actor-capable projection** мира.
+
+## Что показал анализ моделей и prompt'ов
+
+После отдельного разбора model/prompt-layer'ов стало ясно еще одно важное правило:
+
+- у `MiroFish` сейчас почти весь pipeline собран вокруг **одного OpenAI-compatible model slot**
+- но семантически это не один и тот же слой
+- на практике там есть разные режимы LLM-работы:
+  - ontology design
+  - persona/profile generation
+  - simulation config generation
+  - report generation
+  - runtime-agent execution inside OASIS/CAMEL
+
+Из этого следует, что в интеграции с `loreSystem` нам почти наверняка придется менять не только data contract, но и:
+
+- разносить модели по слоям
+- переписывать ontology/profile/config/report prompt'ы под наш домен
+- убирать из prompt'ов лишние assumptions про китайский social-media scenario, если они не соответствуют миру симуляции
+
+Отдельно это описано в `07_MODELS_AND_PROMPTS.md`.
 
 ## Коротко о границах ответственности
 
