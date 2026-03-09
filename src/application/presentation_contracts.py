@@ -138,6 +138,9 @@ class _ProxyMeta(type):
     def __getattr__(cls, item):
         return getattr(cls._target, item)
 
+    def __iter__(cls):
+        return iter(cls._target)
+
     def __instancecheck__(cls, instance):
         return isinstance(instance, cls._target)
 
