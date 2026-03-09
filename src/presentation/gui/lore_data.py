@@ -793,6 +793,8 @@ class LoreData:
             'description': str(item.description),
             'item_type': item.item_type.value,
             'rarity': item.rarity.value if item.rarity else None,
+            'model_3d_id': item.model_3d_id.value if item.model_3d_id else None,
+            'texture_ids': [t.value for t in item.texture_ids] if item.texture_ids else [],
             'created_at': item.created_at.value.isoformat(),
             'updated_at': item.updated_at.value.isoformat(),
             'version': item.version.value
@@ -817,6 +819,8 @@ class LoreData:
             base_def=None,
             special_stat=None,
             special_stat_value=None,
+            model_3d_id=EntityId(data['model_3d_id']) if data.get('model_3d_id') else None,
+            texture_ids=[EntityId(t) for t in data.get('texture_ids', [])] or None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
             version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
@@ -1570,6 +1574,9 @@ class LoreData:
             'player_ids': [p.value for p in session.player_ids],
             'actual_start': session.actual_start.value.isoformat() if session.actual_start else None,
             'actual_end': session.actual_end.value.isoformat() if session.actual_end else None,
+            'actual_duration_hours': session.actual_duration_hours,
+            'notes': session.notes,
+            'story_id': session.story_id.value if session.story_id else None,
             'created_at': session.created_at.value.isoformat(),
             'updated_at': session.updated_at.value.isoformat(),
             'version': session.version.value
@@ -1590,9 +1597,13 @@ class LoreData:
             player_ids=[EntityId(p) for p in data.get('player_ids', [])],
             actual_start=Timestamp(datetime.fromisoformat(data['actual_start'])) if data.get('actual_start') else None,
             actual_end=Timestamp(datetime.fromisoformat(data['actual_end'])) if data.get('actual_end') else None,
+            actual_duration_hours=data.get('actual_duration_hours'),
+            notes=data.get('notes', ''),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version']),
+            story_id=EntityId(data['story_id']) if data.get('story_id') else None,
+            skip_temporal_validation=True,
         )
     
     @staticmethod

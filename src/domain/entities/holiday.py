@@ -53,11 +53,7 @@ class Holiday:
     month: int  # Month number (1-indexed)
     day: int  # Day of month
     
-    # Duration (for multi-day holidays)
-    duration_days: int = 1
-    
     # Occurrence
-    occurs_every_year: bool = True
     specific_years: Optional[List[int]]  # If not every year
     
     # Origins and meaning
@@ -82,6 +78,10 @@ class Holiday:
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
+
+    # Duration / occurrence defaults must come after required fields
+    duration_days: int = 1
+    occurs_every_year: bool = True
     
     def __post_init__(self):
         """Validate invariants after construction."""

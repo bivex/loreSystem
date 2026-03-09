@@ -1817,7 +1817,7 @@ class InMemoryQuestNodeRepository:
         return self._quest_nodes.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [qn for qn in self._quest_nodes.values() if qn.tenant_id == tenant_id and qn.world_id == world_id][offset:offset+limit]]
+        return [qn for qn in self._quest_nodes.values() if qn.tenant_id == tenant_id and qn.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1846,7 +1846,7 @@ class InMemoryQuestPrerequisiteRepository:
         return self._prerequisites.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [p for p in self._prerequisites.values() if p.tenant_id == tenant_id and p.world_id == world_id][offset:offset+limit]]
+        return [p for p in self._prerequisites.values() if p.tenant_id == tenant_id and p.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1875,7 +1875,7 @@ class InMemoryQuestObjectiveRepository:
         return self._objectives.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [o for o in self._objectives.values() if o.tenant_id == tenant_id and o.world_id == world_id][offset:offset+limit]]
+        return [o for o in self._objectives.values() if o.tenant_id == tenant_id and o.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1904,7 +1904,7 @@ class InMemoryQuestTrackerRepository:
         return self._trackers.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [t for t in self._trackers.values() if t.tenant_id == tenant_id and t.world_id == world_id][offset:offset+limit]]
+        return [t for t in self._trackers.values() if t.tenant_id == tenant_id and t.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1933,7 +1933,7 @@ class InMemoryQuestGiverRepository:
         return self._givers.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [g for g in self._givers.values() if g.tenant_id == tenant_id and g.world_id == world_id][offset:offset+limit]]
+        return [g for g in self._givers.values() if g.tenant_id == tenant_id and g.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1962,7 +1962,7 @@ class InMemoryQuestRewardRepository:
         return self._rewards.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [r for r in self._rewards.values() if r.tenant_id == tenant_id and r.world_id == world_id][offset:offset+limit]]
+        return [r for r in self._rewards.values() if r.tenant_id == tenant_id and r.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -1991,7 +1991,7 @@ class InMemoryQuestRewardTierRepository:
         return self._tiers.get((tenant_id, entity_id))
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        return [t for t in self._tiers.values() if t.tenant_id == tenant_id and t.world_id == world_id][offset:offset+limit]]
+        return [t for t in self._tiers.values() if t.tenant_id == tenant_id and t.world_id == world_id][offset:offset+limit]
 
     def delete(self, tenant_id, entity_id):
         key = (tenant_id, entity_id)
@@ -12520,7 +12520,7 @@ class InMemorySubtitleRepository:
 
 class InMemoryDubbingRepository:
     def __init__(self):
-        self._ dubbings = {}
+        self._dubbings = {}
         self._next_id = 1
     def save(self, dubbing):
         if dubbing.id is None:
