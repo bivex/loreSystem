@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.map import Map
-from src.domain.value_objects.common import TenantId, EntityId
+from src.application.presentation_contracts import EntityId, Map, TenantId
 
 
 class MapTab(QWidget):

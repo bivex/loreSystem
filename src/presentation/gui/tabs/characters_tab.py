@@ -11,11 +11,16 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.character import Character
-from src.domain.value_objects.common import (
-    TenantId, EntityId, CharacterName, Backstory, CharacterStatus, Timestamp
+from src.application.presentation_contracts import (
+    Ability,
+    Backstory,
+    Character,
+    CharacterName,
+    CharacterStatus,
+    EntityId,
+    TenantId,
+    Timestamp,
 )
-from src.domain.value_objects.ability import Ability
 from src.presentation.gui.dialogs.ability_dialog import AbilityDialog
 
 

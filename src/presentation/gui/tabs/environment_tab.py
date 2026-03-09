@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.environment import Environment
-from src.domain.value_objects.common import EntityId, TimeOfDay, Weather, Lighting
+from src.application.presentation_contracts import EntityId, Environment, Lighting, TimeOfDay, Weather
 
 
 class EnvironmentTab(QWidget):

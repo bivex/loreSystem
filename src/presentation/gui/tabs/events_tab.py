@@ -12,9 +12,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.event import Event
-from src.domain.value_objects.common import (
-    TenantId, EntityId, Description, Timestamp, EventOutcome, DateRange
+from src.application.presentation_contracts import (
+    DateRange,
+    Description,
+    EntityId,
+    Event,
+    EventOutcome,
+    TenantId,
+    Timestamp,
 )
 
 

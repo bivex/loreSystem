@@ -11,10 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.improvement import Improvement
-from src.domain.value_objects.common import (
-    TenantId, EntityId, EntityType
-)
+from src.application.presentation_contracts import EntityId, EntityType, Improvement, TenantId
 from src.presentation.gui.lore_data import LoreData
 
 class ImprovementsTab(QWidget):

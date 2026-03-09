@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.banner import Banner
-from src.domain.value_objects.common import EntityId, Description
+from src.application.presentation_contracts import Banner, Description, EntityId
 
 
 class BannerTab(QWidget):

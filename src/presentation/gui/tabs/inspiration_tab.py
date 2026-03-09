@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.inspiration import Inspiration
-from src.domain.value_objects.common import TenantId, EntityId
+from src.application.presentation_contracts import EntityId, Inspiration, TenantId
 
 
 class InspirationTab(QWidget):

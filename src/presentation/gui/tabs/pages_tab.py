@@ -12,10 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.page import Page
-from src.domain.value_objects.common import (
-    TenantId, EntityId, PageName, Content, Version, Timestamp
-)
+from src.application.presentation_contracts import Content, EntityId, Page, PageName, TenantId, Timestamp, Version
 
 
 class PagesTab(QWidget):

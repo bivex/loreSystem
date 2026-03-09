@@ -12,9 +12,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.session import Session
-from src.domain.value_objects.common import (
-    TenantId, EntityId, SessionName, SessionStatus, Timestamp
+from src.application.presentation_contracts import (
+    EntityId,
+    Session,
+    SessionName,
+    SessionStatus,
+    TenantId,
+    Timestamp,
 )
 
 

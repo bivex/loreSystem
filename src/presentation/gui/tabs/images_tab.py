@@ -12,10 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
 from PyQt6.QtGui import QFont, QPixmap
 
-from src.domain.entities.image import Image
-from src.domain.value_objects.common import (
-    TenantId, EntityId, ImagePath, ImageType
-)
+from src.application.presentation_contracts import EntityId, Image, ImagePath, ImageType, TenantId
 
 
 class ImagesTab(QWidget):

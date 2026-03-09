@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.world import World
-from src.domain.value_objects.common import TenantId, EntityId, WorldName, Description
+from src.application.presentation_contracts import Description, EntityId, TenantId, World, WorldName
 
 
 class WorldsTab(QWidget):

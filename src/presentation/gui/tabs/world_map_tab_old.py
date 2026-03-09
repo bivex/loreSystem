@@ -10,9 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.world import World
-from src.domain.entities.map import Map
-from src.domain.value_objects.common import EntityId
+from src.application.presentation_contracts import EntityId, Map, World
 
 
 class WorldMapTab(QWidget):

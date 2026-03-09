@@ -82,27 +82,7 @@ def _exception_hook(exc_type, exc_value, exc_tb):
 import sys
 sys.excepthook = _exception_hook
 
-from src.domain.entities.world import World
-from src.domain.entities.character import Character
-from src.domain.entities.event import Event
-from src.domain.entities.improvement import Improvement
-from src.domain.entities.item import Item
-from src.domain.entities.quest import Quest
-from src.domain.entities.storyline import Storyline
-from src.domain.entities.page import Page
-from src.domain.entities.template import Template
-from src.domain.entities.story import Story
-from src.domain.entities.tag import Tag
-from src.domain.entities.image import Image
-from src.domain.value_objects.common import (
-    TenantId, EntityId, WorldName, Description, CharacterName,
-    Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
-    ItemType, Rarity, QuestStatus, StorylineType,
-    PageName, Content, TemplateName, TemplateType, StoryName, StoryType,
-    TagName, TagType, ImagePath, ImageType
-)
-from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
-from src.domain.exceptions import DomainException
+from src.application.presentation_contracts import *  # noqa: F401,F403
 
 # Import new tab modules
 from src.presentation.gui.tabs import (

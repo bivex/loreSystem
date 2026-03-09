@@ -36,7 +36,7 @@ from src.presentation.gui.tabs.location_tab import LocationTab
 from src.presentation.gui.tabs.environment_tab import EnvironmentTab
 from src.presentation.gui.tabs.texture_tab import TextureTab
 from src.presentation.gui.tabs.model3d_tab import Model3DTab
-from src.domain.value_objects.common import EntityId
+from src.application.presentation_contracts import EntityId
 
 
 class MainWindow(QMainWindow):

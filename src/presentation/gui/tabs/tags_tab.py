@@ -11,10 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor
 
-from src.domain.entities.tag import Tag
-from src.domain.value_objects.common import (
-    TenantId, EntityId, TagName, TagType
-)
+from src.application.presentation_contracts import EntityId, Tag, TagName, TagType, TenantId
 
 
 class TagsTab(QWidget):

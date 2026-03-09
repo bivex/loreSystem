@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.value_objects.common import EntityId
+from src.application.presentation_contracts import EntityId
 
 
 class RewardTab(QWidget):

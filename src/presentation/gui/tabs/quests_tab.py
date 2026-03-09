@@ -9,9 +9,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 
-from src.domain.entities.quest import Quest
-from src.domain.value_objects.common import (
-    EntityId, Description, Timestamp, QuestStatus
+from src.application.presentation_contracts import (
+    Description,
+    EntityId,
+    Quest,
+    QuestStatus,
+    Timestamp,
 )
 from src.presentation.gui.lore_data import LoreData
 from src.presentation.gui.i18n import I18n

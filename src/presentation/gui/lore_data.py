@@ -4,61 +4,7 @@ LoreData - In-memory storage for lore entities.
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from src.domain.entities.world import World
-from src.domain.entities.character import Character
-from src.domain.entities.event import Event
-from src.domain.entities.improvement import Improvement
-from src.domain.entities.item import Item
-from src.domain.entities.quest import Quest
-from src.domain.entities.storyline import Storyline
-from src.domain.entities.page import Page
-from src.domain.entities.template import Template
-from src.domain.entities.story import Story
-from src.domain.entities.tag import Tag
-from src.domain.entities.image import Image
-from src.domain.entities.choice import Choice
-from src.domain.entities.flowchart import Flowchart
-from src.domain.entities.handout import Handout
-from src.domain.entities.inspiration import Inspiration
-from src.domain.entities.location import Location
-from src.domain.entities.environment import Environment
-from src.domain.entities.banner import Banner
-from src.domain.entities.character_relationship import CharacterRelationship
-from src.domain.entities.faction import Faction
-from src.domain.entities.shop import Shop
-from src.domain.entities.map import Map
-from src.domain.entities.note import Note
-from src.domain.entities.requirement import Requirement
-from src.domain.entities.session import Session
-from src.domain.entities.tokenboard import Tokenboard
-from src.domain.entities.pity import Pity
-from src.domain.entities.pull import Pull
-from src.domain.entities.player_profile import PlayerProfile
-from src.domain.entities.currency import Currency
-from src.domain.entities.reward import Reward
-from src.domain.entities.purchase import Purchase
-from src.domain.entities.event_chain import EventChain
-from src.domain.entities.faction_membership import FactionMembership
-from src.domain.entities.lore_axioms import LoreAxioms
-from src.domain.entities.music_control import MusicControl
-from src.domain.entities.music_state import MusicState
-from src.domain.entities.music_theme import MusicTheme
-from src.domain.entities.music_track import MusicTrack
-from src.domain.entities.progression_event import ProgressionEvent
-from src.domain.entities.progression_state import CharacterState
-from src.domain.entities.texture import Texture
-from src.domain.entities.model3d import Model3D
-from src.domain.value_objects.common import (
-    TenantId, EntityId, WorldName, Description, CharacterName,
-    Backstory, Timestamp, EntityType, EventOutcome, CharacterStatus,
-    ItemType, Rarity, QuestStatus, StorylineType,
-    PageName, Content, TemplateName, TemplateType, StoryName, StoryType,
-    TagName, TagType, ImagePath, ImageType, ChoiceType, SessionStatus,
-    NoteTitle, MapName, HandoutName, InspirationName, TokenboardName,
-    FlowchartName, Version, GitCommitHash, ImprovementStatus, SessionName,
-    TimeOfDay, Weather, Lighting
-)
-from src.domain.value_objects.ability import Ability
+from src.application.presentation_contracts import *  # noqa: F401,F403
 
 
 class LoreData:
@@ -225,11 +171,11 @@ class LoreData:
                 world_id=location_data['world_id'],
                 name=location_data['name'],
                 description=Description(location_data['description']),
-                location_type=__import__('src.domain.value_objects.common', fromlist=['LocationType']).LocationType(location_data['type']),
+                location_type=LocationType(location_data['type']),
                 parent_location_id=None,
                 created_at=Timestamp.now(),
                 updated_at=Timestamp.now(),
-                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+                version=Version(1)
             )
         else:
             # Assume it's already a Location entity
@@ -253,12 +199,12 @@ class LoreData:
                 world_id=banner['world_id'],
                 name=banner['name'],
                 description=Description(banner['description']),
-                banner_type=__import__('src.domain.value_objects.common', fromlist=['BannerType']).BannerType(banner['type']),
+                banner_type=BannerType(banner['type']),
                 pity_system_id=banner.get('pity_system_id'),
                 is_active=banner.get('is_active', True),
                 created_at=Timestamp.now(),
                 updated_at=Timestamp.now(),
-                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+                version=Version(1)
             )
         if banner.id is None:
             object.__setattr__(banner, 'id', self.get_next_id())
@@ -282,13 +228,13 @@ class LoreData:
                 world_id=relationship['world_id'],
                 character1_id=relationship['character1_id'],
                 character2_id=relationship['character2_id'],
-                relationship_type=__import__('src.domain.value_objects.common', fromlist=['RelationshipType']).RelationshipType(relationship['type']),
+                relationship_type=RelationshipType(relationship['type']),
                 description=Description(relationship['description']),
                 strength=relationship.get('strength', 1),
                 is_mutual=relationship.get('is_mutual', True),
                 created_at=Timestamp.now(),
                 updated_at=Timestamp.now(),
-                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+                version=Version(1)
             )
         if relationship.id is None:
             object.__setattr__(relationship, 'id', self.get_next_id())
@@ -312,13 +258,13 @@ class LoreData:
                 world_id=faction['world_id'],
                 name=faction['name'],
                 description=Description(faction['description']),
-                faction_type=__import__('src.domain.value_objects.common', fromlist=['FactionType']).FactionType(faction['type']),
+                faction_type=FactionType(faction['type']),
                 alignment=faction.get('alignment'),
                 reputation=faction.get('reputation', 0),
                 is_player_faction=faction.get('is_player_faction', False),
                 created_at=Timestamp.now(),
                 updated_at=Timestamp.now(),
-                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+                version=Version(1)
             )
         if faction.id is None:
             object.__setattr__(faction, 'id', self.get_next_id())
@@ -343,12 +289,12 @@ class LoreData:
                 location_id=shop.get('location_id'),
                 name=shop['name'],
                 description=Description(shop['description']),
-                shop_type=__import__('src.domain.value_objects.common', fromlist=['ShopType']).ShopType(shop['type']),
+                shop_type=ShopType(shop['type']),
                 currency_id=shop.get('currency_id'),
                 is_open=shop.get('is_open', True),
                 created_at=Timestamp.now(),
                 updated_at=Timestamp.now(),
-                version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+                version=Version(1)
             )
         if shop.id is None:
             object.__setattr__(shop, 'id', self.get_next_id())
@@ -492,7 +438,7 @@ class LoreData:
             is_active=environment_data.get('is_active', True),
             created_at=Timestamp.now(),
             updated_at=Timestamp.now(),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(1)
+            version=Version(1)
         )
         if environment.id is None:
             object.__setattr__(environment, 'id', self.get_next_id())
@@ -679,7 +625,7 @@ class LoreData:
             parent_id=EntityId(data['parent_id']) if data.get('parent_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -718,7 +664,7 @@ class LoreData:
             energy_cost=None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -739,7 +685,6 @@ class LoreData:
     
     @staticmethod
     def _dict_to_event(data: Dict) -> Event:
-        from src.domain.value_objects.common import DateRange
         return Event(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -755,7 +700,7 @@ class LoreData:
             location_id=None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -772,14 +717,13 @@ class LoreData:
     
     @staticmethod
     def _dict_to_improvement(data: Dict) -> Improvement:
-        from src.domain.value_objects.common import GitCommitHash
         return Improvement(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
             entity_type=EntityType(data['entity_type']),
             entity_id=EntityId(data['entity_id']),
             suggestion=data['suggestion'],
-            status=__import__('src.domain.value_objects.common', fromlist=['ImprovementStatus']).ImprovementStatus(data['status']),
+            status=ImprovementStatus(data['status']),
             git_commit_hash=GitCommitHash(data['git_commit_hash']),
             created_at=Timestamp(datetime.fromisoformat(data['created_at']))
         )
@@ -823,7 +767,7 @@ class LoreData:
             texture_ids=[EntityId(t) for t in data.get('texture_ids', [])] or None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -856,7 +800,7 @@ class LoreData:
             reward_ids=[EntityId(r) for r in data['reward_ids']],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -887,7 +831,7 @@ class LoreData:
             quest_ids=[EntityId(q) for q in data['quest_ids']],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -920,7 +864,7 @@ class LoreData:
             parent_template_id=EntityId(data['parent_template_id']) if data.get('parent_template_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -953,7 +897,7 @@ class LoreData:
             image_ids=[EntityId(i) for i in data.get('image_ids', [])],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -988,7 +932,7 @@ class LoreData:
             is_active=data.get('is_active', True),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1017,7 +961,7 @@ class LoreData:
             description=data.get('description'),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1052,7 +996,7 @@ class LoreData:
             dimensions=data.get('dimensions'),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1087,7 +1031,7 @@ class LoreData:
             is_mandatory=data['is_mandatory'],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1120,7 +1064,7 @@ class LoreData:
             is_active=data.get('is_active', True),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1153,7 +1097,7 @@ class LoreData:
             reveal_timing=data.get('reveal_timing'),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1200,7 +1144,7 @@ class LoreData:
             is_used=data.get('is_used', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1211,11 +1155,11 @@ class LoreData:
             world_id=EntityId(data['world_id']),
             name=data['name'],
             description=Description(data['description']),
-            location_type=__import__('src.domain.value_objects.common', fromlist=['LocationType']).LocationType(data['location_type']),
+            location_type=LocationType(data['location_type']),
             parent_location_id=EntityId(data['parent_location_id']) if data.get('parent_location_id') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1257,7 +1201,7 @@ class LoreData:
             is_active=data.get('is_active', True),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1292,7 +1236,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_banner(data: Dict) -> Banner:
-        from src.domain.entities.banner import BannerType
         return Banner(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -1319,7 +1262,7 @@ class LoreData:
             total_pulls=data.get('total_pulls', 0),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1339,7 +1282,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_character_relationship(data: Dict) -> CharacterRelationship:
-        from src.domain.entities.character_relationship import RelationshipType
         return CharacterRelationship(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -1356,7 +1298,7 @@ class LoreData:
             relationship_changed_events=[],
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1392,7 +1334,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_faction(data: Dict) -> Faction:
-        from src.domain.entities.faction import FactionType, FactionAlignment
         return Faction(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -1420,7 +1361,7 @@ class LoreData:
             is_joinable=True,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1456,7 +1397,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_shop(data: Dict) -> Shop:
-        from src.domain.entities.shop import ShopType
         return Shop(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -1474,7 +1414,7 @@ class LoreData:
             banner_image_path=None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1507,7 +1447,7 @@ class LoreData:
             is_interactive=data.get('is_interactive', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1536,7 +1476,7 @@ class LoreData:
             is_pinned=data.get('is_pinned', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1601,7 +1541,7 @@ class LoreData:
             notes=data.get('notes', ''),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version']),
+            version=Version(data['version']),
             story_id=EntityId(data['story_id']) if data.get('story_id') else None,
             skip_temporal_validation=True,
         )
@@ -1640,12 +1580,11 @@ class LoreData:
             last_pull_at=Timestamp(datetime.fromisoformat(data['last_pull_at'])) if data.get('last_pull_at') else None,
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
     def _dict_to_pull(data: Dict) -> Pull:
-        from src.domain.entities.pull import PullResult
         return Pull(
             id=EntityId(data['id']) if data['id'] else None,
             tenant_id=TenantId(1),
@@ -1667,7 +1606,7 @@ class LoreData:
             pulled_at=Timestamp(datetime.fromisoformat(data['pulled_at'])),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1689,7 +1628,7 @@ class LoreData:
             achievements=data.get('achievements', []),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1706,7 +1645,7 @@ class LoreData:
             max_storage=data.get('max_storage'),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1724,7 +1663,7 @@ class LoreData:
             icon_path=data.get('icon_path'),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1740,7 +1679,7 @@ class LoreData:
             purchase_timestamp=Timestamp(datetime.fromisoformat(data['purchase_timestamp'])),
             used_in_game=data.get('used_in_game', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1757,7 +1696,7 @@ class LoreData:
             completed=data.get('completed', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
 
     @staticmethod
@@ -1774,7 +1713,7 @@ class LoreData:
             special_permissions=data.get('special_permissions', []),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     
     @staticmethod
@@ -1792,7 +1731,7 @@ class LoreData:
             is_active=data.get('is_active', False),
             created_at=Timestamp(datetime.fromisoformat(data['created_at'])),
             updated_at=Timestamp(datetime.fromisoformat(data['updated_at'])),
-            version=__import__('src.domain.value_objects.common', fromlist=['Version']).Version(data['version'])
+            version=Version(data['version'])
         )
     @staticmethod
     def _pity_to_dict(pity: Pity) -> Dict:
@@ -2065,7 +2004,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_lore_axioms(data: Dict) -> LoreAxioms:
-        from src.domain.entities.lore_axioms import LoreAxiom, AxiomType
         return LoreAxioms(
             id=EntityId(data['id']) if data.get('id') else None,
             tenant_id=TenantId(data['tenant_id']),
@@ -2083,7 +2021,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_music_control(data: Dict) -> MusicControl:
-        from src.domain.value_objects.common import NarrativePhase, EmotionalTone, PlayerContext
         return MusicControl(
             id=EntityId(data['id']) if data.get('id') else None,
             tenant_id=TenantId(data['tenant_id']),
@@ -2116,7 +2053,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_progression_event(data: Dict) -> ProgressionEvent:
-        from src.domain.value_objects.progression import EventType, RuleReference
         return ProgressionEvent(
             id=data['id'],
             tenant_id=TenantId(data['tenant_id']),
@@ -2133,7 +2069,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_character_state(data: Dict) -> CharacterState:
-        from src.domain.value_objects.progression import CharacterLevel, CharacterClass, ExperiencePoints, StatType, StatValue
         return CharacterState(
             character_id=EntityId(data['character_id']),
             time_point=data['time_point'],
@@ -2146,7 +2081,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_music_theme(data: Dict) -> MusicTheme:
-        from src.domain.value_objects.common import MusicThemeType
         return MusicTheme(
             id=EntityId(data['id']) if data.get('id') else None,
             tenant_id=TenantId(data['tenant_id']),
@@ -2168,7 +2102,6 @@ class LoreData:
 
     @staticmethod
     def _dict_to_music_track(data: Dict) -> MusicTrack:
-        from src.domain.value_objects.common import MusicSystemType
         return MusicTrack(
             id=EntityId(data['id']) if data.get('id') else None,
             tenant_id=TenantId(data['tenant_id']),

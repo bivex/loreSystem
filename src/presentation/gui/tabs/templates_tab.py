@@ -11,10 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.template import Template
-from src.domain.value_objects.common import (
-    TenantId, EntityId, TemplateName, Content, TemplateType
-)
+from src.application.presentation_contracts import Content, EntityId, Template, TemplateName, TemplateType, TenantId
 
 
 class TemplatesTab(QWidget):

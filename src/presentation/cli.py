@@ -34,35 +34,37 @@ from rich.text import Text
 from rich import box
 from rich import print as rprint
 
-# Domain imports
-from src.domain.entities.world import World
-from src.domain.entities.character import Character
-from src.domain.entities.event import Event
-from src.domain.entities.item import Item
-from src.domain.entities.location import Location
-from src.domain.entities.quest import Quest
-from src.domain.entities.note import Note
-from src.domain.entities.tag import Tag
-from src.domain.entities.requirement import Requirement
-from src.domain.value_objects.common import (
-    TenantId,
-    EntityId,
-    WorldName,
-    Description,
-    CharacterName,
+# Presentation boundary imports
+from src.application.presentation_contracts import (
+    Ability,
+    AbilityName,
     Backstory,
-    Version,
-    Timestamp,
+    Character,
+    CharacterName,
     CharacterStatus,
-    ItemType,
-    Rarity,
-    QuestStatus,
-    NoteType,
-    TagType,
-    ImprovementStatus,
+    Description,
+    EntityId,
+    Event,
     EventOutcome,
+    ImprovementStatus,
+    Item,
+    ItemType,
+    Location,
+    Note,
+    NoteType,
+    PowerLevel,
+    Quest,
+    QuestStatus,
+    Rarity,
+    Requirement,
+    Tag,
+    TagType,
+    TenantId,
+    Timestamp,
+    Version,
+    World,
+    WorldName,
 )
-from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
 
 
 # In-memory storage (in production, use actual repositories)

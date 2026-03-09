@@ -12,8 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.choice import Choice
-from src.domain.value_objects.common import TenantId, EntityId, ChoiceType
+from src.application.presentation_contracts import Choice, ChoiceType, EntityId, TenantId
 
 
 class ChoiceTab(QWidget):
