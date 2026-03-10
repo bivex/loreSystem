@@ -119,6 +119,55 @@ def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_can
     return bundle
 
 
+def manual_candidate_bundle(
+    *,
+    candidate_id: str,
+    target_canonical_type: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    proposed_change: dict | None = None,
+) -> dict:
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": f"ev-{candidate_id}",
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": 0.88,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+            }
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": target_canonical_type,
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change or {},
+                "evidence_ids": [f"ev-{candidate_id}"],
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": 0.88,
+            }
+        ],
+    }
+
+
+def long_backstory() -> str:
+    return (
+        "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
+        "and now balances civic duty, battlefield discipline, and private grief after years of defending the coast."
+    )
+
+
 def test_promoter_maps_approved_event_candidate(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "event.db")
     importer = MiroFishResultImporter(store)
@@ -251,6 +300,127 @@ def test_auto_promote_policy_rejects_low_confidence_event(tmp_path):
         raise AssertionError("Expected ValueError for low-confidence auto-promotion candidate")
 
 
+def test_promoter_maps_manual_location_faction_and_character_candidates(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "manual-create.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-new",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location",
+        )
+    )
+    approved_location = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location")
+    location_result = promoter.promote_candidate(
+        approved_location["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-faction-new",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction",
+        )
+    )
+    approved_faction = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-faction")
+    faction_result = promoter.promote_candidate(
+        approved_faction["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-character-new",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character",
+        )
+    )
+    approved_character = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-character")
+    character_result = promoter.promote_candidate(
+        approved_character["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+            "base_hp": 1400,
+            "base_atk": 220,
+            "base_def": 180,
+            "base_speed": 120,
+            "energy_cost": 90,
+        },
+    )
+
+    assert location_result["canonical_entity"]["canonical_type"] == "Location"
+    assert location_result["canonical_entity"]["entity"]["location_type"] == "castle"
+    assert location_result["canonical_entity"]["entity"]["parent_location_id"] == 900
+    assert faction_result["canonical_entity"]["canonical_type"] == "Faction"
+    assert faction_result["canonical_entity"]["entity"]["faction_type"] == "merchant"
+    assert faction_result["canonical_entity"]["entity"]["alignment"] == "neutral"
+    assert faction_result["canonical_entity"]["entity"]["leader_character_id"] == 501
+    assert faction_result["canonical_entity"]["entity"]["is_joinable"] is False
+    assert character_result["canonical_entity"]["canonical_type"] == "Character"
+    assert character_result["canonical_entity"]["entity"]["name"] == "Captain Aria"
+    assert character_result["canonical_entity"]["entity"]["backstory"] == long_backstory()
+    assert character_result["canonical_entity"]["entity"]["rarity"] == "legendary"
+    assert character_result["canonical_entity"]["entity"]["location_id"] == 301
+
+
+def test_promoter_rejects_manual_character_without_backstory(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "manual-character-gate.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-character-incomplete",
+            target_canonical_type="Character",
+            name="Masked Witness",
+            summary="A shadowy observer mentioned once during the disturbance.",
+            run_id="run-character-gate",
+        )
+    )
+    approved = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-character-gate")
+
+    try:
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+            },
+        )
+    except ValueError as exc:
+        assert "Backstory" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for incomplete manual character promotion")
+
+
 def test_promoter_reuses_canonical_id_for_identical_candidate_on_rerun(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "rerun.db")
     importer = MiroFishResultImporter(store)
@@ -373,3 +543,52 @@ def test_promoter_reuses_existing_merge_link_for_already_merged_candidate(tmp_pa
     assert second_merge["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
     assert second_merge["run_link"]["link_id"] == first_merge["run_link"]["link_id"]
     assert len(store.list_entity_run_links(run_id="run-456", source_candidate_id=approved_second["candidate_id"])) == 1
+
+
+def test_promoter_merges_manual_location_candidate_into_existing_location(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "manual-merge.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        )
+    )
+    approved_first = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location-create")
+    promoted = promoter.promote_candidate(
+        approved_first["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+        },
+    )
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-merge",
+            target_canonical_type="Location",
+            name="Ashen Keep Ruins",
+            summary="Witnesses use a variant name for the same fortress.",
+            run_id="run-location-merge",
+        )
+    )
+    approved_second = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location-merge")
+    merged = promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {
+            "canonical_id": promoted["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "alias of existing location"},
+        },
+    )
+
+    assert merged["canonical_entity"]["canonical_type"] == "Location"
+    assert merged["canonical_entity"]["canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert merged["run_link"]["relation_type"] == "merged_into"
+    assert merged["run_link"]["metadata"]["reason"] == "alias of existing location"
+    assert merged["candidate"]["status"] == "merged"

@@ -105,6 +105,55 @@ def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_can
     return bundle
 
 
+def manual_candidate_bundle(
+    *,
+    candidate_id: str,
+    target_canonical_type: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    proposed_change: dict | None = None,
+) -> dict:
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": f"ev-{candidate_id}",
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": 0.88,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+            }
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": target_canonical_type,
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change or {},
+                "evidence_ids": [f"ev-{candidate_id}"],
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": 0.88,
+            }
+        ],
+    }
+
+
+def long_backstory() -> str:
+    return (
+        "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
+        "and now balances civic duty, battlefield discipline, and private grief after years of defending the coast."
+    )
+
+
 def call_json(app, method: str, path: str, payload: dict | None = None):
     body = json.dumps(payload).encode("utf-8") if payload is not None else b""
     query_string = ""
@@ -552,6 +601,165 @@ def test_batch_auto_promote_endpoint_rejects_invalid_payload(tmp_path):
 
     assert status == 400
     assert payload["success"] is False
+
+
+def test_promote_endpoint_supports_manual_location_faction_and_character_candidates(tmp_path):
+    app = create_writeback_app(str(tmp_path / "manual-promote.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-location-api",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-api",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-location-api/approve")
+    location_status, location_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-location-api/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-faction-api",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-api",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-faction-api/approve")
+    faction_status, faction_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-faction-api/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-character-api",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-api",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-character-api/approve")
+    character_status, character_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-character-api/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+            "base_hp": 1400,
+            "base_atk": 220,
+            "base_def": 180,
+            "base_speed": 120,
+            "energy_cost": 90,
+        },
+    )
+
+    assert location_status == 200
+    assert location_payload["data"]["canonical_entity"]["canonical_type"] == "Location"
+    assert location_payload["data"]["canonical_entity"]["entity"]["location_type"] == "castle"
+    assert faction_status == 200
+    assert faction_payload["data"]["canonical_entity"]["canonical_type"] == "Faction"
+    assert faction_payload["data"]["canonical_entity"]["entity"]["alignment"] == "neutral"
+    assert character_status == 200
+    assert character_payload["data"]["canonical_entity"]["canonical_type"] == "Character"
+    assert character_payload["data"]["canonical_entity"]["entity"]["backstory"] == long_backstory()
+    assert character_payload["data"]["candidate"]["status"] == "promoted"
+
+
+def test_merge_endpoint_links_manual_location_candidate_to_existing_location(tmp_path):
+    app = create_writeback_app(str(tmp_path / "manual-merge.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-location-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-location-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-location-merge",
+            target_canonical_type="Location",
+            name="Ashen Keep Ruins",
+            summary="Witnesses use a variant name for the same fortress.",
+            run_id="run-location-merge",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-location-merge/approve")
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-location-merge/merge",
+        {
+            "canonical_id": promote_payload["data"]["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "alias of existing location"},
+        },
+    )
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["canonical_entity"]["canonical_type"] == "Location"
+    assert payload["data"]["run_link"]["relation_type"] == "merged_into"
+    assert payload["data"]["run_link"]["metadata"]["reason"] == "alias of existing location"
+    assert payload["data"]["candidate"]["status"] == "merged"
 
 
 def test_merge_endpoint_links_approved_candidate_to_existing_canonical_entity(tmp_path):

@@ -7,10 +7,26 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from src.domain.entities.character import Character, CharacterElement, CharacterRole
 from src.domain.entities.character_relationship import CharacterRelationship, RelationshipType
 from src.domain.entities.event import Event
+from src.domain.entities.faction import Faction, FactionAlignment, FactionType
+from src.domain.entities.location import Location
 from src.domain.entities.rumor import Rumor
-from src.domain.value_objects.common import DateRange, Description, EntityId, EventOutcome, TenantId, Timestamp, Version
+from src.domain.value_objects.common import (
+    Backstory,
+    CharacterName,
+    CharacterStatus,
+    DateRange,
+    Description,
+    EntityId,
+    EventOutcome,
+    LocationType,
+    Rarity,
+    TenantId,
+    Timestamp,
+    Version,
+)
 from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
 
 
@@ -175,6 +191,12 @@ class MiroFishCandidatePromoter:
             return self._map_rumor(candidate, payload, tenant_id=tenant_id, world_id=world_id)
         if target == "CharacterRelationship":
             return self._map_relationship(candidate, payload, tenant_id=tenant_id)
+        if target == "Location":
+            return self._map_location(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        if target == "Faction":
+            return self._map_faction(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        if target == "Character":
+            return self._map_character(candidate, payload, tenant_id=tenant_id, world_id=world_id)
         raise ValueError(f"Unsupported canonical target: {target or 'unknown'}")
 
     def _map_event(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Event:
@@ -250,6 +272,113 @@ class MiroFishCandidatePromoter:
             first_met_event_id=first_met_event_id,
         )
 
+    def _map_location(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Location:
+        proposed = candidate.get("proposed_change") or {}
+        location_type = self._parse_required_enum(
+            payload.get("location_type") or proposed.get("location_type"),
+            LocationType,
+            "location_type",
+        )
+        parent_location_id = self._as_optional_entity_id(
+            payload.get("parent_location_id") if "parent_location_id" in payload else proposed.get("parent_location_id"),
+            "parent_location_id",
+        )
+        return Location.create(
+            tenant_id=tenant_id,
+            world_id=world_id,
+            name=str(payload.get("name") or candidate.get("name") or proposed.get("name") or "").strip(),
+            description=Description(
+                str(payload.get("description") or candidate.get("summary") or proposed.get("description") or candidate.get("name") or "").strip()
+            ),
+            location_type=location_type,
+            parent_location_id=parent_location_id,
+        )
+
+    def _map_faction(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Faction:
+        proposed = candidate.get("proposed_change") or {}
+        faction_type = self._parse_required_enum(
+            payload.get("faction_type") or proposed.get("faction_type"),
+            FactionType,
+            "faction_type",
+        )
+        alignment = self._parse_required_enum(
+            payload.get("alignment") or proposed.get("alignment"),
+            FactionAlignment,
+            "alignment",
+        )
+        leader_character_id = self._as_optional_entity_id(
+            payload.get("leader_character_id") if "leader_character_id" in payload else proposed.get("leader_character_id"),
+            "leader_character_id",
+        )
+        return Faction.create(
+            tenant_id=tenant_id,
+            world_id=world_id,
+            name=str(payload.get("name") or candidate.get("name") or proposed.get("name") or "").strip(),
+            description=Description(
+                str(payload.get("description") or candidate.get("summary") or proposed.get("description") or candidate.get("name") or "").strip()
+            ),
+            faction_type=faction_type,
+            alignment=alignment,
+            leader_character_id=leader_character_id,
+            is_joinable=self._as_bool(
+                payload.get("is_joinable") if "is_joinable" in payload else proposed.get("is_joinable"),
+                field_name="is_joinable",
+                default=True,
+            ),
+        )
+
+    def _map_character(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Character:
+        proposed = candidate.get("proposed_change") or {}
+        status = self._parse_optional_enum(
+            payload.get("status") if "status" in payload else proposed.get("status"),
+            CharacterStatus,
+            "status",
+        ) or CharacterStatus.ACTIVE
+        rarity = self._parse_optional_enum(
+            payload.get("rarity") if "rarity" in payload else proposed.get("rarity"),
+            Rarity,
+            "rarity",
+        )
+        element = self._parse_optional_enum(
+            payload.get("element") if "element" in payload else proposed.get("element"),
+            CharacterElement,
+            "element",
+        )
+        role = self._parse_optional_enum(
+            payload.get("role") if "role" in payload else proposed.get("role"),
+            CharacterRole,
+            "role",
+        )
+        return Character.create(
+            tenant_id=tenant_id,
+            world_id=world_id,
+            name=CharacterName(str(payload.get("name") or candidate.get("name") or proposed.get("name") or "").strip()),
+            backstory=Backstory(str(payload.get("backstory") or proposed.get("backstory") or "").strip()),
+            status=status,
+            parent_id=self._as_optional_entity_id(
+                payload.get("parent_id") if "parent_id" in payload else proposed.get("parent_id"),
+                "parent_id",
+            ),
+            location_id=self._as_optional_entity_id(
+                payload.get("location_id") if "location_id" in payload else proposed.get("location_id"),
+                "location_id",
+            ),
+            rarity=rarity,
+            element=element,
+            role=role,
+            base_hp=self._as_optional_int(payload.get("base_hp") if "base_hp" in payload else proposed.get("base_hp"), "base_hp"),
+            base_atk=self._as_optional_int(payload.get("base_atk") if "base_atk" in payload else proposed.get("base_atk"), "base_atk"),
+            base_def=self._as_optional_int(payload.get("base_def") if "base_def" in payload else proposed.get("base_def"), "base_def"),
+            base_speed=self._as_optional_int(
+                payload.get("base_speed") if "base_speed" in payload else proposed.get("base_speed"),
+                "base_speed",
+            ),
+            energy_cost=self._as_optional_int(
+                payload.get("energy_cost") if "energy_cost" in payload else proposed.get("energy_cost"),
+                "energy_cost",
+            ),
+        )
+
     def _infer_relationship_type(self, relationship_level: int) -> RelationshipType:
         if relationship_level <= -30:
             return RelationshipType.ENEMY
@@ -304,6 +433,44 @@ class MiroFishCandidatePromoter:
         except (TypeError, ValueError) as exc:
             raise ValueError(f"{field_name} must be a positive integer") from exc
 
+    def _as_optional_int(self, value: Any, field_name: str) -> int | None:
+        if value is None or str(value).strip() == "":
+            return None
+        return self._as_int(value, field_name)
+
+    def _as_optional_entity_id(self, value: Any, field_name: str) -> EntityId | None:
+        resolved = self._as_optional_int(value, field_name)
+        if resolved is None:
+            return None
+        return EntityId(resolved)
+
+    def _as_bool(self, value: Any, *, field_name: str, default: bool) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        text = str(value).strip().lower()
+        if text in {"1", "true", "yes", "y", "on"}:
+            return True
+        if text in {"0", "false", "no", "n", "off"}:
+            return False
+        raise ValueError(f"{field_name} must be a boolean")
+
+    def _parse_required_enum(self, value: Any, enum_type: type[Enum], field_name: str) -> Enum:
+        parsed = self._parse_optional_enum(value, enum_type, field_name)
+        if parsed is None:
+            raise ValueError(f"{field_name} is required")
+        return parsed
+
+    def _parse_optional_enum(self, value: Any, enum_type: type[Enum], field_name: str) -> Enum | None:
+        text = str(value or "").strip().lower()
+        if not text:
+            return None
+        try:
+            return enum_type(text)
+        except ValueError as exc:
+            raise ValueError(f"Invalid {field_name}: {value}") from exc
+
     def _build_run_link_metadata(self, candidate: dict[str, Any], *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         metadata = {
             "candidate_type": candidate.get("candidate_type"),
@@ -337,7 +504,7 @@ class MiroFishCandidatePromoter:
     def _serialize_entity(self, entity: Any) -> dict[str, Any]:
         if isinstance(entity, TenantId | EntityId | Version):
             return entity.value
-        if isinstance(entity, Description):
+        if isinstance(entity, Description | CharacterName | Backstory):
             return entity.value
         if isinstance(entity, Timestamp):
             return entity.value.isoformat()
