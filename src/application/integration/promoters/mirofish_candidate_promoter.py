@@ -17,6 +17,8 @@ from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
 class MiroFishCandidatePromoter:
     """Promote approved staged candidate deltas into persisted canonical entities."""
 
+    SAFE_EVENT_ONLY_POLICY = "safe_event_only"
+
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
 
@@ -24,6 +26,8 @@ class MiroFishCandidatePromoter:
         candidate = self.store.get_candidate(candidate_id)
         if not candidate:
             raise LookupError(f"Candidate '{candidate_id}' not found")
+        payload = mapping or {}
+        promote_metadata = self._extract_promote_metadata(payload)
         if candidate.get("status") == "promoted":
             canonical_entity = self.store.get_canonical_entity_by_candidate(candidate_id)
             if not canonical_entity:
@@ -40,7 +44,7 @@ class MiroFishCandidatePromoter:
                 source_candidate_id=candidate_id,
                 relation_type="promoted_from",
                 evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
-                metadata=self._build_run_link_metadata(candidate),
+                metadata=self._build_run_link_metadata(candidate, extra=promote_metadata),
             )
             canonical_entity["run_links"] = [run_link]
             return {
@@ -52,7 +56,6 @@ class MiroFishCandidatePromoter:
         if candidate.get("status") != "approved":
             raise ValueError("Only approved candidates can be promoted")
 
-        payload = mapping or {}
         tenant_id = TenantId(self._as_int(payload.get("tenant_id"), "tenant_id"))
         world_id_value = self._as_int(payload.get("world_id"), "world_id")
         world_id = EntityId(world_id_value)
@@ -73,7 +76,7 @@ class MiroFishCandidatePromoter:
             source_candidate_id=candidate_id,
             relation_type="promoted_from",
             evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
-            metadata=self._build_run_link_metadata(candidate),
+            metadata=self._build_run_link_metadata(candidate, extra=promote_metadata),
         )
         saved_entity["run_links"] = [run_link]
         updated_candidate = self.store.mark_candidate_promoted(candidate_id, canonical_type=canonical_type, canonical_id=saved_entity["canonical_id"])
@@ -83,6 +86,28 @@ class MiroFishCandidatePromoter:
             "run_link": run_link,
             "candidate": updated_candidate,
         }
+
+    def auto_promote_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None, *, policy: str) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload = dict(mapping or {})
+        self._validate_auto_promote_candidate(candidate, policy=policy)
+        if candidate.get("status") == "pending_review":
+            updated_candidate = self.store.update_candidate_status(candidate_id, "approved")
+            if not updated_candidate:
+                raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        existing_metadata = payload.get("metadata") or {}
+        if not isinstance(existing_metadata, dict):
+            raise ValueError("metadata must be an object")
+        payload["metadata"] = {
+            **existing_metadata,
+            "auto_promote_policy": policy,
+            "auto_promoted": True,
+        }
+        return self.promote_candidate(candidate_id, payload)
 
     def merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
         candidate = self.store.get_candidate(candidate_id)
@@ -232,6 +257,30 @@ class MiroFishCandidatePromoter:
             return RelationshipType.FRIEND
         return RelationshipType.NEUTRAL
 
+    def _validate_auto_promote_candidate(self, candidate: dict[str, Any], *, policy: str) -> None:
+        if policy != self.SAFE_EVENT_ONLY_POLICY:
+            raise ValueError(f"Unsupported auto-promotion policy: {policy}")
+
+        status = str(candidate.get("status") or "").strip()
+        if status not in {"pending_review", "approved", "promoted"}:
+            raise ValueError("Auto-promotion policy can only process pending_review, approved, or already promoted candidates")
+
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "scenario_event":
+            raise ValueError("Policy 'safe_event_only' only supports scenario_event candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Event":
+            raise ValueError("Policy 'safe_event_only' only supports Event promotion targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_event_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_event_only' requires at least 2 evidence items")
+
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()
         try:
@@ -264,6 +313,16 @@ class MiroFishCandidatePromoter:
         if extra:
             metadata.update(extra)
         return metadata
+
+    def _extract_promote_metadata(self, payload: dict[str, Any]) -> dict[str, Any]:
+        metadata = payload.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            raise ValueError("metadata must be an object")
+        note = str(payload.get("note") or "").strip()
+        promoted = dict(metadata)
+        if note:
+            promoted["note"] = note
+        return promoted
 
     def _extract_merge_metadata(self, payload: dict[str, Any]) -> dict[str, Any]:
         metadata = payload.get("metadata") or {}

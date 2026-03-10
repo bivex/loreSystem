@@ -43,6 +43,9 @@ class MiroFishWriteBackAPI:
         if method == "POST" and path == f"{self.base_path}/candidate-deltas/batch/promote":
             return self._handle_candidate_batch_promote(body)
 
+        if method == "POST" and path == f"{self.base_path}/candidate-deltas/batch/auto-promote":
+            return self._handle_candidate_batch_auto_promote(body)
+
         candidate_prefix = f"{self.base_path}/candidate-deltas/"
         if method == "GET" and path.startswith(candidate_prefix):
             suffix = path[len(candidate_prefix):].strip("/")
@@ -262,6 +265,60 @@ class MiroFishWriteBackAPI:
             {
                 "success": True,
                 "data": {
+                    "requested_count": len(items),
+                    "success_count": len(succeeded),
+                    "failure_count": len(failed),
+                    "succeeded": succeeded,
+                    "failed": failed,
+                },
+            },
+        )
+
+    def _handle_candidate_batch_auto_promote(self, body: bytes) -> tuple[int, dict[str, Any]]:
+        try:
+            payload = json.loads(body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
+
+        policy = str(payload.get("policy") or "").strip()
+        if not policy:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "policy is required"})
+
+        items = payload.get("items")
+        if not isinstance(items, list) or not items:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "items must be a non-empty list"})
+
+        succeeded: list[dict[str, Any]] = []
+        failed: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                failed.append({"candidate_id": None, "error": "Each item must be an object"})
+                continue
+            candidate_id = str(item.get("candidate_id") or "").strip()
+            if not candidate_id:
+                failed.append({"candidate_id": candidate_id, "error": "candidate_id is required"})
+                continue
+            mapping = item.get("mapping")
+            if mapping is None:
+                mapping = {}
+            if not isinstance(mapping, dict):
+                failed.append({"candidate_id": candidate_id, "error": "mapping must be an object"})
+                continue
+            try:
+                result = self.promoter.auto_promote_candidate(candidate_id, mapping, policy=policy)
+            except LookupError as exc:
+                failed.append({"candidate_id": candidate_id, "error": str(exc), "status": int(HTTPStatus.NOT_FOUND)})
+            except ValueError as exc:
+                failed.append({"candidate_id": candidate_id, "error": str(exc), "status": int(HTTPStatus.BAD_REQUEST)})
+            else:
+                succeeded.append(result)
+
+        return self._response(
+            HTTPStatus.OK,
+            {
+                "success": True,
+                "data": {
+                    "policy": policy,
                     "requested_count": len(items),
                     "success_count": len(succeeded),
                     "failure_count": len(failed),

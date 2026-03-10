@@ -43,6 +43,82 @@ def _approve_candidate(store: MiroFishWriteBackStore, *, candidate_type: str, ru
     return store.update_candidate_status(candidate["candidate_id"], "approved")
 
 
+def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_candidate: bool = False) -> dict:
+    bundle = sample_result_bundle()
+    bundle["runtime_evidence"] = [
+        {
+            "evidence_id": "ev-event-1",
+            "evidence_type": "post",
+            "source_type": "runtime_action",
+            "actor_refs": ["actor:royal_court"],
+            "text": "The Royal Court publicly denies the forged decree.",
+            "timestamp": "2026-03-10T12:05:00Z",
+            "confidence": 0.95,
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+        },
+        {
+            "evidence_id": "ev-event-2",
+            "evidence_type": "report",
+            "source_type": "runtime_action",
+            "actor_refs": ["org:royal_court"],
+            "text": "Multiple witnesses confirm the denial spread across the capital.",
+            "timestamp": "2026-03-10T12:06:00Z",
+            "confidence": 0.94,
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+        },
+    ]
+    candidates = [
+        {
+            "candidate_id": "cand-event-safe",
+            "candidate_type": "scenario_event",
+            "target_canonical_type": "Event",
+            "name": "Court issues denial",
+            "summary": "The court publicly denies the forged decree.",
+            "proposed_change": {
+                "participant_ids": ["actor:royal_court", "org:royal_court"],
+                "timestamp": "2026-03-10T12:05:00Z",
+                "outcome": "success",
+            },
+            "evidence_ids": ["ev-event-1", "ev-event-2"],
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+            "confidence": 0.93,
+        }
+    ]
+    if low_confidence_event:
+        candidates.append(
+            {
+                "candidate_id": "cand-event-low",
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court whispers denial",
+                "summary": "Signals are still too weak for canon.",
+                "proposed_change": {
+                    "participant_ids": ["actor:royal_court"],
+                    "timestamp": "2026-03-10T12:07:00Z",
+                },
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 1}],
+                "confidence": 0.89,
+            }
+        )
+    if include_rumor_candidate:
+        candidates.append(
+            {
+                "candidate_id": "cand-rumor-safe",
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": "Forged decree rumor",
+                "summary": "Town criers continue amplifying the story.",
+                "proposed_change": {"source_name": "Town criers"},
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 2}],
+                "confidence": 0.95,
+            }
+        )
+    bundle["candidate_deltas"] = candidates
+    return bundle
+
+
 def test_promoter_maps_approved_event_candidate(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "event.db")
     importer = MiroFishResultImporter(store)
@@ -128,6 +204,51 @@ def test_promoter_requires_approved_candidate(tmp_path):
         assert "approved candidates" in str(exc)
     else:
         raise AssertionError("Expected ValueError for non-approved candidate")
+
+
+def test_auto_promote_policy_promotes_safe_event_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle())
+
+    result = promoter.auto_promote_candidate(
+        "cand-event-safe",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+        policy="safe_event_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "Event"
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_event_only"
+    assert result["run_link"]["metadata"]["auto_promoted"] is True
+
+
+def test_auto_promote_policy_rejects_low_confidence_event(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-gate.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle(low_confidence_event=True))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-event-low",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "participant_map": {"actor:royal_court": 201},
+            },
+            policy="safe_event_only",
+        )
+    except ValueError as exc:
+        assert "confidence >= 0.90" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for low-confidence auto-promotion candidate")
 
 
 def test_promoter_reuses_canonical_id_for_identical_candidate_on_rerun(tmp_path):

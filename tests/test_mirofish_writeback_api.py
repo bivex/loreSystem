@@ -29,6 +29,82 @@ def sample_result_bundle(*, run_id: str = "run-123", generated_at: str = "2026-0
     }
 
 
+def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_candidate: bool = False) -> dict:
+    bundle = sample_result_bundle()
+    bundle["runtime_evidence"] = [
+        {
+            "evidence_id": "ev-event-1",
+            "evidence_type": "post",
+            "source_type": "runtime_action",
+            "actor_refs": ["actor:royal_court"],
+            "text": "The Royal Court publicly denies the forged decree.",
+            "timestamp": "2026-03-10T12:05:00Z",
+            "confidence": 0.95,
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+        },
+        {
+            "evidence_id": "ev-event-2",
+            "evidence_type": "report",
+            "source_type": "runtime_action",
+            "actor_refs": ["org:royal_court"],
+            "text": "Multiple witnesses confirm the denial spread across the capital.",
+            "timestamp": "2026-03-10T12:06:00Z",
+            "confidence": 0.94,
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+        },
+    ]
+    candidates = [
+        {
+            "candidate_id": "cand-event-safe",
+            "candidate_type": "scenario_event",
+            "target_canonical_type": "Event",
+            "name": "Court issues denial",
+            "summary": "The court publicly denies the forged decree.",
+            "proposed_change": {
+                "participant_ids": ["actor:royal_court", "org:royal_court"],
+                "timestamp": "2026-03-10T12:05:00Z",
+                "outcome": "success",
+            },
+            "evidence_ids": ["ev-event-1", "ev-event-2"],
+            "source_refs": [{"collection": "policy_event_cluster", "index": 0}],
+            "confidence": 0.93,
+        }
+    ]
+    if low_confidence_event:
+        candidates.append(
+            {
+                "candidate_id": "cand-event-low",
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court whispers denial",
+                "summary": "Signals are still too weak for canon.",
+                "proposed_change": {
+                    "participant_ids": ["actor:royal_court"],
+                    "timestamp": "2026-03-10T12:07:00Z",
+                },
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 1}],
+                "confidence": 0.89,
+            }
+        )
+    if include_rumor_candidate:
+        candidates.append(
+            {
+                "candidate_id": "cand-rumor-safe",
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": "Forged decree rumor",
+                "summary": "Town criers continue amplifying the story.",
+                "proposed_change": {"source_name": "Town criers"},
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 2}],
+                "confidence": 0.95,
+            }
+        )
+    bundle["candidate_deltas"] = candidates
+    return bundle
+
+
 def call_json(app, method: str, path: str, payload: dict | None = None):
     body = json.dumps(payload).encode("utf-8") if payload is not None else b""
     query_string = ""
@@ -390,6 +466,87 @@ def test_batch_promote_endpoint_rejects_invalid_payload(tmp_path):
         app,
         "POST",
         "/api/mirofish/writeback/candidate-deltas/batch/promote",
+        {"items": []},
+    )
+
+    assert status == 400
+    assert payload["success"] is False
+
+
+def test_batch_auto_promote_endpoint_processes_policy_gated_items(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(low_confidence_event=True, include_rumor_candidate=True))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_event_only",
+            "items": [
+                {
+                    "candidate_id": "cand-event-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                        "outcome": "success",
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-low",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                    },
+                },
+                {
+                    "candidate_id": "cand-rumor-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-missing",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                    },
+                },
+            ],
+        },
+    )
+
+    safe_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-safe")[1]["data"]
+    low_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-low")[1]["data"]
+    rumor_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-safe")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_event_only"
+    assert payload["data"]["requested_count"] == 4
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 3
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-event-safe"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_event_only"
+    failed_ids = {item["candidate_id"] for item in payload["data"]["failed"]}
+    assert failed_ids == {"cand-event-low", "cand-rumor-safe", "cand-missing"}
+    assert safe_detail["status"] == "promoted"
+    assert low_detail["status"] == "pending_review"
+    assert rumor_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_rejects_invalid_payload(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-bad.db"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
         {"items": []},
     )
 
