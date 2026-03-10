@@ -59,3 +59,8 @@ Thumbs.db
 lore-repo/
 
 loreSystem.und/
+
+# Gas Town (added by gt)
+.runtime/
+.claude/
+.logs/
