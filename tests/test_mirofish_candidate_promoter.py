@@ -455,6 +455,61 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_faction_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    faction_type: str = "merchant",
+    alignment: str = "neutral",
+    leader_character_id: int | None = 501,
+    is_joinable: bool = False,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change: dict[str, object] = {
+        "faction_type": faction_type,
+        "alignment": alignment,
+        "is_joinable": is_joinable,
+    }
+    if leader_character_id is not None:
+        proposed_change["leader_character_id"] = leader_character_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Faction",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_relationship_duplicate_bundle(
     *,
     candidate_id: str,
@@ -1811,6 +1866,263 @@ def test_preview_auto_merge_candidate_rejects_low_confidence_and_sparse_evidence
     assert sparse_evidence_preview["eligible"] is False
     assert sparse_evidence_preview["reasons"] == [
         "Policy 'safe_existing_location_duplicate_only' requires at least 2 evidence items"
+    ]
+
+
+def test_preview_auto_merge_candidate_for_exact_duplicate_faction_is_side_effect_free(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-faction-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-faction-create",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-faction-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-duplicate",
+            name="  Harbor-Guild  ",
+            summary="Scouts describe the same merchant coalition again.",
+            run_id="run-faction-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-faction-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-faction-duplicate")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_faction_duplicate_only"
+    assert preview["metadata_preview"]["merge_match_name"] == "harbor guild"
+    assert preview["metadata_preview"]["merge_match_faction_type"] == "merchant"
+    assert preview["metadata_preview"]["merge_match_alignment"] == "neutral"
+    assert preview["metadata_preview"]["merge_match_leader_character_id"] == 501
+    assert preview["metadata_preview"]["merge_match_is_joinable"] is False
+    assert detail["status"] == "pending_review"
+    assert detail["target_canonical_id"] is None
+    assert store.list_entity_run_links(run_id="run-faction-duplicate", source_candidate_id="cand-faction-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_faction_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-faction-execute.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-faction-create",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-faction-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-duplicate",
+            name="Harbor Guild",
+            summary="A second run confirms the same merchant coalition.",
+            run_id="run-faction-duplicate",
+        )
+    )
+
+    result = promoter.auto_merge_candidate(
+        "cand-faction-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-faction-duplicate")
+
+    assert result["candidate"]["status"] == "merged"
+    assert result["canonical_entity"]["canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert result["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_faction_duplicate_only"
+    assert result["run_link"]["metadata"]["merge_match_faction_type"] == "merchant"
+    assert result["run_link"]["metadata"]["merge_match_alignment"] == "neutral"
+    assert result["run_link"]["metadata"]["merge_match_leader_character_id"] == 501
+    assert result["run_link"]["metadata"]["merge_match_is_joinable"] is False
+    assert detail["status"] == "merged"
+    assert detail["target_canonical_id"] == str(promote_result["canonical_entity"]["canonical_id"])
+
+
+def test_preview_auto_merge_candidate_rejects_when_no_exact_duplicate_faction_exists(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-faction-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-faction-create",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-faction-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-no-match",
+            name="Harbor Guild",
+            summary="This report points to a different leadership snapshot.",
+            run_id="run-faction-no-match",
+            is_joinable=True,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-faction-no-match",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_faction_duplicate_only' requires exactly 1 staged canonical Faction exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_factions(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-faction-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id in (("cand-faction-create-a", "run-faction-create-a"), ("cand-faction-create-b", "run-faction-create-b")):
+        importer.import_result_bundle(
+            manual_candidate_bundle(
+                candidate_id=candidate_id,
+                target_canonical_type="Faction",
+                name="Harbor Guild",
+                summary="A disciplined merchant coalition controlling the docks.",
+                run_id=run_id,
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="new_entity_candidate", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "faction_type": "merchant",
+                "alignment": "neutral",
+                "leader_character_id": 501,
+                "is_joinable": False,
+            },
+        )
+
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-duplicate",
+            name="Harbor Guild",
+            summary="Another run repeats the same faction signature.",
+            run_id="run-faction-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-faction-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_faction_duplicate_only' rejected due to ambiguous staged canonical Faction duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_faction_duplicate_gates(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-faction-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-low-confidence",
+            name="Harbor Guild",
+            summary="Weak evidence for the same merchant coalition.",
+            run_id="run-faction-low-confidence",
+            confidence=0.89,
+            evidence_count=2,
+        )
+    )
+    importer.import_result_bundle(
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-sparse-evidence",
+            name="Harbor Guild",
+            summary="Only one witness mentions the same merchant coalition.",
+            run_id="run-faction-sparse-evidence",
+            confidence=0.95,
+            evidence_count=1,
+        )
+    )
+
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-faction-low-confidence",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-faction-sparse-evidence",
+        {"world_id": 101},
+        policy="safe_existing_faction_duplicate_only",
+    )
+
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_faction_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_faction_duplicate_only' requires at least 2 evidence items"
     ]
 
 

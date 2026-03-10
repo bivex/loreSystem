@@ -43,6 +43,7 @@ class MiroFishCandidatePromoter:
     SAFE_EXISTING_EVENT_DUPLICATE_ONLY_POLICY = "safe_existing_event_duplicate_only"
     SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
     SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY = "safe_existing_rumor_duplicate_only"
+    SAFE_EXISTING_FACTION_DUPLICATE_ONLY_POLICY = "safe_existing_faction_duplicate_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -521,6 +522,8 @@ class MiroFishCandidatePromoter:
             return self._validate_safe_existing_rumor_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY:
             return self._validate_safe_existing_location_duplicate_policy(candidate, payload)
+        if policy == self.SAFE_EXISTING_FACTION_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_faction_duplicate_policy(candidate, payload)
         raise ValueError(f"Unsupported auto-merge policy: {policy}")
 
     def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> dict[str, Any]:
@@ -969,6 +972,59 @@ class MiroFishCandidatePromoter:
             "duplicate_guard": "passed",
         }
 
+    def _validate_safe_existing_faction_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "new_entity_candidate":
+            raise ValueError("Policy 'safe_existing_faction_duplicate_only' only supports new_entity_candidate candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Faction":
+            raise ValueError("Policy 'safe_existing_faction_duplicate_only' only supports Faction merge targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_faction_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_faction_duplicate_only' requires at least 2 evidence items")
+
+        faction_name = self._normalize_faction_name(candidate.get("name") or (candidate.get("proposed_change") or {}).get("name"))
+        if not faction_name:
+            raise ValueError("Policy 'safe_existing_faction_duplicate_only' requires candidate.name")
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        faction_type = self._resolve_faction_type_for_candidate(candidate, payload)
+        alignment = self._resolve_faction_alignment_for_candidate(candidate, payload)
+        leader_character_id = self._resolve_faction_leader_character_id_for_candidate(candidate, payload)
+        is_joinable = self._resolve_faction_is_joinable_for_candidate(candidate, payload)
+        matches = self._find_exact_duplicate_canonical_factions(
+            world_id=world_id,
+            faction_name=faction_name,
+            faction_type=faction_type,
+            alignment=alignment,
+            leader_character_id=leader_character_id,
+            is_joinable=is_joinable,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_faction_duplicate_only' requires exactly 1 staged canonical Faction exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_faction_duplicate_only' rejected due to ambiguous staged canonical Faction duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "merge_match_name": faction_name,
+            "merge_match_faction_type": faction_type,
+            "merge_match_alignment": alignment,
+            "merge_match_leader_character_id": leader_character_id,
+            "merge_match_is_joinable": is_joinable,
+            "duplicate_guard": "passed",
+        }
+
     def _find_supporting_relationship_run_ids(
         self,
         candidate: dict[str, Any],
@@ -1283,6 +1339,36 @@ class MiroFishCandidatePromoter:
             matches.append(canonical)
         return matches
 
+    def _find_exact_duplicate_canonical_factions(
+        self,
+        *,
+        world_id: int,
+        faction_name: str,
+        faction_type: str,
+        alignment: str,
+        leader_character_id: int | None,
+        is_joinable: bool,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        for canonical in self.store.list_canonical_entities(canonical_type="Faction", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._normalize_faction_name(entity.get("name")) != faction_name:
+                continue
+            if str(entity.get("faction_type") or "").strip().casefold() != faction_type:
+                continue
+            if str(entity.get("alignment") or "").strip().casefold() != alignment:
+                continue
+            if self._as_optional_int(entity.get("leader_character_id"), "entity.leader_character_id") != leader_character_id:
+                continue
+            try:
+                existing_is_joinable = self._as_bool(entity.get("is_joinable"), field_name="entity.is_joinable", default=True)
+            except ValueError:
+                continue
+            if existing_is_joinable != is_joinable:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
@@ -1300,6 +1386,9 @@ class MiroFishCandidatePromoter:
         return self._normalize_text_signature(value)
 
     def _normalize_location_name(self, value: Any) -> str:
+        return self._normalize_text_signature(value)
+
+    def _normalize_faction_name(self, value: Any) -> str:
         return self._normalize_text_signature(value)
 
     def _normalize_canonical_participant_ids(self, value: Any) -> tuple[int, ...]:
@@ -1464,6 +1553,34 @@ class MiroFishCandidatePromoter:
         proposed = candidate.get("proposed_change") or {}
         raw_parent_id = payload.get("parent_location_id") if "parent_location_id" in payload else proposed.get("parent_location_id")
         return self._as_optional_int(raw_parent_id, "parent_location_id")
+
+    def _resolve_faction_type_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        faction_type = self._parse_required_enum(
+            payload.get("faction_type") or proposed.get("faction_type"),
+            FactionType,
+            "faction_type",
+        )
+        return str(faction_type.value)
+
+    def _resolve_faction_alignment_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        alignment = self._parse_required_enum(
+            payload.get("alignment") or proposed.get("alignment"),
+            FactionAlignment,
+            "alignment",
+        )
+        return str(alignment.value)
+
+    def _resolve_faction_leader_character_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
+        proposed = candidate.get("proposed_change") or {}
+        raw_leader_id = payload.get("leader_character_id") if "leader_character_id" in payload else proposed.get("leader_character_id")
+        return self._as_optional_int(raw_leader_id, "leader_character_id")
+
+    def _resolve_faction_is_joinable_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> bool:
+        proposed = candidate.get("proposed_change") or {}
+        raw_is_joinable = payload.get("is_joinable") if "is_joinable" in payload else proposed.get("is_joinable")
+        return self._as_bool(raw_is_joinable, field_name="is_joinable", default=True)
 
     def _resolve_event_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
         proposed = candidate.get("proposed_change") or {}

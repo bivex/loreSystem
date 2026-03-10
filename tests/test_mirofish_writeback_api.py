@@ -441,6 +441,61 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_faction_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    faction_type: str = "merchant",
+    alignment: str = "neutral",
+    leader_character_id: int | None = 501,
+    is_joinable: bool = False,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change: dict[str, object] = {
+        "faction_type": faction_type,
+        "alignment": alignment,
+        "is_joinable": is_joinable,
+    }
+    if leader_character_id is not None:
+        proposed_change["leader_character_id"] = leader_character_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Faction",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_relationship_duplicate_bundle(
     *,
     candidate_id: str,
@@ -2254,6 +2309,181 @@ def test_batch_auto_merge_endpoint_supports_relationship_dry_run_without_side_ef
     ]
     assert duplicate_detail["data"]["status"] == "pending_review"
     assert weak_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_faction_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-faction.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-faction-create",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-faction-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-faction-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-duplicate",
+            name="Harbor Guild",
+            summary="Another run confirms the same merchant coalition.",
+            run_id="run-faction-duplicate",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-no-match",
+            name="Harbor Guild",
+            summary="A different faction variant should stay pending.",
+            run_id="run-faction-no-match",
+            is_joinable=True,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_faction_duplicate_only",
+            "items": [
+                {"candidate_id": "cand-faction-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-faction-no-match", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-faction-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-faction-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_faction_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-faction-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_faction_duplicate_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["merge_match_faction_type"] == "merchant"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-faction-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_faction_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-faction-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-faction-create",
+            target_canonical_type="Faction",
+            name="Harbor Guild",
+            summary="A disciplined merchant coalition controlling the docks.",
+            run_id="run-faction-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-faction-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-faction-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "faction_type": "merchant",
+            "alignment": "neutral",
+            "leader_character_id": 501,
+            "is_joinable": False,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-duplicate",
+            name="  Harbor-Guild  ",
+            summary="Another run confirms the same merchant coalition.",
+            run_id="run-faction-duplicate",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_faction_duplicate_bundle(
+            candidate_id="cand-faction-low-confidence",
+            name="Harbor Guild",
+            summary="Weak evidence for the same merchant coalition.",
+            run_id="run-faction-low-confidence",
+            confidence=0.85,
+            evidence_count=2,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_faction_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {"candidate_id": "cand-faction-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-faction-low-confidence", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-faction-duplicate")[1]
+    low_confidence_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-faction-low-confidence")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_faction_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-faction-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_faction_duplicate_only"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["merge_match_name"] == "harbor guild"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-faction-low-confidence"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_faction_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert low_confidence_detail["data"]["status"] == "pending_review"
 
 
 def test_batch_auto_merge_endpoint_merges_exact_duplicate_rumor_and_reports_failures(tmp_path):
