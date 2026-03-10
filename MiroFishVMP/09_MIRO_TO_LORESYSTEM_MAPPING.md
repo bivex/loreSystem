@@ -136,7 +136,26 @@ Mapping:
 | `relationship_change` | `CharacterRelationship` | supported |
 | `actor` / `organization` runtime subjects | direct promote target | not implemented |
 
-## 6.1 Merge semantics
+## 6.1 Recommended lore-generation arc
+
+Если `MiroFish` используется как generator narrative/lore, то самый удобный mapping сейчас такой:
+
+- **Act I — Rumor seed**
+  - основной выход: `prediction_summary.rumors[]`
+  - candidate path: `rumor_candidate`
+  - canonical target: `Rumor`
+- **Act II — Escalation**
+  - основной выход: `emergent_events[]` + дополнительный `runtime_evidence`
+  - candidate path: `scenario_event`
+  - canonical target: `Event`
+- **Act III — Resolution / Fallout**
+  - основной выход: `relationship_changes[]` и при необходимости explicit `new_entity_candidate`
+  - candidate path: `relationship_change` / `new_entity_candidate`
+  - canonical target: `CharacterRelationship` или manual create/merge для `Location` / `Faction` / `Character`
+
+Такой порядок хорош тем, что генерация начинает с soft claim, а hard-canon появляется только после narrative escalation и evidence accumulation.
+
+## 6.2 Merge semantics
 
 Текущий `merge` flow специально ограничен безопасной семантикой:
 

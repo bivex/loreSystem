@@ -119,6 +119,8 @@
 
 То есть reverse path уже не только спроектирован, а доведён до рабочего staging/review/promote MVP.
 
+Практическая narrative-рекомендация для generation side: **стартовать со слуха** и строить материал как **трёхактную арку** — сначала `rumor_candidate`, затем `scenario_event`, затем `relationship_change` и при необходимости `new_entity_candidate`.
+
 ## Фаза 7. Простой пользовательский поток
 
 Минимальный flow в UI/CLI:
@@ -157,6 +159,7 @@
 
 - projection bundle ingestion
 - profile/config generation
+- rumor-first three-act lore generation
 - agent instantiation
 - run orchestration
 - result normalization

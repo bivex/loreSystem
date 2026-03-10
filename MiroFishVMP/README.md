@@ -93,6 +93,14 @@
 
 Если нужен практический field-level reference, он вынесен отдельно в `09_MIRO_TO_LORESYSTEM_MAPPING.md`.
 
+Для narrative/lore generation есть ещё одно практическое правило: **лучше стартовать со слуха** и строить сценарий как **трёхактную структуру**:
+
+- **Act I — Rumor seed**: мир получает спорный или неполный social/narrative signal → `rumor_candidate`
+- **Act II — Escalation**: слух провоцирует наблюдаемые действия, столкновения, публичные реакции → `scenario_event`
+- **Act III — Resolution**: последствия закрепляются в отношениях, ролях и новых стабильных сущностях → `relationship_change` + при необходимости manual create/merge для `Location` / `Faction` / `Character`
+
+Такой flow хорошо совпадает с философией `loreSystem`: сначала soft claim, потом evidence-backed event, и только потом более жёсткая канонизация.
+
 ## Главная идея
 
 Не надо сливать проекты в один монолит.

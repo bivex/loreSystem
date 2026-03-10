@@ -292,6 +292,14 @@ Forward path у интеграции уже понятен:
 - есть `truth_level`, `spread_speed`, `credibility_score`, `source_name`, `world_id`, `location_id`,
 - это позволяет не загрязнять canon ложной определённостью.
 
+Отсюда следует ещё один практический вывод для generation layer: **стартовать со слуха часто лучше всего**. Для лора это даёт естественную трёхактную форму:
+
+- **Act I — Rumor seed**: появляется спорный сигнал, намёк, обвинение, предсказание или тревожный narrative hook
+- **Act II — Escalation**: слух начинает менять поведение акторов и порождает observable events
+- **Act III — Resolution**: история закрепляется в последствиях — отношениях, репутации, новых или уточнённых canonical entities
+
+Для write-back pipeline это удобно потому, что ранняя стадия истории остаётся soft-canon (`Rumor`), а более жёсткие записи появляются только когда у истории уже есть evidence trail.
+
 ## 6. Что promote только после review
 
 ### 6.1 Location
@@ -363,6 +371,27 @@ Forward path у интеграции уже понятен:
 - всё, что не резолвится в canonical IDs.
 
 ## 8. Рекомендуемый result bundle от MiroFish
+
+Если `MiroFish` используется именно как generator лора, а не только как runtime simulation, то практический authoring pattern лучше делать таким:
+
+- сценарий стартует со **слуха / disputed claim**
+- bundle хранит evidence по трём narrative фазам
+- поздние фазы должны давать материал не только для `Rumor`, но и для `Event`, `CharacterRelationship`, а иногда и для manual create/merge новых сущностей
+
+Идеальная практическая трёхактная структура:
+
+- **Act I — Setup / Rumor**
+  - `prediction_summary.rumors[]`
+  - early `runtime_evidence`
+  - цель: задать tension, uncertainty, hook
+- **Act II — Confrontation / Escalation**
+  - `emergent_events[]`
+  - дополнительные `runtime_evidence`
+  - цель: превратить rumor в проверяемые действия и столкновения
+- **Act III — Resolution / Fallout**
+  - `relationship_changes[]`
+  - `new_entity_candidate` при необходимости
+  - цель: закрепить последствия в мире, factions, locations, characters, social state
 
 Базовый shape:
 
@@ -861,6 +890,17 @@ Promote только вручную, если:
 Новые `Character` и `Faction` на MVP автоматически не создавать.
 
 Именно этот MVP сейчас и реализован в `loreSystem` для reverse path.
+
+Если смотреть не только на ingestion, но и на **идеальную форму входного lore generation**, то самый удобный сценарий для VMP сейчас такой:
+
+1. начать историю со **слуха**,
+2. развернуть её как **трёхактную арку**,
+3. в первом акте генерировать в основном `rumor_candidate`,
+4. во втором акте генерировать `scenario_event` + более плотный `runtime_evidence`,
+5. в третьем акте фиксировать `relationship_change` и при необходимости `new_entity_candidate`,
+6. затем уже пропускать это через review/promote/merge слой.
+
+Это хорошо совпадает с уже реализованной safe semantics: система не вынуждена делать hard-canon слишком рано, но при этом narrative progression остаётся структурированной и пригодной для write-back.
 
 ## 19. Итоговое правило
 
