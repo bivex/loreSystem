@@ -186,7 +186,7 @@ Mapping:
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
 7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run event/rumor/relationship slices, и вызывать тот же promote path; optional `dry_run: true` даёт preview этого же пути без side effects
-8. explicit `batch/auto-merge` может narrow-gate'ить safe exact duplicate merge для `new_entity_candidate -> Location` через policy `safe_existing_location_duplicate_only`, для `scenario_event -> Event` через policy `safe_existing_event_duplicate_only` и для `rumor_candidate -> Rumor` через policy `safe_existing_rumor_duplicate_only`, после чего вызывает тот же existing merge path; optional `dry_run: true` даёт preview без side effects
+8. explicit `batch/auto-merge` может narrow-gate'ить safe exact duplicate merge для `new_entity_candidate -> Location` через policy `safe_existing_location_duplicate_only`, для `scenario_event -> Event` через policy `safe_existing_event_duplicate_only`, для `rumor_candidate -> Rumor` через policy `safe_existing_rumor_duplicate_only` и для `relationship_change -> CharacterRelationship` через policy `safe_existing_relationship_duplicate_only`, после чего вызывает тот же existing merge path; optional `dry_run: true` даёт preview без side effects
 9. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
 10. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
 11. canonical entity / merge-linkage → `mirofish_entity_run_links`
@@ -230,7 +230,7 @@ Mapping:
 - single-candidate review detail
 - batch review / batch promotion API
 - narrow batch auto-promotion API (`safe_event_only`, `safe_cross_run_event_only`, `safe_rumor_only`, `safe_cross_run_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`)
-- narrow batch auto-merge API (`safe_existing_location_duplicate_only`, `safe_existing_event_duplicate_only`, `safe_existing_rumor_duplicate_only`)
+- narrow batch auto-merge API (`safe_existing_location_duplicate_only`, `safe_existing_event_duplicate_only`, `safe_existing_rumor_duplicate_only`, `safe_existing_relationship_duplicate_only`)
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
@@ -289,21 +289,26 @@ Mapping:
   - `safe_existing_location_duplicate_only`
   - `safe_existing_event_duplicate_only`
   - `safe_existing_rumor_duplicate_only`
+  - `safe_existing_relationship_duplicate_only`
 - `safe_existing_location_duplicate_only` → только `new_entity_candidate -> Location`
 - `safe_existing_event_duplicate_only` → только `scenario_event -> Event`
 - `safe_existing_rumor_duplicate_only` → только `rumor_candidate -> Rumor`
+- `safe_existing_relationship_duplicate_only` → только `relationship_change -> CharacterRelationship`
 - только `confidence >= 0.90`
 - только минимум `2 evidence_ids`
 - mapping обязан содержать explicit `world_id`
 - exact duplicate определяется только по normalized `name` + `location_type` + `parent_location_id` + `world_id`
 - event exact duplicate определяется только по canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id` + `world_id`
 - rumor exact duplicate определяется только по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id` + `world_id`
+- relationship exact duplicate определяется только по `character_from_id` + `character_to_id` + `relationship_type` + `relationship_level` + `is_mutual` + `world_id`
 - event policy дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
 - rumor policy дополнительно требует explicit/resolvable `source_name`, explicit/resolvable `location_id` и unresolved truth bucket (`Unverified` / `Partially True`)
+- relationship policy дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, разные стороны, `abs(relationship_level) >= 30`; `relationship_type` может быть передан явно или выводится из `relationship_level`, `is_mutual` резолвится из mapping
 - policy требует ровно один staged canonical `Location` match и reject'ит no-match / ambiguous-match случаи
 - event policy тоже требует ровно один staged canonical `Event` match и reject'ит no-match / ambiguous-match случаи
 - rumor policy тоже требует ровно один staged canonical `Rumor` match и reject'ит no-match / ambiguous-match случаи
-- provenance metadata содержит `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+- relationship policy тоже требует ровно один staged canonical `CharacterRelationship` match и reject'ит no-match / ambiguous-match случаи
+- provenance metadata содержит `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`
 
 Manual create/merge для новых entity types сейчас intentionally explicit:
 

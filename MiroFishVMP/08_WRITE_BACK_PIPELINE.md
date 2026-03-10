@@ -591,12 +591,14 @@ Confidence лучше считать не LLM-словами, а детерми�
   - `safe_existing_location_duplicate_only`
   - `safe_existing_event_duplicate_only`
   - `safe_existing_rumor_duplicate_only`
+  - `safe_existing_relationship_duplicate_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
 - optional `dry_run: true` на том же endpoint для preview без side effects
 - только по явно переданным `candidate_id`
 - только для `new_entity_candidate -> Location`
 - только для `scenario_event -> Event`
 - только для `rumor_candidate -> Rumor`
+- только для `relationship_change -> CharacterRelationship`
 - только при явном `world_id` в mapping
 - candidate должен пройти `confidence >= 0.90`
 - candidate должен иметь минимум `2 evidence_ids`
@@ -605,8 +607,10 @@ Confidence лучше считать не LLM-словами, а детерми�
 - event policy дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
 - rumor merge выполняется только при ровно одном staged canonical `Rumor` exact duplicate match в том же world по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id`
 - rumor policy дополнительно требует explicit `location_id`, resolvable `source_name` и unresolved truth bucket (`Unverified` / `Partially True`)
+- relationship merge выполняется только при ровно одном staged canonical `CharacterRelationship` exact duplicate match в том же world по `character_from_id` + `character_to_id` + `relationship_type` + `relationship_level` + `is_mutual`
+- relationship policy дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, разные стороны, `abs(relationship_level) >= 30`; `relationship_type` может быть передан явно или выводится из `relationship_level`, `is_mutual` резолвится из mapping
 - auto-merge не создаёт новый canonical snapshot, а вызывает existing merge path в уже существующую staged canonical entity
-- auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+- auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`
 
 ## 12. Promotion rules по типам
 
@@ -775,8 +779,8 @@ Promote только вручную, если:
 - cross-run rumor policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `rumor_match_name`, `rumor_match_source_name`, `rumor_truth_bucket`, `duplicate_guard`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 - auto-merge тоже не является background automation: это отдельный explicit batch endpoint
-- auto-merge сейчас intentionally narrow и покрывает только `Location` / `Event` / `Rumor` exact duplicate merge через policies `safe_existing_location_duplicate_only`, `safe_existing_event_duplicate_only` и `safe_existing_rumor_duplicate_only`
-- audit metadata для auto-merge пишется в provenance link: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+- auto-merge сейчас intentionally narrow и покрывает только `Location` / `Event` / `Rumor` / `CharacterRelationship` exact duplicate merge через policies `safe_existing_location_duplicate_only`, `safe_existing_event_duplicate_only`, `safe_existing_rumor_duplicate_only` и `safe_existing_relationship_duplicate_only`
+- audit metadata для auto-merge пишется в provenance link: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`
 - `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
 Пока не реализовано:
@@ -809,6 +813,7 @@ Promote только вручную, если:
     - `safe_existing_location_duplicate_only`
     - `safe_existing_event_duplicate_only`
     - `safe_existing_rumor_duplicate_only`
+    - `safe_existing_relationship_duplicate_only`
 
 Эти policy endpoint'ы возвращают поэлементный результат, а не all-or-nothing transaction.
 
@@ -914,6 +919,21 @@ Promote только вручную, если:
 - mapping обязан содержать explicit `world_id`
 - `location_id` должен разрешаться из candidate или mapping
 - существует ровно 1 staged canonical `Rumor` exact duplicate match в том же world по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id`
+- policy reject'ит и 0-match, и ambiguous-match сценарии
+
+Для `safe_existing_relationship_duplicate_only` item дополнительно проходит такой gate:
+
+- `candidate_type == relationship_change`
+- `target_canonical_type == CharacterRelationship`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
+- mapping обязан содержать explicit `world_id`
+- mapping обязан содержать `character_from_id`, `character_to_id`, `relationship_level`
+- `character_from_id != character_to_id`
+- `abs(relationship_level) >= 30`
+- `relationship_type` должен либо быть явно задан, либо детерминированно выводиться из `relationship_level`
+- `is_mutual` резолвится из mapping
+- существует ровно 1 staged canonical `CharacterRelationship` exact duplicate match в том же world по `character_from_id` + `character_to_id` + `relationship_type` + `relationship_level` + `is_mutual`
 - policy reject'ит и 0-match, и ambiguous-match сценарии
 
 ## 15. Какие MCP tools нужны
@@ -1074,6 +1094,26 @@ Promote только вручную, если:
 - только для exact duplicate случая в том же world
 - duplicate signature: canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id`
 - policy требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
+- без создания нового canonical snapshot
+- с targeted promoter/API tests
+
+### Phase 4.8 — Exact Duplicate Relationship Auto-Merge
+
+Добавить narrow merge-side policy для:
+
+- `relationship_change -> CharacterRelationship`
+
+Статус: **сделано**.
+
+Реально реализованный slice:
+
+- через existing explicit endpoint `batch/auto-merge`
+- с optional `dry_run: true`
+- только для merge в existing staged canonical `CharacterRelationship`
+- только для exact duplicate случая в том же world
+- duplicate signature: `character_from_id` + `character_to_id` + `relationship_type` + `relationship_level` + `is_mutual`
+- policy требует explicit `character_from_id`, `character_to_id`, `relationship_level`, разные стороны и `abs(relationship_level) >= 30`
+- `relationship_type` может быть передан явно или выводится из `relationship_level`, `is_mutual` резолвится из mapping
 - без создания нового canonical snapshot
 - с targeted promoter/API tests
 
