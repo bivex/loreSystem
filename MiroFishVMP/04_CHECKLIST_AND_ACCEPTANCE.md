@@ -38,6 +38,22 @@
 - [ ] world deltas требуют явного принятия
 - [ ] timeline branches не перезаписывают основной мир автоматически
 
+### Что уже фактически закрыто в текущем write-back MVP
+
+- [x] `MiroFish result bundle` импортируется в `loreSystem`
+- [x] `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas` сохраняются отдельно от канона
+- [x] review требует явного действия через `approve` / `reject`
+- [x] promote требует отдельного explicit mapping payload
+- [x] canonical snapshot пишется в отдельную safe table `mirofish_canonical_entities`, а не напрямую в legacy canonical repositories
+- [x] live smoke подтверждает запись в SQLite БД
+
+### Что ещё остаётся вне текущего MVP
+
+- [ ] `merge` flow для candidate deltas
+- [ ] batch review / batch promotion
+- [ ] auto-promotion policy
+- [ ] manual create/merge flow для `Location`, `Faction`, `Character`
+
 ## 5. Definition of Done для первого MVP
 
 MVP считается готовым, если выполняются все условия:
@@ -100,3 +116,5 @@ MVP считается готовым, если выполняются все у
 3. Можно ли вернуть результаты обратно, не разрушив канон?
 
 Если хотя бы один ответ "нет", нужно чинить архитектуру, а не наращивать фичи.
+
+На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + promote, без direct canon write**.

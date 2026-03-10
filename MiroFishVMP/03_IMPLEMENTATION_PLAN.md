@@ -98,6 +98,23 @@
 
 Результат фазы: результаты симуляции доступны внутри loreSystem и не ломают канон.
 
+### Что уже закрыто в reverse path
+
+В `loreSystem` уже реализован безопасный минимум этой фазы и следующего слоя review/promote:
+
+1. import `result bundle` в отдельный SQLite staging store
+2. сохранение `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas`
+3. HTTP review surface для списка candidates и run/evidence readback
+4. review actions `approve` / `reject`
+5. manual promotion для:
+   - `scenario_event -> Event`
+   - `rumor_candidate -> Rumor`
+   - `relationship_change -> CharacterRelationship`
+6. safe canonical persistence в `mirofish_canonical_entities`
+7. full smoke script для end-to-end проверки review/promote workflow
+
+То есть reverse path уже не только спроектирован, а доведён до рабочего staging/review/promote MVP.
+
 ## Фаза 7. Простой пользовательский поток
 
 Минимальный flow в UI/CLI:

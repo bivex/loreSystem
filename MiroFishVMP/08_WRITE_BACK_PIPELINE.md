@@ -14,6 +14,26 @@ Forward path у интеграции уже понятен:
 
 `MiroFish result bundle -> runtime evidence -> candidate deltas -> review/promotion -> canonical lore`
 
+## 1.1 Что уже реализовано в loreSystem
+
+Статус на текущий момент:
+
+- есть отдельный SQLite store `src/infrastructure/mirofish_writeback_store.py`
+- есть importer `src/application/integration/importers/mirofish_result_importer.py`
+- есть review/promote API `src/presentation/api/mirofish_writeback_api.py`
+- есть promoter `src/application/integration/promoters/mirofish_candidate_promoter.py`
+- canonical snapshots пишутся не в legacy repository layer, а в отдельную safe table `mirofish_canonical_entities`
+- есть CLI:
+  - `scripts/import_mirofish_results.py`
+  - `scripts/run_mirofish_writeback_api.py`
+  - `scripts/smoke_mirofish_writeback_workflow.py`
+- full live smoke уже прогнан против `lore_system.db` и подтвердил запись в БД:
+  - `scenario_run`
+  - `scenario_result`
+  - `runtime_evidence`
+  - `candidate_deltas`
+  - `canonical_entities`
+
 ## 2. Главный принцип
 
 После первого поста или первого прогона мы **не пишем сразу в canon**.
@@ -83,16 +103,13 @@ Forward path у интеграции уже понятен:
 
 ## 4. Какие сущности реально поддерживать в MVP
 
-Для обратной записи на MVP достаточно покрыть 6 групп:
+Текущий реализованный MVP покрывает 3 группы:
 
-- `scenario_events`
-- `relationship_changes`
-- `rumor_candidates`
-- `location_candidates`
-- `faction_candidates`
-- `character_candidates`
+- `scenario_event`
+- `relationship_change`
+- `rumor_candidate`
 
-Но promote в canon на первом этапе должен быть уже, чем ingest.
+Это сознательно уже, чем будущий ingest scope. `Location`, `Faction`, `Character` пока остаются только planned/manual-review domain.
 
 ## 5. Что можно promote в canon в первую очередь
 
@@ -292,12 +309,15 @@ Forward path у интеграции уже понятен:
 
 ### Статусы candidate
 
-- `observed`
 - `pending_review`
-- `accepted`
+- `approved`
 - `rejected`
-- `merged`
 - `promoted`
+
+Дополнительно как future/planned statuses могут появиться:
+
+- `merged`
+- `observed`
 
 ## 11. Confidence model
 
@@ -377,15 +397,22 @@ Promote только вручную, если:
 
 Так как exporter уже живёт в `src/application/integration/`, reverse path логично держать рядом.
 
-Рекомендуемая структура:
+Фактическая текущая структура:
 
 - `src/application/integration/dto/mirofish_result_bundle.py`
 - `src/application/integration/dto/runtime_evidence_record.py`
 - `src/application/integration/dto/candidate_delta.py`
 - `src/application/integration/importers/mirofish_result_importer.py`
-- `src/application/integration/mappers/mirofish_result_mapper.py`
-- `src/application/integration/services/candidate_review_service.py`
-- `src/application/integration/services/candidate_promotion_service.py`
+- `src/application/integration/promoters/mirofish_candidate_promoter.py`
+- `src/infrastructure/mirofish_writeback_store.py`
+- `src/presentation/api/mirofish_writeback_api.py`
+- `scripts/import_mirofish_results.py`
+- `scripts/run_mirofish_writeback_api.py`
+- `scripts/smoke_mirofish_writeback_workflow.py`
+- `tests/test_mirofish_result_importer.py`
+- `tests/test_mirofish_candidate_promoter.py`
+- `tests/test_mirofish_writeback_api.py`
+- `tests/test_mirofish_writeback_smoke_script.py`
 
 Важно: adapter layer должен оставаться отдельным от доменной модели. Он переводит simulation outputs в reviewable deltas, а не пишет напрямую в агрегаты при ingest.
 
@@ -393,7 +420,9 @@ Promote только вручную, если:
 
 ### 14.1 Ingest API
 
-- `POST /api/integration/mirofish/result-bundles`
+Реально реализовано:
+
+- `POST /api/mirofish/writeback/ingest`
 
 Функция:
 
@@ -405,17 +434,28 @@ Promote только вручную, если:
 
 ### 14.2 Read API
 
-- `GET /api/integration/mirofish/runs/{run_id}`
-- `GET /api/integration/mirofish/runs/{run_id}/evidence`
-- `GET /api/integration/mirofish/candidates?world_id=...&status=...&type=...`
-- `GET /api/integration/mirofish/candidates/{candidate_id}`
+Реально реализовано:
+
+- `GET /api/mirofish/writeback/runs/{run_id}`
+- `GET /api/mirofish/writeback/runs/{run_id}/evidence`
+- `GET /api/mirofish/writeback/candidate-deltas?world_id=...&status=...&candidate_type=...`
+
+Пока не реализовано:
+
+- `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 
 ### 14.3 Review / promotion API
 
-- `POST /api/integration/mirofish/candidates/{candidate_id}/accept`
-- `POST /api/integration/mirofish/candidates/{candidate_id}/reject`
-- `POST /api/integration/mirofish/candidates/{candidate_id}/merge`
-- `POST /api/integration/mirofish/candidates/{candidate_id}/promote`
+Реально реализовано:
+
+- `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/approve`
+- `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/reject`
+- `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/promote`
+
+Пока не реализовано:
+
+- `merge`
+- batch review / batch promotion
 
 ## 15. Какие MCP tools нужны
 
@@ -427,14 +467,16 @@ Promote только вручную, если:
 - `create_location`
 - `update_location`
 
-Но для write-back pipeline не хватает review/promotion surface.
+Но для write-back pipeline пока реализован именно **HTTP/CLI surface**, а не MCP tools.
+
+То есть следующий логичный этап для MCP — завернуть уже существующий ingest/review/promote flow в tools, а не проектировать его с нуля.
 
 Нужны новые tools:
 
 - `ingest_mirofish_result_bundle`
 - `list_mirofish_candidates`
 - `get_mirofish_candidate`
-- `accept_mirofish_candidate`
+- `approve_mirofish_candidate`
 - `reject_mirofish_candidate`
 - `merge_mirofish_candidate`
 - `promote_mirofish_candidate`
@@ -450,11 +492,17 @@ Promote только вручную, если:
 
 ## 16. Какие CLI нужны
 
-Минимальный операционный набор:
+Минимальный текущий операционный набор:
 
 - `python scripts/import_mirofish_results.py --input result_bundle.json`
-- `python scripts/list_mirofish_candidates.py --world-id <id> --status pending_review`
-- `python scripts/promote_mirofish_candidate.py --candidate-id <id> --target event`
+- `python scripts/run_mirofish_writeback_api.py --db lore_system.db --port 8080`
+- `python scripts/smoke_mirofish_writeback_workflow.py`
+
+Пока не реализовано как отдельные CLI:
+
+- `list_mirofish_candidates.py`
+- `promote_mirofish_candidate.py`
+- `promote_mirofish_batch.py`
 
 Опционально позже:
 
@@ -472,6 +520,8 @@ Promote только вручную, если:
 
 Без canon writes.
 
+Статус: **сделано**.
+
 ### Phase 2 — Candidate Extraction
 
 Добавить:
@@ -483,6 +533,8 @@ Promote только вручную, если:
 
 Всё ещё без auto-promote.
 
+Статус: **сделано**.
+
 ### Phase 3 — Manual Promotion
 
 Разрешить promote только в:
@@ -490,6 +542,8 @@ Promote только вручную, если:
 - `Event`
 - `CharacterRelationship`
 - `Rumor`
+
+Статус: **сделано** через manual promote API + explicit mapping payload.
 
 ### Phase 4 — New Entity Promotion
 
@@ -499,6 +553,8 @@ Promote только вручную, если:
 - `Faction`
 - `Character`
 
+Статус: **ещё не сделано**.
+
 ### Phase 5 — Policy-driven Auto Promotion
 
 Только после стабилизации:
@@ -506,6 +562,8 @@ Promote только вручную, если:
 - selective `Event` promote,
 - selective `Relationship` promote,
 - safe `Rumor` promote.
+
+Статус: **ещё не делалось**.
 
 ## 18. MVP recommendation
 
@@ -524,6 +582,8 @@ Promote только вручную, если:
    - `Rumor`
 
 Новые `Character` и `Faction` на MVP автоматически не создавать.
+
+Именно этот MVP сейчас и реализован в `loreSystem` для reverse path.
 
 ## 19. Итоговое правило
 

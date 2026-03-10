@@ -25,6 +25,7 @@
 - `02_DATA_CONTRACT.md` — единый контракт данных и правила маппинга
 - `06_MIROFISH_REVERSE_ENGINEERING.md` — что реально показал разбор кода `MiroFish`
 - `07_MODELS_AND_PROMPTS.md` — какие модели и prompt-layer'ы реально используются в `MiroFish`
+- `08_WRITE_BACK_PIPELINE.md` — safe reverse path: staging, review, promote, smoke validation
 - `03_IMPLEMENTATION_PLAN.md` — пошаговый план внедрения
 - `04_CHECKLIST_AND_ACCEPTANCE.md` — чеклист, риски и критерии готовности
 - `05_FIRST_DEMO_SCENARIO.md` — первый демонстрационный сценарий, с которого стоит начинать
@@ -35,9 +36,27 @@
 2. `02_DATA_CONTRACT.md`
 3. `06_MIROFISH_REVERSE_ENGINEERING.md`
 4. `07_MODELS_AND_PROMPTS.md`
-5. `03_IMPLEMENTATION_PLAN.md`
-6. `05_FIRST_DEMO_SCENARIO.md`
-7. `04_CHECKLIST_AND_ACCEPTANCE.md`
+5. `08_WRITE_BACK_PIPELINE.md`
+6. `03_IMPLEMENTATION_PLAN.md`
+7. `05_FIRST_DEMO_SCENARIO.md`
+8. `04_CHECKLIST_AND_ACCEPTANCE.md`
+
+## Актуальный статус reverse path
+
+На текущий момент в `loreSystem` уже реализован безопасный reverse write-back MVP:
+
+- импорт `MiroFish result bundle` в отдельный SQLite staging store
+- сохранение `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas`
+- stdlib HTTP API `POST/GET` для ingest/review
+- review actions: `approve` / `reject`
+- manual promotion для 3 типов:
+  - `scenario_event -> Event`
+  - `rumor_candidate -> Rumor`
+  - `relationship_change -> CharacterRelationship`
+- safe canonical persistence в отдельную таблицу `mirofish_canonical_entities`
+- full smoke script для end-to-end проверки review/promote workflow
+
+Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/promote слой.
 
 ## Главная идея
 
@@ -51,7 +70,7 @@
 
 Формула интеграции:
 
-`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Scenario Events -> Lore Updates`
+`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Runtime Evidence -> Candidate Deltas -> Review/Promote -> Lore Updates`
 
 ## Что показал анализ кода MiroFish
 
