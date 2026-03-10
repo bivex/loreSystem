@@ -43,7 +43,12 @@ def _approve_candidate(store: MiroFishWriteBackStore, *, candidate_type: str, ru
     return store.update_candidate_status(candidate["candidate_id"], "approved")
 
 
-def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_candidate: bool = False) -> dict:
+def policy_ready_bundle(
+    *,
+    low_confidence_event: bool = False,
+    include_rumor_candidate: bool = False,
+    include_relationship_candidate: bool = False,
+) -> dict:
     bundle = sample_result_bundle()
     bundle["runtime_evidence"] = [
         {
@@ -113,6 +118,20 @@ def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_can
                 "evidence_ids": ["ev-event-1", "ev-event-2"],
                 "source_refs": [{"collection": "policy_event_cluster", "index": 2}],
                 "confidence": 0.95,
+            }
+        )
+    if include_relationship_candidate:
+        candidates.append(
+            {
+                "candidate_id": "cand-relationship-safe",
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "The decree fallout pushes their trust sharply downward.",
+                "proposed_change": {"relationship_level": -42},
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 3}],
+                "confidence": 0.94,
             }
         )
     bundle["candidate_deltas"] = candidates
@@ -298,6 +317,83 @@ def test_auto_promote_policy_rejects_low_confidence_event(tmp_path):
         assert "confidence >= 0.90" in str(exc)
     else:
         raise AssertionError("Expected ValueError for low-confidence auto-promotion candidate")
+
+
+def test_auto_promote_policy_promotes_safe_rumor_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-rumor.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle(include_rumor_candidate=True))
+
+    result = promoter.auto_promote_candidate(
+        "cand-rumor-safe",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "source_name": "Town criers",
+            "credibility_score": 7,
+            "location_id": 301,
+        },
+        policy="safe_rumor_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "Rumor"
+    assert result["canonical_entity"]["entity"]["credibility_score"] == 7
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_rumor_only"
+
+
+def test_auto_promote_policy_promotes_safe_relationship_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-relationship.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle(include_relationship_candidate=True))
+
+    result = promoter.auto_promote_candidate(
+        "cand-relationship-safe",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+        policy="safe_relationship_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "CharacterRelationship"
+    assert result["canonical_entity"]["entity"]["relationship_level"] == -42
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_relationship_only"
+
+
+def test_auto_promote_policy_rejects_weak_relationship_delta(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-relationship-gate.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle(include_relationship_candidate=True))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-relationship-safe",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "character_from_id": 201,
+                "character_to_id": 202,
+                "relationship_level": -10,
+            },
+            policy="safe_relationship_only",
+        )
+    except ValueError as exc:
+        assert "abs(relationship_level) >= 30" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for weak relationship delta")
+
+    candidate = store.get_candidate("cand-relationship-safe")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
 
 
 def test_promoter_maps_manual_location_faction_and_character_candidates(tmp_path):

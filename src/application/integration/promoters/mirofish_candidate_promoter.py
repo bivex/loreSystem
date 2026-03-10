@@ -34,6 +34,8 @@ class MiroFishCandidatePromoter:
     """Promote approved staged candidate deltas into persisted canonical entities."""
 
     SAFE_EVENT_ONLY_POLICY = "safe_event_only"
+    SAFE_RUMOR_ONLY_POLICY = "safe_rumor_only"
+    SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -109,7 +111,7 @@ class MiroFishCandidatePromoter:
             raise LookupError(f"Candidate '{candidate_id}' not found")
 
         payload = dict(mapping or {})
-        self._validate_auto_promote_candidate(candidate, policy=policy)
+        self._validate_auto_promote_candidate(candidate, payload, policy=policy)
         if candidate.get("status") == "pending_review":
             updated_candidate = self.store.update_candidate_status(candidate_id, "approved")
             if not updated_candidate:
@@ -386,14 +388,23 @@ class MiroFishCandidatePromoter:
             return RelationshipType.FRIEND
         return RelationshipType.NEUTRAL
 
-    def _validate_auto_promote_candidate(self, candidate: dict[str, Any], *, policy: str) -> None:
-        if policy != self.SAFE_EVENT_ONLY_POLICY:
-            raise ValueError(f"Unsupported auto-promotion policy: {policy}")
-
+    def _validate_auto_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any], *, policy: str) -> None:
         status = str(candidate.get("status") or "").strip()
         if status not in {"pending_review", "approved", "promoted"}:
             raise ValueError("Auto-promotion policy can only process pending_review, approved, or already promoted candidates")
 
+        if policy == self.SAFE_EVENT_ONLY_POLICY:
+            self._validate_safe_event_policy(candidate)
+            return
+        if policy == self.SAFE_RUMOR_ONLY_POLICY:
+            self._validate_safe_rumor_policy(candidate, payload)
+            return
+        if policy == self.SAFE_RELATIONSHIP_ONLY_POLICY:
+            self._validate_safe_relationship_policy(candidate, payload)
+            return
+        raise ValueError(f"Unsupported auto-promotion policy: {policy}")
+
+    def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> None:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
         if candidate_type != "scenario_event":
             raise ValueError("Policy 'safe_event_only' only supports scenario_event candidates")
@@ -409,6 +420,57 @@ class MiroFishCandidatePromoter:
         evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
         if len(evidence_ids) < 2:
             raise ValueError("Policy 'safe_event_only' requires at least 2 evidence items")
+
+    def _validate_safe_rumor_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> None:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "rumor_candidate":
+            raise ValueError("Policy 'safe_rumor_only' only supports rumor_candidate candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Rumor":
+            raise ValueError("Policy 'safe_rumor_only' only supports Rumor promotion targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_rumor_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_rumor_only' requires at least 2 evidence items")
+
+        source_name = str(payload.get("source_name") or (candidate.get("proposed_change") or {}).get("source_name") or "").strip()
+        if not source_name:
+            raise ValueError("Policy 'safe_rumor_only' requires source_name")
+
+        if payload.get("credibility_score") is None:
+            raise ValueError("Policy 'safe_rumor_only' requires credibility_score")
+        self._as_int(payload.get("credibility_score"), "credibility_score")
+
+    def _validate_safe_relationship_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> None:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "relationship_change":
+            raise ValueError("Policy 'safe_relationship_only' only supports relationship_change candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "CharacterRelationship":
+            raise ValueError("Policy 'safe_relationship_only' only supports CharacterRelationship promotion targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_relationship_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_relationship_only' requires at least 2 evidence items")
+
+        character_from_id = self._as_int(payload.get("character_from_id"), "character_from_id")
+        character_to_id = self._as_int(payload.get("character_to_id"), "character_to_id")
+        if character_from_id == character_to_id:
+            raise ValueError("Policy 'safe_relationship_only' requires two different characters")
+
+        relationship_level = self._as_int(payload.get("relationship_level"), "relationship_level")
+        if abs(relationship_level) < 30:
+            raise ValueError("Policy 'safe_relationship_only' requires abs(relationship_level) >= 30")
 
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()

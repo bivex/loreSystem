@@ -29,7 +29,12 @@ def sample_result_bundle(*, run_id: str = "run-123", generated_at: str = "2026-0
     }
 
 
-def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_candidate: bool = False) -> dict:
+def policy_ready_bundle(
+    *,
+    low_confidence_event: bool = False,
+    include_rumor_candidate: bool = False,
+    include_relationship_candidate: bool = False,
+) -> dict:
     bundle = sample_result_bundle()
     bundle["runtime_evidence"] = [
         {
@@ -99,6 +104,20 @@ def policy_ready_bundle(*, low_confidence_event: bool = False, include_rumor_can
                 "evidence_ids": ["ev-event-1", "ev-event-2"],
                 "source_refs": [{"collection": "policy_event_cluster", "index": 2}],
                 "confidence": 0.95,
+            }
+        )
+    if include_relationship_candidate:
+        candidates.append(
+            {
+                "candidate_id": "cand-relationship-safe",
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "The decree fallout pushes their trust sharply downward.",
+                "proposed_change": {"relationship_level": -42},
+                "evidence_ids": ["ev-event-1", "ev-event-2"],
+                "source_refs": [{"collection": "policy_event_cluster", "index": 3}],
+                "confidence": 0.94,
             }
         )
     bundle["candidate_deltas"] = candidates
@@ -587,6 +606,107 @@ def test_batch_auto_promote_endpoint_processes_policy_gated_items(tmp_path):
     assert safe_detail["status"] == "promoted"
     assert low_detail["status"] == "pending_review"
     assert rumor_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_supports_safe_rumor_policy(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-rumor.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(include_rumor_candidate=True))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_rumor_only",
+            "items": [
+                {
+                    "candidate_id": "cand-rumor-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "source_name": "Town criers",
+                        "credibility_score": 7,
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                    },
+                },
+            ],
+        },
+    )
+
+    rumor_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-safe")[1]["data"]
+    event_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-safe")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_rumor_only"
+    assert payload["data"]["requested_count"] == 2
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-rumor-safe"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_rumor_only"
+    assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-event-safe"}
+    assert rumor_detail["status"] == "promoted"
+    assert event_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_supports_safe_relationship_policy(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-relationship.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(include_relationship_candidate=True))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_relationship_only",
+            "items": [
+                {
+                    "candidate_id": "cand-relationship-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -42,
+                        "is_mutual": False,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                    },
+                },
+            ],
+        },
+    )
+
+    relationship_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-safe")[1]["data"]
+    event_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-safe")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_relationship_only"
+    assert payload["data"]["requested_count"] == 2
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-relationship-safe"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_relationship_only"
+    assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-event-safe"}
+    assert relationship_detail["status"] == "promoted"
+    assert event_detail["status"] == "pending_review"
 
 
 def test_batch_auto_promote_endpoint_rejects_invalid_payload(tmp_path):
