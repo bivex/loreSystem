@@ -73,7 +73,7 @@ class MiroFishCandidatePromoter:
                 evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
                 metadata=self._build_run_link_metadata(candidate, extra=promote_metadata),
             )
-            canonical_entity["run_links"] = [run_link]
+            canonical_entity = self.store.get_canonical_entity(canonical_entity["canonical_id"]) or canonical_entity
             return {
                 "candidate_id": candidate_id,
                 "canonical_entity": canonical_entity,
@@ -105,7 +105,7 @@ class MiroFishCandidatePromoter:
             evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
             metadata=self._build_run_link_metadata(candidate, extra=promote_metadata),
         )
-        saved_entity["run_links"] = [run_link]
+        saved_entity = self.store.get_canonical_entity(saved_entity["canonical_id"]) or saved_entity
         updated_candidate = self.store.mark_candidate_promoted(candidate_id, canonical_type=canonical_type, canonical_id=saved_entity["canonical_id"])
         return {
             "candidate_id": candidate_id,
@@ -273,7 +273,7 @@ class MiroFishCandidatePromoter:
             evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
             metadata=self._build_run_link_metadata(candidate, extra=self._extract_merge_metadata(payload)),
         )
-        canonical_entity["run_links"] = [run_link]
+        canonical_entity = self.store.get_canonical_entity(canonical_entity["canonical_id"]) or canonical_entity
         updated_candidate = candidate
         if candidate.get("status") != "merged":
             updated_candidate = self.store.mark_candidate_merged(

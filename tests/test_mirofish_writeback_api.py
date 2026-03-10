@@ -833,6 +833,61 @@ def test_run_detail_and_evidence_endpoints_return_review_context(tmp_path):
     assert evidence_payload["data"]["run_id"] == "run-123"
     assert evidence_payload["data"]["count"] == 4
     assert any(any(subject["subject_ref"] == "org:town_criers" for subject in item["linked_subjects"]) for item in evidence_payload["data"]["evidence"])
+    assert run_payload["data"]["entity_run_links"] == []
+
+
+def test_run_detail_endpoint_exposes_persisted_entity_run_links_after_promote_and_merge(tmp_path):
+    app = create_writeback_app(str(tmp_path / "context-links.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    first_candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    first_candidate_id = first_candidates[0]["candidate_id"]
+
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        sample_result_bundle(run_id="run-456", generated_at="2026-03-10T13:00:00Z", event_name="Court repeats denial"),
+    )
+    second_candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    second_candidate_id = [item for item in second_candidates if item["run_id"] == "run-456"][0]["candidate_id"]
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/approve")
+    call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/merge",
+        {
+            "canonical_id": promote_payload["data"]["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "same event"},
+        },
+    )
+
+    first_run_payload = call_json(app, "GET", "/api/mirofish/writeback/runs/run-123")[1]
+    second_run_payload = call_json(app, "GET", "/api/mirofish/writeback/runs/run-456")[1]
+
+    assert len(first_run_payload["data"]["entity_run_links"]) == 1
+    assert first_run_payload["data"]["entity_run_links"][0]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert first_run_payload["data"]["entity_run_links"][0]["source_candidate_id"] == first_candidate_id
+    assert first_run_payload["data"]["entity_run_links"][0]["relation_type"] == "promoted_from"
+    assert first_run_payload["data"]["entity_run_links"][0]["metadata"]["candidate_type"] == "scenario_event"
+    assert len(second_run_payload["data"]["entity_run_links"]) == 1
+    assert second_run_payload["data"]["entity_run_links"][0]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert second_run_payload["data"]["entity_run_links"][0]["source_candidate_id"] == second_candidate_id
+    assert second_run_payload["data"]["entity_run_links"][0]["relation_type"] == "merged_into"
+    assert second_run_payload["data"]["entity_run_links"][0]["metadata"]["reason"] == "same event"
+    assert second_run_payload["data"]["entity_run_links"][0]["evidence_ids"] != []
 
 
 def test_review_action_endpoints_approve_and_reject_candidates(tmp_path):

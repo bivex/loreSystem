@@ -91,6 +91,7 @@ class MiroFishWriteBackStore:
             "actors": actors,
             "organizations": organizations,
         }
+        payload["entity_run_links"] = self.list_entity_run_links(run_id=run_id)
         return payload
 
     def list_evidence(self, run_id: str) -> list[dict[str, Any]]:

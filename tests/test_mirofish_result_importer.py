@@ -1,6 +1,7 @@
 import json
 
 from src.application.integration.importers import MiroFishResultImporter
+from src.application.integration.promoters import MiroFishCandidatePromoter
 from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
 
 
@@ -108,6 +109,38 @@ def test_importer_keeps_explicit_runtime_evidence_and_candidate_deltas(tmp_path)
     assert len(candidates) == 1
     assert candidates[0]["candidate_id"] == "cand-1"
     assert candidates[0]["evidence_ids"] == ["ev-1"]
+
+
+def test_store_get_run_includes_persisted_entity_run_links_after_promotion(tmp_path):
+    db_path = tmp_path / "run-links.db"
+    store = MiroFishWriteBackStore(db_path)
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    candidate = store.list_candidates(world_id="world-1", candidate_type="scenario_event")[0]
+    approved = store.update_candidate_status(candidate["candidate_id"], "approved")
+
+    result = promoter.promote_candidate(
+        approved["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+
+    saved_run = store.get_run("run-123")
+
+    assert saved_run is not None
+    assert len(saved_run["entity_run_links"]) == 1
+    assert saved_run["entity_run_links"][0]["canonical_id"] == result["canonical_entity"]["canonical_id"]
+    assert saved_run["entity_run_links"][0]["run_id"] == "run-123"
+    assert saved_run["entity_run_links"][0]["source_candidate_id"] == approved["candidate_id"]
+    assert saved_run["entity_run_links"][0]["relation_type"] == "promoted_from"
+    assert saved_run["entity_run_links"][0]["evidence_ids"] == approved["evidence_ids"]
+    assert saved_run["entity_run_links"][0]["metadata"]["candidate_type"] == "scenario_event"
 
 
 def test_import_cli_round_trip(tmp_path):

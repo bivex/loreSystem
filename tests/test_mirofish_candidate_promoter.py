@@ -1591,6 +1591,11 @@ def test_promoter_merges_approved_candidate_into_existing_canonical_entity(tmp_p
     assert merged["candidate"]["status"] == "merged"
     assert merged["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
     assert merged["candidate"]["target_canonical_type"] == "Event"
+    assert len(merged["canonical_entity"]["run_links"]) == 2
+    assert sorted((item["run_id"], item["relation_type"]) for item in merged["canonical_entity"]["run_links"]) == [
+        ("run-123", "promoted_from"),
+        ("run-456", "merged_into"),
+    ]
     assert store.get_canonical_entity(promoted["canonical_entity"]["canonical_id"])["source_candidate_id"] == approved_first["candidate_id"]
 
 
