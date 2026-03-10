@@ -999,10 +999,10 @@ Promote только вручную, если:
 - `python scripts/import_mirofish_results.py --input result_bundle.json`
 - `python scripts/run_mirofish_writeback_api.py --db lore_system.db --port 8080`
 - `python scripts/smoke_mirofish_writeback_workflow.py`
+- `python scripts/list_mirofish_candidates.py --db lore_system.db [--world-id <id>] [--status <status>] [--candidate-type <type>]`
 
 Пока не реализовано как отдельные CLI:
 
-- `list_mirofish_candidates.py`
 - `promote_mirofish_candidate.py`
 - `promote_mirofish_batch.py`
 
