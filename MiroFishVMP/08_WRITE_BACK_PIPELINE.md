@@ -116,6 +116,13 @@ Forward path у интеграции уже понятен:
 - cascade cleanup теперь реально удаляет старые `mirofish_canonical_entities` и `mirofish_entity_run_links`,
 - двухпроходный smoke на одной и той же БД больше не накапливает дубли.
 
+Следующий слой стабилизации поверх этого фикса:
+
+- derived `runtime_evidence` и `candidate_deltas` больше не получают случайные UUID, а строятся через детерминированный fingerprint от нормализованного payload,
+- `mirofish_scenario_runs` / `mirofish_scenario_results` обновляются через upsert, а не через destructive `INSERT OR REPLACE`,
+- `runtime_evidence` и `candidate_deltas` синхронизируются через rerun-safe sync/upsert semantics: unchanged rows сохраняются, stale rows удаляются, changed rows обновляются,
+- повторный promote того же `candidate_id` переиспользует existing canonical row и existing run-link.
+
 Подтверждённый same-db результат после фикса:
 
 - `scenario_runs = 1`
@@ -125,7 +132,15 @@ Forward path у интеграции уже понятен:
 - `canonical_entities = 3`
 - `entity_run_links = 3`
 
-Важно: текущая система идемпотентна по **содержимому и counts**, но не гарантирует стабильность SQLite autoincrement ID между rerun'ами. То есть canonical rows могут быть пересозданы с новыми числовыми `canonical_id`, при этом stale rows и дубли больше не остаются.
+Важно: текущая система теперь идемпотентна не только по **counts**, но и по identity для неизменившегося candidate-path.
+
+То есть при same-db rerun, если candidate content не изменился:
+
+- `candidate_id` остаётся тем же,
+- `canonical_id` остаётся тем же,
+- `entity_run_links` не дублируются.
+
+Если же rerun реально меняет candidate/evidence content, fingerprint меняется и система сознательно рассматривает это как новый candidate-path. В этом случае новый `canonical_id` допустим и отражает новую версию результата, а не регрессию cleanup semantics.
 
 ## 2. Главный принцип
 

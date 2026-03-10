@@ -65,6 +65,8 @@
 - full smoke script для end-to-end проверки review/promote workflow
 - convenience wrapper `scripts/autorun_mirofish_live_smoke.py` для fresh-db и same-db smoke прогонов
 - repeat-run idempotency на одной и той же SQLite БД подтверждена после включения `PRAGMA foreign_keys = ON`
+- derived `runtime_evidence` и `candidate_deltas` теперь получают детерминированные fingerprint-based IDs, а не случайные UUID
+- same-db rerun для неизменившегося candidate теперь сохраняет стабильный `canonical_id` и не плодит новые `entity_run_links`
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/promote слой.
 

@@ -66,7 +66,19 @@
 | `structured_payload` | `structured_payload` | `structured_payload_json` | original evidence-level payload |
 | `source_refs[]` | `source_refs` | `source_refs_json` | supporting references |
 
-### 4.1 Derived read model
+### 4.1 Deterministic evidence identity
+
+Для derived evidence path действует правило:
+
+- если исходный bundle уже прислал `evidence_id`, он сохраняется как есть,
+- если evidence собирается/importer'ом из runtime payload, `RuntimeEvidenceRecord` строит детерминированный fingerprint-based `evidence_id` из нормализованного payload.
+
+Практический смысл:
+
+- одинаковый evidence на same-db rerun получает тот же `evidence_id`,
+- rerun-safe sync может обновить existing row вместо delete/recreate churn.
+
+### 4.2 Derived read model
 
 При readback через store/API evidence дополнительно получает:
 
@@ -95,7 +107,19 @@ Mapping:
 | `source_refs[]` | `source_refs` | `source_refs_json` | supporting refs |
 | `status` | `status` | `status` | `pending_review` → `approved` / `rejected` / `promoted` |
 
-### 5.1 Candidate types currently supported
+### 5.1 Deterministic candidate identity
+
+Для candidate layer действует аналогичное правило:
+
+- explicit `candidate_id` из bundle сохраняется как есть,
+- derived candidate получает детерминированный fingerprint-based `candidate_id` из нормализованного candidate payload.
+
+Это делает safe два ключевых сценария:
+
+- same-db rerun может переиспользовать уже существующий promoted candidate-path,
+- canonical entity может оставаться привязанной к тому же `source_candidate_id`.
+
+### 5.2 Candidate types currently supported
 
 Сейчас review/promote flow реально поддерживает:
 
@@ -138,8 +162,10 @@ Mapping:
 При повторном ingest того же logical run в ту же SQLite БД действуют такие правила:
 
 - connection provider store включает `PRAGMA foreign_keys = ON`,
-- staging rows для того же `run_id` перезаписываются,
-- старые `mirofish_canonical_entities` и `mirofish_entity_run_links`, связанные с предыдущим проходом, удаляются через cascade cleanup,
+- `mirofish_scenario_runs` / `mirofish_scenario_results` обновляются через upsert, а не через destructive replace,
+- `runtime_evidence` и `candidate_deltas` синхронизируются через rerun-safe sync/upsert semantics,
+- unchanged rows сохраняют прежнюю identity, stale rows удаляются, changed rows обновляются,
+- повторный promote того же неизменившегося candidate переиспользует existing canonical row и existing run-link,
 - итоговые counts после двух проходов остаются стабильными.
 
 Подтверждённый smoke result после фикса:
@@ -151,7 +177,10 @@ Mapping:
 - `canonical_entities = 3`
 - `entity_run_links = 3`
 
-Нюанс: `canonical_id` и внутренние row ids могут измениться между проходами из-за SQLite autoincrement. Это нормальная часть текущего design — система идемпотентна по содержимому, а не по числовым surrogate IDs.
+Правило стабильности теперь такое:
+
+- если candidate content не изменился, то сохраняются те же `candidate_id` и `canonical_id`,
+- если candidate/evidence content изменился, fingerprint меняется и система рассматривает это как новый candidate-path.
 
 ## 9. Practical summary
 
