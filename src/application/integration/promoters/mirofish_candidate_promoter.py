@@ -40,11 +40,7 @@ class MiroFishCandidatePromoter:
                 source_candidate_id=candidate_id,
                 relation_type="promoted_from",
                 evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
-                metadata={
-                    "candidate_type": candidate.get("candidate_type"),
-                    "source_refs": candidate.get("source_refs") or [],
-                    "confidence": candidate.get("confidence"),
-                },
+                metadata=self._build_run_link_metadata(candidate),
             )
             canonical_entity["run_links"] = [run_link]
             return {
@@ -77,17 +73,71 @@ class MiroFishCandidatePromoter:
             source_candidate_id=candidate_id,
             relation_type="promoted_from",
             evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
-            metadata={
-                "candidate_type": candidate.get("candidate_type"),
-                "source_refs": candidate.get("source_refs") or [],
-                "confidence": candidate.get("confidence"),
-            },
+            metadata=self._build_run_link_metadata(candidate),
         )
         saved_entity["run_links"] = [run_link]
         updated_candidate = self.store.mark_candidate_promoted(candidate_id, canonical_type=canonical_type, canonical_id=saved_entity["canonical_id"])
         return {
             "candidate_id": candidate_id,
             "canonical_entity": saved_entity,
+            "run_link": run_link,
+            "candidate": updated_candidate,
+        }
+
+    def merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload = mapping or {}
+        if candidate.get("status") == "merged":
+            existing_target_id = self._as_int(candidate.get("target_canonical_id"), "target_canonical_id")
+            requested_target_id = payload.get("canonical_id")
+            if requested_target_id is not None and self._as_int(requested_target_id, "canonical_id") != existing_target_id:
+                raise ValueError("Merged candidate is already linked to a different canonical entity")
+        elif candidate.get("status") != "approved":
+            raise ValueError("Only approved candidates can be merged")
+
+        canonical_id = self._as_int(payload.get("canonical_id") or candidate.get("target_canonical_id"), "canonical_id")
+        canonical_entity = self.store.get_canonical_entity(canonical_id)
+        if not canonical_entity:
+            raise LookupError(f"Canonical entity '{canonical_id}' not found")
+
+        requested_type = str(payload.get("canonical_type") or "").strip()
+        if requested_type and requested_type != canonical_entity["canonical_type"]:
+            raise ValueError("canonical_type does not match the target canonical entity")
+
+        candidate_target_type = str(candidate.get("target_canonical_type") or "").strip()
+        if candidate_target_type and candidate_target_type != canonical_entity["canonical_type"]:
+            raise ValueError(
+                f"Candidate target canonical type '{candidate_target_type}' cannot be merged into '{canonical_entity['canonical_type']}'"
+            )
+
+        run_links = [
+            item
+            for item in self.store.list_entity_run_links(canonical_id=canonical_entity["canonical_id"], source_candidate_id=candidate_id)
+            if item.get("run_id") == str(candidate.get("run_id") or "") and item.get("relation_type") == "merged_into"
+        ]
+        run_link = run_links[0] if run_links else self.store.save_entity_run_link(
+            canonical_id=canonical_entity["canonical_id"],
+            canonical_type=canonical_entity["canonical_type"],
+            run_id=str(candidate.get("run_id") or ""),
+            source_candidate_id=candidate_id,
+            relation_type="merged_into",
+            evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
+            metadata=self._build_run_link_metadata(candidate, extra=self._extract_merge_metadata(payload)),
+        )
+        canonical_entity["run_links"] = [run_link]
+        updated_candidate = candidate
+        if candidate.get("status") != "merged":
+            updated_candidate = self.store.mark_candidate_merged(
+                candidate_id,
+                canonical_type=canonical_entity["canonical_type"],
+                canonical_id=canonical_entity["canonical_id"],
+            )
+        return {
+            "candidate_id": candidate_id,
+            "canonical_entity": canonical_entity,
             "run_link": run_link,
             "candidate": updated_candidate,
         }
@@ -204,6 +254,26 @@ class MiroFishCandidatePromoter:
             return int(value)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"{field_name} must be a positive integer") from exc
+
+    def _build_run_link_metadata(self, candidate: dict[str, Any], *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+        metadata = {
+            "candidate_type": candidate.get("candidate_type"),
+            "source_refs": candidate.get("source_refs") or [],
+            "confidence": candidate.get("confidence"),
+        }
+        if extra:
+            metadata.update(extra)
+        return metadata
+
+    def _extract_merge_metadata(self, payload: dict[str, Any]) -> dict[str, Any]:
+        metadata = payload.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            raise ValueError("metadata must be an object")
+        note = str(payload.get("note") or "").strip()
+        merged = dict(metadata)
+        if note:
+            merged["note"] = note
+        return merged
 
     def _serialize_entity(self, entity: Any) -> dict[str, Any]:
         if isinstance(entity, TenantId | EntityId | Version):

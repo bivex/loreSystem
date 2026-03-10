@@ -182,10 +182,16 @@ class MiroFishWriteBackStore:
         return self._decode_candidate_row(dict(row))
 
     def mark_candidate_promoted(self, candidate_id: str, *, canonical_type: str, canonical_id: int) -> dict[str, Any] | None:
+        return self._mark_candidate_with_canonical(candidate_id, status="promoted", canonical_type=canonical_type, canonical_id=canonical_id)
+
+    def mark_candidate_merged(self, candidate_id: str, *, canonical_type: str, canonical_id: int) -> dict[str, Any] | None:
+        return self._mark_candidate_with_canonical(candidate_id, status="merged", canonical_type=canonical_type, canonical_id=canonical_id)
+
+    def _mark_candidate_with_canonical(self, candidate_id: str, *, status: str, canonical_type: str, canonical_id: int) -> dict[str, Any] | None:
         with self.db.get_connection() as conn:
             updated = conn.execute(
                 "UPDATE mirofish_candidate_deltas SET status = ?, target_canonical_type = ?, target_canonical_id = ? WHERE candidate_id = ?",
-                ("promoted", canonical_type, str(canonical_id), candidate_id),
+                (status, canonical_type, str(canonical_id), candidate_id),
             )
             if updated.rowcount == 0:
                 return None
@@ -229,15 +235,19 @@ class MiroFishWriteBackStore:
             "promoted_at": promoted_at,
         }
 
-    def get_canonical_entity_by_candidate(self, candidate_id: str) -> dict[str, Any] | None:
+    def get_canonical_entity(self, canonical_id: int) -> dict[str, Any] | None:
         with self.db.get_connection() as conn:
-            row = conn.execute("SELECT * FROM mirofish_canonical_entities WHERE source_candidate_id = ?", (candidate_id,)).fetchone()
+            row = conn.execute("SELECT * FROM mirofish_canonical_entities WHERE canonical_id = ?", (canonical_id,)).fetchone()
         if not row:
             return None
-        payload = dict(row)
-        payload["entity"] = json.loads(payload.pop("entity_json"))
-        payload["run_links"] = self.list_entity_run_links(canonical_id=payload["canonical_id"])
-        return payload
+        return self._decode_canonical_entity_row(dict(row))
+
+    def get_canonical_entity_by_candidate(self, candidate_id: str) -> dict[str, Any] | None:
+        with self.db.get_connection() as conn:
+            row = conn.execute("SELECT canonical_id FROM mirofish_canonical_entities WHERE source_candidate_id = ?", (candidate_id,)).fetchone()
+        if not row:
+            return None
+        return self.get_canonical_entity(int(row["canonical_id"]))
 
     def save_entity_run_link(
         self,
@@ -328,6 +338,11 @@ class MiroFishWriteBackStore:
     def _decode_run_subject_row(self, row: dict[str, Any]) -> dict[str, Any]:
         row["metadata"] = json.loads(row.pop("metadata_json"))
         row["source_payload"] = json.loads(row.pop("source_payload_json"))
+        return row
+
+    def _decode_canonical_entity_row(self, row: dict[str, Any]) -> dict[str, Any]:
+        row["entity"] = json.loads(row.pop("entity_json"))
+        row["run_links"] = self.list_entity_run_links(canonical_id=int(row["canonical_id"]))
         return row
 
     def _decode_entity_run_link_row(self, row: dict[str, Any]) -> dict[str, Any]:

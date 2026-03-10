@@ -4,13 +4,13 @@ import json
 from src.presentation.api import create_writeback_app
 
 
-def sample_result_bundle() -> dict:
+def sample_result_bundle(*, run_id: str = "run-123", generated_at: str = "2026-03-10T12:00:00Z", event_name: str = "Court issues denial") -> dict:
     return {
         "schema_version": "1.1",
         "world_id": "world-1",
         "scenario_id": "succession-crisis",
-        "run_id": "run-123",
-        "generated_at": "2026-03-10T12:00:00Z",
+        "run_id": run_id,
+        "generated_at": generated_at,
         "actors": [
             {"id": "actor:royal_court", "name": "Royal Court Herald", "canonical_id": "char-royal-court-herald", "canonical_type": "Character", "speaker_mode": "representative", "represented_entity_id": "org:royal_court"},
             {"id": "actor:captain_serik", "name": "Captain Serik", "canonical_id": "char-serik", "canonical_type": "Character", "speaker_mode": "individual"},
@@ -24,7 +24,7 @@ def sample_result_bundle() -> dict:
             "summary": "A forged decree rumor destabilizes trust in the court.",
             "rumors": [{"name": "Forged decree rumor", "summary": "Town criers amplify doubts.", "actor_refs": ["org:town_criers"], "confidence": 0.74}],
         },
-        "emergent_events": [{"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}],
+        "emergent_events": [{"name": event_name, "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}],
         "relationship_changes": [{"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "actor_refs": ["actor:captain_serik", "actor:nessa"], "confidence": 0.67}],
     }
 
@@ -75,6 +75,112 @@ def test_candidate_review_endpoint_lists_and_filters_candidates(tmp_path):
     assert payload["data"]["count"] == 1
     assert payload["data"]["candidates"][0]["candidate_type"] == "rumor_candidate"
     assert payload["data"]["candidates"][0]["evidence_count"] >= 0
+
+
+def test_candidate_detail_endpoint_returns_full_candidate_context(tmp_path):
+    app = create_writeback_app(str(tmp_path / "candidate-detail.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+
+    list_status, list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=rumor_candidate")
+    candidate_id = list_payload["data"]["candidates"][0]["candidate_id"]
+
+    status, payload = call_json(app, "GET", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}")
+
+    assert list_status == 200
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["candidate_id"] == candidate_id
+    assert payload["data"]["candidate_type"] == "rumor_candidate"
+    assert payload["data"]["evidence_count"] == len(payload["data"]["evidence_ids"])
+    assert payload["data"]["canonical_entity"] is None
+    assert payload["data"]["run_links"] == []
+
+
+def test_candidate_detail_endpoint_includes_canonical_context_after_promote(tmp_path):
+    app = create_writeback_app(str(tmp_path / "candidate-detail-promoted.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    list_status, list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")
+    candidate_id = list_payload["data"]["candidates"][0]["candidate_id"]
+
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/approve")
+    promote_status, promote_payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+
+    status, payload = call_json(app, "GET", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}")
+
+    assert list_status == 200
+    assert promote_status == 200
+    assert status == 200
+    assert payload["data"]["candidate_id"] == candidate_id
+    assert payload["data"]["status"] == "promoted"
+    assert payload["data"]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["canonical_entity"]["canonical_type"] == "Event"
+    assert payload["data"]["run_links"][0]["source_candidate_id"] == candidate_id
+
+
+def test_candidate_detail_endpoint_includes_canonical_context_after_merge(tmp_path):
+    app = create_writeback_app(str(tmp_path / "candidate-detail-merged.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    first_candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    first_candidate_id = first_candidates[0]["candidate_id"]
+
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        sample_result_bundle(run_id="run-456", generated_at="2026-03-10T13:00:00Z", event_name="Court repeats denial"),
+    )
+    second_candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    second_candidate_id = [item for item in second_candidates if item["run_id"] == "run-456"][0]["candidate_id"]
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/approve")
+    call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/merge",
+        {
+            "canonical_id": promote_payload["data"]["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "same event"},
+        },
+    )
+
+    status, payload = call_json(app, "GET", f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}")
+
+    assert status == 200
+    assert payload["data"]["candidate_id"] == second_candidate_id
+    assert payload["data"]["status"] == "merged"
+    assert payload["data"]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["run_links"][0]["relation_type"] == "merged_into"
+
+
+def test_candidate_detail_endpoint_returns_404_for_missing_candidate(tmp_path):
+    app = create_writeback_app(str(tmp_path / "candidate-detail-missing.db"))
+
+    status, payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-missing")
+
+    assert status == 404
+    assert payload["success"] is False
 
 
 def test_run_detail_and_evidence_endpoints_return_review_context(tmp_path):
@@ -173,6 +279,90 @@ def test_promote_endpoint_requires_approved_candidate(tmp_path):
     )
 
     assert list_status == 200
+    assert status == 400
+    assert payload["success"] is False
+
+
+def test_merge_endpoint_links_approved_candidate_to_existing_canonical_entity(tmp_path):
+    app = create_writeback_app(str(tmp_path / "merge.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    first_candidate_id = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"][0]["candidate_id"]
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        sample_result_bundle(run_id="run-456", generated_at="2026-03-10T13:00:00Z", event_name="Court repeats denial"),
+    )
+    candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    second_candidate_id = [item for item in candidates if item["run_id"] == "run-456"][0]["candidate_id"]
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/approve")
+
+    status, payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/merge",
+        {
+            "canonical_id": promote_payload["data"]["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "same event"},
+        },
+    )
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["run_link"]["relation_type"] == "merged_into"
+    assert payload["data"]["run_link"]["metadata"]["reason"] == "same event"
+    assert payload["data"]["candidate"]["status"] == "merged"
+
+
+def test_merge_endpoint_requires_approved_candidate(tmp_path):
+    app = create_writeback_app(str(tmp_path / "merge-gate.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    first_candidate_id = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"][0]["candidate_id"]
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{first_candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        sample_result_bundle(run_id="run-456", generated_at="2026-03-10T13:00:00Z", event_name="Court repeats denial"),
+    )
+    candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")[1]["data"]["candidates"]
+    second_candidate_id = [item for item in candidates if item["run_id"] == "run-456"][0]["candidate_id"]
+
+    status, payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{second_candidate_id}/merge",
+        {
+            "canonical_id": promote_payload["data"]["canonical_entity"]["canonical_id"],
+        },
+    )
+
     assert status == 400
     assert payload["success"] is False
 

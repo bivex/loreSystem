@@ -3,13 +3,13 @@ from src.application.integration.promoters import MiroFishCandidatePromoter
 from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
 
 
-def sample_result_bundle() -> dict:
+def sample_result_bundle(*, run_id: str = "run-123", generated_at: str = "2026-03-10T12:00:00Z", event_name: str = "Court issues denial") -> dict:
     return {
         "schema_version": "1.1",
         "world_id": "world-1",
         "scenario_id": "succession-crisis",
-        "run_id": "run-123",
-        "generated_at": "2026-03-10T12:00:00Z",
+        "run_id": run_id,
+        "generated_at": generated_at,
         "actors": [
             {"id": "actor:royal_court", "name": "Royal Court Herald", "canonical_id": "char-royal-court-herald", "canonical_type": "Character", "speaker_mode": "representative", "represented_entity_id": "org:royal_court"},
             {"id": "actor:captain_serik", "name": "Captain Serik", "canonical_id": "char-serik", "canonical_type": "Character", "speaker_mode": "individual"},
@@ -26,7 +26,7 @@ def sample_result_bundle() -> dict:
             ],
         },
         "emergent_events": [
-            {"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}
+            {"name": event_name, "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}
         ],
         "relationship_changes": [
             {"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "actor_refs": ["actor:captain_serik", "actor:nessa"], "confidence": 0.67}
@@ -34,8 +34,12 @@ def sample_result_bundle() -> dict:
     }
 
 
-def _approve_candidate(store: MiroFishWriteBackStore, *, candidate_type: str) -> dict:
-    candidate = store.list_candidates(world_id="world-1", candidate_type=candidate_type)[0]
+def _approve_candidate(store: MiroFishWriteBackStore, *, candidate_type: str, run_id: str = "run-123") -> dict:
+    candidate = [
+        item
+        for item in store.list_candidates(world_id="world-1", candidate_type=candidate_type)
+        if item["run_id"] == run_id
+    ][0]
     return store.update_candidate_status(candidate["candidate_id"], "approved")
 
 
@@ -163,3 +167,88 @@ def test_promoter_reuses_canonical_id_for_identical_candidate_on_rerun(tmp_path)
     assert second["canonical_entity"]["canonical_id"] == first["canonical_entity"]["canonical_id"]
     assert second["run_link"]["link_id"] == first["run_link"]["link_id"]
     assert len(store.list_entity_run_links(run_id="run-123", source_candidate_id=approved["candidate_id"])) == 1
+
+
+def test_promoter_merges_approved_candidate_into_existing_canonical_entity(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "merge.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved_first = _approve_candidate(store, candidate_type="scenario_event", run_id="run-123")
+    promoted = promoter.promote_candidate(
+        approved_first["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(
+        sample_result_bundle(
+            run_id="run-456",
+            generated_at="2026-03-10T13:00:00Z",
+            event_name="Court repeats denial",
+        )
+    )
+    approved_second = _approve_candidate(store, candidate_type="scenario_event", run_id="run-456")
+
+    merged = promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {
+            "canonical_id": promoted["canonical_entity"]["canonical_id"],
+            "metadata": {"reason": "duplicate event narrative"},
+        },
+    )
+
+    assert merged["canonical_entity"]["canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert merged["run_link"]["relation_type"] == "merged_into"
+    assert merged["run_link"]["metadata"]["reason"] == "duplicate event narrative"
+    assert merged["candidate"]["status"] == "merged"
+    assert merged["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
+    assert merged["candidate"]["target_canonical_type"] == "Event"
+    assert store.get_canonical_entity(promoted["canonical_entity"]["canonical_id"])["source_candidate_id"] == approved_first["candidate_id"]
+
+
+def test_promoter_reuses_existing_merge_link_for_already_merged_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "merge-rerun.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved_first = _approve_candidate(store, candidate_type="scenario_event", run_id="run-123")
+    promoted = promoter.promote_candidate(
+        approved_first["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+
+    importer.import_result_bundle(
+        sample_result_bundle(
+            run_id="run-456",
+            generated_at="2026-03-10T13:00:00Z",
+            event_name="Court repeats denial",
+        )
+    )
+    approved_second = _approve_candidate(store, candidate_type="scenario_event", run_id="run-456")
+
+    first_merge = promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {"canonical_id": promoted["canonical_entity"]["canonical_id"]},
+    )
+    second_merge = promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {"canonical_id": promoted["canonical_entity"]["canonical_id"]},
+    )
+
+    assert second_merge["candidate"]["status"] == "merged"
+    assert second_merge["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
+    assert second_merge["run_link"]["link_id"] == first_merge["run_link"]["link_id"]
+    assert len(store.list_entity_run_links(run_id="run-456", source_candidate_id=approved_second["candidate_id"])) == 1

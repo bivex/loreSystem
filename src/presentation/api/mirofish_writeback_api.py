@@ -38,6 +38,11 @@ class MiroFishWriteBackAPI:
             return self._handle_candidate_list(query_string)
 
         candidate_prefix = f"{self.base_path}/candidate-deltas/"
+        if method == "GET" and path.startswith(candidate_prefix):
+            suffix = path[len(candidate_prefix):].strip("/")
+            if suffix and "/" not in suffix:
+                return self._handle_candidate_detail(suffix)
+
         if method == "POST" and path.startswith(candidate_prefix):
             suffix = path[len(candidate_prefix):].strip("/")
             parts = [part for part in suffix.split("/") if part]
@@ -45,6 +50,8 @@ class MiroFishWriteBackAPI:
                 return self._handle_candidate_review_action(parts[0], parts[1])
             if len(parts) == 2 and parts[1] == "promote":
                 return self._handle_candidate_promote(parts[0], body)
+            if len(parts) == 2 and parts[1] == "merge":
+                return self._handle_candidate_merge(parts[0], body)
 
         prefix = f"{self.base_path}/runs/"
         if method == "GET" and path.startswith(prefix):
@@ -86,6 +93,34 @@ class MiroFishWriteBackAPI:
             for item in candidates
         ]
         return self._response(HTTPStatus.OK, {"success": True, "data": {"count": len(items), "candidates": items}})
+
+    def _handle_candidate_detail(self, candidate_id: str) -> tuple[int, dict[str, Any]]:
+        if not candidate_id:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_id is required"})
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": f"Candidate '{candidate_id}' not found"})
+
+        canonical_entity = None
+        target_canonical_id = str(candidate.get("target_canonical_id") or "").strip()
+        if target_canonical_id:
+            try:
+                canonical_entity = self.store.get_canonical_entity(int(target_canonical_id))
+            except ValueError:
+                canonical_entity = None
+        if canonical_entity is None:
+            canonical_entity = self.store.get_canonical_entity_by_candidate(candidate_id)
+        payload = {
+            **candidate,
+            "evidence_count": len(candidate.get("evidence_ids") or []),
+        }
+        if canonical_entity:
+            payload["canonical_entity"] = canonical_entity
+            payload["run_links"] = self.store.list_entity_run_links(source_candidate_id=candidate_id)
+        else:
+            payload["canonical_entity"] = None
+            payload["run_links"] = []
+        return self._response(HTTPStatus.OK, {"success": True, "data": payload})
 
     def _handle_run_detail(self, run_id: str) -> tuple[int, dict[str, Any]]:
         if not run_id:
@@ -136,6 +171,21 @@ class MiroFishWriteBackAPI:
             return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
         try:
             result = self.promoter.promote_candidate(candidate_id, mapping)
+        except LookupError as exc:
+            return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": str(exc)})
+        except ValueError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": str(exc)})
+        return self._response(HTTPStatus.OK, {"success": True, "data": result})
+
+    def _handle_candidate_merge(self, candidate_id: str, body: bytes) -> tuple[int, dict[str, Any]]:
+        if not candidate_id:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_id is required"})
+        try:
+            mapping = json.loads(body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
+        try:
+            result = self.promoter.merge_candidate(candidate_id, mapping)
         except LookupError as exc:
             return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": str(exc)})
         except ValueError as exc:
