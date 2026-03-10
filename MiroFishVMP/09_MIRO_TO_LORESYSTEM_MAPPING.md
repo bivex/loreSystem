@@ -168,7 +168,8 @@ Mapping:
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
 7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event` candidates и вызывать тот же promote path
 8. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
-9. canonical entity / merge-linkage → `mirofish_entity_run_links`
+9. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
+10. canonical entity / merge-linkage → `mirofish_entity_run_links`
 
 ## 8.1 Same-DB rerun semantics
 
@@ -212,6 +213,9 @@ Mapping:
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
+- manually created staged `Location`
+- manually created staged `Faction`
+- manually created staged `Character`
 - merged candidate linkage в existing staged canonical entity
 - explicit `run -> canonical entity` provenance links
 
@@ -221,6 +225,7 @@ Mapping:
 
 - batch review и batch promote являются wrapper'ом над single-candidate endpoint semantics,
 - batch auto-promote тоже работает как wrapper над существующим promote path,
+- manual create для `Location` / `Faction` / `Character` тоже использует тот же single-candidate promote path,
 - каждый item обрабатывается независимо,
 - ответ агрегирует `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`,
 - частичный успех считается нормальным и не откатывает уже успешные элементы.
@@ -232,3 +237,11 @@ Mapping:
 - только `confidence >= 0.90`
 - только минимум `2 evidence_ids`
 - provenance metadata содержит `auto_promote_policy` и `auto_promoted`
+
+Manual create/merge для новых entity types сейчас intentionally explicit:
+
+- candidate type обычно `new_entity_candidate`
+- `Location` требует `location_type`
+- `Faction` требует `faction_type` и `alignment`
+- `Character` требует canonical-grade `backstory`
+- merge для этих типов использует тот же existing `canonical_id`-based path

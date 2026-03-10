@@ -60,6 +60,12 @@
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
   - `relationship_change -> CharacterRelationship`
+- manual create/merge для 3 новых staged canonical targets:
+  - `new_entity_candidate -> Location`
+  - `new_entity_candidate -> Faction`
+  - `new_entity_candidate -> Character`
+  - create использует existing `POST /candidate-deltas/{id}/promote`
+  - merge использует existing `POST /candidate-deltas/{id}/merge`
 - safe merge flow для approved candidate в уже существующий staged canonical entity через `merged_into`
 - safe canonical persistence в отдельную таблицу `mirofish_canonical_entities`
 - явная provenance-связь `run -> canonical entity` через отдельную таблицу `mirofish_entity_run_links`
@@ -78,6 +84,10 @@
   - только `scenario_event -> Event`
   - только `confidence >= 0.90` и минимум `2 evidence_ids`
   - auto-path пишет `auto_promote_policy` / `auto_promoted` в provenance metadata
+- manual create для `Location` / `Faction` / `Character` остаётся review-only и требует fully explicit mapping payload:
+  - `Location` требует как минимум `location_type`
+  - `Faction` требует как минимум `faction_type` и `alignment`
+  - `Character` требует canonical-grade `backstory`
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/merge/promote слой.
 

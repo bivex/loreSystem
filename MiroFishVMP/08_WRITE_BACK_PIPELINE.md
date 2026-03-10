@@ -241,7 +241,7 @@ Forward path у интеграции уже понятен:
 - `relationship_change`
 - `rumor_candidate`
 
-Это сознательно уже, чем будущий ingest scope. `Location`, `Faction`, `Character` пока остаются только planned/manual-review domain.
+Это сознательно уже, чем auto-promote scope. `Location`, `Faction`, `Character` не попадают в policy-driven path и остаются только manual-review domain через explicit create/merge.
 
 ## 5. Что можно promote в canon в первую очередь
 
@@ -305,6 +305,14 @@ Forward path у интеграции уже понятен:
 
 Поэтому `Location` — manual review by default.
 
+Минимально реализованный path теперь такой:
+
+- reviewer получает `new_entity_candidate`
+- делает `approve`
+- либо вызывает existing `POST /candidate-deltas/{id}/promote` с explicit payload
+- либо вызывает existing `POST /candidate-deltas/{id}/merge` в уже существующий staged `Location`
+- для create обязательный минимум: `tenant_id`, `world_id`, `location_type`
+
 ### 6.2 Faction
 
 Новый runtime group может быть:
@@ -315,6 +323,13 @@ Forward path у интеграции уже понятен:
 - просто social cluster без canonical identity.
 
 Поэтому `Faction` — только через candidate + review.
+
+Текущий manual path:
+
+- create идёт через existing `promote` endpoint
+- merge идёт через existing `merge` endpoint
+- для create обязательный минимум: `tenant_id`, `world_id`, `faction_type`, `alignment`
+- optional link к лидеру задаётся через `leader_character_id`
 
 ### 6.3 Character
 
@@ -328,6 +343,13 @@ Forward path у интеграции уже понятен:
 - simulation-only role.
 
 Поэтому новых `Character` на MVP автоматически не создаём.
+
+При этом manual create теперь уже реализован, но только как explicit reviewer action:
+
+- existing `promote` endpoint
+- fully explicit payload
+- canonical-grade `backstory` обязателен
+- optional combat/location fields можно задавать отдельно
 
 ## 7. Что нельзя автоматически импортировать в canon
 
@@ -538,6 +560,14 @@ Promote, если:
 - сигнал повторяется across evidence или runs,
 - reviewer выбрал create или merge.
 
+Практический manual create contract:
+
+- existing endpoint: `POST /candidate-deltas/{candidate_id}/promote`
+- candidate type обычно `new_entity_candidate`
+- target canonical type: `Location`
+- mapping payload должен содержать как минимум `tenant_id`, `world_id`, `location_type`
+- optional: `parent_location_id`, `name`, `description`
+
 ### 12.5 Faction
 
 Promote, если:
@@ -547,6 +577,14 @@ Promote, если:
 - есть leader / mission / group boundary,
 - reviewer явно подтвердил создание.
 
+Практический manual create contract:
+
+- existing endpoint: `POST /candidate-deltas/{candidate_id}/promote`
+- candidate type обычно `new_entity_candidate`
+- target canonical type: `Faction`
+- mapping payload должен содержать как минимум `tenant_id`, `world_id`, `faction_type`, `alignment`
+- optional: `leader_character_id`, `is_joinable`, `name`, `description`
+
 ### 12.6 Character
 
 Promote только вручную, если:
@@ -554,6 +592,14 @@ Promote только вручную, если:
 - это не alias существующего character,
 - есть достаточно материала для canonical backstory,
 - нет признаков, что это simulation-only persona.
+
+Практический manual create contract:
+
+- existing endpoint: `POST /candidate-deltas/{candidate_id}/promote`
+- candidate type обычно `new_entity_candidate`
+- target canonical type: `Character`
+- mapping payload должен содержать как минимум `tenant_id`, `world_id`, `backstory`
+- optional: `status`, `location_id`, `rarity`, `element`, `role`, `base_hp`, `base_atk`, `base_def`, `base_speed`, `energy_cost`
 
 ## 13. Где это должно жить в коде
 
@@ -628,6 +674,7 @@ Promote только вручную, если:
 - `merge` не создаёт новый canonical snapshot, а привязывает approved candidate к уже существующему `mirofish_canonical_entities.canonical_id`
 - provenance для merge пишется в `mirofish_entity_run_links` с `relation_type = merged_into`
 - provenance для promote пишется с `relation_type = promoted_from`
+- existing `promote` теперь покрывает не только `Event` / `Rumor` / `CharacterRelationship`, но и manual create для `Location` / `Faction` / `Character`
 - `data.run_link`
 - `data.canonical_entity.run_links`
 - batch endpoints работают как per-item wrapper над существующими single-candidate операциями
@@ -761,7 +808,16 @@ Promote только вручную, если:
 - `Faction`
 - `Character`
 
-Статус: **ещё не сделано**.
+Статус: **сделано**.
+
+Реально реализованный slice:
+
+- без новых endpoint'ов
+- без изменения SQLite schema
+- через existing `promote` / `merge`
+- staged-only persistence в `mirofish_canonical_entities`
+- explicit mapping payload для каждого create
+- targeted tests для promoter/API
 
 ### Phase 5 — Policy-driven Auto Promotion
 
