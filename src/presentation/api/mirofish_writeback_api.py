@@ -37,6 +37,12 @@ class MiroFishWriteBackAPI:
         if method == "GET" and path == f"{self.base_path}/candidate-deltas":
             return self._handle_candidate_list(query_string)
 
+        if method == "POST" and path == f"{self.base_path}/candidate-deltas/batch/review":
+            return self._handle_candidate_batch_review(body)
+
+        if method == "POST" and path == f"{self.base_path}/candidate-deltas/batch/promote":
+            return self._handle_candidate_batch_promote(body)
+
         candidate_prefix = f"{self.base_path}/candidate-deltas/"
         if method == "GET" and path.startswith(candidate_prefix):
             suffix = path[len(candidate_prefix):].strip("/")
@@ -162,6 +168,48 @@ class MiroFishWriteBackAPI:
             },
         )
 
+    def _handle_candidate_batch_review(self, body: bytes) -> tuple[int, dict[str, Any]]:
+        try:
+            payload = json.loads(body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
+
+        action = str(payload.get("action") or "").strip().lower()
+        if action not in {"approve", "reject"}:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "action must be 'approve' or 'reject'"})
+
+        candidate_ids = payload.get("candidate_ids")
+        if not isinstance(candidate_ids, list) or not candidate_ids:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_ids must be a non-empty list"})
+
+        succeeded: list[dict[str, Any]] = []
+        failed: list[dict[str, Any]] = []
+        for raw_candidate_id in candidate_ids:
+            candidate_id = str(raw_candidate_id or "").strip()
+            if not candidate_id:
+                failed.append({"candidate_id": candidate_id, "error": "candidate_id is required"})
+                continue
+            status_code, result = self._handle_candidate_review_action(candidate_id, action)
+            if status_code == int(HTTPStatus.OK):
+                succeeded.append(result["data"])
+            else:
+                failed.append({"candidate_id": candidate_id, "error": result.get("error", "Unknown error"), "status": status_code})
+
+        return self._response(
+            HTTPStatus.OK,
+            {
+                "success": True,
+                "data": {
+                    "action": action,
+                    "requested_count": len(candidate_ids),
+                    "success_count": len(succeeded),
+                    "failure_count": len(failed),
+                    "succeeded": succeeded,
+                    "failed": failed,
+                },
+            },
+        )
+
     def _handle_candidate_promote(self, candidate_id: str, body: bytes) -> tuple[int, dict[str, Any]]:
         if not candidate_id:
             return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_id is required"})
@@ -176,6 +224,52 @@ class MiroFishWriteBackAPI:
         except ValueError as exc:
             return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": str(exc)})
         return self._response(HTTPStatus.OK, {"success": True, "data": result})
+
+    def _handle_candidate_batch_promote(self, body: bytes) -> tuple[int, dict[str, Any]]:
+        try:
+            payload = json.loads(body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
+
+        items = payload.get("items")
+        if not isinstance(items, list) or not items:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "items must be a non-empty list"})
+
+        succeeded: list[dict[str, Any]] = []
+        failed: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                failed.append({"candidate_id": None, "error": "Each item must be an object"})
+                continue
+            candidate_id = str(item.get("candidate_id") or "").strip()
+            if not candidate_id:
+                failed.append({"candidate_id": candidate_id, "error": "candidate_id is required"})
+                continue
+            mapping = item.get("mapping")
+            if mapping is None:
+                mapping = {}
+            if not isinstance(mapping, dict):
+                failed.append({"candidate_id": candidate_id, "error": "mapping must be an object"})
+                continue
+            status_code, result = self._handle_candidate_promote(candidate_id, json.dumps(mapping).encode("utf-8"))
+            if status_code == int(HTTPStatus.OK):
+                succeeded.append(result["data"])
+            else:
+                failed.append({"candidate_id": candidate_id, "error": result.get("error", "Unknown error"), "status": status_code})
+
+        return self._response(
+            HTTPStatus.OK,
+            {
+                "success": True,
+                "data": {
+                    "requested_count": len(items),
+                    "success_count": len(succeeded),
+                    "failure_count": len(failed),
+                    "succeeded": succeeded,
+                    "failed": failed,
+                },
+            },
+        )
 
     def _handle_candidate_merge(self, candidate_id: str, body: bytes) -> tuple[int, dict[str, Any]]:
         if not candidate_id:

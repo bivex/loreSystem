@@ -223,6 +223,48 @@ def test_review_action_endpoints_approve_and_reject_candidates(tmp_path):
     assert reject_payload["data"]["candidate"]["status"] == "rejected"
 
 
+def test_batch_review_endpoint_processes_multiple_candidates_with_partial_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-review.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+
+    candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas")[1]["data"]["candidates"]
+    candidate_ids = [item["candidate_id"] for item in candidates[:2]]
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/review",
+        {"action": "approve", "candidate_ids": [candidate_ids[0], "cand-missing", candidate_ids[1]]},
+    )
+
+    approved_candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?status=approved")[1]["data"]["candidates"]
+    approved_ids = {item["candidate_id"] for item in approved_candidates}
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["action"] == "approve"
+    assert payload["data"]["requested_count"] == 3
+    assert payload["data"]["success_count"] == 2
+    assert payload["data"]["failure_count"] == 1
+    assert {item["candidate"]["candidate_id"] for item in payload["data"]["succeeded"]} == set(candidate_ids)
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-missing"
+    assert set(candidate_ids).issubset(approved_ids)
+
+
+def test_batch_review_endpoint_rejects_invalid_payload(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-review-bad.db"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/review",
+        {"action": "archive", "candidate_ids": []},
+    )
+
+    assert status == 400
+    assert payload["success"] is False
+
+
 def test_review_action_endpoint_returns_404_for_missing_candidate(tmp_path):
     app = create_writeback_app(str(tmp_path / "missing.db"))
 
@@ -279,6 +321,78 @@ def test_promote_endpoint_requires_approved_candidate(tmp_path):
     )
 
     assert list_status == 200
+    assert status == 400
+    assert payload["success"] is False
+
+
+def test_batch_promote_endpoint_processes_multiple_candidates_with_partial_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-promote.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    candidates = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas")[1]["data"]["candidates"]
+    event_candidate_id = next(item["candidate_id"] for item in candidates if item["candidate_type"] == "scenario_event")
+    rumor_candidate_id = next(item["candidate_id"] for item in candidates if item["candidate_type"] == "rumor_candidate")
+
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{event_candidate_id}/approve")
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/promote",
+        {
+            "items": [
+                {
+                    "candidate_id": event_candidate_id,
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                        "outcome": "success",
+                    },
+                },
+                {
+                    "candidate_id": rumor_candidate_id,
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                    },
+                },
+                {
+                    "candidate_id": "cand-missing",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                    },
+                },
+            ]
+        },
+    )
+
+    event_detail = call_json(app, "GET", f"/api/mirofish/writeback/candidate-deltas/{event_candidate_id}")[1]["data"]
+    rumor_detail = call_json(app, "GET", f"/api/mirofish/writeback/candidate-deltas/{rumor_candidate_id}")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["requested_count"] == 3
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 2
+    assert payload["data"]["succeeded"][0]["candidate_id"] == event_candidate_id
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    failed_ids = {item["candidate_id"] for item in payload["data"]["failed"]}
+    assert failed_ids == {rumor_candidate_id, "cand-missing"}
+    assert event_detail["status"] == "promoted"
+    assert rumor_detail["status"] == "pending_review"
+
+
+def test_batch_promote_endpoint_rejects_invalid_payload(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-promote-bad.db"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/promote",
+        {"items": []},
+    )
+
     assert status == 400
     assert payload["success"] is False
 
