@@ -186,9 +186,10 @@ Mapping:
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
 7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run event/rumor/relationship slices, и вызывать тот же promote path; optional `dry_run: true` даёт preview этого же пути без side effects
-8. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
-9. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
-10. canonical entity / merge-linkage → `mirofish_entity_run_links`
+8. explicit `batch/auto-merge` может narrow-gate'ить safe `new_entity_candidate -> Location` exact duplicate merge через policy `safe_existing_location_duplicate_only` и вызывать тот же existing merge path; optional `dry_run: true` даёт preview без side effects
+9. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
+10. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
+11. canonical entity / merge-linkage → `mirofish_entity_run_links`
 
 ## 8.1 Same-DB rerun semantics
 
@@ -245,6 +246,8 @@ Mapping:
 - batch review и batch promote являются wrapper'ом над single-candidate endpoint semantics,
 - batch auto-promote тоже работает как wrapper над существующим promote path,
 - batch auto-promote с `dry_run: true` работает как explain/preview wrapper над тем же promote path,
+- batch auto-merge тоже работает как wrapper над существующим merge path,
+- batch auto-merge с `dry_run: true` работает как explain/preview wrapper над тем же merge path,
 - manual create для `Location` / `Faction` / `Character` тоже использует тот же single-candidate promote path,
 - каждый item обрабатывается независимо,
 - ответ агрегирует `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`,
@@ -252,9 +255,9 @@ Mapping:
 
 Текущий `dry_run` intentionally narrow:
 
-- доступен только на existing `batch/auto-promote` endpoint
-- принимает те же `policy` и `items[]`
-- возвращает `eligible[]` / `ineligible[]` вместо реального promote результата
+- доступен на existing `batch/auto-promote` и `batch/auto-merge` endpoints
+- принимает те же `policy` и `items[]` для соответствующего endpoint
+- возвращает `eligible[]` / `ineligible[]` вместо реального promote / merge результата
 - даёт per-item `reasons`
 - при успешном preview возвращает `metadata_preview`
 - не меняет candidate status и не создаёт canonical entity / run-link записи
@@ -277,6 +280,19 @@ Mapping:
 - `safe_relationship_only` → только `relationship_change -> CharacterRelationship` и требует `character_from_id`, `character_to_id`, `relationship_level`, плюс `abs(relationship_level) >= 30`
 - `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, сначала проходит все требования `safe_relationship_only`, затем требует хотя бы один supporting run с тем же directed `actor_refs` и той же polarity и отклоняет opposite-polarity staged canonical relationship для той же directed pair
 - provenance metadata содержит `auto_promote_policy` и `auto_promoted`; для cross-run event slice ещё пишутся `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `contradiction_check`, для cross-run rumor slice — `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `rumor_match_name`, `rumor_match_source_name`, `rumor_truth_bucket`, `duplicate_guard`, а для cross-run relationship slice — `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
+
+Текущий auto-merge тоже intentionally narrow:
+
+- endpoint: `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
+- policy names:
+  - `safe_existing_location_duplicate_only`
+- только `new_entity_candidate -> Location`
+- только `confidence >= 0.90`
+- только минимум `2 evidence_ids`
+- mapping обязан содержать explicit `world_id`
+- exact duplicate определяется только по normalized `name` + `location_type` + `parent_location_id` + `world_id`
+- policy требует ровно один staged canonical `Location` match и reject'ит no-match / ambiguous-match случаи
+- provenance metadata содержит `auto_merge_policy`, `auto_merged`, `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`
 
 Manual create/merge для новых entity types сейчас intentionally explicit:
 

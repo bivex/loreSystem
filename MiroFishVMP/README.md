@@ -63,6 +63,11 @@
     - `safe_cross_run_rumor_only`
     - `safe_relationship_only`
     - `safe_cross_run_relationship_only`
+- minimal explicit auto-merge policy endpoint:
+  - `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
+  - optional `dry_run: true` даёт explain/preview без side effects
+  - текущая policy:
+    - `safe_existing_location_duplicate_only`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
@@ -107,6 +112,15 @@
   - `Location` требует как минимум `location_type`
   - `Faction` требует как минимум `faction_type` и `alignment`
   - `Character` требует canonical-grade `backstory`
+- auto-merge тоже остаётся explicit и audit-friendly:
+  - отдельный endpoint `batch/auto-merge`, а не расширение `batch/auto-promote`
+  - `safe_existing_location_duplicate_only` → только `new_entity_candidate -> Location`
+  - candidate должен пройти базовые gate: `confidence >= 0.90` и минимум `2 evidence_ids`
+  - mapping обязан содержать explicit `world_id`
+  - merge допускается только при ровно одном staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+  - policy не создаёт новый canonical snapshot: она лишь выбирает existing staged `Location` как merge target
+  - auto-path пишет `auto_merge_policy` / `auto_merged`, а также `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`
+  - `dry_run` возвращает per-item `eligible/ineligible`, `reasons`, `metadata_preview` и ничего не меняет в candidate status / canonical rows / run links
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/merge/promote слой.
 

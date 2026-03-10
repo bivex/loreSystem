@@ -585,6 +585,21 @@ Confidence лучше считать не LLM-словами, а детерми�
 - auto-path оставляет audit metadata в `run_link.metadata`
 - `dry_run` делает per-item preview и проверяет не только policy gate, но и promote-side mapping viability
 
+Отдельно теперь есть и узкий merge-side policy slice:
+
+- policy:
+  - `safe_existing_location_duplicate_only`
+- explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
+- optional `dry_run: true` на том же endpoint для preview без side effects
+- только по явно переданным `candidate_id`
+- только для `new_entity_candidate -> Location`
+- только при явном `world_id` в mapping
+- candidate должен пройти `confidence >= 0.90`
+- candidate должен иметь минимум `2 evidence_ids`
+- merge выполняется только при ровно одном staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+- auto-merge не создаёт новый canonical snapshot, а вызывает existing merge path в уже существующий staged canonical `Location`
+- auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`, `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`
+
 ## 12. Promotion rules по типам
 
 ### 12.1 Event
@@ -731,6 +746,7 @@ Promote только вручную, если:
 - `POST /api/mirofish/writeback/candidate-deltas/batch/review`
 - `POST /api/mirofish/writeback/candidate-deltas/batch/promote`
 - `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
+- `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
 
 Важно:
 
@@ -744,13 +760,15 @@ Promote только вручную, если:
 - batch response возвращает `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`
 - partial failure в batch допустим и не откатывает успешно обработанные элементы
 - auto-promote сейчас не является background automation: это отдельный explicit batch endpoint
-- auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через четыре отдельные именованные policy
 - auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через шесть отдельных именованных policy
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
 - cross-run event policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `contradiction_check`
 - cross-run rumor policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `rumor_match_name`, `rumor_match_source_name`, `rumor_truth_bucket`, `duplicate_guard`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
+- auto-merge тоже не является background automation: это отдельный explicit batch endpoint
+- auto-merge сейчас intentionally narrow и покрывает только `Location` exact duplicate merge через policy `safe_existing_location_duplicate_only`
+- audit metadata для auto-merge пишется в provenance link: `auto_merge_policy`, `auto_merged`, `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`
 - `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
 Пока не реализовано:
@@ -776,16 +794,21 @@ Promote только вручную, если:
     - `safe_cross_run_rumor_only`
     - `safe_relationship_only`
     - `safe_cross_run_relationship_only`
+- `POST /candidate-deltas/batch/auto-merge`
+  - payload: `policy` + `items[]` + optional `dry_run: true`
+  - каждый item содержит `candidate_id` и optional `mapping`
+  - текущая допустимая policy:
+    - `safe_existing_location_duplicate_only`
 
-Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
+Эти policy endpoint'ы возвращают поэлементный результат, а не all-or-nothing transaction.
 
 Для `dry_run: true` batch contract сейчас такой:
 
-- тот же endpoint не выполняет auto-approve / promote side effects
+- тот же endpoint не выполняет auto-approve / promote / merge side effects
 - по каждому item возвращается либо `eligible`, либо `ineligible`
 - preview содержит `reasons`
 - если policy и mapping проходят, preview дополнительно содержит `metadata_preview`
-- preview валидирует не только policy gate, но и то, что mapping реально сможет пройти existing promote path
+- preview валидирует не только policy gate, но и то, что mapping реально сможет пройти existing promote или merge path
 
 Для `safe_event_only` item дополнительно проходит такой gate:
 
@@ -840,6 +863,19 @@ Promote только вручную, если:
 - существует хотя бы 1 additional distinct `run_id` с тем же directed pair и той же relationship polarity
 - supporting relationship candidate не `rejected`, имеет `confidence >= 0.90` и `len(evidence_ids) >= 2`
 - в staged canonical `CharacterRelationship` нет opposite-polarity relationship для той же directed pair
+
+Для `safe_existing_location_duplicate_only` item дополнительно проходит такой gate:
+
+- `candidate_type == new_entity_candidate`
+- `target_canonical_type == Location`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
+- candidate `name` нормализуется в устойчивый location signature
+- mapping обязан содержать explicit `world_id`
+- `location_type` должен разрешаться из candidate или mapping
+- `parent_location_id` должен разрешаться из candidate или mapping
+- существует ровно 1 staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+- policy reject'ит и 0-match, и ambiguous-match сценарии
 
 ## 15. Какие MCP tools нужны
 
@@ -947,6 +983,23 @@ Promote только вручную, если:
 - staged-only persistence в `mirofish_canonical_entities`
 - explicit mapping payload для каждого create
 - targeted tests для promoter/API
+
+### Phase 4.5 — Exact Duplicate Location Auto-Merge
+
+Добавить narrow merge-side policy для:
+
+- `new_entity_candidate -> Location`
+
+Статус: **сделано**.
+
+Реально реализованный slice:
+
+- через новый explicit endpoint `batch/auto-merge`
+- с optional `dry_run: true`
+- только для merge в existing staged canonical `Location`
+- только для exact duplicate случая в том же world
+- без создания нового canonical snapshot
+- с targeted promoter/API tests
 
 ### Phase 5 — Policy-driven Auto Promotion
 
