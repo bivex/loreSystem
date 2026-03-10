@@ -284,9 +284,79 @@ class MiroFishWriteBackAPI:
         if not policy:
             return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "policy is required"})
 
+        dry_run = payload.get("dry_run", False)
+        if not isinstance(dry_run, bool):
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "dry_run must be a boolean"})
+
         items = payload.get("items")
         if not isinstance(items, list) or not items:
             return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "items must be a non-empty list"})
+
+        if dry_run:
+            eligible: list[dict[str, Any]] = []
+            ineligible: list[dict[str, Any]] = []
+            for item in items:
+                if not isinstance(item, dict):
+                    ineligible.append({
+                        "candidate_id": None,
+                        "eligible": False,
+                        "reasons": ["Each item must be an object"],
+                        "status": int(HTTPStatus.BAD_REQUEST),
+                    })
+                    continue
+                candidate_id = str(item.get("candidate_id") or "").strip()
+                if not candidate_id:
+                    ineligible.append({
+                        "candidate_id": candidate_id,
+                        "eligible": False,
+                        "reasons": ["candidate_id is required"],
+                        "status": int(HTTPStatus.BAD_REQUEST),
+                    })
+                    continue
+                mapping = item.get("mapping")
+                if mapping is None:
+                    mapping = {}
+                if not isinstance(mapping, dict):
+                    ineligible.append({
+                        "candidate_id": candidate_id,
+                        "eligible": False,
+                        "reasons": ["mapping must be an object"],
+                        "status": int(HTTPStatus.BAD_REQUEST),
+                    })
+                    continue
+                try:
+                    result = self.promoter.preview_auto_promote_candidate(candidate_id, mapping, policy=policy)
+                except LookupError as exc:
+                    ineligible.append({
+                        "candidate_id": candidate_id,
+                        "eligible": False,
+                        "reasons": [str(exc)],
+                        "status": int(HTTPStatus.NOT_FOUND),
+                    })
+                else:
+                    if result.get("eligible"):
+                        eligible.append(result)
+                    else:
+                        ineligible.append({
+                            **result,
+                            "status": int(HTTPStatus.BAD_REQUEST),
+                        })
+
+            return self._response(
+                HTTPStatus.OK,
+                {
+                    "success": True,
+                    "data": {
+                        "policy": policy,
+                        "dry_run": True,
+                        "requested_count": len(items),
+                        "eligible_count": len(eligible),
+                        "ineligible_count": len(ineligible),
+                        "eligible": eligible,
+                        "ineligible": ineligible,
+                    },
+                },
+            )
 
         succeeded: list[dict[str, Any]] = []
         failed: list[dict[str, Any]] = []
@@ -319,6 +389,7 @@ class MiroFishWriteBackAPI:
                 "success": True,
                 "data": {
                     "policy": policy,
+                    "dry_run": False,
                     "requested_count": len(items),
                     "success_count": len(succeeded),
                     "failure_count": len(failed),

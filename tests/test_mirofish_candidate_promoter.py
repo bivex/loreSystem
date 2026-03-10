@@ -453,6 +453,63 @@ def test_auto_promote_policy_rejects_weak_relationship_delta(tmp_path):
     assert candidate["status"] == "pending_review"
 
 
+def test_preview_auto_promote_candidate_reports_eligibility_without_side_effects(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "preview-auto-policy-relationship.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle(include_relationship_candidate=True))
+
+    preview = promoter.preview_auto_promote_candidate(
+        "cand-relationship-safe",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+        policy="safe_relationship_only",
+    )
+
+    candidate = store.get_candidate("cand-relationship-safe")
+    canonical_entity = store.get_canonical_entity_by_candidate("cand-relationship-safe")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_type"] == "CharacterRelationship"
+    assert preview["metadata_preview"]["auto_promote_policy"] == "safe_relationship_only"
+    assert any("Policy 'safe_relationship_only' gate passed" == item for item in preview["reasons"])
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+    assert canonical_entity is None
+
+
+def test_preview_auto_promote_candidate_reports_mapping_failure_without_side_effects(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "preview-auto-policy-event-mapping.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(policy_ready_bundle())
+
+    preview = promoter.preview_auto_promote_candidate(
+        "cand-event-safe",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+        },
+        policy="safe_event_only",
+    )
+
+    candidate = store.get_candidate("cand-event-safe")
+    canonical_entity = store.get_canonical_entity_by_candidate("cand-event-safe")
+
+    assert preview["eligible"] is False
+    assert preview["metadata_preview"] is None
+    assert preview["reasons"] == ["Event promotion requires participant_ids or participant_map"]
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+    assert canonical_entity is None
+
+
 def test_auto_promote_policy_promotes_cross_run_relationship_candidate(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-relationship.db")
     importer = MiroFishResultImporter(store)

@@ -823,6 +823,102 @@ def test_batch_auto_promote_endpoint_supports_cross_run_relationship_policy(tmp_
     assert solo_detail["status"] == "pending_review"
 
 
+def test_batch_auto_promote_endpoint_supports_dry_run_preview_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-dry-run.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(low_confidence_event=True, include_rumor_candidate=True))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_event_only",
+            "dry_run": True,
+            "items": [
+                {
+                    "candidate_id": "cand-event-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                        "outcome": "success",
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-low",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201},
+                    },
+                },
+                {
+                    "candidate_id": "cand-rumor-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-safe",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                    },
+                },
+                {
+                    "candidate_id": "cand-missing",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                    },
+                },
+            ],
+        },
+    )
+
+    safe_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-safe")[1]["data"]
+    low_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-low")[1]["data"]
+    rumor_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-safe")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_event_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["requested_count"] == 5
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 4
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-event-safe"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_promote_policy"] == "safe_event_only"
+    ineligible_by_id = {}
+    for item in payload["data"]["ineligible"]:
+        ineligible_by_id.setdefault(item["candidate_id"], []).append(item)
+    assert ineligible_by_id["cand-event-low"][0]["reasons"] == ["Policy 'safe_event_only' requires confidence >= 0.90"]
+    assert ineligible_by_id["cand-rumor-safe"][0]["reasons"] == ["Policy 'safe_event_only' only supports scenario_event candidates"]
+    assert ineligible_by_id["cand-event-safe"][0]["reasons"] == ["Event promotion requires participant_ids or participant_map"]
+    assert ineligible_by_id["cand-missing"][0]["status"] == 404
+    assert safe_detail["status"] == "pending_review"
+    assert safe_detail["canonical_entity"] is None
+    assert low_detail["status"] == "pending_review"
+    assert rumor_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_rejects_non_boolean_dry_run(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-dry-run-bad.db"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {"policy": "safe_event_only", "dry_run": "yes", "items": [{"candidate_id": "cand-1", "mapping": {}}]},
+    )
+
+    assert status == 400
+    assert payload["success"] is False
+    assert payload["error"] == "dry_run must be a boolean"
+
+
 def test_batch_auto_promote_endpoint_rejects_invalid_payload(tmp_path):
     app = create_writeback_app(str(tmp_path / "batch-auto-promote-bad.db"))
 

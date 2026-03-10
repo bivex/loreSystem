@@ -118,16 +118,58 @@ class MiroFishCandidatePromoter:
             if not updated_candidate:
                 raise LookupError(f"Candidate '{candidate_id}' not found")
 
-        existing_metadata = payload.get("metadata") or {}
-        if not isinstance(existing_metadata, dict):
-            raise ValueError("metadata must be an object")
-        payload["metadata"] = {
-            **existing_metadata,
-            **validation_metadata,
-            "auto_promote_policy": policy,
-            "auto_promoted": True,
-        }
+        payload["metadata"] = self._build_auto_promote_metadata(payload, validation_metadata, policy=policy)
         return self.promote_candidate(candidate_id, payload)
+
+    def preview_auto_promote_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None, *, policy: str) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload = dict(mapping or {})
+        candidate_status = str(candidate.get("status") or "").strip()
+
+        try:
+            validation_metadata = self._validate_auto_promote_candidate(candidate, payload, policy=policy)
+            metadata_preview = self._build_auto_promote_metadata(payload, validation_metadata, policy=policy)
+            promote_preview = self._preview_promote_candidate(candidate, payload)
+        except ValueError as exc:
+            return {
+                "candidate_id": candidate_id,
+                "policy": policy,
+                "eligible": False,
+                "candidate": candidate,
+                "candidate_status_before": candidate_status,
+                "reasons": [str(exc)],
+                "metadata_preview": None,
+            }
+
+        reasons = [
+            f"Candidate status '{candidate_status}' is eligible for auto-promotion processing",
+            f"Policy '{policy}' gate passed",
+            f"Mapping can be promoted to canonical '{promote_preview['canonical_type']}'",
+        ]
+        if candidate_status == "pending_review":
+            reasons.append("Candidate would be auto-approved before promotion")
+        if promote_preview.get("already_promoted"):
+            reasons.append("Candidate is already promoted and would reuse the existing canonical entity")
+        supporting_run_ids = metadata_preview.get("cross_run_supporting_run_ids") or []
+        if supporting_run_ids:
+            reasons.append(f"Cross-run support found in runs: {', '.join(str(item) for item in supporting_run_ids)}")
+        if metadata_preview.get("contradiction_check") == "passed":
+            reasons.append("Contradiction check passed against staged canonical relationships")
+
+        return {
+            "candidate_id": candidate_id,
+            "policy": policy,
+            "eligible": True,
+            "candidate": candidate,
+            "candidate_status_before": candidate_status,
+            "would_auto_approve": candidate_status == "pending_review",
+            "target_canonical_type": promote_preview["canonical_type"],
+            "metadata_preview": metadata_preview,
+            "reasons": reasons,
+        }
 
     def merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
         candidate = self.store.get_candidate(candidate_id)
@@ -586,6 +628,35 @@ class MiroFishCandidatePromoter:
         if resolved < 0:
             return -1
         return 0
+
+    def _build_auto_promote_metadata(self, payload: dict[str, Any], validation_metadata: dict[str, Any], *, policy: str) -> dict[str, Any]:
+        existing_metadata = payload.get("metadata") or {}
+        if not isinstance(existing_metadata, dict):
+            raise ValueError("metadata must be an object")
+        return {
+            **existing_metadata,
+            **validation_metadata,
+            "auto_promote_policy": policy,
+            "auto_promoted": True,
+        }
+
+    def _preview_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        if candidate.get("status") == "promoted":
+            canonical_entity = self.store.get_canonical_entity_by_candidate(str(candidate.get("candidate_id") or ""))
+            if not canonical_entity:
+                raise LookupError(f"Promoted candidate '{candidate.get('candidate_id')}' is missing its canonical entity")
+            return {
+                "canonical_type": canonical_entity["canonical_type"],
+                "already_promoted": True,
+            }
+
+        tenant_id = TenantId(self._as_int(payload.get("tenant_id"), "tenant_id"))
+        world_id = EntityId(self._as_int(payload.get("world_id"), "world_id"))
+        entity = self._map_candidate(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        return {
+            "canonical_type": type(entity).__name__,
+            "already_promoted": False,
+        }
 
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()
