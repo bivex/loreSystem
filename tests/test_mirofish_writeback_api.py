@@ -386,6 +386,57 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_rumor_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    source_name: str = "Town criers",
+    truth_level: str = "unverified",
+    location_id: int = 301,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": name,
+                "summary": summary,
+                "proposed_change": {
+                    "source_name": source_name,
+                    "truth_level": truth_level,
+                    "location_id": location_id,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def long_backstory() -> str:
     return (
         "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
@@ -1713,6 +1764,173 @@ def test_batch_auto_merge_endpoint_validates_dry_run_type(tmp_path):
     assert status == 400
     assert payload["success"] is False
     assert payload["error"] == "dry_run must be a boolean"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_rumor_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-rumor.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-create",
+            name="Bellfire Coup",
+            summary="Whispers describe a coup brewing in Bellfire.",
+            run_id="run-rumor-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-rumor-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-rumor-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_id": 301,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-duplicate",
+            name="Bellfire Coup",
+            summary="Another run confirms the same rumor signature.",
+            run_id="run-rumor-duplicate",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-no-match",
+            name="Harbor Fire",
+            summary="A different rumor should stay pending.",
+            run_id="run-rumor-no-match",
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_rumor_duplicate_only",
+            "items": [
+                {"candidate_id": "cand-rumor-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-rumor-no-match", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_rumor_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-rumor-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_rumor_duplicate_only"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-rumor-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_rumor_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-rumor-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-create",
+            name="Bellfire Coup",
+            summary="Whispers describe a coup brewing in Bellfire.",
+            run_id="run-rumor-create",
+            truth_level="partially_true",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-rumor-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-rumor-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_id": 301,
+            "truth_level": "partially_true",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-duplicate",
+            name="  Bellfire-Coup  ",
+            summary="Another run confirms the same rumor signature.",
+            run_id="run-rumor-duplicate",
+            truth_level="partially_true",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-resolved",
+            name="Bellfire Coup",
+            summary="The rumor is already treated as true.",
+            run_id="run-rumor-resolved",
+            truth_level="true",
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_rumor_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {"candidate_id": "cand-rumor-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-rumor-resolved", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-duplicate")[1]
+    resolved_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-resolved")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_rumor_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-rumor-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_rumor_duplicate_only"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["rumor_truth_bucket"] == "Partially True"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-rumor-resolved"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' only supports unresolved truth levels (Unverified or Partially True)"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert resolved_detail["data"]["status"] == "pending_review"
 
 
 def test_merge_endpoint_requires_approved_candidate(tmp_path):

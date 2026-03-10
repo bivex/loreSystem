@@ -40,6 +40,7 @@ class MiroFishCandidatePromoter:
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
     SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
+    SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY = "safe_existing_rumor_duplicate_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -510,6 +511,8 @@ class MiroFishCandidatePromoter:
         if status not in {"pending_review", "approved", "merged"}:
             raise ValueError("Auto-merge policy can only process pending_review, approved, or already merged candidates")
 
+        if policy == self.SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_rumor_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY:
             return self._validate_safe_existing_location_duplicate_policy(candidate, payload)
         raise ValueError(f"Unsupported auto-merge policy: {policy}")
@@ -779,6 +782,65 @@ class MiroFishCandidatePromoter:
             "duplicate_guard": "passed",
         }
 
+    def _validate_safe_existing_rumor_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "rumor_candidate":
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' only supports rumor_candidate candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Rumor":
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' only supports Rumor merge targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' requires at least 2 evidence items")
+
+        proposed = candidate.get("proposed_change") or {}
+        rumor_name = self._normalize_rumor_name(candidate.get("name") or proposed.get("name"))
+        if not rumor_name:
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' requires candidate.name")
+
+        source_name = self._normalize_source_name(payload.get("source_name") or proposed.get("source_name"))
+        if not source_name:
+            raise ValueError("Policy 'safe_existing_rumor_duplicate_only' requires source_name")
+
+        truth_bucket = self._rumor_truth_bucket(payload.get("truth_level") or proposed.get("truth_level") or "Unverified")
+        if truth_bucket not in {"Unverified", "Partially True"}:
+            raise ValueError(
+                "Policy 'safe_existing_rumor_duplicate_only' only supports unresolved truth levels (Unverified or Partially True)"
+            )
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        location_id = self._resolve_rumor_location_id_for_candidate(candidate, payload)
+        matches = self._find_exact_duplicate_canonical_rumors(
+            world_id=world_id,
+            rumor_name=rumor_name,
+            source_name=source_name,
+            truth_bucket=truth_bucket,
+            location_id=location_id,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_rumor_duplicate_only' requires exactly 1 staged canonical Rumor exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_rumor_duplicate_only' rejected due to ambiguous staged canonical Rumor duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "merge_match_name": rumor_name,
+            "merge_match_source_name": source_name,
+            "merge_match_location_id": location_id,
+            "rumor_truth_bucket": truth_bucket,
+            "duplicate_guard": "passed",
+        }
+
     def _find_supporting_relationship_run_ids(
         self,
         candidate: dict[str, Any],
@@ -1000,6 +1062,33 @@ class MiroFishCandidatePromoter:
             matches.append(canonical)
         return matches
 
+    def _find_exact_duplicate_canonical_rumors(
+        self,
+        *,
+        world_id: int,
+        rumor_name: str,
+        source_name: str,
+        truth_bucket: str,
+        location_id: int,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        for canonical in self.store.list_canonical_entities(canonical_type="Rumor", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._normalize_rumor_name(entity.get("name")) != rumor_name:
+                continue
+            if self._normalize_source_name(entity.get("source_name")) != source_name:
+                continue
+            if self._as_optional_int(entity.get("location_id"), "entity.location_id") != location_id:
+                continue
+            try:
+                entity_truth_bucket = self._rumor_truth_bucket(entity.get("truth_level") or "Unverified")
+            except ValueError:
+                continue
+            if entity_truth_bucket != truth_bucket:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
@@ -1168,6 +1257,11 @@ class MiroFishCandidatePromoter:
         proposed = candidate.get("proposed_change") or {}
         raw_parent_id = payload.get("parent_location_id") if "parent_location_id" in payload else proposed.get("parent_location_id")
         return self._as_optional_int(raw_parent_id, "parent_location_id")
+
+    def _resolve_rumor_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int:
+        proposed = candidate.get("proposed_change") or {}
+        raw_location_id = payload.get("location_id") if "location_id" in payload else proposed.get("location_id")
+        return self._as_int(raw_location_id, "location_id")
 
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()

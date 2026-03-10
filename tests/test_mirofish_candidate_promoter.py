@@ -400,6 +400,57 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_rumor_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    source_name: str = "Town criers",
+    truth_level: str = "unverified",
+    location_id: int = 301,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": name,
+                "summary": summary,
+                "proposed_change": {
+                    "source_name": source_name,
+                    "truth_level": truth_level,
+                    "location_id": location_id,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def long_backstory() -> str:
     return (
         "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
@@ -1656,4 +1707,248 @@ def test_preview_auto_merge_candidate_rejects_low_confidence_and_sparse_evidence
     assert sparse_evidence_preview["eligible"] is False
     assert sparse_evidence_preview["reasons"] == [
         "Policy 'safe_existing_location_duplicate_only' requires at least 2 evidence items"
+    ]
+
+
+def test_preview_auto_merge_candidate_for_exact_duplicate_rumor_is_side_effect_free(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-rumor-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-create",
+            name="Bellfire Coup",
+            summary="Whispers describe a coup brewing in Bellfire.",
+            run_id="run-rumor-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="rumor_candidate", run_id="run-rumor-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {"tenant_id": 1, "world_id": 101, "location_id": 301},
+    )
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-duplicate",
+            name="  Bellfire Coup  ",
+            summary="A second run repeats the same rumor signature.",
+            run_id="run-rumor-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-rumor-duplicate")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_rumor_duplicate_only"
+    assert preview["metadata_preview"]["merge_match_name"] == "bellfire coup"
+    assert preview["metadata_preview"]["merge_match_source_name"] == "town criers"
+    assert preview["metadata_preview"]["merge_match_location_id"] == 301
+    assert preview["metadata_preview"]["rumor_truth_bucket"] == "Unverified"
+    assert detail["status"] == "pending_review"
+    assert detail["target_canonical_id"] is None
+    assert store.list_entity_run_links(run_id="run-rumor-duplicate", source_candidate_id="cand-rumor-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_rumor(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-rumor-execute.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-create",
+            name="Bellfire Coup",
+            summary="Whispers describe a coup brewing in Bellfire.",
+            run_id="run-rumor-create",
+            truth_level="partially_true",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="rumor_candidate", run_id="run-rumor-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {"tenant_id": 1, "world_id": 101, "location_id": 301},
+    )
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-duplicate",
+            name="Bellfire Coup",
+            summary="A second run repeats the same rumor signature.",
+            run_id="run-rumor-duplicate",
+            truth_level="partially_true",
+        )
+    )
+
+    result = promoter.auto_merge_candidate(
+        "cand-rumor-duplicate",
+        {"world_id": 101, "truth_level": "partially_true"},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-rumor-duplicate")
+
+    assert result["candidate"]["status"] == "merged"
+    assert result["canonical_entity"]["canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert result["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_rumor_duplicate_only"
+    assert result["run_link"]["metadata"]["merge_match_source_name"] == "town criers"
+    assert result["run_link"]["metadata"]["merge_match_location_id"] == 301
+    assert result["run_link"]["metadata"]["rumor_truth_bucket"] == "Partially True"
+    assert detail["status"] == "merged"
+    assert detail["target_canonical_id"] == str(promote_result["canonical_entity"]["canonical_id"])
+
+
+def test_preview_auto_merge_candidate_rejects_when_no_exact_duplicate_rumor_exists(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-rumor-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-create",
+            name="Bellfire Coup",
+            summary="Whispers describe a coup brewing in Bellfire.",
+            run_id="run-rumor-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="rumor_candidate", run_id="run-rumor-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {"tenant_id": 1, "world_id": 101, "location_id": 301},
+    )
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-no-match",
+            name="Harbor Fire",
+            summary="A different rumor should stay pending review.",
+            run_id="run-rumor-no-match",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-no-match",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' requires exactly 1 staged canonical Rumor exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_rumors(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-rumor-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id, source_name in (
+        ("cand-rumor-create-a", "run-rumor-create-a", "Town criers"),
+        ("cand-rumor-create-b", "run-rumor-create-b", "  Town-criers  "),
+    ):
+        importer.import_result_bundle(
+            exact_rumor_duplicate_bundle(
+                candidate_id=candidate_id,
+                name="Bellfire Coup",
+                summary="Whispers describe a coup brewing in Bellfire.",
+                run_id=run_id,
+                source_name=source_name,
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="rumor_candidate", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {"tenant_id": 1, "world_id": 101, "location_id": 301},
+        )
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-duplicate",
+            name="Bellfire Coup",
+            summary="A second run repeats the same rumor signature.",
+            run_id="run-rumor-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' rejected due to ambiguous staged canonical Rumor duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_resolved_truth_low_confidence_and_sparse_rumor_evidence(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-rumor-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-resolved",
+            name="Bellfire Coup",
+            summary="The rumor is already treated as true.",
+            run_id="run-rumor-resolved",
+            truth_level="true",
+        )
+    )
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-low-confidence",
+            name="Bellfire Coup",
+            summary="Weak evidence for the same rumor.",
+            run_id="run-rumor-low-confidence",
+            confidence=0.85,
+        )
+    )
+    importer.import_result_bundle(
+        exact_rumor_duplicate_bundle(
+            candidate_id="cand-rumor-sparse-evidence",
+            name="Bellfire Coup",
+            summary="Only one witness mentions the same rumor.",
+            run_id="run-rumor-sparse-evidence",
+            evidence_count=1,
+        )
+    )
+
+    resolved_preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-resolved",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-low-confidence",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-rumor-sparse-evidence",
+        {"world_id": 101},
+        policy="safe_existing_rumor_duplicate_only",
+    )
+
+    assert resolved_preview["eligible"] is False
+    assert resolved_preview["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' only supports unresolved truth levels (Unverified or Partially True)"
+    ]
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_rumor_duplicate_only' requires at least 2 evidence items"
     ]
