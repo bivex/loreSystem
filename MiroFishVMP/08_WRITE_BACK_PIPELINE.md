@@ -589,20 +589,24 @@ Confidence лучше считать не LLM-словами, а детерми�
 
 - policy:
   - `safe_existing_location_duplicate_only`
+  - `safe_existing_event_duplicate_only`
   - `safe_existing_rumor_duplicate_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-merge`
 - optional `dry_run: true` на том же endpoint для preview без side effects
 - только по явно переданным `candidate_id`
 - только для `new_entity_candidate -> Location`
+- только для `scenario_event -> Event`
 - только для `rumor_candidate -> Rumor`
 - только при явном `world_id` в mapping
 - candidate должен пройти `confidence >= 0.90`
 - candidate должен иметь минимум `2 evidence_ids`
 - merge выполняется только при ровно одном staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+- event merge выполняется только при ровно одном staged canonical `Event` exact duplicate match в том же world по canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id`
+- event policy дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
 - rumor merge выполняется только при ровно одном staged canonical `Rumor` exact duplicate match в том же world по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id`
 - rumor policy дополнительно требует explicit `location_id`, resolvable `source_name` и unresolved truth bucket (`Unverified` / `Partially True`)
 - auto-merge не создаёт новый canonical snapshot, а вызывает existing merge path в уже существующую staged canonical entity
-- auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+- auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
 
 ## 12. Promotion rules по типам
 
@@ -771,8 +775,8 @@ Promote только вручную, если:
 - cross-run rumor policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `rumor_match_name`, `rumor_match_source_name`, `rumor_truth_bucket`, `duplicate_guard`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 - auto-merge тоже не является background automation: это отдельный explicit batch endpoint
-- auto-merge сейчас intentionally narrow и покрывает только `Location` / `Rumor` exact duplicate merge через policies `safe_existing_location_duplicate_only` и `safe_existing_rumor_duplicate_only`
-- audit metadata для auto-merge пишется в provenance link: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+- auto-merge сейчас intentionally narrow и покрывает только `Location` / `Event` / `Rumor` exact duplicate merge через policies `safe_existing_location_duplicate_only`, `safe_existing_event_duplicate_only` и `safe_existing_rumor_duplicate_only`
+- audit metadata для auto-merge пишется в provenance link: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
 - `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
 Пока не реализовано:
@@ -803,6 +807,7 @@ Promote только вручную, если:
   - каждый item содержит `candidate_id` и optional `mapping`
   - текущие допустимые policy:
     - `safe_existing_location_duplicate_only`
+    - `safe_existing_event_duplicate_only`
     - `safe_existing_rumor_duplicate_only`
 
 Эти policy endpoint'ы возвращают поэлементный результат, а не all-or-nothing transaction.
@@ -880,6 +885,21 @@ Promote только вручную, если:
 - `location_type` должен разрешаться из candidate или mapping
 - `parent_location_id` должен разрешаться из candidate или mapping
 - существует ровно 1 staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+- policy reject'ит и 0-match, и ambiguous-match сценарии
+
+Для `safe_existing_event_duplicate_only` item дополнительно проходит такой gate:
+
+- `candidate_type == scenario_event`
+- `target_canonical_type == Event`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
+- `proposed_change.participant_ids` содержит устойчивый participant set
+- `proposed_change.timestamp` присутствует и сворачивается в UTC date bucket
+- `proposed_change.outcome` присутствует и является terminal outcome, а не `ongoing`
+- mapping обязан содержать explicit `world_id`
+- canonical participants должны резолвиться через explicit `participant_ids` или `participant_map`
+- `location_id` участвует в duplicate match только если он явно задан/resolved
+- существует ровно 1 staged canonical `Event` exact duplicate match в том же world по canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id`
 - policy reject'ит и 0-match, и ambiguous-match сценарии
 
 Для `safe_existing_rumor_duplicate_only` item дополнительно проходит такой gate:
@@ -1035,6 +1055,25 @@ Promote только вручную, если:
 - только для merge в existing staged canonical `Rumor`
 - только для exact duplicate случая в том же world
 - duplicate signature: normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id`
+- без создания нового canonical snapshot
+- с targeted promoter/API tests
+
+### Phase 4.7 — Exact Duplicate Event Auto-Merge
+
+Добавить narrow merge-side policy для:
+
+- `scenario_event -> Event`
+
+Статус: **сделано**.
+
+Реально реализованный slice:
+
+- через existing explicit endpoint `batch/auto-merge`
+- с optional `dry_run: true`
+- только для merge в existing staged canonical `Event`
+- только для exact duplicate случая в том же world
+- duplicate signature: canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id`
+- policy требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
 - без создания нового canonical snapshot
 - с targeted promoter/API tests
 

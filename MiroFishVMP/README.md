@@ -68,6 +68,7 @@
   - optional `dry_run: true` даёт explain/preview без side effects
   - текущие policies:
     - `safe_existing_location_duplicate_only`
+    - `safe_existing_event_duplicate_only`
     - `safe_existing_rumor_duplicate_only`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
@@ -116,14 +117,17 @@
 - auto-merge тоже остаётся explicit и audit-friendly:
   - отдельный endpoint `batch/auto-merge`, а не расширение `batch/auto-promote`
   - `safe_existing_location_duplicate_only` → только `new_entity_candidate -> Location`
+  - `safe_existing_event_duplicate_only` → только `scenario_event -> Event`
   - `safe_existing_rumor_duplicate_only` → только `rumor_candidate -> Rumor`
   - candidate должен пройти базовые gate: `confidence >= 0.90` и минимум `2 evidence_ids`
   - mapping обязан содержать explicit `world_id`
   - merge допускается только при ровно одном staged canonical `Location` exact duplicate match в том же world по normalized `name` + `location_type` + `parent_location_id`
+  - event merge допускается только при ровно одном staged canonical `Event` exact duplicate match в том же world по canonical participant set + terminal `outcome` + UTC date bucket + optional `location_id`
+  - event policy дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
   - rumor merge допускается только при ровно одном staged canonical `Rumor` exact duplicate match в том же world по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id`
   - rumor policy дополнительно требует explicit `location_id`, resolvable `source_name` и unresolved truth bucket (`Unverified` / `Partially True`)
   - policy не создаёт новый canonical snapshot: она лишь выбирает existing staged canonical entity как merge target
-  - auto-path пишет `auto_merge_policy` / `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
+  - auto-path пишет `auto_merge_policy` / `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`
   - `dry_run` возвращает per-item `eligible/ineligible`, `reasons`, `metadata_preview` и ничего не меняет в candidate status / canonical rows / run links
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/merge/promote слой.
