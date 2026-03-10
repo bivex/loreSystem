@@ -102,6 +102,33 @@ def inspect_db(db_path: str) -> dict:
     return {"canonical_rows": canonical_rows, "promoted_rows": promoted_rows, "subject_rows": subject_rows}
 
 
+def summarize_db(db_path: str) -> dict:
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    counts = {
+        "scenario_runs": conn.execute("SELECT COUNT(*) FROM mirofish_scenario_runs").fetchone()[0],
+        "runtime_evidence": conn.execute("SELECT COUNT(*) FROM mirofish_runtime_evidence").fetchone()[0],
+        "candidate_deltas": conn.execute("SELECT COUNT(*) FROM mirofish_candidate_deltas").fetchone()[0],
+        "run_subjects": conn.execute("SELECT COUNT(*) FROM mirofish_run_subjects").fetchone()[0],
+        "canonical_entities": conn.execute("SELECT COUNT(*) FROM mirofish_canonical_entities").fetchone()[0],
+        "entity_run_links": conn.execute("SELECT COUNT(*) FROM mirofish_entity_run_links").fetchone()[0],
+    }
+    subjects = [
+        dict(row)
+        for row in conn.execute(
+            "SELECT subject_kind, subject_ref, name, canonical_id, canonical_type, speaker_mode, represented_entity_id FROM mirofish_run_subjects ORDER BY subject_kind, subject_ref"
+        ).fetchall()
+    ]
+    run_links = [
+        dict(row)
+        for row in conn.execute(
+            "SELECT run_id, canonical_type, source_candidate_id, relation_type FROM mirofish_entity_run_links ORDER BY link_id"
+        ).fetchall()
+    ]
+    conn.close()
+    return {"db_path": db_path, "counts": counts, "subjects": subjects, "run_links": run_links}
+
+
 def run_smoke(base_url: str, db_path: str) -> dict:
     ingest_status, ingest_payload = request_json(base_url, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
     assert_ok(ingest_status, ingest_payload, "ingest")
