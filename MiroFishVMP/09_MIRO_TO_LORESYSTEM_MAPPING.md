@@ -165,8 +165,9 @@ Mapping:
 3. `runtime_evidence.actor_refs` → `linked_subjects`
 4. `candidate_deltas` → review / approve / reject
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
-6. approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
-7. canonical entity / merge-linkage → `mirofish_entity_run_links`
+6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
+7. approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
+8. canonical entity / merge-linkage → `mirofish_entity_run_links`
 
 ## 8.1 Same-DB rerun semantics
 
@@ -205,8 +206,18 @@ Mapping:
 - linked evidence subjects
 - reviewable candidate deltas
 - single-candidate review detail
+- batch review / batch promotion API
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
 - merged candidate linkage в existing staged canonical entity
 - explicit `run -> canonical entity` provenance links
+
+## 9.1 Batch API semantics
+
+Текущая batch-семантика намеренно простая:
+
+- batch review и batch promote являются wrapper'ом над single-candidate endpoint semantics,
+- каждый item обрабатывается независимо,
+- ответ агрегирует `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`,
+- частичный успех считается нормальным и не откатывает уже успешные элементы.

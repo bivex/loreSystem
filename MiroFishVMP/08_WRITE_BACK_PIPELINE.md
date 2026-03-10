@@ -608,6 +608,8 @@ Promote только вручную, если:
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/reject`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/merge`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/promote`
+- `POST /api/mirofish/writeback/candidate-deltas/batch/review`
+- `POST /api/mirofish/writeback/candidate-deltas/batch/promote`
 
 Важно:
 
@@ -616,10 +618,24 @@ Promote только вручную, если:
 - provenance для promote пишется с `relation_type = promoted_from`
 - `data.run_link`
 - `data.canonical_entity.run_links`
+- batch endpoints работают как per-item wrapper над существующими single-candidate операциями
+- batch response возвращает `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`
+- partial failure в batch допустим и не откатывает успешно обработанные элементы
 
 Пока не реализовано:
 
-- batch review / batch promotion
+- auto-promotion policy
+
+### 14.4 Batch contract
+
+Минимальный batch contract сейчас такой:
+
+- `POST /candidate-deltas/batch/review`
+  - payload: `action` + `candidate_ids[]`
+- `POST /candidate-deltas/batch/promote`
+  - payload: `items[]`, где каждый item содержит `candidate_id` и `mapping`
+
+Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
 
 ## 15. Какие MCP tools нужны
 

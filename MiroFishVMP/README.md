@@ -49,9 +49,10 @@
 
 - импорт `MiroFish result bundle` в отдельный SQLite staging store
 - сохранение `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas`
-- stdlib HTTP API `POST/GET` для ingest/review/detail
+- stdlib HTTP API `POST/GET` для ingest/review/detail/batch
 - single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 - review actions: `approve` / `reject`
+- batch review / batch promotion API поверх single-candidate операций
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
@@ -70,7 +71,7 @@
 - derived `runtime_evidence` и `candidate_deltas` теперь получают детерминированные fingerprint-based IDs, а не случайные UUID
 - same-db rerun для неизменившегося candidate теперь сохраняет стабильный `canonical_id` и не плодит новые `entity_run_links`
 
-Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/promote слой.
+Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/merge/promote слой.
 
 Если нужен практический field-level reference, он вынесен отдельно в `09_MIRO_TO_LORESYSTEM_MAPPING.md`.
 

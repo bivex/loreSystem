@@ -48,6 +48,7 @@
 - [x] после promote создаётся явная provenance-связь `run -> canonical entity` в `mirofish_entity_run_links`
 - [x] есть single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 - [x] approved candidate можно safe-merge'ить в уже существующий staged canonical entity без создания нового canonical snapshot
+- [x] есть batch review / batch promotion surface поверх existing single-candidate операций
 - [x] у обычного lore bundle появился top-level provenance layer через `LoreData.metadata`
 - [x] actors / organizations из result bundle нормализуются в `mirofish_run_subjects`
 - [x] runtime evidence readback резолвит `actor_refs` в `linked_subjects`
@@ -58,7 +59,6 @@
 
 ### Что ещё остаётся вне текущего MVP
 
-- [ ] batch review / batch promotion
 - [ ] auto-promotion policy
 - [ ] manual create/merge flow для `Location`, `Faction`, `Character`
 
