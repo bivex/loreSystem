@@ -111,7 +111,11 @@
    - `rumor_candidate -> Rumor`
    - `relationship_change -> CharacterRelationship`
 6. safe canonical persistence в `mirofish_canonical_entities`
-7. full smoke script для end-to-end проверки review/promote workflow
+7. explicit `run -> canonical entity` provenance links в `mirofish_entity_run_links`
+8. generic provenance foundation для обычных lore bundle через `LoreData.metadata`
+9. explicit runtime subject staging в `mirofish_run_subjects` для actors / organizations
+10. evidence enrichment через `linked_subjects` на readback path
+11. full smoke script для end-to-end проверки review/promote workflow
 
 То есть reverse path уже не только спроектирован, а доведён до рабочего staging/review/promote MVP.
 

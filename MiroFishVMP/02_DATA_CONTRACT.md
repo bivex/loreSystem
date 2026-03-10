@@ -162,6 +162,8 @@
   "world_id": "world-uuid",
   "scenario_id": "scenario-uuid",
   "run_id": "run-uuid",
+  "actors": [],
+  "organizations": [],
   "prediction_summary": {},
   "emergent_events": [],
   "state_deltas": [],
@@ -169,6 +171,35 @@
   "timeline_branches": []
 }
 ```
+
+Для текущего reverse write-back MVP это важно не только для MiroFish-side semantics, но и для staging внутри `loreSystem`:
+
+- `actors` сохраняются как runtime subjects вида `actor:*`
+- `organizations` сохраняются как runtime subjects вида `org:*`
+- затем evidence может ссылаться на них через `actor_refs`
+
+Внутри staging SQLite это нормализуется в `mirofish_run_subjects`.
+
+### 9.1 Runtime subject shape
+
+Минимально полезные поля одного subject:
+
+- `id`
+- `name`
+- `canonical_id`
+- `canonical_type`
+- `speaker_mode`
+- `represented_entity_id`
+
+Это покрывает как индивидуальных actors, так и representative / official-account cases.
+
+### 9.2 Evidence linkage
+
+Когда result bundle уже импортирован в `loreSystem`, evidence readback может быть enriched-derived полем:
+
+- `linked_subjects`
+
+Оно не обязано приходить из исходного `MiroFish` payload. Это read model, которая резолвит `actor_refs` в нормализованные строки из `mirofish_run_subjects`.
 
 Желательно также хранить:
 

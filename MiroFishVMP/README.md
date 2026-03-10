@@ -54,6 +54,12 @@
   - `rumor_candidate -> Rumor`
   - `relationship_change -> CharacterRelationship`
 - safe canonical persistence в отдельную таблицу `mirofish_canonical_entities`
+- явная provenance-связь `run -> canonical entity` через отдельную таблицу `mirofish_entity_run_links`
+- нормализованный staging layer для runtime actors/organizations через `mirofish_run_subjects`
+- enriched evidence readback с `linked_subjects`, резолвящими `actor_refs` в persisted subject rows
+- generic provenance foundation для обычного lore bundle:
+  - `src/application/integration/dto/provenance.py`
+  - `src/presentation/gui/lore_data.py::metadata`
 - full smoke script для end-to-end проверки review/promote workflow
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/promote слой.
@@ -70,7 +76,7 @@
 
 Формула интеграции:
 
-`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Runtime Evidence -> Candidate Deltas -> Review/Promote -> Lore Updates`
+`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Run Subjects + Runtime Evidence -> Candidate Deltas -> Review/Promote -> Canonical Entity + Run Links`
 
 ## Что показал анализ кода MiroFish
 

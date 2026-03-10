@@ -23,6 +23,14 @@ Forward path у интеграции уже понятен:
 - есть review/promote API `src/presentation/api/mirofish_writeback_api.py`
 - есть promoter `src/application/integration/promoters/mirofish_candidate_promoter.py`
 - canonical snapshots пишутся не в legacy repository layer, а в отдельную safe table `mirofish_canonical_entities`
+- при ingest actors / organizations нормализуются в отдельную table `mirofish_run_subjects`
+- evidence readback обогащается `linked_subjects`, резолвящими `actor_refs` в persisted subject rows
+- provenance для обычных lore bundle теперь может храниться в top-level `LoreData.metadata`
+- есть generic DTO shape для provenance:
+  - `src/application/integration/dto/provenance.py`
+  - `GenerationRunRecord`
+  - `EntityProvenanceLink`
+- после promote создаётся явная связь `run -> canonical entity` в `mirofish_entity_run_links`
 - есть CLI:
   - `scripts/import_mirofish_results.py`
   - `scripts/run_mirofish_writeback_api.py`
@@ -33,6 +41,64 @@ Forward path у интеграции уже понятен:
   - `runtime_evidence`
   - `candidate_deltas`
   - `canonical_entities`
+- `entity_run_links`
+- `run_subjects`
+
+## 1.2 Новый provenance layer
+
+Теперь provenance хранится в двух комплементарных слоях.
+
+### A. Generic lore provenance
+
+Для обычных extraction/generation bundle добавлен top-level metadata layer в `src/presentation/gui/lore_data.py`:
+
+- `metadata.generation_runs`
+- `metadata.entity_provenance`
+
+Он нужен для roundtrip-safe хранения истории генерации без загрязнения сотен доменных dataclass полями вроде `run_id`.
+
+### B. Write-back promotion provenance
+
+Для reverse path добавлена отдельная relation table `mirofish_entity_run_links`.
+
+Она фиксирует:
+
+- какой `run_id` породил promoted entity,
+- из какого `candidate_id` она появилась,
+- какие `evidence_ids` её поддерживали,
+- какой тип связи используется (`promoted_from`),
+- дополнительный metadata payload.
+
+Это лучше, чем хранить provenance только косвенно через `source_candidate_id`, потому что:
+
+- связь становится явной и queryable,
+- можно поддержать `one run -> many canonical entities`,
+- можно развивать `many runs -> one canonical entity` без изменения доменной модели.
+
+## 1.3 Runtime subject layer
+
+Чтобы key actors / organizations не терялись внутри raw bundle и строковых `actor_refs`, в reverse path добавлен отдельный нормализованный слой `mirofish_run_subjects`.
+
+Он хранит:
+
+- `subject_kind` (`actor` / `organization`)
+- `subject_ref`
+- `name`
+- `canonical_id`
+- `canonical_type`
+- `speaker_mode`
+- `represented_entity_id`
+- `metadata`
+- `source_payload`
+
+Практически это даёт две вещи:
+
+1. можно queryable-образом посмотреть, какие actors и organizations реально участвовали в конкретном run,
+2. `runtime_evidence.actor_refs` теперь можно резолвить в нормализованные subject rows через поле `linked_subjects`.
+
+Итоговая трассировка становится такой:
+
+`scenario_run -> run_subjects -> runtime_evidence -> candidate_delta -> canonical_entity -> entity_run_link`
 
 ## 2. Главный принцип
 
@@ -90,6 +156,11 @@ Forward path у интеграции уже понятен:
 
 Это слой наблюдений, а не слой канона.
 
+В текущем API/store readback у evidence теперь есть enriched view:
+
+- `actor_refs` — сырой список ссылок из bundle
+- `linked_subjects` — нормализованные subject rows из `mirofish_run_subjects`, совпавшие по `subject_ref`
+
 ### 3.4 Candidate delta
 
 Нормализованный кандидат на изменение мира:
@@ -100,6 +171,25 @@ Forward path у интеграции уже понятен:
 - `location_state_change`
 - `new_entity_candidate`
 - `prediction_report`
+
+### 3.5 Canonical promotion provenance
+
+После successful promote теперь сохраняется не только canonical snapshot, но и отдельная provenance-запись в `mirofish_entity_run_links`.
+
+Минимальные поля этой связи:
+
+- `canonical_id`
+- `canonical_type`
+- `run_id`
+- `source_candidate_id`
+- `relation_type`
+- `evidence_ids`
+- `metadata`
+- `linked_at`
+
+Практически это означает, что promote теперь даёт аудит-цепочку:
+
+`scenario_run -> candidate_delta -> canonical_entity -> entity_run_link`
 
 ## 4. Какие сущности реально поддерживать в MVP
 
@@ -219,11 +309,20 @@ Forward path у интеграции уже понятен:
   "scenario_id": "scenario-uuid",
   "run_id": "run-uuid",
   "generated_at": "2026-03-10T12:00:00Z",
+  "actors": [],
+  "organizations": [],
   "prediction_summary": {},
   "runtime_evidence": [],
   "candidate_deltas": []
 }
 ```
+
+Где:
+
+- `actors` — runtime subjects вида `actor:*`
+- `organizations` — runtime subjects вида `org:*`
+
+Даже если evidence/candidates можно вывести эвристически, сами subjects полезно сохранять отдельно, чтобы не терять ключевых действующих лиц прогона.
 
 Если `MiroFish` пока возвращает более простой bundle, importer в `loreSystem` может сам достраивать `runtime_evidence` и `candidate_deltas` из:
 
@@ -254,6 +353,16 @@ Forward path у интеграции уже понятен:
   "source_refs": []
 }
 ```
+
+При readback из API/store эта запись может дополнительно содержать derived поле:
+
+```json
+{
+  "linked_subjects": []
+}
+```
+
+`linked_subjects` не обязан приезжать из исходного result bundle — это enriched read model на стороне `loreSystem`.
 
 Обязательные поля:
 
@@ -402,6 +511,8 @@ Promote только вручную, если:
 - `src/application/integration/dto/mirofish_result_bundle.py`
 - `src/application/integration/dto/runtime_evidence_record.py`
 - `src/application/integration/dto/candidate_delta.py`
+- `src/application/integration/dto/provenance.py`
+- `src/application/integration/dto/run_subject_record.py`
 - `src/application/integration/importers/mirofish_result_importer.py`
 - `src/application/integration/promoters/mirofish_candidate_promoter.py`
 - `src/infrastructure/mirofish_writeback_store.py`
@@ -440,6 +551,11 @@ Promote только вручную, если:
 - `GET /api/mirofish/writeback/runs/{run_id}/evidence`
 - `GET /api/mirofish/writeback/candidate-deltas?world_id=...&status=...&candidate_type=...`
 
+Важно:
+
+- run detail теперь возвращает нормализованные `subjects.actors` и `subjects.organizations`
+- evidence readback теперь возвращает `linked_subjects`
+
 Пока не реализовано:
 
 - `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
@@ -451,6 +567,11 @@ Promote только вручную, если:
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/approve`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/reject`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/promote`
+
+Важно: ответ `promote` теперь включает:
+
+- `data.run_link`
+- `data.canonical_entity.run_links`
 
 Пока не реализовано:
 
