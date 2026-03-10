@@ -141,6 +141,12 @@ def test_store_get_run_includes_persisted_entity_run_links_after_promotion(tmp_p
     assert saved_run["entity_run_links"][0]["relation_type"] == "promoted_from"
     assert saved_run["entity_run_links"][0]["evidence_ids"] == approved["evidence_ids"]
     assert saved_run["entity_run_links"][0]["metadata"]["candidate_type"] == "scenario_event"
+    assert saved_run["entity_run_links"][0]["metadata"]["provenance"]["canonical_id"] == result["canonical_entity"]["canonical_id"]
+    assert saved_run["entity_run_links"][0]["metadata"]["provenance"]["source_candidate_id"] == approved["candidate_id"]
+    assert saved_run["entity_run_links"][0]["entity_provenance"]["entity_type"] == "Event"
+    assert saved_run["generation_run"]["run_id"] == "run-123"
+    assert saved_run["generation_run"]["metadata"]["scenario_id"] == "succession-crisis"
+    assert saved_run["entity_provenance"][0]["metadata"]["provenance"]["source_backend"] == "mirofish"
 
 
 def test_import_cli_round_trip(tmp_path):

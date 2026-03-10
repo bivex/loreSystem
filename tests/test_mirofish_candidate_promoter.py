@@ -785,6 +785,10 @@ def test_auto_promote_policy_promotes_safe_event_candidate(tmp_path):
     assert result["canonical_entity"]["canonical_type"] == "Event"
     assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_event_only"
     assert result["run_link"]["metadata"]["auto_promoted"] is True
+    assert result["run_link"]["metadata"]["provenance"]["source_candidate_id"] == "cand-event-safe"
+    assert result["run_link"]["metadata"]["provenance"]["relation_type"] == "promoted_from"
+    assert result["canonical_entity"]["entity_provenance"][0]["metadata"]["auto_promote_policy"] == "safe_event_only"
+    assert result["canonical_entity"]["entity_provenance"][0]["metadata"]["provenance"]["canonical_id"] == result["canonical_entity"]["canonical_id"]
 
 
 def test_auto_promote_policy_rejects_low_confidence_event(tmp_path):
@@ -1550,6 +1554,45 @@ def test_promoter_reuses_canonical_id_for_identical_candidate_on_rerun(tmp_path)
     assert len(store.list_entity_run_links(run_id="run-123", source_candidate_id=approved["candidate_id"])) == 1
 
 
+def test_promoter_recovers_promoted_candidate_from_run_link_when_candidate_linkage_is_stale(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "promote-stale.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved_event = _approve_candidate(store, candidate_type="scenario_event")
+    approved_rumor = _approve_candidate(store, candidate_type="rumor_candidate")
+    promoted = promoter.promote_candidate(
+        approved_event["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    with store.db.get_connection() as conn:
+        conn.execute(
+            "UPDATE mirofish_canonical_entities SET source_candidate_id = ? WHERE canonical_id = ?",
+            (approved_rumor["candidate_id"], promoted["canonical_entity"]["canonical_id"]),
+        )
+        conn.execute(
+            "UPDATE mirofish_candidate_deltas SET target_canonical_id = NULL, target_canonical_type = NULL WHERE candidate_id = ?",
+            (approved_event["candidate_id"],),
+        )
+
+    recovered = promoter.promote_candidate(approved_event["candidate_id"])
+
+    assert recovered["canonical_entity"]["canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert recovered["run_link"]["link_id"] == promoted["run_link"]["link_id"]
+    assert recovered["candidate"]["status"] == "promoted"
+    assert recovered["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
+    assert recovered["candidate"]["target_canonical_type"] == "Event"
+    assert len(store.list_entity_run_links(run_id="run-123", source_candidate_id=approved_event["candidate_id"])) == 1
+
+
 def test_promoter_merges_approved_candidate_into_existing_canonical_entity(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "merge.db")
     importer = MiroFishResultImporter(store)
@@ -1638,6 +1681,112 @@ def test_promoter_reuses_existing_merge_link_for_already_merged_candidate(tmp_pa
     assert second_merge["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
     assert second_merge["run_link"]["link_id"] == first_merge["run_link"]["link_id"]
     assert len(store.list_entity_run_links(run_id="run-456", source_candidate_id=approved_second["candidate_id"])) == 1
+
+
+def test_promoter_recovers_merged_candidate_from_run_link_when_target_linkage_is_stale(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "merge-stale.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved_first = _approve_candidate(store, candidate_type="scenario_event", run_id="run-123")
+    promoted = promoter.promote_candidate(
+        approved_first["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+
+    importer.import_result_bundle(
+        sample_result_bundle(
+            run_id="run-456",
+            generated_at="2026-03-10T13:00:00Z",
+            event_name="Court repeats denial",
+        )
+    )
+    approved_second = _approve_candidate(store, candidate_type="scenario_event", run_id="run-456")
+    merged = promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {"canonical_id": promoted["canonical_entity"]["canonical_id"]},
+    )
+
+    with store.db.get_connection() as conn:
+        conn.execute(
+            "UPDATE mirofish_candidate_deltas SET target_canonical_id = NULL, target_canonical_type = NULL WHERE candidate_id = ?",
+            (approved_second["candidate_id"],),
+        )
+
+    recovered = promoter.merge_candidate(approved_second["candidate_id"])
+
+    assert recovered["canonical_entity"]["canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert recovered["run_link"]["link_id"] == merged["run_link"]["link_id"]
+    assert recovered["candidate"]["status"] == "merged"
+    assert recovered["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
+    assert recovered["candidate"]["target_canonical_type"] == "Event"
+    assert len(store.list_entity_run_links(run_id="run-456", source_candidate_id=approved_second["candidate_id"])) == 1
+
+
+def test_promoter_fails_for_merged_candidate_with_inconsistent_recovered_canonical_state(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "merge-stale-conflict.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved_event = _approve_candidate(store, candidate_type="scenario_event", run_id="run-123")
+    approved_rumor = _approve_candidate(store, candidate_type="rumor_candidate", run_id="run-123")
+    promoted_event = promoter.promote_candidate(
+        approved_event["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+    promoted_rumor = promoter.promote_candidate(
+        approved_rumor["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_id": 301,
+            "source_name": "Town criers",
+            "credibility_score": 7,
+            "spread_speed": "Rapid",
+        },
+    )
+
+    importer.import_result_bundle(
+        sample_result_bundle(
+            run_id="run-456",
+            generated_at="2026-03-10T13:00:00Z",
+            event_name="Court repeats denial",
+        )
+    )
+    approved_second = _approve_candidate(store, candidate_type="scenario_event", run_id="run-456")
+    promoter.merge_candidate(
+        approved_second["candidate_id"],
+        {"canonical_id": promoted_event["canonical_entity"]["canonical_id"]},
+    )
+
+    with store.db.get_connection() as conn:
+        conn.execute(
+            "UPDATE mirofish_candidate_deltas SET target_canonical_id = ?, target_canonical_type = ? WHERE candidate_id = ?",
+            (
+                str(promoted_rumor["canonical_entity"]["canonical_id"]),
+                promoted_rumor["canonical_entity"]["canonical_type"],
+                approved_second["candidate_id"],
+            ),
+        )
+
+    try:
+        promoter.merge_candidate(approved_second["candidate_id"])
+    except ValueError as exc:
+        assert "inconsistent canonical recovery state" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for inconsistent merged stale state")
 
 
 def test_promoter_merges_manual_location_candidate_into_existing_location(tmp_path):

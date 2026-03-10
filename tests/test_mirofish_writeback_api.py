@@ -759,6 +759,8 @@ def test_candidate_detail_endpoint_includes_canonical_context_after_promote(tmp_
     assert payload["data"]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
     assert payload["data"]["canonical_entity"]["canonical_type"] == "Event"
     assert payload["data"]["run_links"][0]["source_candidate_id"] == candidate_id
+    assert payload["data"]["run_links"][0]["entity_provenance"]["metadata"]["provenance"]["relation_type"] == "promoted_from"
+    assert payload["data"]["canonical_entity"]["entity_provenance"][0]["metadata"]["provenance"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
 
 
 def test_candidate_detail_endpoint_includes_canonical_context_after_merge(tmp_path):
@@ -882,12 +884,17 @@ def test_run_detail_endpoint_exposes_persisted_entity_run_links_after_promote_an
     assert first_run_payload["data"]["entity_run_links"][0]["source_candidate_id"] == first_candidate_id
     assert first_run_payload["data"]["entity_run_links"][0]["relation_type"] == "promoted_from"
     assert first_run_payload["data"]["entity_run_links"][0]["metadata"]["candidate_type"] == "scenario_event"
+    assert first_run_payload["data"]["entity_run_links"][0]["metadata"]["provenance"]["source_backend"] == "mirofish"
+    assert first_run_payload["data"]["entity_run_links"][0]["entity_provenance"]["metadata"]["provenance"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert first_run_payload["data"]["generation_run"]["run_kind"] == "mirofish_writeback"
+    assert first_run_payload["data"]["entity_provenance"][0]["metadata"]["provenance"]["relation_type"] == "promoted_from"
     assert len(second_run_payload["data"]["entity_run_links"]) == 1
     assert second_run_payload["data"]["entity_run_links"][0]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
     assert second_run_payload["data"]["entity_run_links"][0]["source_candidate_id"] == second_candidate_id
     assert second_run_payload["data"]["entity_run_links"][0]["relation_type"] == "merged_into"
     assert second_run_payload["data"]["entity_run_links"][0]["metadata"]["reason"] == "same event"
     assert second_run_payload["data"]["entity_run_links"][0]["evidence_ids"] != []
+    assert second_run_payload["data"]["entity_provenance"][0]["metadata"]["provenance"]["relation_type"] == "merged_into"
 
 
 def test_review_action_endpoints_approve_and_reject_candidates(tmp_path):

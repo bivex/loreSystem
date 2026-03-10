@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from src.application.integration.dto import CandidateDelta, MiroFishResultBundle, RuntimeEvidenceRecord
+from src.application.integration.dto import CandidateDelta, EntityProvenanceLink, GenerationRunRecord, MiroFishResultBundle, RuntimeEvidenceRecord
 
 
 class _SQLiteConnectionProvider:
@@ -92,6 +92,8 @@ class MiroFishWriteBackStore:
             "organizations": organizations,
         }
         payload["entity_run_links"] = self.list_entity_run_links(run_id=run_id)
+        payload["generation_run"] = self._build_generation_run_record(payload)
+        payload["entity_provenance"] = [item["entity_provenance"] for item in payload["entity_run_links"]]
         return payload
 
     def list_evidence(self, run_id: str) -> list[dict[str, Any]]:
@@ -280,6 +282,15 @@ class MiroFishWriteBackStore:
     ) -> dict[str, Any]:
         linked_at = datetime.now(timezone.utc).isoformat()
         with self.db.get_connection() as conn:
+            metadata_payload = self._normalize_entity_run_link_metadata(
+                conn,
+                canonical_id=canonical_id,
+                canonical_type=canonical_type,
+                run_id=run_id,
+                source_candidate_id=source_candidate_id,
+                relation_type=relation_type,
+                metadata=metadata,
+            )
             if source_candidate_id is None:
                 row = conn.execute(
                     "SELECT link_id FROM mirofish_entity_run_links WHERE canonical_id = ? AND run_id = ? AND relation_type = ? AND source_candidate_id IS NULL",
@@ -294,12 +305,12 @@ class MiroFishWriteBackStore:
                 link_id = int(row["link_id"])
                 conn.execute(
                     "UPDATE mirofish_entity_run_links SET canonical_type = ?, evidence_ids_json = ?, metadata_json = ?, linked_at = ? WHERE link_id = ?",
-                    (canonical_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), linked_at, link_id),
+                    (canonical_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata_payload, ensure_ascii=False), linked_at, link_id),
                 )
             else:
                 cursor = conn.execute(
                     "INSERT INTO mirofish_entity_run_links (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, evidence_ids_json, metadata_json, linked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), linked_at),
+                    (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata_payload, ensure_ascii=False), linked_at),
                 )
                 link_id = int(cursor.lastrowid)
         return {
@@ -310,7 +321,17 @@ class MiroFishWriteBackStore:
             "source_candidate_id": source_candidate_id,
             "relation_type": relation_type,
             "evidence_ids": list(evidence_ids or []),
-            "metadata": dict(metadata or {}),
+            "metadata": metadata_payload,
+            "entity_provenance": self._build_entity_provenance_record({
+                "canonical_id": canonical_id,
+                "canonical_type": canonical_type,
+                "run_id": run_id,
+                "source_candidate_id": source_candidate_id,
+                "relation_type": relation_type,
+                "evidence_ids": list(evidence_ids or []),
+                "metadata": metadata_payload,
+                "linked_at": linked_at,
+            }),
             "linked_at": linked_at,
         }
 
@@ -338,7 +359,7 @@ class MiroFishWriteBackStore:
         query += " ORDER BY linked_at, link_id"
         with self.db.get_connection() as conn:
             rows = conn.execute(query, tuple(params)).fetchall()
-        return [self._decode_entity_run_link_row(dict(row)) for row in rows]
+            return [self._decode_entity_run_link_row(dict(row), conn=conn) for row in rows]
 
     def _decode_evidence_row(self, row: dict[str, Any]) -> dict[str, Any]:
         row["actor_refs"] = json.loads(row.pop("actor_refs_json"))
@@ -361,12 +382,104 @@ class MiroFishWriteBackStore:
     def _decode_canonical_entity_row(self, row: dict[str, Any]) -> dict[str, Any]:
         row["entity"] = json.loads(row.pop("entity_json"))
         row["run_links"] = self.list_entity_run_links(canonical_id=int(row["canonical_id"]))
+        row["entity_provenance"] = [item["entity_provenance"] for item in row["run_links"]]
         return row
 
-    def _decode_entity_run_link_row(self, row: dict[str, Any]) -> dict[str, Any]:
+    def _decode_entity_run_link_row(self, row: dict[str, Any], *, conn: sqlite3.Connection | None = None) -> dict[str, Any]:
         row["evidence_ids"] = json.loads(row.pop("evidence_ids_json"))
-        row["metadata"] = json.loads(row.pop("metadata_json"))
+        row["metadata"] = self._normalize_entity_run_link_metadata(
+            conn,
+            canonical_id=int(row["canonical_id"]),
+            canonical_type=str(row.get("canonical_type") or ""),
+            run_id=str(row.get("run_id") or ""),
+            source_candidate_id=row.get("source_candidate_id"),
+            relation_type=str(row.get("relation_type") or ""),
+            metadata=json.loads(row.pop("metadata_json")),
+        )
+        row["entity_provenance"] = self._build_entity_provenance_record(row)
         return row
+
+    def _normalize_entity_run_link_metadata(
+        self,
+        conn: sqlite3.Connection | None,
+        *,
+        canonical_id: int,
+        canonical_type: str,
+        run_id: str,
+        source_candidate_id: str | None,
+        relation_type: str,
+        metadata: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        payload = dict(metadata) if isinstance(metadata, dict) else {}
+        provenance = dict(payload.get("provenance")) if isinstance(payload.get("provenance"), dict) else {}
+        run_row: sqlite3.Row | None = None
+        if conn is not None and run_id:
+            run_row = conn.execute(
+                "SELECT run_id, world_id, scenario_id, schema_version, world_version, projection_version, generated_at, source_backend, imported_at FROM mirofish_scenario_runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        provenance.update(
+            {
+                "run_id": run_id,
+                "source_candidate_id": source_candidate_id,
+                "canonical_id": canonical_id,
+                "canonical_type": canonical_type,
+                "relation_type": relation_type,
+            }
+        )
+        if run_row is not None:
+            provenance.update(
+                {
+                    "world_id": run_row["world_id"],
+                    "scenario_id": run_row["scenario_id"],
+                    "schema_version": run_row["schema_version"],
+                    "world_version": run_row["world_version"],
+                    "projection_version": run_row["projection_version"],
+                    "generated_at": run_row["generated_at"],
+                    "source_backend": run_row["source_backend"],
+                    "imported_at": run_row["imported_at"],
+                }
+            )
+        payload["provenance"] = provenance
+        return payload
+
+    def _build_entity_provenance_record(self, row: dict[str, Any]) -> dict[str, Any]:
+        metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+        return EntityProvenanceLink.from_dict(
+            {
+                "entity_type": row.get("canonical_type"),
+                "entity_id": str(row.get("canonical_id") or ""),
+                "run_id": row.get("run_id"),
+                "relation_type": row.get("relation_type"),
+                "source_candidate_id": row.get("source_candidate_id"),
+                "evidence_ids": row.get("evidence_ids") or [],
+                "source_refs": metadata.get("source_refs") or [],
+                "confidence": metadata.get("confidence"),
+                "linked_at": row.get("linked_at"),
+                "metadata": metadata,
+            }
+        ).to_dict()
+
+    def _build_generation_run_record(self, row: dict[str, Any]) -> dict[str, Any]:
+        return GenerationRunRecord.from_dict(
+            {
+                "run_id": row.get("run_id"),
+                "run_kind": "mirofish_writeback",
+                "source_system": row.get("source_backend") or "mirofish",
+                "world_id": row.get("world_id"),
+                "status": "persisted",
+                "started_at": row.get("generated_at"),
+                "completed_at": row.get("imported_at"),
+                "input_refs": [{"type": "scenario", "scenario_id": row.get("scenario_id")}],
+                "metadata": {
+                    "scenario_id": row.get("scenario_id"),
+                    "schema_version": row.get("schema_version"),
+                    "world_version": row.get("world_version"),
+                    "projection_version": row.get("projection_version"),
+                    "source_backend": row.get("source_backend"),
+                },
+            }
+        ).to_dict()
 
     def _delete_missing_run_rows(self, conn: sqlite3.Connection, *, table: str, id_column: str, run_id: str, ids: list[str]) -> None:
         if ids:

@@ -56,15 +56,8 @@ class MiroFishCandidatePromoter:
         payload = mapping or {}
         promote_metadata = self._extract_promote_metadata(payload)
         if candidate.get("status") == "promoted":
-            canonical_entity = self.store.get_canonical_entity_by_candidate(candidate_id)
-            if not canonical_entity:
-                raise LookupError(f"Promoted candidate '{candidate_id}' is missing its canonical entity")
-            run_links = [
-                item
-                for item in canonical_entity.get("run_links") or []
-                if item.get("run_id") == str(candidate.get("run_id") or "") and item.get("source_candidate_id") == candidate_id
-            ]
-            run_link = run_links[0] if run_links else self.store.save_entity_run_link(
+            canonical_entity = self._resolve_existing_promoted_canonical_entity(candidate)
+            run_link = self._find_candidate_run_link(candidate, relation_type="promoted_from", state_label="Promoted") or self.store.save_entity_run_link(
                 canonical_id=canonical_entity["canonical_id"],
                 canonical_type=canonical_entity["canonical_type"],
                 run_id=str(candidate.get("run_id") or ""),
@@ -74,11 +67,18 @@ class MiroFishCandidatePromoter:
                 metadata=self._build_run_link_metadata(candidate, extra=promote_metadata),
             )
             canonical_entity = self.store.get_canonical_entity(canonical_entity["canonical_id"]) or canonical_entity
+            updated_candidate = candidate
+            if self._candidate_canonical_link_is_stale(candidate, canonical_entity):
+                updated_candidate = self.store.mark_candidate_promoted(
+                    candidate_id,
+                    canonical_type=canonical_entity["canonical_type"],
+                    canonical_id=canonical_entity["canonical_id"],
+                )
             return {
                 "candidate_id": candidate_id,
                 "canonical_entity": canonical_entity,
                 "run_link": run_link,
-                "candidate": candidate,
+                "candidate": updated_candidate,
             }
         if candidate.get("status") != "approved":
             raise ValueError("Only approved candidates can be promoted")
@@ -249,12 +249,8 @@ class MiroFishCandidatePromoter:
             raise LookupError(f"Candidate '{candidate_id}' not found")
 
         payload = mapping or {}
-        if candidate.get("status") == "merged":
-            existing_target_id = self._as_int(candidate.get("target_canonical_id"), "target_canonical_id")
-            requested_target_id = payload.get("canonical_id")
-            if requested_target_id is not None and self._as_int(requested_target_id, "canonical_id") != existing_target_id:
-                raise ValueError("Merged candidate is already linked to a different canonical entity")
-        elif candidate.get("status") != "approved":
+        candidate_status = str(candidate.get("status") or "").strip()
+        if candidate_status not in {"approved", "merged"}:
             raise ValueError("Only approved candidates can be merged")
 
         canonical_entity = self._resolve_merge_target_canonical_entity(candidate, payload)
@@ -275,7 +271,7 @@ class MiroFishCandidatePromoter:
         )
         canonical_entity = self.store.get_canonical_entity(canonical_entity["canonical_id"]) or canonical_entity
         updated_candidate = candidate
-        if candidate.get("status") != "merged":
+        if candidate_status != "merged" or self._candidate_canonical_link_is_stale(candidate, canonical_entity):
             updated_candidate = self.store.mark_candidate_merged(
                 candidate_id,
                 canonical_type=canonical_entity["canonical_type"],
@@ -1590,9 +1586,7 @@ class MiroFishCandidatePromoter:
 
     def _preview_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         if candidate.get("status") == "promoted":
-            canonical_entity = self.store.get_canonical_entity_by_candidate(str(candidate.get("candidate_id") or ""))
-            if not canonical_entity:
-                raise LookupError(f"Promoted candidate '{candidate.get('candidate_id')}' is missing its canonical entity")
+            canonical_entity = self._resolve_existing_promoted_canonical_entity(candidate)
             return {
                 "canonical_type": canonical_entity["canonical_type"],
                 "already_promoted": True,
@@ -1607,12 +1601,6 @@ class MiroFishCandidatePromoter:
         }
 
     def _preview_merge_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-        if candidate.get("status") == "merged":
-            existing_target_id = self._as_int(candidate.get("target_canonical_id"), "target_canonical_id")
-            requested_target_id = payload.get("canonical_id")
-            if requested_target_id is not None and self._as_int(requested_target_id, "canonical_id") != existing_target_id:
-                raise ValueError("Merged candidate is already linked to a different canonical entity")
-
         canonical_entity = self._resolve_merge_target_canonical_entity(candidate, payload)
         return {
             "canonical_id": canonical_entity["canonical_id"],
@@ -1621,11 +1609,46 @@ class MiroFishCandidatePromoter:
         }
 
     def _resolve_merge_target_canonical_entity(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-        canonical_id = self._as_int(payload.get("canonical_id") or candidate.get("target_canonical_id"), "canonical_id")
-        canonical_entity = self.store.get_canonical_entity(canonical_id)
-        if not canonical_entity:
-            raise LookupError(f"Canonical entity '{canonical_id}' not found")
+        candidate_id = str(candidate.get("candidate_id") or "")
+        requested_canonical_id = self._as_optional_int(payload.get("canonical_id"), "canonical_id")
+        candidate_canonical_id = self._as_optional_int(candidate.get("target_canonical_id"), "target_canonical_id")
+        recovered_run_link = self._find_candidate_run_link(
+            candidate,
+            relation_type="merged_into",
+            state_label="Merged" if candidate.get("status") == "merged" else "Approved",
+        )
 
+        resolved_entities: list[dict[str, Any]] = []
+        if requested_canonical_id is not None:
+            requested_canonical = self.store.get_canonical_entity(requested_canonical_id)
+            if not requested_canonical:
+                raise LookupError(f"Canonical entity '{requested_canonical_id}' not found")
+            resolved_entities.append(requested_canonical)
+        if candidate_canonical_id is not None:
+            candidate_canonical = self.store.get_canonical_entity(candidate_canonical_id)
+            if candidate_canonical:
+                resolved_entities.append(candidate_canonical)
+        if recovered_run_link:
+            recovered_canonical_id = self._as_int(recovered_run_link.get("canonical_id"), "canonical_id")
+            recovered_canonical = self.store.get_canonical_entity(recovered_canonical_id)
+            if not recovered_canonical:
+                raise LookupError(f"Merged candidate '{candidate_id}' is linked to missing canonical entity '{recovered_canonical_id}'")
+            resolved_entities.append(recovered_canonical)
+
+        if not resolved_entities:
+            if candidate_canonical_id is not None:
+                raise LookupError(f"Canonical entity '{candidate_canonical_id}' not found")
+            self._as_int(payload.get("canonical_id") or candidate.get("target_canonical_id"), "canonical_id")
+        canonical_ids = {int(item["canonical_id"]) for item in resolved_entities}
+        if len(canonical_ids) > 1:
+            if requested_canonical_id is not None and candidate.get("status") == "merged":
+                raise ValueError("Merged candidate is already linked to a different canonical entity")
+            raise ValueError(f"Merged candidate '{candidate_id}' has inconsistent canonical recovery state")
+        canonical_entity = resolved_entities[0]
+        self._validate_merge_target_canonical_entity(candidate, payload, canonical_entity)
+        return canonical_entity
+
+    def _validate_merge_target_canonical_entity(self, candidate: dict[str, Any], payload: dict[str, Any], canonical_entity: dict[str, Any]) -> None:
         requested_type = str(payload.get("canonical_type") or "").strip()
         if requested_type and requested_type != canonical_entity["canonical_type"]:
             raise ValueError("canonical_type does not match the target canonical entity")
@@ -1635,7 +1658,57 @@ class MiroFishCandidatePromoter:
             raise ValueError(
                 f"Candidate target canonical type '{candidate_target_type}' cannot be merged into '{canonical_entity['canonical_type']}'"
             )
+
+    def _resolve_existing_promoted_canonical_entity(self, candidate: dict[str, Any]) -> dict[str, Any]:
+        candidate_id = str(candidate.get("candidate_id") or "")
+        source_canonical = self.store.get_canonical_entity_by_candidate(candidate_id)
+        target_canonical = None
+        target_canonical_id = self._as_optional_int(candidate.get("target_canonical_id"), "target_canonical_id")
+        if target_canonical_id is not None:
+            target_canonical = self.store.get_canonical_entity(target_canonical_id)
+        recovered_run_link = self._find_candidate_run_link(candidate, relation_type="promoted_from", state_label="Promoted")
+        recovered_canonical = None
+        if recovered_run_link:
+            recovered_canonical_id = self._as_int(recovered_run_link.get("canonical_id"), "canonical_id")
+            recovered_canonical = self.store.get_canonical_entity(recovered_canonical_id)
+            if not recovered_canonical:
+                raise LookupError(f"Promoted candidate '{candidate_id}' is linked to missing canonical entity '{recovered_canonical_id}'")
+
+        resolved_entities = [item for item in (source_canonical, target_canonical, recovered_canonical) if item]
+        if not resolved_entities:
+            raise LookupError(f"Promoted candidate '{candidate_id}' is missing its canonical entity")
+        canonical_ids = {int(item["canonical_id"]) for item in resolved_entities}
+        if len(canonical_ids) > 1:
+            raise ValueError(f"Promoted candidate '{candidate_id}' has inconsistent canonical recovery state")
+        canonical_entity = resolved_entities[0]
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type and target_canonical_type != canonical_entity["canonical_type"]:
+            raise ValueError(
+                f"Promoted candidate target canonical type '{target_canonical_type}' does not match '{canonical_entity['canonical_type']}'"
+            )
         return canonical_entity
+
+    def _find_candidate_run_link(self, candidate: dict[str, Any], *, relation_type: str, state_label: str) -> dict[str, Any] | None:
+        candidate_id = str(candidate.get("candidate_id") or "")
+        run_id = str(candidate.get("run_id") or "")
+        run_links = [
+            item
+            for item in self.store.list_entity_run_links(source_candidate_id=candidate_id)
+            if item.get("run_id") == run_id and item.get("relation_type") == relation_type
+        ]
+        if not run_links:
+            return None
+        canonical_ids = {self._as_int(item.get("canonical_id"), "canonical_id") for item in run_links}
+        if len(canonical_ids) > 1:
+            raise ValueError(f"{state_label} candidate '{candidate_id}' has ambiguous run-link recovery state")
+        return run_links[0]
+
+    def _candidate_canonical_link_is_stale(self, candidate: dict[str, Any], canonical_entity: dict[str, Any]) -> bool:
+        return (
+            str(candidate.get("target_canonical_id") or "").strip() != str(canonical_entity["canonical_id"])
+            or str(candidate.get("target_canonical_type") or "").strip() != str(canonical_entity["canonical_type"])
+        )
 
     def _resolve_location_type_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
         proposed = candidate.get("proposed_change") or {}
