@@ -124,6 +124,63 @@ def policy_ready_bundle(
     return bundle
 
 
+def cross_run_relationship_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    relationship_level: int,
+    actor_refs: list[str] | None = None,
+    confidence: float = 0.94,
+) -> dict:
+    refs = actor_refs or ["actor:captain_serik", "actor:nessa"]
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Captain Serik publicly breaks trust with Nessa.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Observers confirm the fallout persists across the district.",
+                "timestamp": "2026-03-10T12:06:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "Repeated signals show the pair sliding into open distrust.",
+                "proposed_change": {
+                    "actor_refs": refs,
+                    "relationship_level": relationship_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -707,6 +764,63 @@ def test_batch_auto_promote_endpoint_supports_safe_relationship_policy(tmp_path)
     assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-event-safe"}
     assert relationship_detail["status"] == "promoted"
     assert event_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_supports_cross_run_relationship_policy(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-cross-run-relationship.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_relationship_bundle(run_id="run-rel-primary", candidate_id="cand-relationship-primary", relationship_level=-42))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_relationship_bundle(run_id="run-rel-support", candidate_id="cand-relationship-support", relationship_level=-55))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_relationship_bundle(run_id="run-rel-solo", candidate_id="cand-relationship-solo", relationship_level=44))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_cross_run_relationship_only",
+            "items": [
+                {
+                    "candidate_id": "cand-relationship-primary",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -42,
+                        "is_mutual": False,
+                    },
+                },
+                {
+                    "candidate_id": "cand-relationship-solo",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": 44,
+                        "is_mutual": False,
+                    },
+                },
+            ],
+        },
+    )
+
+    primary_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-primary")[1]["data"]
+    solo_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-solo")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_cross_run_relationship_only"
+    assert payload["data"]["requested_count"] == 2
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-relationship-primary"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_relationship_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-rel-support"]
+    assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-relationship-solo"}
+    assert primary_detail["status"] == "promoted"
+    assert solo_detail["status"] == "pending_review"
 
 
 def test_batch_auto_promote_endpoint_rejects_invalid_payload(tmp_path):

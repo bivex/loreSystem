@@ -242,6 +242,23 @@ class MiroFishWriteBackStore:
             return None
         return self._decode_canonical_entity_row(dict(row))
 
+    def list_canonical_entities(self, *, canonical_type: str | None = None, world_id: int | None = None) -> list[dict[str, Any]]:
+        clauses = []
+        params: list[Any] = []
+        if canonical_type is not None:
+            clauses.append("canonical_type = ?")
+            params.append(canonical_type)
+        if world_id is not None:
+            clauses.append("world_id = ?")
+            params.append(world_id)
+        query = "SELECT * FROM mirofish_canonical_entities"
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY promoted_at, canonical_id"
+        with self.db.get_connection() as conn:
+            rows = conn.execute(query, tuple(params)).fetchall()
+        return [self._decode_canonical_entity_row(dict(row)) for row in rows]
+
     def get_canonical_entity_by_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         with self.db.get_connection() as conn:
             row = conn.execute("SELECT canonical_id FROM mirofish_canonical_entities WHERE source_candidate_id = ?", (candidate_id,)).fetchone()

@@ -138,6 +138,63 @@ def policy_ready_bundle(
     return bundle
 
 
+def cross_run_relationship_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    relationship_level: int,
+    actor_refs: list[str] | None = None,
+    confidence: float = 0.94,
+) -> dict:
+    refs = actor_refs or ["actor:captain_serik", "actor:nessa"]
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Captain Serik publicly breaks trust with Nessa.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Observers confirm the fallout persists across the district.",
+                "timestamp": "2026-03-10T12:06:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "Repeated signals show the pair sliding into open distrust.",
+                "proposed_change": {
+                    "actor_refs": refs,
+                    "relationship_level": relationship_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -392,6 +449,118 @@ def test_auto_promote_policy_rejects_weak_relationship_delta(tmp_path):
         raise AssertionError("Expected ValueError for weak relationship delta")
 
     candidate = store.get_candidate("cand-relationship-safe")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_promotes_cross_run_relationship_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-relationship.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-rel-primary", candidate_id="cand-relationship-primary", relationship_level=-42)
+    )
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-rel-support", candidate_id="cand-relationship-support", relationship_level=-55)
+    )
+
+    result = promoter.auto_promote_candidate(
+        "cand-relationship-primary",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+        policy="safe_cross_run_relationship_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "CharacterRelationship"
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_relationship_only"
+    assert result["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-rel-support"]
+    assert result["run_link"]["metadata"]["cross_run_distinct_run_count"] == 2
+    assert result["run_link"]["metadata"]["contradiction_check"] == "passed"
+
+
+def test_auto_promote_policy_rejects_cross_run_relationship_without_support(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-relationship-no-support.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-rel-primary", candidate_id="cand-relationship-primary", relationship_level=-42)
+    )
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-relationship-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "character_from_id": 201,
+                "character_to_id": 202,
+                "relationship_level": -42,
+            },
+            policy="safe_cross_run_relationship_only",
+        )
+    except ValueError as exc:
+        assert "at least 1 additional run" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for missing cross-run support")
+
+    candidate = store.get_candidate("cand-relationship-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_rejects_cross_run_relationship_on_canonical_contradiction(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-relationship-conflict.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-existing", candidate_id="cand-relationship-existing", relationship_level=58)
+    )
+    approved_existing = _approve_candidate(store, candidate_type="relationship_change", run_id="run-existing")
+    promoter.promote_candidate(
+        approved_existing["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": 58,
+            "is_mutual": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-rel-primary", candidate_id="cand-relationship-primary", relationship_level=-42)
+    )
+    importer.import_result_bundle(
+        cross_run_relationship_bundle(run_id="run-rel-support", candidate_id="cand-relationship-support", relationship_level=-55)
+    )
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-relationship-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "character_from_id": 201,
+                "character_to_id": 202,
+                "relationship_level": -42,
+            },
+            policy="safe_cross_run_relationship_only",
+        )
+    except ValueError as exc:
+        assert "opposite-polarity staged canonical relationship" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for canonical contradiction")
+
+    candidate = store.get_candidate("cand-relationship-primary")
     assert candidate is not None
     assert candidate["status"] == "pending_review"
 

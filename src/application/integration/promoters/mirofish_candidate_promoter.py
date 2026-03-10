@@ -36,6 +36,7 @@ class MiroFishCandidatePromoter:
     SAFE_EVENT_ONLY_POLICY = "safe_event_only"
     SAFE_RUMOR_ONLY_POLICY = "safe_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
+    SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -111,7 +112,7 @@ class MiroFishCandidatePromoter:
             raise LookupError(f"Candidate '{candidate_id}' not found")
 
         payload = dict(mapping or {})
-        self._validate_auto_promote_candidate(candidate, payload, policy=policy)
+        validation_metadata = self._validate_auto_promote_candidate(candidate, payload, policy=policy)
         if candidate.get("status") == "pending_review":
             updated_candidate = self.store.update_candidate_status(candidate_id, "approved")
             if not updated_candidate:
@@ -122,6 +123,7 @@ class MiroFishCandidatePromoter:
             raise ValueError("metadata must be an object")
         payload["metadata"] = {
             **existing_metadata,
+            **validation_metadata,
             "auto_promote_policy": policy,
             "auto_promoted": True,
         }
@@ -388,23 +390,22 @@ class MiroFishCandidatePromoter:
             return RelationshipType.FRIEND
         return RelationshipType.NEUTRAL
 
-    def _validate_auto_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any], *, policy: str) -> None:
+    def _validate_auto_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any], *, policy: str) -> dict[str, Any]:
         status = str(candidate.get("status") or "").strip()
         if status not in {"pending_review", "approved", "promoted"}:
             raise ValueError("Auto-promotion policy can only process pending_review, approved, or already promoted candidates")
 
         if policy == self.SAFE_EVENT_ONLY_POLICY:
-            self._validate_safe_event_policy(candidate)
-            return
+            return self._validate_safe_event_policy(candidate)
         if policy == self.SAFE_RUMOR_ONLY_POLICY:
-            self._validate_safe_rumor_policy(candidate, payload)
-            return
+            return self._validate_safe_rumor_policy(candidate, payload)
         if policy == self.SAFE_RELATIONSHIP_ONLY_POLICY:
-            self._validate_safe_relationship_policy(candidate, payload)
-            return
+            return self._validate_safe_relationship_policy(candidate, payload)
+        if policy == self.SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY:
+            return self._validate_safe_cross_run_relationship_policy(candidate, payload)
         raise ValueError(f"Unsupported auto-promotion policy: {policy}")
 
-    def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> None:
+    def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
         if candidate_type != "scenario_event":
             raise ValueError("Policy 'safe_event_only' only supports scenario_event candidates")
@@ -420,8 +421,9 @@ class MiroFishCandidatePromoter:
         evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
         if len(evidence_ids) < 2:
             raise ValueError("Policy 'safe_event_only' requires at least 2 evidence items")
+        return {}
 
-    def _validate_safe_rumor_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> None:
+    def _validate_safe_rumor_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
         if candidate_type != "rumor_candidate":
             raise ValueError("Policy 'safe_rumor_only' only supports rumor_candidate candidates")
@@ -445,8 +447,9 @@ class MiroFishCandidatePromoter:
         if payload.get("credibility_score") is None:
             raise ValueError("Policy 'safe_rumor_only' requires credibility_score")
         self._as_int(payload.get("credibility_score"), "credibility_score")
+        return {}
 
-    def _validate_safe_relationship_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> None:
+    def _validate_safe_relationship_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
         if candidate_type != "relationship_change":
             raise ValueError("Policy 'safe_relationship_only' only supports relationship_change candidates")
@@ -471,6 +474,118 @@ class MiroFishCandidatePromoter:
         relationship_level = self._as_int(payload.get("relationship_level"), "relationship_level")
         if abs(relationship_level) < 30:
             raise ValueError("Policy 'safe_relationship_only' requires abs(relationship_level) >= 30")
+        return {}
+
+    def _validate_safe_cross_run_relationship_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        self._validate_safe_relationship_policy(candidate, payload)
+
+        relationship_level = self._as_int(payload.get("relationship_level"), "relationship_level")
+        relationship_sign = self._relationship_sign(relationship_level)
+        proposed = candidate.get("proposed_change") or {}
+        actor_refs = self._normalize_actor_refs(proposed.get("actor_refs"))
+        if len(actor_refs) != 2:
+            raise ValueError(
+                "Policy 'safe_cross_run_relationship_only' requires proposed_change.actor_refs with exactly 2 directed refs"
+            )
+
+        supporting_run_ids = self._find_supporting_relationship_run_ids(candidate, actor_refs=actor_refs, relationship_sign=relationship_sign)
+        if not supporting_run_ids:
+            raise ValueError(
+                "Policy 'safe_cross_run_relationship_only' requires support from at least 1 additional run with the same directed pair and polarity"
+            )
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        character_from_id = self._as_int(payload.get("character_from_id"), "character_from_id")
+        character_to_id = self._as_int(payload.get("character_to_id"), "character_to_id")
+        conflicting_canonical = self._find_conflicting_canonical_relationship(
+            world_id=world_id,
+            character_from_id=character_from_id,
+            character_to_id=character_to_id,
+            relationship_sign=relationship_sign,
+            skip_canonical_id=self._as_optional_int(candidate.get("target_canonical_id"), "target_canonical_id"),
+        )
+        if conflicting_canonical is not None:
+            raise ValueError(
+                "Policy 'safe_cross_run_relationship_only' rejected due to opposite-polarity staged canonical relationship for the same directed pair"
+            )
+
+        return {
+            "cross_run_supporting_run_ids": supporting_run_ids,
+            "cross_run_distinct_run_count": len(supporting_run_ids) + 1,
+            "contradiction_check": "passed",
+        }
+
+    def _find_supporting_relationship_run_ids(
+        self,
+        candidate: dict[str, Any],
+        *,
+        actor_refs: tuple[str, str],
+        relationship_sign: int,
+    ) -> list[str]:
+        supporting_run_ids: set[str] = set()
+        current_run_id = str(candidate.get("run_id") or "").strip()
+        for item in self.store.list_candidates(world_id=str(candidate.get("world_id") or ""), candidate_type="relationship_change"):
+            if item.get("candidate_id") == candidate.get("candidate_id"):
+                continue
+            if str(item.get("run_id") or "").strip() == current_run_id:
+                continue
+            if str(item.get("target_canonical_type") or "").strip() != "CharacterRelationship":
+                continue
+            if str(item.get("status") or "").strip() == "rejected":
+                continue
+            if float(item.get("confidence") or 0.0) < 0.90:
+                continue
+            evidence_ids = [str(entry).strip() for entry in (item.get("evidence_ids") or []) if str(entry).strip()]
+            if len(evidence_ids) < 2:
+                continue
+
+            proposed = item.get("proposed_change") or {}
+            if self._normalize_actor_refs(proposed.get("actor_refs")) != actor_refs:
+                continue
+            if self._relationship_sign(proposed.get("relationship_level")) != relationship_sign:
+                continue
+            supporting_run_ids.add(str(item.get("run_id") or "").strip())
+        return sorted(run_id for run_id in supporting_run_ids if run_id)
+
+    def _find_conflicting_canonical_relationship(
+        self,
+        *,
+        world_id: int,
+        character_from_id: int,
+        character_to_id: int,
+        relationship_sign: int,
+        skip_canonical_id: int | None,
+    ) -> dict[str, Any] | None:
+        for canonical in self.store.list_canonical_entities(canonical_type="CharacterRelationship", world_id=world_id):
+            canonical_id = int(canonical.get("canonical_id") or 0)
+            if skip_canonical_id is not None and canonical_id == skip_canonical_id:
+                continue
+            entity = canonical.get("entity") or {}
+            if self._as_optional_int(entity.get("character_from_id"), "entity.character_from_id") != character_from_id:
+                continue
+            if self._as_optional_int(entity.get("character_to_id"), "entity.character_to_id") != character_to_id:
+                continue
+            existing_sign = self._relationship_sign(entity.get("relationship_level"))
+            if existing_sign != 0 and existing_sign != relationship_sign:
+                return canonical
+        return None
+
+    def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
+        refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
+        if len(refs) != 2:
+            return tuple()
+        return refs
+
+    def _relationship_sign(self, value: Any) -> int:
+        try:
+            resolved = int(value)
+        except (TypeError, ValueError):
+            return 0
+        if resolved > 0:
+            return 1
+        if resolved < 0:
+            return -1
+        return 0
 
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()
