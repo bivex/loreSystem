@@ -455,6 +455,55 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_relationship_duplicate_bundle(
+    *,
+    candidate_id: str,
+    run_id: str,
+    relationship_level: int,
+    actor_refs: list[str] | None = None,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    refs = actor_refs or ["actor:captain_serik", "actor:nessa"]
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Captain Serik and Nessa show the same relationship shift again.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            }
+            for evidence_id in evidence_ids
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "Repeated signals show the same directed relationship snapshot.",
+                "proposed_change": {
+                    "actor_refs": refs,
+                    "relationship_level": relationship_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_rumor_duplicate_bundle(
     *,
     candidate_id: str,
@@ -2070,6 +2119,346 @@ def test_preview_auto_merge_candidate_rejects_missing_event_duplicate_fields(tmp
     assert missing_timestamp_preview["eligible"] is False
     assert missing_timestamp_preview["reasons"] == [
         "Policy 'safe_existing_event_duplicate_only' requires proposed_change.timestamp"
+    ]
+
+
+def test_preview_auto_merge_candidate_for_exact_duplicate_relationship_is_side_effect_free(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=-42,
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="relationship_change", run_id="run-relationship-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=-42,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-duplicate",
+        {
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+        },
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-relationship-duplicate")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_relationship_duplicate_only"
+    assert preview["metadata_preview"]["merge_match_relationship_type"] == "enemy"
+    assert preview["metadata_preview"]["merge_match_relationship_level"] == -42
+    assert preview["metadata_preview"]["merge_match_is_mutual"] is False
+    assert detail["status"] == "pending_review"
+    assert detail["target_canonical_id"] is None
+    assert store.list_entity_run_links(run_id="run-relationship-duplicate", source_candidate_id="cand-relationship-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_relationship(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-execute.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=-42,
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="relationship_change", run_id="run-relationship-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=-42,
+        )
+    )
+
+    result = promoter.auto_merge_candidate(
+        "cand-relationship-duplicate",
+        {
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+        },
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-relationship-duplicate")
+
+    assert result["candidate"]["status"] == "merged"
+    assert result["canonical_entity"]["canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert result["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_relationship_duplicate_only"
+    assert result["run_link"]["metadata"]["merge_match_relationship_type"] == "enemy"
+    assert result["run_link"]["metadata"]["merge_match_relationship_level"] == -42
+    assert result["run_link"]["metadata"]["merge_match_is_mutual"] is False
+    assert detail["status"] == "merged"
+    assert detail["target_canonical_id"] == str(promote_result["canonical_entity"]["canonical_id"])
+
+
+def test_preview_auto_merge_candidate_rejects_when_no_exact_duplicate_relationship_exists(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=-42,
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="relationship_change", run_id="run-relationship-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-no-match",
+            run_id="run-relationship-no-match",
+            relationship_level=-55,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-no-match",
+        {
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -55,
+        },
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires exactly 1 staged canonical CharacterRelationship exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_relationships(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id in (("cand-relationship-create-a", "run-relationship-create-a"), ("cand-relationship-create-b", "run-relationship-create-b")):
+        importer.import_result_bundle(
+            exact_relationship_duplicate_bundle(
+                candidate_id=candidate_id,
+                run_id=run_id,
+                relationship_level=-42,
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="relationship_change", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "character_from_id": 201,
+                "character_to_id": 202,
+                "relationship_level": -42,
+                "is_mutual": False,
+            },
+        )
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=-42,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-duplicate",
+        {
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+        },
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' rejected due to ambiguous staged canonical CharacterRelationship duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_relationship_duplicate_gates(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-low-confidence",
+            run_id="run-relationship-low-confidence",
+            relationship_level=-42,
+            confidence=0.89,
+        )
+    )
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-sparse-evidence",
+            run_id="run-relationship-sparse-evidence",
+            relationship_level=-42,
+            evidence_count=1,
+        )
+    )
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-self",
+            run_id="run-relationship-self",
+            relationship_level=-42,
+        )
+    )
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-weak",
+            run_id="run-relationship-weak",
+            relationship_level=-10,
+        )
+    )
+
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-low-confidence",
+        {"world_id": 101, "character_from_id": 201, "character_to_id": 202, "relationship_level": -42},
+        policy="safe_existing_relationship_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-sparse-evidence",
+        {"world_id": 101, "character_from_id": 201, "character_to_id": 202, "relationship_level": -42},
+        policy="safe_existing_relationship_duplicate_only",
+    )
+    self_relationship_preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-self",
+        {"world_id": 101, "character_from_id": 201, "character_to_id": 201, "relationship_level": -42},
+        policy="safe_existing_relationship_duplicate_only",
+    )
+    weak_preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-weak",
+        {"world_id": 101, "character_from_id": 201, "character_to_id": 202, "relationship_level": -10},
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires at least 2 evidence items"
+    ]
+    assert self_relationship_preview["eligible"] is False
+    assert self_relationship_preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires two different characters"
+    ]
+    assert weak_preview["eligible"] is False
+    assert weak_preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires abs(relationship_level) >= 30"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_relationship_is_mutual_mismatch(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-relationship-mutual-mismatch.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=48,
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="relationship_change", run_id="run-relationship-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": 48,
+            "is_mutual": True,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=48,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-relationship-duplicate",
+        {
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": 48,
+            "is_mutual": False,
+        },
+        policy="safe_existing_relationship_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires exactly 1 staged canonical CharacterRelationship exact duplicate match in the same world"
     ]
 
 

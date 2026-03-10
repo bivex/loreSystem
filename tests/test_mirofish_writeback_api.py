@@ -441,6 +441,55 @@ def exact_location_duplicate_bundle(
     }
 
 
+def exact_relationship_duplicate_bundle(
+    *,
+    candidate_id: str,
+    run_id: str,
+    relationship_level: int,
+    actor_refs: list[str] | None = None,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    refs = actor_refs or ["actor:captain_serik", "actor:nessa"]
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "relationship_change",
+                "source_type": "relationship_delta",
+                "actor_refs": refs,
+                "text": "Captain Serik and Nessa repeat the same relationship shift.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+            }
+            for evidence_id in evidence_ids
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "relationship_change",
+                "target_canonical_type": "CharacterRelationship",
+                "name": "Captain Serik distrusts Nessa",
+                "summary": "Repeated signals show the same directed relationship snapshot.",
+                "proposed_change": {
+                    "actor_refs": refs,
+                    "relationship_level": relationship_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "relationship_delta", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_rumor_duplicate_bundle(
     *,
     candidate_id: str,
@@ -2009,6 +2058,202 @@ def test_batch_auto_merge_endpoint_supports_event_dry_run_without_side_effects(t
     ]
     assert duplicate_detail["data"]["status"] == "pending_review"
     assert ongoing_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_relationship_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-relationship.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=-42,
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-relationship-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-relationship-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=-42,
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-no-match",
+            run_id="run-relationship-no-match",
+            relationship_level=-55,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_relationship_duplicate_only",
+            "items": [
+                {
+                    "candidate_id": "cand-relationship-duplicate",
+                    "mapping": {
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -42,
+                    },
+                },
+                {
+                    "candidate_id": "cand-relationship-no-match",
+                    "mapping": {
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -55,
+                    },
+                },
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_relationship_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-relationship-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_relationship_duplicate_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["merge_match_relationship_type"] == "enemy"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-relationship-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_relationship_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-relationship-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-create",
+            run_id="run-relationship-create",
+            relationship_level=-42,
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-relationship-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-relationship-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "character_from_id": 201,
+            "character_to_id": 202,
+            "relationship_level": -42,
+            "is_mutual": False,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-duplicate",
+            run_id="run-relationship-duplicate",
+            relationship_level=-42,
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_relationship_duplicate_bundle(
+            candidate_id="cand-relationship-weak",
+            run_id="run-relationship-weak",
+            relationship_level=-10,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_relationship_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {
+                    "candidate_id": "cand-relationship-duplicate",
+                    "mapping": {
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -42,
+                    },
+                },
+                {
+                    "candidate_id": "cand-relationship-weak",
+                    "mapping": {
+                        "world_id": 101,
+                        "character_from_id": 201,
+                        "character_to_id": 202,
+                        "relationship_level": -10,
+                    },
+                },
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-duplicate")[1]
+    weak_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-relationship-weak")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_relationship_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-relationship-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_relationship_duplicate_only"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["merge_match_relationship_type"] == "enemy"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-relationship-weak"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_relationship_duplicate_only' requires abs(relationship_level) >= 30"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert weak_detail["data"]["status"] == "pending_review"
 
 
 def test_batch_auto_merge_endpoint_merges_exact_duplicate_rumor_and_reports_failures(tmp_path):

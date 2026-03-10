@@ -39,6 +39,7 @@ class MiroFishCandidatePromoter:
     SAFE_CROSS_RUN_RUMOR_ONLY_POLICY = "safe_cross_run_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
+    SAFE_EXISTING_RELATIONSHIP_DUPLICATE_ONLY_POLICY = "safe_existing_relationship_duplicate_only"
     SAFE_EXISTING_EVENT_DUPLICATE_ONLY_POLICY = "safe_existing_event_duplicate_only"
     SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
     SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY = "safe_existing_rumor_duplicate_only"
@@ -512,6 +513,8 @@ class MiroFishCandidatePromoter:
         if status not in {"pending_review", "approved", "merged"}:
             raise ValueError("Auto-merge policy can only process pending_review, approved, or already merged candidates")
 
+        if policy == self.SAFE_EXISTING_RELATIONSHIP_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_relationship_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_EVENT_DUPLICATE_ONLY_POLICY:
             return self._validate_safe_existing_event_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY:
@@ -736,6 +739,66 @@ class MiroFishCandidatePromoter:
             "cross_run_supporting_run_ids": supporting_run_ids,
             "cross_run_distinct_run_count": len(supporting_run_ids) + 1,
             "contradiction_check": "passed",
+        }
+
+    def _validate_safe_existing_relationship_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "relationship_change":
+            raise ValueError(
+                "Policy 'safe_existing_relationship_duplicate_only' only supports relationship_change candidates"
+            )
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "CharacterRelationship":
+            raise ValueError(
+                "Policy 'safe_existing_relationship_duplicate_only' only supports CharacterRelationship merge targets"
+            )
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_relationship_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_relationship_duplicate_only' requires at least 2 evidence items")
+
+        character_from_id = self._as_int(payload.get("character_from_id"), "character_from_id")
+        character_to_id = self._as_int(payload.get("character_to_id"), "character_to_id")
+        if character_from_id == character_to_id:
+            raise ValueError("Policy 'safe_existing_relationship_duplicate_only' requires two different characters")
+
+        relationship_level = self._as_int(payload.get("relationship_level"), "relationship_level")
+        if abs(relationship_level) < 30:
+            raise ValueError("Policy 'safe_existing_relationship_duplicate_only' requires abs(relationship_level) >= 30")
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        relationship_type = self._resolve_relationship_type_for_candidate(payload)
+        is_mutual = self._resolve_relationship_is_mutual_for_candidate(payload)
+        matches = self._find_exact_duplicate_canonical_relationships(
+            world_id=world_id,
+            character_from_id=character_from_id,
+            character_to_id=character_to_id,
+            relationship_type=relationship_type,
+            relationship_level=relationship_level,
+            is_mutual=is_mutual,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_relationship_duplicate_only' requires exactly 1 staged canonical CharacterRelationship exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_relationship_duplicate_only' rejected due to ambiguous staged canonical CharacterRelationship duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "merge_match_character_from_id": character_from_id,
+            "merge_match_character_to_id": character_to_id,
+            "merge_match_relationship_type": relationship_type.value,
+            "merge_match_relationship_level": relationship_level,
+            "merge_match_is_mutual": is_mutual,
+            "duplicate_guard": "passed",
         }
 
     def _validate_safe_existing_event_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -1143,6 +1206,36 @@ class MiroFishCandidatePromoter:
             matches.append(canonical)
         return matches
 
+    def _find_exact_duplicate_canonical_relationships(
+        self,
+        *,
+        world_id: int,
+        character_from_id: int,
+        character_to_id: int,
+        relationship_type: RelationshipType,
+        relationship_level: int,
+        is_mutual: bool,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        for canonical in self.store.list_canonical_entities(canonical_type="CharacterRelationship", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._as_optional_int(entity.get("character_from_id"), "entity.character_from_id") != character_from_id:
+                continue
+            if self._as_optional_int(entity.get("character_to_id"), "entity.character_to_id") != character_to_id:
+                continue
+            if str(entity.get("relationship_type") or "").strip().casefold() != relationship_type.value:
+                continue
+            if self._as_optional_int(entity.get("relationship_level"), "entity.relationship_level") != relationship_level:
+                continue
+            try:
+                existing_is_mutual = self._as_bool(entity.get("is_mutual"), field_name="entity.is_mutual", default=False)
+            except ValueError:
+                continue
+            if existing_is_mutual != is_mutual:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _find_exact_duplicate_canonical_locations(
         self,
         *,
@@ -1245,6 +1338,19 @@ class MiroFishCandidatePromoter:
                 continue
             normalized.add(self._as_int(item, "participant_ids[]"))
         return tuple(sorted(normalized))
+
+    def _resolve_relationship_type_for_candidate(self, payload: dict[str, Any]) -> RelationshipType:
+        relationship_type_raw = str(payload.get("relationship_type") or "").strip().casefold()
+        if relationship_type_raw:
+            try:
+                return RelationshipType(relationship_type_raw)
+            except ValueError as exc:
+                raise ValueError(f"Invalid relationship_type: {payload.get('relationship_type')}") from exc
+        relationship_level = self._as_int(payload.get("relationship_level"), "relationship_level")
+        return self._infer_relationship_type(relationship_level)
+
+    def _resolve_relationship_is_mutual_for_candidate(self, payload: dict[str, Any]) -> bool:
+        return self._as_bool(payload.get("is_mutual"), field_name="is_mutual", default=False)
 
     def _event_date_bucket(self, value: Any, *, field_name: str) -> str:
         try:
