@@ -70,8 +70,16 @@ Forward path у интеграции уже понятен:
 - какой `run_id` породил promoted entity,
 - из какого `candidate_id` она появилась,
 - какие `evidence_ids` её поддерживали,
-- какой тип связи используется (`promoted_from`),
-- дополнительный metadata payload.
+- какой тип связи используется (`promoted_from` / `merged_into`),
+- дополнительный metadata payload,
+- нормализованный provenance payload, который при write-back/readback стабильно сохраняет `run_id`, `source_candidate_id`, `canonical_id`, `canonical_type`, `relation_type`, `world_id`, `scenario_id`, `schema_version`, `world_version`, `projection_version`, `generated_at`, `source_backend`, `imported_at`.
+
+Этот provenance roundtrip теперь читается назад не только из самой link table, но и через existing detail surfaces:
+
+- `candidate detail -> canonical_entity.run_links[]`,
+- `candidate detail -> run_links[]`,
+- `run detail -> entity_run_links[]`,
+- `canonical entity detail -> entity_provenance`.
 
 Это лучше, чем хранить provenance только косвенно через `source_candidate_id`, потому что:
 
@@ -122,6 +130,14 @@ Forward path у интеграции уже понятен:
 - `mirofish_scenario_runs` / `mirofish_scenario_results` обновляются через upsert, а не через destructive `INSERT OR REPLACE`,
 - `runtime_evidence` и `candidate_deltas` синхронизируются через rerun-safe sync/upsert semantics: unchanged rows сохраняются, stale rows удаляются, changed rows обновляются,
 - повторный promote того же `candidate_id` переиспользует existing canonical row и existing run-link.
+- stale-state recovery в promote / merge теперь тоже идёт по existing persisted state: candidate link, canonical lookup и `mirofish_entity_run_links`; recoverable состояния чинятся детерминированно без дублей, а конфликтное состояние падает явно вместо silent corruption.
+
+Практически stale-state semantics сейчас узко и явно такие:
+
+- promoted candidate может восстановиться через `source_candidate_id`, candidate `target_canonical_*` или persisted `promoted_from` run-link,
+- merged candidate может восстановиться через requested `canonical_id`, candidate `target_canonical_*` или persisted `merged_into` run-link,
+- если candidate linkage stale, но canonical/run-link state согласованы, existing canonical + existing run-link переиспользуются и candidate linkage repair-ится,
+- если recovery sources конфликтуют или run-link указывает на отсутствующий canonical entity, flow падает явно (`ValueError` / `LookupError`), а не пытается молча перезаписать state.
 
 Подтверждённый same-db результат после фикса:
 

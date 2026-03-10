@@ -175,6 +175,33 @@ Mapping:
 | `candidate_id` used for promotion | `source_candidate_id` | `mirofish_canonical_entities.source_candidate_id` |
 | promoted/merged entity provenance | `run_id + candidate_id + evidence_ids` | `mirofish_entity_run_links` |
 
+### 7.1 What roundtrips on readback now
+
+`mirofish_entity_run_links.metadata.provenance` сейчас стабильно roundtrip'ит и читается назад через store/API с такими полями:
+
+- `run_id`
+- `source_candidate_id`
+- `canonical_id`
+- `canonical_type`
+- `relation_type`
+- `world_id`
+- `scenario_id`
+- `schema_version`
+- `world_version`
+- `projection_version`
+- `generated_at`
+- `source_backend`
+- `imported_at`
+
+Supporting metadata из current flow тоже сохраняется вместе с этим provenance payload — например `auto_promote_policy`, `auto_merge_policy`, `auto_promoted`, `auto_merged`, `source_refs`, `confidence` и type-specific `merge_match_*` / `event_match_*` поля.
+
+Readback surfaces, где это уже видно:
+
+- `candidate detail -> run_links[]`
+- `candidate detail -> canonical_entity.run_links[]`
+- `run detail -> entity_run_links[]`
+- `canonical entity detail -> entity_provenance`
+
 ## 8. End-to-end trace that works now
 
 Текущая рабочая цепочка выглядит так:
@@ -186,7 +213,7 @@ Mapping:
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
 7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run event/rumor/relationship slices, и вызывать тот же promote path; optional `dry_run: true` даёт preview этого же пути без side effects
-8. explicit `batch/auto-merge` может narrow-gate'ить safe exact duplicate merge для `new_entity_candidate -> Location` через policy `safe_existing_location_duplicate_only`, для `scenario_event -> Event` через policy `safe_existing_event_duplicate_only`, для `rumor_candidate -> Rumor` через policy `safe_existing_rumor_duplicate_only`, для `relationship_change -> CharacterRelationship` через policy `safe_existing_relationship_duplicate_only` и для `new_entity_candidate -> Faction` через policy `safe_existing_faction_duplicate_only`, после чего вызывает тот же existing merge path; optional `dry_run: true` даёт preview без side effects
+8. explicit `batch/auto-merge` может narrow-gate'ить safe exact duplicate merge для `new_entity_candidate -> Location` через policy `safe_existing_location_duplicate_only`, для `scenario_event -> Event` через policy `safe_existing_event_duplicate_only`, для `rumor_candidate -> Rumor` через policy `safe_existing_rumor_duplicate_only`, для `relationship_change -> CharacterRelationship` через policy `safe_existing_relationship_duplicate_only`, для `new_entity_candidate -> Faction` через policy `safe_existing_faction_duplicate_only` и для `new_entity_candidate -> Character` через policy `safe_existing_character_duplicate_only`, после чего вызывает тот же existing merge path; optional `dry_run: true` даёт preview без side effects
 9. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
 10. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
 11. canonical entity / merge-linkage → `mirofish_entity_run_links`
@@ -214,7 +241,17 @@ Mapping:
 Правило стабильности теперь такое:
 
 - если candidate content не изменился, то сохраняются те же `candidate_id` и `canonical_id`,
+- `entity_run_links` тоже сохраняют прежнюю identity и не дублируются для того же unchanged candidate-path,
 - если candidate/evidence content изменился, fingerprint меняется и система рассматривает это как новый candidate-path.
+
+## 8.2 Stale-state recovery semantics
+
+Поверх same-db rerun stability у текущего write-back path есть ещё узкий stale-state recovery слой:
+
+- promoted candidate со stale candidate linkage может восстановиться через persisted canonical state (`source_candidate_id`, `target_canonical_*`, `promoted_from` run-link),
+- merged candidate со stale target linkage может восстановиться через requested `canonical_id`, persisted candidate linkage или `merged_into` run-link,
+- если recovery state согласован, flow детерминированно переиспользует existing canonical entity и existing run-link, а candidate `target_canonical_*` repair-ится,
+- если sources конфликтуют, ambiguous run-link state указывает на разные canonical IDs или recovered run-link ведёт в отсутствующий canonical entity, flow падает явно вместо silent repair.
 
 ## 9. Practical summary
 
