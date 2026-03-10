@@ -57,7 +57,7 @@
 - [x] неизменившийся candidate при same-db rerun сохраняет тот же `candidate_id` и тот же `canonical_id`
 - [x] есть прикладная mapping matrix: `09_MIRO_TO_LORESYSTEM_MAPPING.md`
 - [x] есть explicit narrow auto-promotion layer для safe cases: `batch/auto-promote` + `safe_event_only` / `safe_cross_run_event_only` / `safe_rumor_only` / `safe_cross_run_rumor_only` / `safe_relationship_only` / `safe_cross_run_relationship_only`
-- [x] есть explicit narrow auto-merge layer для safe duplicate merge cases: `batch/auto-merge` + `safe_existing_location_duplicate_only` / `safe_existing_event_duplicate_only` / `safe_existing_rumor_duplicate_only` / `safe_existing_relationship_duplicate_only` / `safe_existing_faction_duplicate_only`
+- [x] есть explicit narrow auto-merge layer для safe duplicate merge cases: `batch/auto-merge` + `safe_existing_location_duplicate_only` / `safe_existing_event_duplicate_only` / `safe_existing_rumor_duplicate_only` / `safe_existing_relationship_duplicate_only` / `safe_existing_faction_duplicate_only` / `safe_existing_character_duplicate_only`
 - [x] у `batch/auto-promote` есть `dry_run: true` explain/preview режим без side effects на candidate status / canonical rows / run links
 - [x] у `batch/auto-merge` есть `dry_run: true` explain/preview режим без side effects на candidate status / canonical rows / run links
 - [x] есть manual create/merge flow для `Location`, `Faction`, `Character` через existing `promote` / `merge` endpoints и staged canonical persistence

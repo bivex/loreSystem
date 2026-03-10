@@ -291,11 +291,13 @@ Mapping:
   - `safe_existing_rumor_duplicate_only`
   - `safe_existing_relationship_duplicate_only`
   - `safe_existing_faction_duplicate_only`
+  - `safe_existing_character_duplicate_only`
 - `safe_existing_location_duplicate_only` → только `new_entity_candidate -> Location`
 - `safe_existing_event_duplicate_only` → только `scenario_event -> Event`
 - `safe_existing_rumor_duplicate_only` → только `rumor_candidate -> Rumor`
 - `safe_existing_relationship_duplicate_only` → только `relationship_change -> CharacterRelationship`
 - `safe_existing_faction_duplicate_only` → только `new_entity_candidate -> Faction`
+- `safe_existing_character_duplicate_only` → только `new_entity_candidate -> Character`
 - только `confidence >= 0.90`
 - только минимум `2 evidence_ids`
 - mapping обязан содержать explicit `world_id`
@@ -304,16 +306,19 @@ Mapping:
 - rumor exact duplicate определяется только по normalized `name` + normalized `source_name` + unresolved truth bucket + `location_id` + `world_id`
 - relationship exact duplicate определяется только по `character_from_id` + `character_to_id` + `relationship_type` + `relationship_level` + `is_mutual` + `world_id`
 - faction exact duplicate определяется только по normalized `name` + `faction_type` + `alignment` + `leader_character_id` + `is_joinable` + `world_id`
+- character exact duplicate определяется только по normalized `name` + `status` + optional `parent_id` + `location_id` + `rarity` + `element` + `role` + `world_id`
 - event policy дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing `outcome` и resolve canonical participants через explicit `participant_ids` или `participant_map`
 - rumor policy дополнительно требует explicit/resolvable `source_name`, explicit/resolvable `location_id` и unresolved truth bucket (`Unverified` / `Partially True`)
 - relationship policy дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, разные стороны, `abs(relationship_level) >= 30`; `relationship_type` может быть передан явно или выводится из `relationship_level`, `is_mutual` резолвится из mapping
 - faction policy дополнительно требует resolvable `faction_type` и `alignment`; `leader_character_id` и `is_joinable` резолвятся из mapping или candidate payload
+- character policy дополнительно требует resolvable `status`, `location_id`, `rarity`, `element`, `role`; optional `parent_id` резолвится из mapping или candidate payload
 - policy требует ровно один staged canonical `Location` match и reject'ит no-match / ambiguous-match случаи
 - event policy тоже требует ровно один staged canonical `Event` match и reject'ит no-match / ambiguous-match случаи
 - rumor policy тоже требует ровно один staged canonical `Rumor` match и reject'ит no-match / ambiguous-match случаи
 - relationship policy тоже требует ровно один staged canonical `CharacterRelationship` match и reject'ит no-match / ambiguous-match случаи
 - faction policy тоже требует ровно один staged canonical `Faction` match и reject'ит no-match / ambiguous-match случаи
-- provenance metadata содержит `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`, faction slice — `merge_match_name`, `merge_match_faction_type`, `merge_match_alignment`, `merge_match_leader_character_id`, `merge_match_is_joinable`, `duplicate_guard`
+- character policy тоже требует ровно один staged canonical `Character` match и reject'ит no-match / ambiguous-match случаи
+- provenance metadata содержит `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`, faction slice — `merge_match_name`, `merge_match_faction_type`, `merge_match_alignment`, `merge_match_leader_character_id`, `merge_match_is_joinable`, `duplicate_guard`, character slice — `merge_match_name`, `merge_match_status`, `merge_match_parent_id`, `merge_match_location_id`, `merge_match_rarity`, `merge_match_element`, `merge_match_role`, `duplicate_guard`
 
 Manual create/merge для новых entity types сейчас intentionally explicit:
 
