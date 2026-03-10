@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import is_dataclass, fields
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -34,6 +34,7 @@ class MiroFishCandidatePromoter:
     """Promote approved staged candidate deltas into persisted canonical entities."""
 
     SAFE_EVENT_ONLY_POLICY = "safe_event_only"
+    SAFE_CROSS_RUN_EVENT_ONLY_POLICY = "safe_cross_run_event_only"
     SAFE_RUMOR_ONLY_POLICY = "safe_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
@@ -439,6 +440,8 @@ class MiroFishCandidatePromoter:
 
         if policy == self.SAFE_EVENT_ONLY_POLICY:
             return self._validate_safe_event_policy(candidate)
+        if policy == self.SAFE_CROSS_RUN_EVENT_ONLY_POLICY:
+            return self._validate_safe_cross_run_event_policy(candidate, payload)
         if policy == self.SAFE_RUMOR_ONLY_POLICY:
             return self._validate_safe_rumor_policy(candidate, payload)
         if policy == self.SAFE_RELATIONSHIP_ONLY_POLICY:
@@ -464,6 +467,62 @@ class MiroFishCandidatePromoter:
         if len(evidence_ids) < 2:
             raise ValueError("Policy 'safe_event_only' requires at least 2 evidence items")
         return {}
+
+    def _validate_safe_cross_run_event_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        self._validate_safe_event_policy(candidate)
+
+        proposed = candidate.get("proposed_change") or {}
+        participant_refs = self._normalize_participant_refs(proposed.get("participant_ids"))
+        if not participant_refs:
+            raise ValueError("Policy 'safe_cross_run_event_only' requires proposed_change.participant_ids")
+
+        timestamp_raw = str(proposed.get("timestamp") or "").strip()
+        if not timestamp_raw:
+            raise ValueError("Policy 'safe_cross_run_event_only' requires proposed_change.timestamp")
+        date_bucket = self._event_date_bucket(timestamp_raw, field_name="proposed_change.timestamp")
+
+        outcome_raw = str(proposed.get("outcome") or "").strip()
+        if not outcome_raw:
+            raise ValueError("Policy 'safe_cross_run_event_only' requires proposed_change.outcome")
+        outcome = self._parse_event_outcome(outcome_raw)
+        if outcome == EventOutcome.ONGOING:
+            raise ValueError("Policy 'safe_cross_run_event_only' requires terminal non-ongoing outcome")
+
+        supporting_run_ids = self._find_supporting_event_run_ids(
+            candidate,
+            participant_refs=participant_refs,
+            outcome=outcome,
+            date_bucket=date_bucket,
+        )
+        if not supporting_run_ids:
+            raise ValueError(
+                "Policy 'safe_cross_run_event_only' requires support from at least 1 additional run with the same participant set, outcome, and date bucket"
+            )
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        canonical_participants = self._resolve_event_participant_ids(candidate, payload)
+        location_id = self._as_optional_int(payload.get("location_id"), "location_id")
+        conflicting_canonical = self._find_conflicting_canonical_event(
+            world_id=world_id,
+            canonical_participants=canonical_participants,
+            outcome=outcome,
+            date_bucket=self._event_date_bucket(payload.get("start_date") or timestamp_raw, field_name="start_date"),
+            location_id=location_id,
+            skip_canonical_id=self._as_optional_int(candidate.get("target_canonical_id"), "target_canonical_id"),
+        )
+        if conflicting_canonical is not None:
+            raise ValueError(
+                "Policy 'safe_cross_run_event_only' rejected due to conflicting staged canonical Event outcome for the same participant set and date bucket"
+            )
+
+        return {
+            "cross_run_supporting_run_ids": supporting_run_ids,
+            "cross_run_distinct_run_count": len(supporting_run_ids) + 1,
+            "event_match_participant_refs": list(participant_refs),
+            "event_match_outcome": outcome.value,
+            "event_match_date_bucket": date_bucket,
+            "contradiction_check": "passed",
+        }
 
     def _validate_safe_rumor_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
@@ -589,6 +648,52 @@ class MiroFishCandidatePromoter:
             supporting_run_ids.add(str(item.get("run_id") or "").strip())
         return sorted(run_id for run_id in supporting_run_ids if run_id)
 
+    def _find_supporting_event_run_ids(
+        self,
+        candidate: dict[str, Any],
+        *,
+        participant_refs: tuple[str, ...],
+        outcome: EventOutcome,
+        date_bucket: str,
+    ) -> list[str]:
+        supporting_run_ids: set[str] = set()
+        current_run_id = str(candidate.get("run_id") or "").strip()
+        for item in self.store.list_candidates(world_id=str(candidate.get("world_id") or ""), candidate_type="scenario_event"):
+            if item.get("candidate_id") == candidate.get("candidate_id"):
+                continue
+            if str(item.get("run_id") or "").strip() == current_run_id:
+                continue
+            if str(item.get("target_canonical_type") or "").strip() != "Event":
+                continue
+            if str(item.get("status") or "").strip() == "rejected":
+                continue
+            if float(item.get("confidence") or 0.0) < 0.90:
+                continue
+            evidence_ids = [str(entry).strip() for entry in (item.get("evidence_ids") or []) if str(entry).strip()]
+            if len(evidence_ids) < 2:
+                continue
+
+            proposed = item.get("proposed_change") or {}
+            if self._normalize_participant_refs(proposed.get("participant_ids")) != participant_refs:
+                continue
+            outcome_raw = str(proposed.get("outcome") or "").strip()
+            if not outcome_raw:
+                continue
+            try:
+                item_outcome = self._parse_event_outcome(outcome_raw)
+            except ValueError:
+                continue
+            if item_outcome != outcome:
+                continue
+            try:
+                item_date_bucket = self._event_date_bucket(proposed.get("timestamp"), field_name="proposed_change.timestamp")
+            except ValueError:
+                continue
+            if item_date_bucket != date_bucket:
+                continue
+            supporting_run_ids.add(str(item.get("run_id") or "").strip())
+        return sorted(run_id for run_id in supporting_run_ids if run_id)
+
     def _find_conflicting_canonical_relationship(
         self,
         *,
@@ -612,11 +717,62 @@ class MiroFishCandidatePromoter:
                 return canonical
         return None
 
+    def _find_conflicting_canonical_event(
+        self,
+        *,
+        world_id: int,
+        canonical_participants: tuple[int, ...],
+        outcome: EventOutcome,
+        date_bucket: str,
+        location_id: int | None,
+        skip_canonical_id: int | None,
+    ) -> dict[str, Any] | None:
+        if not canonical_participants:
+            return None
+        for canonical in self.store.list_canonical_entities(canonical_type="Event", world_id=world_id):
+            canonical_id = int(canonical.get("canonical_id") or 0)
+            if skip_canonical_id is not None and canonical_id == skip_canonical_id:
+                continue
+            entity = canonical.get("entity") or {}
+            if self._normalize_canonical_participant_ids(entity.get("participant_ids")) != canonical_participants:
+                continue
+            try:
+                existing_date_bucket = self._event_date_bucket(
+                    ((entity.get("date_range") or {}).get("start_date")),
+                    field_name="entity.date_range.start_date",
+                )
+            except ValueError:
+                continue
+            if existing_date_bucket != date_bucket:
+                continue
+            if location_id is not None and self._as_optional_int(entity.get("location_id"), "entity.location_id") != location_id:
+                continue
+            try:
+                existing_outcome = self._parse_event_outcome(entity.get("outcome"))
+            except ValueError:
+                continue
+            if existing_outcome != EventOutcome.ONGOING and existing_outcome != outcome:
+                return canonical
+        return None
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
             return tuple()
         return refs
+
+    def _normalize_participant_refs(self, value: Any) -> tuple[str, ...]:
+        refs = {str(item).strip() for item in (value or []) if str(item).strip()}
+        return tuple(sorted(refs))
+
+    def _normalize_canonical_participant_ids(self, value: Any) -> tuple[int, ...]:
+        normalized: set[int] = set()
+        for item in (value or []):
+            try:
+                normalized.add(int(item))
+            except (TypeError, ValueError):
+                continue
+        return tuple(sorted(normalized))
 
     def _relationship_sign(self, value: Any) -> int:
         try:
@@ -628,6 +784,33 @@ class MiroFishCandidatePromoter:
         if resolved < 0:
             return -1
         return 0
+
+    def _resolve_event_participant_ids(self, candidate: dict[str, Any], payload: dict[str, Any]) -> tuple[int, ...]:
+        participant_ids = payload.get("participant_ids")
+        if participant_ids is None:
+            proposed = candidate.get("proposed_change") or {}
+            source_participants = proposed.get("participant_ids") or []
+            participant_map = payload.get("participant_map") or {}
+            if source_participants:
+                participant_ids = [participant_map.get(str(item)) for item in source_participants]
+            else:
+                participant_ids = list(participant_map.values())
+        normalized: set[int] = set()
+        for item in (participant_ids or []):
+            if item is None:
+                continue
+            normalized.add(self._as_int(item, "participant_ids[]"))
+        return tuple(sorted(normalized))
+
+    def _event_date_bucket(self, value: Any, *, field_name: str) -> str:
+        try:
+            timestamp = self._parse_timestamp(value)
+        except ValueError as exc:
+            raise ValueError(f"{field_name} must be a valid ISO timestamp") from exc
+        resolved = timestamp.value
+        if resolved.tzinfo is None:
+            return resolved.date().isoformat()
+        return resolved.astimezone(timezone.utc).date().isoformat()
 
     def _build_auto_promote_metadata(self, payload: dict[str, Any], validation_metadata: dict[str, Any], *, policy: str) -> dict[str, Any]:
         existing_metadata = payload.get("metadata") or {}

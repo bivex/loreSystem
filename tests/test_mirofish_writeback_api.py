@@ -181,6 +181,65 @@ def cross_run_relationship_bundle(
     }
 
 
+def cross_run_event_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    outcome: str,
+    participant_ids: list[str] | None = None,
+    timestamp: str = "2026-03-10T12:05:00Z",
+    confidence: float = 0.94,
+) -> dict:
+    refs = participant_ids or ["actor:royal_court", "org:royal_court"]
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "post",
+                "source_type": "runtime_action",
+                "actor_refs": refs,
+                "text": "The Royal Court publicly denies the forged decree.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "report",
+                "source_type": "runtime_action",
+                "actor_refs": refs,
+                "text": "Multiple witnesses confirm the denial spread across the capital.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court issues denial",
+                "summary": "The court publicly denies the forged decree.",
+                "proposed_change": {
+                    "participant_ids": refs,
+                    "timestamp": timestamp,
+                    "outcome": outcome,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -823,6 +882,61 @@ def test_batch_auto_promote_endpoint_supports_cross_run_relationship_policy(tmp_
     assert solo_detail["status"] == "pending_review"
 
 
+def test_batch_auto_promote_endpoint_supports_cross_run_event_policy(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-cross-run-event.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="success"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-solo", candidate_id="cand-event-solo", outcome="failure"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_cross_run_event_only",
+            "items": [
+                {
+                    "candidate_id": "cand-event-primary",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "outcome": "success",
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-solo",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "outcome": "failure",
+                    },
+                },
+            ],
+        },
+    )
+
+    primary_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-primary")[1]["data"]
+    solo_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-solo")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_cross_run_event_only"
+    assert payload["data"]["requested_count"] == 2
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-event-primary"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_event_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-event-support"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["event_match_outcome"] == "success"
+    assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-event-solo"}
+    assert primary_detail["status"] == "promoted"
+    assert solo_detail["status"] == "pending_review"
+
+
 def test_batch_auto_promote_endpoint_supports_dry_run_preview_without_side_effects(tmp_path):
     app = create_writeback_app(str(tmp_path / "batch-auto-promote-dry-run.db"))
     call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(low_confidence_event=True, include_rumor_candidate=True))
@@ -902,6 +1016,61 @@ def test_batch_auto_promote_endpoint_supports_dry_run_preview_without_side_effec
     assert safe_detail["canonical_entity"] is None
     assert low_detail["status"] == "pending_review"
     assert rumor_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_supports_cross_run_event_dry_run_preview(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-cross-run-event-dry-run.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="success"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_event_bundle(run_id="run-event-ongoing", candidate_id="cand-event-ongoing", outcome="ongoing"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_cross_run_event_only",
+            "dry_run": True,
+            "items": [
+                {
+                    "candidate_id": "cand-event-primary",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "outcome": "success",
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-ongoing",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "outcome": "ongoing",
+                    },
+                },
+            ],
+        },
+    )
+
+    primary_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-primary")[1]["data"]
+    ongoing_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-ongoing")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_cross_run_event_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-event-primary"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["event_match_outcome"] == "success"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["cross_run_supporting_run_ids"] == ["run-event-support"]
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-event-ongoing"
+    assert payload["data"]["ineligible"][0]["reasons"] == ["Policy 'safe_cross_run_event_only' requires terminal non-ongoing outcome"]
+    assert primary_detail["status"] == "pending_review"
+    assert primary_detail["canonical_entity"] is None
+    assert ongoing_detail["status"] == "pending_review"
 
 
 def test_batch_auto_promote_endpoint_rejects_non_boolean_dry_run(tmp_path):

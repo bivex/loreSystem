@@ -195,6 +195,65 @@ def cross_run_relationship_bundle(
     }
 
 
+def cross_run_event_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    outcome: str,
+    participant_ids: list[str] | None = None,
+    timestamp: str = "2026-03-10T12:05:00Z",
+    confidence: float = 0.94,
+) -> dict:
+    refs = participant_ids or ["actor:royal_court", "org:royal_court"]
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "post",
+                "source_type": "runtime_action",
+                "actor_refs": refs,
+                "text": "The Royal Court publicly denies the forged decree.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "report",
+                "source_type": "runtime_action",
+                "actor_refs": refs,
+                "text": "Multiple witnesses confirm the denial spread across the capital.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court issues denial",
+                "summary": "The court publicly denies the forged decree.",
+                "proposed_change": {
+                    "participant_ids": refs,
+                    "timestamp": timestamp,
+                    "outcome": outcome,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "emergent_event", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -542,6 +601,116 @@ def test_auto_promote_policy_promotes_cross_run_relationship_candidate(tmp_path)
     assert result["run_link"]["metadata"]["contradiction_check"] == "passed"
 
 
+def test_auto_promote_policy_promotes_cross_run_event_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-event.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="success"))
+
+    result = promoter.auto_promote_candidate(
+        "cand-event-primary",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+        policy="safe_cross_run_event_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "Event"
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_event_only"
+    assert result["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-event-support"]
+    assert result["run_link"]["metadata"]["event_match_outcome"] == "success"
+    assert result["run_link"]["metadata"]["event_match_date_bucket"] == "2026-03-10"
+    assert result["run_link"]["metadata"]["contradiction_check"] == "passed"
+
+
+def test_auto_promote_policy_rejects_cross_run_event_without_support(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-event-no-support.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-event-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                "outcome": "success",
+            },
+            policy="safe_cross_run_event_only",
+        )
+    except ValueError as exc:
+        assert "at least 1 additional run" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for missing event cross-run support")
+
+    candidate = store.get_candidate("cand-event-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_rejects_cross_run_event_with_ongoing_outcome(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-event-ongoing.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="ongoing"))
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="ongoing"))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-event-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                "outcome": "ongoing",
+            },
+            policy="safe_cross_run_event_only",
+        )
+    except ValueError as exc:
+        assert "terminal non-ongoing outcome" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for ongoing event outcome")
+
+
+def test_preview_auto_promote_candidate_reports_cross_run_event_eligibility_without_side_effects(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "preview-auto-policy-cross-run-event.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="success"))
+
+    preview = promoter.preview_auto_promote_candidate(
+        "cand-event-primary",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+        },
+        policy="safe_cross_run_event_only",
+    )
+
+    candidate = store.get_candidate("cand-event-primary")
+    canonical_entity = store.get_canonical_entity_by_candidate("cand-event-primary")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_type"] == "Event"
+    assert preview["metadata_preview"]["auto_promote_policy"] == "safe_cross_run_event_only"
+    assert preview["metadata_preview"]["cross_run_supporting_run_ids"] == ["run-event-support"]
+    assert any("Cross-run support found in runs: run-event-support" == item for item in preview["reasons"])
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+    assert canonical_entity is None
+
+
 def test_auto_promote_policy_rejects_cross_run_relationship_without_support(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-relationship-no-support.db")
     importer = MiroFishResultImporter(store)
@@ -618,6 +787,49 @@ def test_auto_promote_policy_rejects_cross_run_relationship_on_canonical_contrad
         raise AssertionError("Expected ValueError for canonical contradiction")
 
     candidate = store.get_candidate("cand-relationship-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_rejects_cross_run_event_on_canonical_contradiction(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-event-conflict.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-existing", candidate_id="cand-event-existing", outcome="failure"))
+    approved_existing = _approve_candidate(store, candidate_type="scenario_event", run_id="run-event-existing")
+    promoter.promote_candidate(
+        approved_existing["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "failure",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-primary", candidate_id="cand-event-primary", outcome="success"))
+    importer.import_result_bundle(cross_run_event_bundle(run_id="run-event-support", candidate_id="cand-event-support", outcome="success"))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-event-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                "outcome": "success",
+                "location_id": 301,
+            },
+            policy="safe_cross_run_event_only",
+        )
+    except ValueError as exc:
+        assert "conflicting staged canonical Event outcome" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for canonical event contradiction")
+
+    candidate = store.get_candidate("cand-event-primary")
     assert candidate is not None
     assert candidate["status"] == "pending_review"
 
