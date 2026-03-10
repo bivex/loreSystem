@@ -544,6 +544,7 @@ Confidence лучше считать не LLM-словами, а детерми�
 
 - policies:
   - `safe_event_only`
+  - `safe_cross_run_event_only`
   - `safe_rumor_only`
   - `safe_relationship_only`
   - `safe_cross_run_relationship_only`
@@ -552,11 +553,19 @@ Confidence лучше считать не LLM-словами, а детерми�
 - только по явно переданным `candidate_id`
 - только при явном `mapping` payload для promote
 - `safe_event_only` → только `scenario_event -> Event`
+- `safe_cross_run_event_only` → только `scenario_event -> Event`, но с cross-run stability/contradiction gate
 - `safe_rumor_only` → только `rumor_candidate -> Rumor`
 - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
 - `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, но с cross-run stability/contradiction gate
 - для всех safe policy: `confidence >= 0.90`
 - для всех safe policy: минимум `2 evidence_ids`
+- `safe_cross_run_event_only` использует все требования `safe_event_only`, а затем дополнительно требует:
+  - `proposed_change.participant_ids` с устойчивым participant set,
+  - `proposed_change.timestamp`, который можно свернуть в UTC date bucket,
+  - terminal `outcome` (не `ongoing`),
+  - хотя бы 1 additional distinct `run_id` с тем же participant set, тем же terminal outcome и тем же UTC date bucket,
+  - отсутствие staged canonical `Event` с тем же participant set / date bucket и другим terminal outcome,
+  - explicit mapping, который реально проходит existing promote path для `Event`
 - `safe_rumor_only` требует explicit `source_name` и `credibility_score`
 - `safe_relationship_only` требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
 - `safe_cross_run_relationship_only` использует все требования `safe_relationship_only`, а затем дополнительно требует:
@@ -729,13 +738,14 @@ Promote только вручную, если:
 - auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через четыре отдельные именованные policy
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
+- cross-run event policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `contradiction_check`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 - `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
 Пока не реализовано:
 
 - background / scheduled auto-promotion
-- более широкий contradiction-aware / cross-run-aware policy engine за пределами relationship-only safe slice
+- более широкий contradiction-aware / cross-run-aware policy engine за пределами event/relationship-only safe slices
 
 ### 14.4 Batch contract
 
@@ -750,6 +760,7 @@ Promote только вручную, если:
   - каждый item содержит `candidate_id` и `mapping`
   - текущие допустимые policy:
     - `safe_event_only`
+    - `safe_cross_run_event_only`
     - `safe_rumor_only`
     - `safe_relationship_only`
     - `safe_cross_run_relationship_only`
@@ -770,6 +781,16 @@ Promote только вручную, если:
 - `target_canonical_type == Event`
 - `confidence >= 0.90`
 - `len(evidence_ids) >= 2`
+
+Для `safe_cross_run_event_only` item дополнительно проходит такой gate:
+
+- сначала полностью проходит `safe_event_only`
+- `proposed_change.participant_ids` содержит устойчивый participant set
+- `proposed_change.timestamp` присутствует и сворачивается в UTC date bucket
+- `proposed_change.outcome` присутствует и является terminal outcome, а не `ongoing`
+- существует хотя бы 1 additional distinct `run_id` с тем же participant set, тем же terminal outcome и тем же UTC date bucket
+- supporting event candidate не `rejected`, имеет `confidence >= 0.90` и `len(evidence_ids) >= 2`
+- в staged canonical `Event` нет conflicting terminal outcome для того же participant set / UTC date bucket (и того же `location_id`, если он явно задан)
 
 Для `safe_rumor_only` item дополнительно проходит такой gate:
 
@@ -917,11 +938,11 @@ Promote только вручную, если:
 Реально реализованный slice сейчас такой:
 
 - explicit policy endpoint `batch/auto-promote`
-- policies `safe_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
+- policies `safe_event_only`, `safe_cross_run_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
 - только `scenario_event -> Event`, `rumor_candidate -> Rumor`, `relationship_change -> CharacterRelationship`
 - только narrow opt-in gate с audit metadata
 - explain/preview через `dry_run: true` на том же endpoint
-- cross-run-aware часть пока реализована только как узкий relationship-only slice, а не как общий policy engine
+- cross-run-aware часть пока реализована только как узкие event/relationship slices, а не как общий policy engine
 
 Пока не сделано в этой фазе:
 

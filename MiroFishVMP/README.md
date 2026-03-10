@@ -58,6 +58,7 @@
   - optional `dry_run: true` даёт explain/preview без side effects
   - текущие policies:
     - `safe_event_only`
+    - `safe_cross_run_event_only`
     - `safe_rumor_only`
     - `safe_relationship_only`
     - `safe_cross_run_relationship_only`
@@ -88,14 +89,16 @@
   - только explicit opt-in вызов
   - тот же endpoint умеет `dry_run: true` для preview policy gate + promote viability check
   - `safe_event_only` → только `scenario_event -> Event`
+  - `safe_cross_run_event_only` → только `scenario_event -> Event`, но уже с cross-run stability/contradiction gate
   - `safe_rumor_only` → только `rumor_candidate -> Rumor`
   - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
   - `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, но уже с cross-run stability gate
   - базовые gate для всех safe policy: `confidence >= 0.90` и минимум `2 evidence_ids`
+  - `safe_cross_run_event_only` дополнительно требует `proposed_change.participant_ids`, `proposed_change.timestamp`, terminal non-ongoing outcome, хотя бы один supporting run с тем же participant set / outcome / UTC date bucket и режет conflicting staged canonical `Event` с тем же participant set / date bucket, но другим terminal outcome
   - `safe_rumor_only` дополнительно требует explicit `source_name` и `credibility_score`
   - `safe_relationship_only` дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
   - `safe_cross_run_relationship_only` дополнительно требует хотя бы один supporting run с тем же directed `actor_refs` и той же polarity, плюс отклоняет opposite-polarity staged canonical relationship для той же directed pair
-  - auto-path пишет `auto_promote_policy` / `auto_promoted`, а cross-run policy ещё и `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check` в provenance metadata
+  - auto-path пишет `auto_promote_policy` / `auto_promoted`, а cross-run policy ещё и `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`; event cross-run slice дополнительно пишет `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`
   - `dry_run` возвращает per-item `eligible/ineligible`, `reasons`, `metadata_preview` и ничего не меняет в candidate status / canonical entities / run links
 - manual create для `Location` / `Faction` / `Character` остаётся review-only и требует fully explicit mapping payload:
   - `Location` требует как минимум `location_type`
