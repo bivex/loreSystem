@@ -36,6 +36,7 @@ class MiroFishCandidatePromoter:
     SAFE_EVENT_ONLY_POLICY = "safe_event_only"
     SAFE_CROSS_RUN_EVENT_ONLY_POLICY = "safe_cross_run_event_only"
     SAFE_RUMOR_ONLY_POLICY = "safe_rumor_only"
+    SAFE_CROSS_RUN_RUMOR_ONLY_POLICY = "safe_cross_run_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
 
@@ -444,6 +445,8 @@ class MiroFishCandidatePromoter:
             return self._validate_safe_cross_run_event_policy(candidate, payload)
         if policy == self.SAFE_RUMOR_ONLY_POLICY:
             return self._validate_safe_rumor_policy(candidate, payload)
+        if policy == self.SAFE_CROSS_RUN_RUMOR_ONLY_POLICY:
+            return self._validate_safe_cross_run_rumor_policy(candidate, payload)
         if policy == self.SAFE_RELATIONSHIP_ONLY_POLICY:
             return self._validate_safe_relationship_policy(candidate, payload)
         if policy == self.SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY:
@@ -549,6 +552,58 @@ class MiroFishCandidatePromoter:
             raise ValueError("Policy 'safe_rumor_only' requires credibility_score")
         self._as_int(payload.get("credibility_score"), "credibility_score")
         return {}
+
+    def _validate_safe_cross_run_rumor_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        self._validate_safe_rumor_policy(candidate, payload)
+
+        proposed = candidate.get("proposed_change") or {}
+        rumor_name = self._normalize_rumor_name(candidate.get("name") or proposed.get("name"))
+        if not rumor_name:
+            raise ValueError("Policy 'safe_cross_run_rumor_only' requires candidate.name")
+
+        source_name = self._normalize_source_name(payload.get("source_name") or proposed.get("source_name"))
+        if not source_name:
+            raise ValueError("Policy 'safe_cross_run_rumor_only' requires source_name")
+
+        truth_bucket = self._rumor_truth_bucket(payload.get("truth_level") or proposed.get("truth_level") or "Unverified")
+        if truth_bucket not in {"Unverified", "Partially True"}:
+            raise ValueError(
+                "Policy 'safe_cross_run_rumor_only' only supports unresolved truth levels (Unverified or Partially True)"
+            )
+
+        location_id = self._as_int(payload.get("location_id"), "location_id")
+        supporting_run_ids = self._find_supporting_rumor_run_ids(
+            candidate,
+            rumor_name=rumor_name,
+            source_name=source_name,
+            truth_bucket=truth_bucket,
+        )
+        if not supporting_run_ids:
+            raise ValueError(
+                "Policy 'safe_cross_run_rumor_only' requires support from at least 1 additional run with the same normalized rumor name, source name, and unresolved truth bucket"
+            )
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        existing_canonical = self._find_existing_canonical_rumor_signature(
+            world_id=world_id,
+            rumor_name=rumor_name,
+            source_name=source_name,
+            location_id=location_id,
+            skip_canonical_id=self._as_optional_int(candidate.get("target_canonical_id"), "target_canonical_id"),
+        )
+        if existing_canonical is not None:
+            raise ValueError(
+                "Policy 'safe_cross_run_rumor_only' rejected due to existing staged canonical Rumor with the same normalized name, source, and location"
+            )
+
+        return {
+            "cross_run_supporting_run_ids": supporting_run_ids,
+            "cross_run_distinct_run_count": len(supporting_run_ids) + 1,
+            "rumor_match_name": rumor_name,
+            "rumor_match_source_name": source_name,
+            "rumor_truth_bucket": truth_bucket,
+            "duplicate_guard": "passed",
+        }
 
     def _validate_safe_relationship_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
@@ -694,6 +749,45 @@ class MiroFishCandidatePromoter:
             supporting_run_ids.add(str(item.get("run_id") or "").strip())
         return sorted(run_id for run_id in supporting_run_ids if run_id)
 
+    def _find_supporting_rumor_run_ids(
+        self,
+        candidate: dict[str, Any],
+        *,
+        rumor_name: str,
+        source_name: str,
+        truth_bucket: str,
+    ) -> list[str]:
+        supporting_run_ids: set[str] = set()
+        current_run_id = str(candidate.get("run_id") or "").strip()
+        for item in self.store.list_candidates(world_id=str(candidate.get("world_id") or ""), candidate_type="rumor_candidate"):
+            if item.get("candidate_id") == candidate.get("candidate_id"):
+                continue
+            if str(item.get("run_id") or "").strip() == current_run_id:
+                continue
+            if str(item.get("target_canonical_type") or "").strip() != "Rumor":
+                continue
+            if str(item.get("status") or "").strip() == "rejected":
+                continue
+            if float(item.get("confidence") or 0.0) < 0.90:
+                continue
+            evidence_ids = [str(entry).strip() for entry in (item.get("evidence_ids") or []) if str(entry).strip()]
+            if len(evidence_ids) < 2:
+                continue
+
+            proposed = item.get("proposed_change") or {}
+            if self._normalize_rumor_name(item.get("name") or proposed.get("name")) != rumor_name:
+                continue
+            if self._normalize_source_name(proposed.get("source_name")) != source_name:
+                continue
+            try:
+                item_truth_bucket = self._rumor_truth_bucket(proposed.get("truth_level") or "Unverified")
+            except ValueError:
+                continue
+            if item_truth_bucket != truth_bucket:
+                continue
+            supporting_run_ids.add(str(item.get("run_id") or "").strip())
+        return sorted(run_id for run_id in supporting_run_ids if run_id)
+
     def _find_conflicting_canonical_relationship(
         self,
         *,
@@ -755,6 +849,29 @@ class MiroFishCandidatePromoter:
                 return canonical
         return None
 
+    def _find_existing_canonical_rumor_signature(
+        self,
+        *,
+        world_id: int,
+        rumor_name: str,
+        source_name: str,
+        location_id: int,
+        skip_canonical_id: int | None,
+    ) -> dict[str, Any] | None:
+        for canonical in self.store.list_canonical_entities(canonical_type="Rumor", world_id=world_id):
+            canonical_id = int(canonical.get("canonical_id") or 0)
+            if skip_canonical_id is not None and canonical_id == skip_canonical_id:
+                continue
+            entity = canonical.get("entity") or {}
+            if self._normalize_rumor_name(entity.get("name")) != rumor_name:
+                continue
+            if self._normalize_source_name(entity.get("source_name")) != source_name:
+                continue
+            if self._as_optional_int(entity.get("location_id"), "entity.location_id") != location_id:
+                continue
+            return canonical
+        return None
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
@@ -764,6 +881,12 @@ class MiroFishCandidatePromoter:
     def _normalize_participant_refs(self, value: Any) -> tuple[str, ...]:
         refs = {str(item).strip() for item in (value or []) if str(item).strip()}
         return tuple(sorted(refs))
+
+    def _normalize_rumor_name(self, value: Any) -> str:
+        return self._normalize_text_signature(value)
+
+    def _normalize_source_name(self, value: Any) -> str:
+        return self._normalize_text_signature(value)
 
     def _normalize_canonical_participant_ids(self, value: Any) -> tuple[int, ...]:
         normalized: set[int] = set()
@@ -811,6 +934,24 @@ class MiroFishCandidatePromoter:
         if resolved.tzinfo is None:
             return resolved.date().isoformat()
         return resolved.astimezone(timezone.utc).date().isoformat()
+
+    def _rumor_truth_bucket(self, value: Any) -> str:
+        normalized = self._normalize_text_signature(value or "Unverified")
+        mapping = {
+            "false": "False",
+            "unverified": "Unverified",
+            "partially true": "Partially True",
+            "true": "True",
+        }
+        if not normalized:
+            return "Unverified"
+        if normalized not in mapping:
+            raise ValueError("truth_level must be one of False, Unverified, Partially True, or True")
+        return mapping[normalized]
+
+    def _normalize_text_signature(self, value: Any) -> str:
+        text = str(value or "").strip().replace("_", " ").replace("-", " ")
+        return " ".join(text.split()).casefold()
 
     def _build_auto_promote_metadata(self, payload: dict[str, Any], validation_metadata: dict[str, Any], *, policy: str) -> dict[str, Any]:
         existing_metadata = payload.get("metadata") or {}

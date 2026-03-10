@@ -254,6 +254,61 @@ def cross_run_event_bundle(
     }
 
 
+def cross_run_rumor_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    name: str = "Forged decree rumor",
+    source_name: str = "Town criers",
+    truth_level: str = "Unverified",
+    confidence: float = 0.95,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "rumor_signal",
+                "source_type": "prediction_summary",
+                "text": "Town criers keep repeating the forged decree story.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "rumor_signal",
+                "source_type": "prediction_summary",
+                "text": "A second witness confirms the rumor is still spreading.",
+                "timestamp": "2026-03-10T12:06:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": name,
+                "summary": "Repeated chatter says the decree was forged.",
+                "proposed_change": {
+                    "source_name": source_name,
+                    "truth_level": truth_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -629,6 +684,43 @@ def test_auto_promote_policy_promotes_cross_run_event_candidate(tmp_path):
     assert result["run_link"]["metadata"]["contradiction_check"] == "passed"
 
 
+def test_auto_promote_policy_promotes_cross_run_rumor_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-rumor.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+    importer.import_result_bundle(
+        cross_run_rumor_bundle(
+            run_id="run-rumor-support",
+            candidate_id="cand-rumor-support",
+            name="  forged decree rumor  ",
+            source_name=" town criers ",
+        )
+    )
+
+    result = promoter.auto_promote_candidate(
+        "cand-rumor-primary",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "source_name": "Town criers",
+            "credibility_score": 7,
+            "location_id": 301,
+        },
+        policy="safe_cross_run_rumor_only",
+    )
+
+    assert result["candidate"]["status"] == "promoted"
+    assert result["canonical_entity"]["canonical_type"] == "Rumor"
+    assert result["canonical_entity"]["entity"]["credibility_score"] == 7
+    assert result["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_rumor_only"
+    assert result["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-rumor-support"]
+    assert result["run_link"]["metadata"]["rumor_match_name"] == "forged decree rumor"
+    assert result["run_link"]["metadata"]["rumor_match_source_name"] == "town criers"
+    assert result["run_link"]["metadata"]["rumor_truth_bucket"] == "Unverified"
+    assert result["run_link"]["metadata"]["duplicate_guard"] == "passed"
+
+
 def test_auto_promote_policy_rejects_cross_run_event_without_support(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-event-no-support.db")
     importer = MiroFishResultImporter(store)
@@ -680,6 +772,76 @@ def test_auto_promote_policy_rejects_cross_run_event_with_ongoing_outcome(tmp_pa
         raise AssertionError("Expected ValueError for ongoing event outcome")
 
 
+def test_auto_promote_policy_rejects_cross_run_rumor_without_support(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-rumor-no-support.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-rumor-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "source_name": "Town criers",
+                "credibility_score": 7,
+                "location_id": 301,
+            },
+            policy="safe_cross_run_rumor_only",
+        )
+    except ValueError as exc:
+        assert "at least 1 additional run" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for missing rumor cross-run support")
+
+    candidate = store.get_candidate("cand-rumor-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_rejects_cross_run_rumor_with_resolved_truth(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-rumor-resolved.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(
+        cross_run_rumor_bundle(
+            run_id="run-rumor-primary",
+            candidate_id="cand-rumor-primary",
+            truth_level="True",
+        )
+    )
+    importer.import_result_bundle(
+        cross_run_rumor_bundle(
+            run_id="run-rumor-support",
+            candidate_id="cand-rumor-support",
+            truth_level="True",
+        )
+    )
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-rumor-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "source_name": "Town criers",
+                "credibility_score": 7,
+                "location_id": 301,
+                "truth_level": "True",
+            },
+            policy="safe_cross_run_rumor_only",
+        )
+    except ValueError as exc:
+        assert "only supports unresolved truth levels" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for resolved rumor truth level")
+
+    candidate = store.get_candidate("cand-rumor-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
 def test_preview_auto_promote_candidate_reports_cross_run_event_eligibility_without_side_effects(tmp_path):
     store = MiroFishWriteBackStore(tmp_path / "preview-auto-policy-cross-run-event.db")
     importer = MiroFishResultImporter(store)
@@ -706,6 +868,38 @@ def test_preview_auto_promote_candidate_reports_cross_run_event_eligibility_with
     assert preview["metadata_preview"]["auto_promote_policy"] == "safe_cross_run_event_only"
     assert preview["metadata_preview"]["cross_run_supporting_run_ids"] == ["run-event-support"]
     assert any("Cross-run support found in runs: run-event-support" == item for item in preview["reasons"])
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+    assert canonical_entity is None
+
+
+def test_preview_auto_promote_candidate_reports_cross_run_rumor_eligibility_without_side_effects(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "preview-auto-policy-cross-run-rumor.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-support", candidate_id="cand-rumor-support"))
+
+    preview = promoter.preview_auto_promote_candidate(
+        "cand-rumor-primary",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "source_name": "Town criers",
+            "credibility_score": 7,
+            "location_id": 301,
+        },
+        policy="safe_cross_run_rumor_only",
+    )
+
+    candidate = store.get_candidate("cand-rumor-primary")
+    canonical_entity = store.get_canonical_entity_by_candidate("cand-rumor-primary")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_type"] == "Rumor"
+    assert preview["metadata_preview"]["auto_promote_policy"] == "safe_cross_run_rumor_only"
+    assert preview["metadata_preview"]["cross_run_supporting_run_ids"] == ["run-rumor-support"]
+    assert any("Cross-run support found in runs: run-rumor-support" == item for item in preview["reasons"])
     assert candidate is not None
     assert candidate["status"] == "pending_review"
     assert canonical_entity is None
@@ -830,6 +1024,49 @@ def test_auto_promote_policy_rejects_cross_run_event_on_canonical_contradiction(
         raise AssertionError("Expected ValueError for canonical event contradiction")
 
     candidate = store.get_candidate("cand-event-primary")
+    assert candidate is not None
+    assert candidate["status"] == "pending_review"
+
+
+def test_auto_promote_policy_rejects_cross_run_rumor_on_canonical_duplicate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-policy-cross-run-rumor-duplicate.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-existing", candidate_id="cand-rumor-existing"))
+    approved_existing = _approve_candidate(store, candidate_type="rumor_candidate", run_id="run-rumor-existing")
+    promoter.promote_candidate(
+        approved_existing["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "source_name": "Town criers",
+            "credibility_score": 6,
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+    importer.import_result_bundle(cross_run_rumor_bundle(run_id="run-rumor-support", candidate_id="cand-rumor-support"))
+
+    try:
+        promoter.auto_promote_candidate(
+            "cand-rumor-primary",
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "source_name": "Town criers",
+                "credibility_score": 7,
+                "location_id": 301,
+            },
+            policy="safe_cross_run_rumor_only",
+        )
+    except ValueError as exc:
+        assert "existing staged canonical Rumor" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for canonical rumor duplicate")
+
+    candidate = store.get_candidate("cand-rumor-primary")
     assert candidate is not None
     assert candidate["status"] == "pending_review"
 

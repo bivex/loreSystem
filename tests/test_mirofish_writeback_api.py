@@ -240,6 +240,61 @@ def cross_run_event_bundle(
     }
 
 
+def cross_run_rumor_bundle(
+    *,
+    run_id: str,
+    candidate_id: str,
+    name: str = "Forged decree rumor",
+    source_name: str = "Town criers",
+    truth_level: str = "Unverified",
+    confidence: float = 0.95,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-1", f"{candidate_id}-ev-2"]
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_ids[0],
+                "evidence_type": "rumor_signal",
+                "source_type": "prediction_summary",
+                "text": "Town criers keep repeating the forged decree story.",
+                "timestamp": "2026-03-10T12:05:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+            },
+            {
+                "evidence_id": evidence_ids[1],
+                "evidence_type": "rumor_signal",
+                "source_type": "prediction_summary",
+                "text": "A second witness confirms the rumor is still spreading.",
+                "timestamp": "2026-03-10T12:06:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+            },
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "rumor_candidate",
+                "target_canonical_type": "Rumor",
+                "name": name,
+                "summary": "Repeated chatter says the decree was forged.",
+                "proposed_change": {
+                    "source_name": source_name,
+                    "truth_level": truth_level,
+                },
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "prediction_summary", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def manual_candidate_bundle(
     *,
     candidate_id: str,
@@ -937,6 +992,61 @@ def test_batch_auto_promote_endpoint_supports_cross_run_event_policy(tmp_path):
     assert solo_detail["status"] == "pending_review"
 
 
+def test_batch_auto_promote_endpoint_supports_cross_run_rumor_policy(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-cross-run-rumor.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-support", candidate_id="cand-rumor-support", name=" forged decree rumor ", source_name=" town criers "))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-solo", candidate_id="cand-rumor-solo", name="Harbor poison rumor", source_name="Dockworkers"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_cross_run_rumor_only",
+            "items": [
+                {
+                    "candidate_id": "cand-rumor-primary",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "source_name": "Town criers",
+                        "credibility_score": 7,
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-rumor-solo",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "source_name": "Dockworkers",
+                        "credibility_score": 6,
+                        "location_id": 301,
+                    },
+                },
+            ],
+        },
+    )
+
+    primary_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-primary")[1]["data"]
+    solo_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-solo")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_cross_run_rumor_only"
+    assert payload["data"]["requested_count"] == 2
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-rumor-primary"
+    assert payload["data"]["succeeded"][0]["candidate"]["status"] == "promoted"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_promote_policy"] == "safe_cross_run_rumor_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["cross_run_supporting_run_ids"] == ["run-rumor-support"]
+    assert {item["candidate_id"] for item in payload["data"]["failed"]} == {"cand-rumor-solo"}
+    assert primary_detail["status"] == "promoted"
+    assert solo_detail["status"] == "pending_review"
+
+
 def test_batch_auto_promote_endpoint_supports_dry_run_preview_without_side_effects(tmp_path):
     app = create_writeback_app(str(tmp_path / "batch-auto-promote-dry-run.db"))
     call_json(app, "POST", "/api/mirofish/writeback/ingest", policy_ready_bundle(low_confidence_event=True, include_rumor_candidate=True))
@@ -1071,6 +1181,65 @@ def test_batch_auto_promote_endpoint_supports_cross_run_event_dry_run_preview(tm
     assert primary_detail["status"] == "pending_review"
     assert primary_detail["canonical_entity"] is None
     assert ongoing_detail["status"] == "pending_review"
+
+
+def test_batch_auto_promote_endpoint_supports_cross_run_rumor_dry_run_preview(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-promote-cross-run-rumor-dry-run.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-primary", candidate_id="cand-rumor-primary"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-support", candidate_id="cand-rumor-support"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", cross_run_rumor_bundle(run_id="run-rumor-resolved", candidate_id="cand-rumor-resolved", truth_level="True"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-promote",
+        {
+            "policy": "safe_cross_run_rumor_only",
+            "dry_run": True,
+            "items": [
+                {
+                    "candidate_id": "cand-rumor-primary",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "source_name": "Town criers",
+                        "credibility_score": 7,
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-rumor-resolved",
+                    "mapping": {
+                        "tenant_id": 1,
+                        "world_id": 101,
+                        "source_name": "Town criers",
+                        "credibility_score": 7,
+                        "location_id": 301,
+                        "truth_level": "True",
+                    },
+                },
+            ],
+        },
+    )
+
+    primary_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-primary")[1]["data"]
+    resolved_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-rumor-resolved")[1]["data"]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_cross_run_rumor_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-rumor-primary"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["cross_run_supporting_run_ids"] == ["run-rumor-support"]
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-rumor-resolved"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_cross_run_rumor_only' only supports unresolved truth levels (Unverified or Partially True)"
+    ]
+    assert primary_detail["status"] == "pending_review"
+    assert primary_detail["canonical_entity"] is None
+    assert resolved_detail["status"] == "pending_review"
 
 
 def test_batch_auto_promote_endpoint_rejects_non_boolean_dry_run(tmp_path):
