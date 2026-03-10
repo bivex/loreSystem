@@ -49,12 +49,14 @@
 
 - импорт `MiroFish result bundle` в отдельный SQLite staging store
 - сохранение `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas`
-- stdlib HTTP API `POST/GET` для ingest/review
+- stdlib HTTP API `POST/GET` для ingest/review/detail
+- single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 - review actions: `approve` / `reject`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
   - `relationship_change -> CharacterRelationship`
+- safe merge flow для approved candidate в уже существующий staged canonical entity через `merged_into`
 - safe canonical persistence в отдельную таблицу `mirofish_canonical_entities`
 - явная provenance-связь `run -> canonical entity` через отдельную таблицу `mirofish_entity_run_links`
 - нормализованный staging layer для runtime actors/organizations через `mirofish_run_subjects`
@@ -84,7 +86,7 @@
 
 Формула интеграции:
 
-`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Run Subjects + Runtime Evidence -> Candidate Deltas -> Review/Promote -> Canonical Entity + Run Links`
+`Text -> Structured World -> Social Projection Bundle -> MiroFish/OASIS Runs -> Run Subjects + Runtime Evidence -> Candidate Deltas -> Review/Merge/Promote -> Canonical Entity + Run Links`
 
 ## Что показал анализ кода MiroFish
 

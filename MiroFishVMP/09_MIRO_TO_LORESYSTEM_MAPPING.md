@@ -96,16 +96,16 @@ Mapping:
 |---|---|---|---|
 | `candidate_deltas[]` | `CandidateDelta` | `mirofish_candidate_deltas` | explicit candidate path |
 | derived event/rumor/relationship outputs | derived `CandidateDelta` | `mirofish_candidate_deltas` | when explicit candidate list missing |
-| `candidate_type` | `candidate_type` | `candidate_type` | review / promote routing key |
-| `target_canonical_type` | `target_canonical_type` | `target_canonical_type` | set after promote if not already present |
-| `target_canonical_id` | `target_canonical_id` | `target_canonical_id` | set after promote |
+| `candidate_type` | `candidate_type` | `candidate_type` | review / merge / promote routing key |
+| `target_canonical_type` | `target_canonical_type` | `target_canonical_type` | set after merge/promote if not already present |
+| `target_canonical_id` | `target_canonical_id` | `target_canonical_id` | set after merge/promote |
 | `proposed_entity_type` | `proposed_entity_type` | `proposed_entity_type` | optional |
 | `name` | `name` | `name` | candidate label |
 | `summary` | `summary` | `summary` | candidate text |
 | `proposed_change` | `proposed_change` | `proposed_change_json` | canonical mapping payload source |
 | `evidence_ids[]` | `evidence_ids` | `evidence_ids_json` | evidence linkage |
 | `source_refs[]` | `source_refs` | `source_refs_json` | supporting refs |
-| `status` | `status` | `status` | `pending_review` → `approved` / `rejected` / `promoted` |
+| `status` | `status` | `status` | `pending_review` → `approved` / `rejected` / `promoted` / `merged` |
 
 ### 5.1 Deterministic candidate identity
 
@@ -136,15 +136,25 @@ Mapping:
 | `relationship_change` | `CharacterRelationship` | supported |
 | `actor` / `organization` runtime subjects | direct promote target | not implemented |
 
+## 6.1 Merge semantics
+
+Текущий `merge` flow специально ограничен безопасной семантикой:
+
+- merge работает только в уже существующий `mirofish_canonical_entities.canonical_id`,
+- новый canonical snapshot при merge не создаётся,
+- candidate получает `status = merged` и `target_canonical_*`,
+- provenance-связь пишется как `relation_type = merged_into`.
+
 ## 7. Provenance mapping
 
 | Source | loreSystem layer | Target |
 |---|---|---|
 | generic generation run | `GenerationRunRecord` | `LoreData.metadata.generation_runs` |
 | generic entity provenance | `EntityProvenanceLink` | `LoreData.metadata.entity_provenance` |
-| promoted write-back entity | run-link persistence | `mirofish_entity_run_links` |
+| promoted write-back entity | run-link persistence (`promoted_from`) | `mirofish_entity_run_links` |
+| merged write-back candidate | run-link persistence (`merged_into`) | `mirofish_entity_run_links` |
 | `candidate_id` used for promotion | `source_candidate_id` | `mirofish_canonical_entities.source_candidate_id` |
-| promoted entity provenance | `run_id + candidate_id + evidence_ids` | `mirofish_entity_run_links` |
+| promoted/merged entity provenance | `run_id + candidate_id + evidence_ids` | `mirofish_entity_run_links` |
 
 ## 8. End-to-end trace that works now
 
@@ -154,8 +164,9 @@ Mapping:
 2. `actors[]` / `organizations[]` → `mirofish_run_subjects`
 3. `runtime_evidence.actor_refs` → `linked_subjects`
 4. `candidate_deltas` → review / approve / reject
-5. approved candidate → canonical entity (`Event` / `Rumor` / `CharacterRelationship`)
-6. canonical entity → `mirofish_entity_run_links`
+5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
+6. approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
+7. canonical entity / merge-linkage → `mirofish_entity_run_links`
 
 ## 8.1 Same-DB rerun semantics
 
@@ -193,7 +204,9 @@ Mapping:
 - runtime evidence
 - linked evidence subjects
 - reviewable candidate deltas
+- single-candidate review detail
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
+- merged candidate linkage в existing staged canonical entity
 - explicit `run -> canonical entity` provenance links

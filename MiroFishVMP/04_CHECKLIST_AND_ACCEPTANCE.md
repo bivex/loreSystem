@@ -46,6 +46,8 @@
 - [x] promote требует отдельного explicit mapping payload
 - [x] canonical snapshot пишется в отдельную safe table `mirofish_canonical_entities`, а не напрямую в legacy canonical repositories
 - [x] после promote создаётся явная provenance-связь `run -> canonical entity` в `mirofish_entity_run_links`
+- [x] есть single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
+- [x] approved candidate можно safe-merge'ить в уже существующий staged canonical entity без создания нового canonical snapshot
 - [x] у обычного lore bundle появился top-level provenance layer через `LoreData.metadata`
 - [x] actors / organizations из result bundle нормализуются в `mirofish_run_subjects`
 - [x] runtime evidence readback резолвит `actor_refs` в `linked_subjects`
@@ -56,7 +58,6 @@
 
 ### Что ещё остаётся вне текущего MVP
 
-- [ ] `merge` flow для candidate deltas
 - [ ] batch review / batch promotion
 - [ ] auto-promotion policy
 - [ ] manual create/merge flow для `Location`, `Faction`, `Character`
@@ -111,7 +112,7 @@ MVP считается готовым, если выполняются все у
 - **расширяемой** — можно добавить новые сущности без слома ядра
 - **объяснимой** — видно, откуда взялся прогноз
 - **трассируемой** — видно, из какой канонической сущности появился агент
-- **аудируемой** — видно, из какого `run_id` и `candidate_id` появился promoted canonical entity
+- **аудируемой** — видно, из какого `run_id` и `candidate_id` появился promoted или merged canonical linkage
 - **наблюдаемой** — видно, какие key actors / organizations реально участвовали в run и к каким evidence они привязаны
 - **идемпотентной на уровне staging-store** — повторный импорт того же run в ту же SQLite БД не оставляет stale canonical/run-link rows
 - **стабильной по identity для неизменившегося результата** — rerun не меняет `candidate_id` / `canonical_id`, если candidate content не изменился
@@ -128,4 +129,4 @@ MVP считается готовым, если выполняются все у
 
 Если хотя бы один ответ "нет", нужно чинить архитектуру, а не наращивать фичи.
 
-На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + promote, без direct canon write, с явным provenance/run-link следом, с нормализованным subject/evidence слоем и с подтверждённой repeat-run идемпотентностью на same DB**.
+На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + merge/promote, без direct canon write, с явным provenance/run-link следом, с нормализованным subject/evidence слоем и с подтверждённой repeat-run идемпотентностью на same DB**.

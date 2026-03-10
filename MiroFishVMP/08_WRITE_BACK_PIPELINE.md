@@ -464,10 +464,10 @@ Forward path у интеграции уже понятен:
 - `approved`
 - `rejected`
 - `promoted`
+- `merged`
 
 Дополнительно как future/planned statuses могут появиться:
 
-- `merged`
 - `observed`
 
 ## 11. Confidence model
@@ -592,32 +592,33 @@ Promote только вручную, если:
 - `GET /api/mirofish/writeback/runs/{run_id}`
 - `GET /api/mirofish/writeback/runs/{run_id}/evidence`
 - `GET /api/mirofish/writeback/candidate-deltas?world_id=...&status=...&candidate_type=...`
+- `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 
 Важно:
 
 - run detail теперь возвращает нормализованные `subjects.actors` и `subjects.organizations`
 - evidence readback теперь возвращает `linked_subjects`
+- candidate detail теперь возвращает `candidate`, `evidence_count`, `canonical_entity` и `run_links`
 
-Пока не реализовано:
-
-- `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
-
-### 14.3 Review / promotion API
+### 14.3 Review / merge / promotion API
 
 Реально реализовано:
 
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/approve`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/reject`
+- `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/merge`
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/promote`
 
-Важно: ответ `promote` теперь включает:
+Важно:
 
+- `merge` не создаёт новый canonical snapshot, а привязывает approved candidate к уже существующему `mirofish_canonical_entities.canonical_id`
+- provenance для merge пишется в `mirofish_entity_run_links` с `relation_type = merged_into`
+- provenance для promote пишется с `relation_type = promoted_from`
 - `data.run_link`
 - `data.canonical_entity.run_links`
 
 Пока не реализовано:
 
-- `merge`
 - batch review / batch promotion
 
 ## 15. Какие MCP tools нужны
