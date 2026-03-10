@@ -510,6 +510,66 @@ def exact_faction_duplicate_bundle(
     }
 
 
+def exact_character_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    status: str = "active",
+    parent_id: int | None = None,
+    location_id: int = 301,
+    rarity: str = "legendary",
+    element: str = "water",
+    role: str | None = "support",
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change: dict[str, object] = {
+        "status": status,
+        "location_id": location_id,
+        "rarity": rarity,
+        "element": element,
+    }
+    if parent_id is not None:
+        proposed_change["parent_id"] = parent_id
+    if role is not None:
+        proposed_change["role"] = role
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Character",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_relationship_duplicate_bundle(
     *,
     candidate_id: str,
@@ -2124,6 +2184,287 @@ def test_preview_auto_merge_candidate_rejects_faction_duplicate_gates(tmp_path):
     assert sparse_evidence_preview["reasons"] == [
         "Policy 'safe_existing_faction_duplicate_only' requires at least 2 evidence items"
     ]
+
+
+def test_preview_auto_merge_candidate_for_exact_duplicate_character_is_side_effect_free(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-character-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-character-create",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-character-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-duplicate",
+            name="  Captain-Aria  ",
+            summary="A second run repeats the same character signature.",
+            run_id="run-character-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-character-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-character-duplicate")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_character_duplicate_only"
+    assert preview["metadata_preview"]["merge_match_name"] == "captain aria"
+    assert preview["metadata_preview"]["merge_match_status"] == "active"
+    assert preview["metadata_preview"]["merge_match_location_id"] == 301
+    assert preview["metadata_preview"]["merge_match_rarity"] == "legendary"
+    assert preview["metadata_preview"]["merge_match_element"] == "water"
+    assert preview["metadata_preview"]["merge_match_role"] == "support"
+    assert detail["status"] == "pending_review"
+    assert detail["target_canonical_id"] is None
+    assert store.list_entity_run_links(run_id="run-character-duplicate", source_candidate_id="cand-character-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_character(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-character-execute.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-character-create",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-character-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-duplicate",
+            name="Captain Aria",
+            summary="A second run confirms the same character snapshot.",
+            run_id="run-character-duplicate",
+        )
+    )
+
+    result = promoter.auto_merge_candidate(
+        "cand-character-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-character-duplicate")
+
+    assert result["candidate"]["status"] == "merged"
+    assert result["canonical_entity"]["canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert result["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_character_duplicate_only"
+    assert result["run_link"]["metadata"]["merge_match_status"] == "active"
+    assert result["run_link"]["metadata"]["merge_match_location_id"] == 301
+    assert result["run_link"]["metadata"]["merge_match_rarity"] == "legendary"
+    assert result["run_link"]["metadata"]["merge_match_element"] == "water"
+    assert result["run_link"]["metadata"]["merge_match_role"] == "support"
+    assert detail["status"] == "merged"
+    assert detail["target_canonical_id"] == str(promote_result["canonical_entity"]["canonical_id"])
+
+
+def test_preview_auto_merge_candidate_rejects_when_no_exact_duplicate_character_exists(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-character-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-character-create",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-character-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-no-match",
+            name="Captain Aria",
+            summary="This report points to a different combat role snapshot.",
+            run_id="run-character-no-match",
+            role="dps",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-character-no-match",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_character_duplicate_only' requires exactly 1 staged canonical Character exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_characters(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-character-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id in (("cand-character-create-a", "run-character-create-a"), ("cand-character-create-b", "run-character-create-b")):
+        importer.import_result_bundle(
+            manual_candidate_bundle(
+                candidate_id=candidate_id,
+                target_canonical_type="Character",
+                name="Captain Aria",
+                summary="A harbor defender whose public resolve hides years of sacrifice.",
+                run_id=run_id,
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="new_entity_candidate", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "backstory": long_backstory(),
+                "status": "active",
+                "location_id": 301,
+                "rarity": "legendary",
+                "element": "water",
+                "role": "support",
+            },
+        )
+
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-duplicate",
+            name="Captain Aria",
+            summary="Another run repeats the same character signature.",
+            run_id="run-character-duplicate",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-character-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_character_duplicate_only' rejected due to ambiguous staged canonical Character duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_character_duplicate_gates(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-character-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-low-confidence",
+            name="Captain Aria",
+            summary="Weak evidence repeats the same character snapshot.",
+            run_id="run-character-low-confidence",
+            confidence=0.89,
+        )
+    )
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-sparse-evidence",
+            name="Captain Aria",
+            summary="Only one witness mentions the same character snapshot.",
+            run_id="run-character-sparse-evidence",
+            evidence_count=1,
+        )
+    )
+    importer.import_result_bundle(
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-missing-role",
+            name="Captain Aria",
+            summary="The report omits a required combat role.",
+            run_id="run-character-missing-role",
+            role=None,
+        )
+    )
+
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-character-low-confidence",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-character-sparse-evidence",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+    missing_role_preview = promoter.preview_auto_merge_candidate(
+        "cand-character-missing-role",
+        {"world_id": 101},
+        policy="safe_existing_character_duplicate_only",
+    )
+
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_character_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_character_duplicate_only' requires at least 2 evidence items"
+    ]
+    assert missing_role_preview["eligible"] is False
+    assert missing_role_preview["reasons"] == ["role is required"]
 
 
 def test_preview_auto_merge_candidate_for_exact_duplicate_event_is_side_effect_free(tmp_path):

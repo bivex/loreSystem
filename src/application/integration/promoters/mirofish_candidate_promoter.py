@@ -44,6 +44,7 @@ class MiroFishCandidatePromoter:
     SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
     SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY = "safe_existing_rumor_duplicate_only"
     SAFE_EXISTING_FACTION_DUPLICATE_ONLY_POLICY = "safe_existing_faction_duplicate_only"
+    SAFE_EXISTING_CHARACTER_DUPLICATE_ONLY_POLICY = "safe_existing_character_duplicate_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -524,6 +525,8 @@ class MiroFishCandidatePromoter:
             return self._validate_safe_existing_location_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_FACTION_DUPLICATE_ONLY_POLICY:
             return self._validate_safe_existing_faction_duplicate_policy(candidate, payload)
+        if policy == self.SAFE_EXISTING_CHARACTER_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_character_duplicate_policy(candidate, payload)
         raise ValueError(f"Unsupported auto-merge policy: {policy}")
 
     def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> dict[str, Any]:
@@ -1025,6 +1028,65 @@ class MiroFishCandidatePromoter:
             "duplicate_guard": "passed",
         }
 
+    def _validate_safe_existing_character_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "new_entity_candidate":
+            raise ValueError("Policy 'safe_existing_character_duplicate_only' only supports new_entity_candidate candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Character":
+            raise ValueError("Policy 'safe_existing_character_duplicate_only' only supports Character merge targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_character_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_character_duplicate_only' requires at least 2 evidence items")
+
+        character_name = self._normalize_character_name(candidate.get("name") or (candidate.get("proposed_change") or {}).get("name"))
+        if not character_name:
+            raise ValueError("Policy 'safe_existing_character_duplicate_only' requires candidate.name")
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        status = self._resolve_character_status_for_candidate(candidate, payload)
+        parent_id = self._resolve_character_parent_id_for_candidate(candidate, payload)
+        location_id = self._resolve_character_location_id_for_candidate(candidate, payload)
+        rarity = self._resolve_character_rarity_for_candidate(candidate, payload)
+        element = self._resolve_character_element_for_candidate(candidate, payload)
+        role = self._resolve_character_role_for_candidate(candidate, payload)
+        matches = self._find_exact_duplicate_canonical_characters(
+            world_id=world_id,
+            character_name=character_name,
+            status=status,
+            parent_id=parent_id,
+            location_id=location_id,
+            rarity=rarity,
+            element=element,
+            role=role,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_character_duplicate_only' requires exactly 1 staged canonical Character exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_character_duplicate_only' rejected due to ambiguous staged canonical Character duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "merge_match_name": character_name,
+            "merge_match_status": status,
+            "merge_match_parent_id": parent_id,
+            "merge_match_location_id": location_id,
+            "merge_match_rarity": rarity,
+            "merge_match_element": element,
+            "merge_match_role": role,
+            "duplicate_guard": "passed",
+        }
+
     def _find_supporting_relationship_run_ids(
         self,
         candidate: dict[str, Any],
@@ -1369,6 +1431,38 @@ class MiroFishCandidatePromoter:
             matches.append(canonical)
         return matches
 
+    def _find_exact_duplicate_canonical_characters(
+        self,
+        *,
+        world_id: int,
+        character_name: str,
+        status: str,
+        parent_id: int | None,
+        location_id: int,
+        rarity: str,
+        element: str,
+        role: str,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        for canonical in self.store.list_canonical_entities(canonical_type="Character", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._normalize_character_name(entity.get("name")) != character_name:
+                continue
+            if str(entity.get("status") or "").strip().casefold() != status:
+                continue
+            if self._as_optional_int(entity.get("parent_id"), "entity.parent_id") != parent_id:
+                continue
+            if self._as_optional_int(entity.get("location_id"), "entity.location_id") != location_id:
+                continue
+            if str(entity.get("rarity") or "").strip().casefold() != rarity:
+                continue
+            if str(entity.get("element") or "").strip().casefold() != element:
+                continue
+            if str(entity.get("role") or "").strip().casefold() != role:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
@@ -1389,6 +1483,9 @@ class MiroFishCandidatePromoter:
         return self._normalize_text_signature(value)
 
     def _normalize_faction_name(self, value: Any) -> str:
+        return self._normalize_text_signature(value)
+
+    def _normalize_character_name(self, value: Any) -> str:
         return self._normalize_text_signature(value)
 
     def _normalize_canonical_participant_ids(self, value: Any) -> tuple[int, ...]:
@@ -1581,6 +1678,52 @@ class MiroFishCandidatePromoter:
         proposed = candidate.get("proposed_change") or {}
         raw_is_joinable = payload.get("is_joinable") if "is_joinable" in payload else proposed.get("is_joinable")
         return self._as_bool(raw_is_joinable, field_name="is_joinable", default=True)
+
+    def _resolve_character_status_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        status = self._parse_required_enum(
+            payload.get("status") if "status" in payload else proposed.get("status"),
+            CharacterStatus,
+            "status",
+        )
+        return str(status.value)
+
+    def _resolve_character_parent_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
+        proposed = candidate.get("proposed_change") or {}
+        raw_parent_id = payload.get("parent_id") if "parent_id" in payload else proposed.get("parent_id")
+        return self._as_optional_int(raw_parent_id, "parent_id")
+
+    def _resolve_character_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int:
+        proposed = candidate.get("proposed_change") or {}
+        raw_location_id = payload.get("location_id") if "location_id" in payload else proposed.get("location_id")
+        return self._as_int(raw_location_id, "location_id")
+
+    def _resolve_character_rarity_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        rarity = self._parse_required_enum(
+            payload.get("rarity") if "rarity" in payload else proposed.get("rarity"),
+            Rarity,
+            "rarity",
+        )
+        return str(rarity.value)
+
+    def _resolve_character_element_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        element = self._parse_required_enum(
+            payload.get("element") if "element" in payload else proposed.get("element"),
+            CharacterElement,
+            "element",
+        )
+        return str(element.value)
+
+    def _resolve_character_role_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        role = self._parse_required_enum(
+            payload.get("role") if "role" in payload else proposed.get("role"),
+            CharacterRole,
+            "role",
+        )
+        return str(role.value)
 
     def _resolve_event_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
         proposed = candidate.get("proposed_change") or {}

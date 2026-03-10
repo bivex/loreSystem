@@ -496,6 +496,66 @@ def exact_faction_duplicate_bundle(
     }
 
 
+def exact_character_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    status: str = "active",
+    parent_id: int | None = None,
+    location_id: int = 301,
+    rarity: str = "legendary",
+    element: str = "water",
+    role: str | None = "support",
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change: dict[str, object] = {
+        "status": status,
+        "location_id": location_id,
+        "rarity": rarity,
+        "element": element,
+    }
+    if parent_id is not None:
+        proposed_change["parent_id"] = parent_id
+    if role is not None:
+        proposed_change["role"] = role
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Character",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def exact_relationship_duplicate_bundle(
     *,
     candidate_id: str,
@@ -2481,6 +2541,185 @@ def test_batch_auto_merge_endpoint_supports_faction_dry_run_without_side_effects
     assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-faction-low-confidence"
     assert payload["data"]["ineligible"][0]["reasons"] == [
         "Policy 'safe_existing_faction_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert low_confidence_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_character_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-character.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-character-create",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-character-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-character-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-duplicate",
+            name="  Captain-Aria  ",
+            summary="Another run confirms the same character snapshot.",
+            run_id="run-character-duplicate",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-no-match",
+            name="Captain Aria",
+            summary="A different combat role snapshot should stay pending.",
+            run_id="run-character-no-match",
+            role="dps",
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_character_duplicate_only",
+            "items": [
+                {"candidate_id": "cand-character-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-character-no-match", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-character-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-character-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_character_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-character-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_character_duplicate_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["merge_match_role"] == "support"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-character-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_character_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-character-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-character-create",
+            target_canonical_type="Character",
+            name="Captain Aria",
+            summary="A harbor defender whose public resolve hides years of sacrifice.",
+            run_id="run-character-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-character-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-character-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "backstory": long_backstory(),
+            "status": "active",
+            "location_id": 301,
+            "rarity": "legendary",
+            "element": "water",
+            "role": "support",
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-duplicate",
+            name="Captain Aria",
+            summary="Another run confirms the same character snapshot.",
+            run_id="run-character-duplicate",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_character_duplicate_bundle(
+            candidate_id="cand-character-low-confidence",
+            name="Captain Aria",
+            summary="Weak evidence repeats the same character snapshot.",
+            run_id="run-character-low-confidence",
+            confidence=0.85,
+            evidence_count=2,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_character_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {"candidate_id": "cand-character-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-character-low-confidence", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-character-duplicate")[1]
+    low_confidence_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-character-low-confidence")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_character_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-character-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_character_duplicate_only"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["merge_match_name"] == "captain aria"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-character-low-confidence"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_character_duplicate_only' requires confidence >= 0.90"
     ]
     assert duplicate_detail["data"]["status"] == "pending_review"
     assert low_confidence_detail["data"]["status"] == "pending_review"
