@@ -101,6 +101,26 @@ class MiroFishWriteBackStore:
             rows = conn.execute(query, tuple(params)).fetchall()
         return [self._decode_candidate_row(dict(row)) for row in rows]
 
+    def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
+        with self.db.get_connection() as conn:
+            row = conn.execute("SELECT * FROM mirofish_candidate_deltas WHERE candidate_id = ?", (candidate_id,)).fetchone()
+        if not row:
+            return None
+        return self._decode_candidate_row(dict(row))
+
+    def update_candidate_status(self, candidate_id: str, status: str) -> dict[str, Any] | None:
+        with self.db.get_connection() as conn:
+            updated = conn.execute(
+                "UPDATE mirofish_candidate_deltas SET status = ? WHERE candidate_id = ?",
+                (status, candidate_id),
+            )
+            if updated.rowcount == 0:
+                return None
+            row = conn.execute("SELECT * FROM mirofish_candidate_deltas WHERE candidate_id = ?", (candidate_id,)).fetchone()
+        if not row:
+            return None
+        return self._decode_candidate_row(dict(row))
+
     def _decode_evidence_row(self, row: dict[str, Any]) -> dict[str, Any]:
         row["actor_refs"] = json.loads(row.pop("actor_refs_json"))
         row["canonical_refs"] = json.loads(row.pop("canonical_refs_json"))

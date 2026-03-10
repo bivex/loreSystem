@@ -35,6 +35,13 @@ class MiroFishWriteBackAPI:
         if method == "GET" and path == f"{self.base_path}/candidate-deltas":
             return self._handle_candidate_list(query_string)
 
+        candidate_prefix = f"{self.base_path}/candidate-deltas/"
+        if method == "POST" and path.startswith(candidate_prefix):
+            suffix = path[len(candidate_prefix):].strip("/")
+            parts = [part for part in suffix.split("/") if part]
+            if len(parts) == 2 and parts[1] in {"approve", "reject"}:
+                return self._handle_candidate_review_action(parts[0], parts[1])
+
         prefix = f"{self.base_path}/runs/"
         if method == "GET" and path.startswith(prefix):
             suffix = path[len(prefix):]
@@ -92,6 +99,29 @@ class MiroFishWriteBackAPI:
             return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": f"Run '{run_id}' not found"})
         evidence = self.store.list_evidence(run_id)
         return self._response(HTTPStatus.OK, {"success": True, "data": {"run_id": run_id, "count": len(evidence), "evidence": evidence}})
+
+    def _handle_candidate_review_action(self, candidate_id: str, action: str) -> tuple[int, dict[str, Any]]:
+        if not candidate_id:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_id is required"})
+
+        status = "approved" if action == "approve" else "rejected"
+        candidate = self.store.update_candidate_status(candidate_id, status)
+        if not candidate:
+            return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": f"Candidate '{candidate_id}' not found"})
+
+        return self._response(
+            HTTPStatus.OK,
+            {
+                "success": True,
+                "data": {
+                    "action": action,
+                    "candidate": {
+                        **candidate,
+                        "evidence_count": len(candidate.get("evidence_ids") or []),
+                    },
+                },
+            },
+        )
 
     def wsgi_app(self, environ: dict[str, Any], start_response):
         content_length = int(environ.get("CONTENT_LENGTH") or 0)

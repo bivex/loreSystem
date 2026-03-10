@@ -81,6 +81,37 @@ def test_run_detail_and_evidence_endpoints_return_review_context(tmp_path):
     assert evidence_payload["data"]["count"] == 4
 
 
+def test_review_action_endpoints_approve_and_reject_candidates(tmp_path):
+    app = create_writeback_app(str(tmp_path / "actions.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+
+    list_status, list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=rumor_candidate")
+    candidate_id = list_payload["data"]["candidates"][0]["candidate_id"]
+
+    approve_status, approve_payload = call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/approve")
+    approved_list_status, approved_list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?status=approved")
+    reject_status, reject_payload = call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/reject")
+
+    assert list_status == 200
+    assert approve_status == 200
+    assert approve_payload["data"]["action"] == "approve"
+    assert approve_payload["data"]["candidate"]["status"] == "approved"
+    assert approved_list_status == 200
+    assert approved_list_payload["data"]["count"] == 1
+    assert reject_status == 200
+    assert reject_payload["data"]["action"] == "reject"
+    assert reject_payload["data"]["candidate"]["status"] == "rejected"
+
+
+def test_review_action_endpoint_returns_404_for_missing_candidate(tmp_path):
+    app = create_writeback_app(str(tmp_path / "missing.db"))
+
+    status, payload = call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-missing/approve")
+
+    assert status == 404
+    assert payload["success"] is False
+
+
 def test_ingest_endpoint_rejects_invalid_json(tmp_path):
     app = create_writeback_app(str(tmp_path / "bad.db"))
     environ = {
