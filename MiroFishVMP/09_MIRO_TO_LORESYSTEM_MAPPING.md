@@ -312,6 +312,7 @@ Mapping:
 - relationship policy дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, разные стороны, `abs(relationship_level) >= 30`; `relationship_type` может быть передан явно или выводится из `relationship_level`, `is_mutual` резолвится из mapping
 - faction policy дополнительно требует resolvable `faction_type` и `alignment`; `leader_character_id` и `is_joinable` резолвятся из mapping или candidate payload
 - character policy дополнительно требует resolvable `status`, `location_id`, `rarity`, `element`, `role`; optional `parent_id` резолвится из mapping или candidate payload
+- character slice intentionally не использует fuzzy matching и не вводит generic duplicate engine
 - policy требует ровно один staged canonical `Location` match и reject'ит no-match / ambiguous-match случаи
 - event policy тоже требует ровно один staged canonical `Event` match и reject'ит no-match / ambiguous-match случаи
 - rumor policy тоже требует ровно один staged canonical `Rumor` match и reject'ит no-match / ambiguous-match случаи

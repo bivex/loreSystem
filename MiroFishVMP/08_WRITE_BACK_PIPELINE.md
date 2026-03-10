@@ -617,6 +617,7 @@ Confidence лучше считать не LLM-словами, а детерми�
 - faction policy дополнительно требует resolvable `faction_type` и `alignment`; `leader_character_id` и `is_joinable` резолвятся из mapping или candidate payload
 - character merge выполняется только при ровно одном staged canonical `Character` exact duplicate match в том же world по normalized `name` + `status` + optional `parent_id` + `location_id` + `rarity` + `element` + `role`
 - character policy дополнительно требует resolvable `status`, `location_id`, `rarity`, `element`, `role`; optional `parent_id` резолвится из mapping или candidate payload
+- character slice остаётся deterministic exact duplicate-only: без fuzzy matching и без generic duplicate engine
 - auto-merge не создаёт новый canonical snapshot, а вызывает existing merge path в уже существующую staged canonical entity
 - auto-merge пишет audit metadata в `run_link.metadata`: `auto_merge_policy`, `auto_merged`; location slice дополнительно пишет `merge_match_name`, `merge_match_location_type`, `merge_match_parent_location_id`, `duplicate_guard`, event slice — `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `merge_match_location_id`, `duplicate_guard`, rumor slice — `merge_match_name`, `merge_match_source_name`, `merge_match_location_id`, `rumor_truth_bucket`, `duplicate_guard`, relationship slice — `merge_match_character_from_id`, `merge_match_character_to_id`, `merge_match_relationship_type`, `merge_match_relationship_level`, `merge_match_is_mutual`, `duplicate_guard`, faction slice — `merge_match_name`, `merge_match_faction_type`, `merge_match_alignment`, `merge_match_leader_character_id`, `merge_match_is_joinable`, `duplicate_guard`, character slice — `merge_match_name`, `merge_match_status`, `merge_match_parent_id`, `merge_match_location_id`, `merge_match_rarity`, `merge_match_element`, `merge_match_role`, `duplicate_guard`
 
@@ -1174,6 +1175,7 @@ Promote только вручную, если:
 - только для exact duplicate случая в том же world
 - duplicate signature: normalized `name` + `status` + optional `parent_id` + `location_id` + `rarity` + `element` + `role`
 - policy требует resolvable `status`, `location_id`, `rarity`, `element`, `role`; optional `parent_id` резолвится из mapping или candidate payload
+- без fuzzy matching и без generic duplicate engine
 - без создания нового canonical snapshot
 - с targeted promoter/API tests
 
