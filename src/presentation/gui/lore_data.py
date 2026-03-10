@@ -4,6 +4,7 @@ LoreData - In-memory storage for lore entities.
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+from src.application.integration.dto.provenance import EntityProvenanceLink, GenerationRunRecord
 from src.application.presentation_contracts import *  # noqa: F401,F403
 
 
@@ -60,6 +61,7 @@ class LoreData:
         self.progression_events: List[ProgressionEvent] = []
         self.character_states: List[CharacterState] = []
 
+        self.metadata: Dict[str, Any] = self._normalize_metadata()
         self.tenant_id = TenantId(1)
         self._next_id = 1
     
@@ -483,6 +485,33 @@ class LoreData:
     def get_characters_by_world(self, world_id: EntityId) -> List[Character]:
         """Get all characters in a world."""
         return [c for c in self.characters if c.world_id == world_id]
+
+    @staticmethod
+    def _normalize_metadata(metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        payload = dict(metadata) if isinstance(metadata, dict) else {}
+        payload['generation_runs'] = [
+            GenerationRunRecord.from_dict(item).to_dict()
+            for item in (payload.get('generation_runs') or [])
+            if isinstance(item, dict)
+        ]
+        payload['entity_provenance'] = [
+            EntityProvenanceLink.from_dict(item).to_dict()
+            for item in (payload.get('entity_provenance') or [])
+            if isinstance(item, dict)
+        ]
+        return payload
+
+    def add_generation_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a normalized generation run in top-level metadata."""
+        record = GenerationRunRecord.from_dict(payload).to_dict()
+        self.metadata.setdefault('generation_runs', []).append(record)
+        return record
+
+    def add_entity_provenance(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a normalized entity provenance link in top-level metadata."""
+        record = EntityProvenanceLink.from_dict(payload).to_dict()
+        self.metadata.setdefault('entity_provenance', []).append(record)
+        return record
     
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary for JSON."""
@@ -536,6 +565,7 @@ class LoreData:
             'textures': [self._texture_to_dict(t) for t in self.textures],
             'models': [self._model_to_dict(m) for m in self.models],
 
+            'metadata': self._normalize_metadata(self.metadata),
             'next_id': self._next_id
         }
     
@@ -602,6 +632,7 @@ class LoreData:
         self.textures = [self._dict_to_texture(t) for t in data.get('textures', [])]
         self.models = [self._dict_to_model(m) for m in data.get('models', [])]
 
+        self.metadata = self._normalize_metadata(data.get('metadata'))
         self._next_id = data.get('next_id', 1)
     
     @staticmethod
