@@ -240,6 +240,61 @@ def cross_run_event_bundle(
     }
 
 
+def exact_event_duplicate_bundle(
+    *,
+    candidate_id: str,
+    run_id: str,
+    outcome: str,
+    participant_ids: list[str] | None = None,
+    timestamp: str = "2026-03-10T12:05:00Z",
+    location_id: int | None = 301,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    refs = ["actor:royal_court", "org:royal_court"] if participant_ids is None else list(participant_ids)
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change = {
+        "participant_ids": refs,
+        "timestamp": timestamp,
+        "outcome": outcome,
+    }
+    if location_id is not None:
+        proposed_change["location_id"] = location_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_action",
+                "source_type": "manual_event_candidate",
+                "actor_refs": refs,
+                "text": "Witnesses describe the same court denial event.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_event_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court issues denial",
+                "summary": "The court publicly denies the forged decree.",
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_event_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def cross_run_rumor_bundle(
     *,
     run_id: str,
@@ -1764,6 +1819,196 @@ def test_batch_auto_merge_endpoint_validates_dry_run_type(tmp_path):
     assert status == 400
     assert payload["success"] is False
     assert payload["error"] == "dry_run must be a boolean"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_event_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-event.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-create",
+            run_id="run-event-create",
+            outcome="success",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-event-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-event-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-duplicate",
+            run_id="run-event-duplicate",
+            outcome="success",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-no-match",
+            run_id="run-event-no-match",
+            outcome="failure",
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_event_duplicate_only",
+            "items": [
+                {
+                    "candidate_id": "cand-event-duplicate",
+                    "mapping": {
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-no-match",
+                    "mapping": {
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "location_id": 301,
+                    },
+                },
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_event_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-event-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_event_duplicate_only"
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["event_match_outcome"] == "success"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-event-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_event_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-event-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-create",
+            run_id="run-event-create",
+            outcome="success",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-event-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-event-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-duplicate",
+            run_id="run-event-duplicate",
+            outcome="success",
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-ongoing",
+            run_id="run-event-ongoing",
+            outcome="ongoing",
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_event_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {
+                    "candidate_id": "cand-event-duplicate",
+                    "mapping": {
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "location_id": 301,
+                    },
+                },
+                {
+                    "candidate_id": "cand-event-ongoing",
+                    "mapping": {
+                        "world_id": 101,
+                        "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                        "location_id": 301,
+                    },
+                },
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-duplicate")[1]
+    ongoing_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-event-ongoing")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_event_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-event-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_event_duplicate_only"
+    assert payload["data"]["eligible"][0]["metadata_preview"]["event_match_outcome"] == "success"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-event-ongoing"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires terminal non-ongoing outcome"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert ongoing_detail["data"]["status"] == "pending_review"
 
 
 def test_batch_auto_merge_endpoint_merges_exact_duplicate_rumor_and_reports_failures(tmp_path):

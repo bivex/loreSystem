@@ -39,6 +39,7 @@ class MiroFishCandidatePromoter:
     SAFE_CROSS_RUN_RUMOR_ONLY_POLICY = "safe_cross_run_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
+    SAFE_EXISTING_EVENT_DUPLICATE_ONLY_POLICY = "safe_existing_event_duplicate_only"
     SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
     SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY = "safe_existing_rumor_duplicate_only"
 
@@ -511,6 +512,8 @@ class MiroFishCandidatePromoter:
         if status not in {"pending_review", "approved", "merged"}:
             raise ValueError("Auto-merge policy can only process pending_review, approved, or already merged candidates")
 
+        if policy == self.SAFE_EXISTING_EVENT_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_event_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_RUMOR_DUPLICATE_ONLY_POLICY:
             return self._validate_safe_existing_rumor_duplicate_policy(candidate, payload)
         if policy == self.SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY:
@@ -733,6 +736,68 @@ class MiroFishCandidatePromoter:
             "cross_run_supporting_run_ids": supporting_run_ids,
             "cross_run_distinct_run_count": len(supporting_run_ids) + 1,
             "contradiction_check": "passed",
+        }
+
+    def _validate_safe_existing_event_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "scenario_event":
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' only supports scenario_event candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Event":
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' only supports Event merge targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires at least 2 evidence items")
+
+        proposed = candidate.get("proposed_change") or {}
+        participant_refs = self._normalize_participant_refs(proposed.get("participant_ids"))
+        if not participant_refs:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires proposed_change.participant_ids")
+
+        timestamp_raw = str(proposed.get("timestamp") or "").strip()
+        if not timestamp_raw:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires proposed_change.timestamp")
+        date_bucket = self._event_date_bucket(timestamp_raw, field_name="proposed_change.timestamp")
+
+        outcome_raw = str(proposed.get("outcome") or "").strip()
+        if not outcome_raw:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires proposed_change.outcome")
+        outcome = self._parse_event_outcome(outcome_raw)
+        if outcome == EventOutcome.ONGOING:
+            raise ValueError("Policy 'safe_existing_event_duplicate_only' requires terminal non-ongoing outcome")
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        canonical_participants = self._resolve_event_participant_ids(candidate, payload)
+        location_id = self._resolve_event_location_id_for_candidate(candidate, payload)
+        matches = self._find_exact_duplicate_canonical_events(
+            world_id=world_id,
+            canonical_participants=canonical_participants,
+            outcome=outcome,
+            date_bucket=date_bucket,
+            location_id=location_id,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_event_duplicate_only' requires exactly 1 staged canonical Event exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_event_duplicate_only' rejected due to ambiguous staged canonical Event duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "event_match_participant_refs": list(participant_refs),
+            "event_match_outcome": outcome.value,
+            "event_match_date_bucket": date_bucket,
+            "merge_match_location_id": location_id,
+            "duplicate_guard": "passed",
         }
 
     def _validate_safe_existing_location_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -1042,6 +1107,42 @@ class MiroFishCandidatePromoter:
             return canonical
         return None
 
+    def _find_exact_duplicate_canonical_events(
+        self,
+        *,
+        world_id: int,
+        canonical_participants: tuple[int, ...],
+        outcome: EventOutcome,
+        date_bucket: str,
+        location_id: int | None,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        if not canonical_participants:
+            return matches
+        for canonical in self.store.list_canonical_entities(canonical_type="Event", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._normalize_canonical_participant_ids(entity.get("participant_ids")) != canonical_participants:
+                continue
+            try:
+                existing_date_bucket = self._event_date_bucket(
+                    ((entity.get("date_range") or {}).get("start_date")),
+                    field_name="entity.date_range.start_date",
+                )
+            except ValueError:
+                continue
+            if existing_date_bucket != date_bucket:
+                continue
+            if location_id is not None and self._as_optional_int(entity.get("location_id"), "entity.location_id") != location_id:
+                continue
+            try:
+                existing_outcome = self._parse_event_outcome(entity.get("outcome"))
+            except ValueError:
+                continue
+            if existing_outcome != outcome:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _find_exact_duplicate_canonical_locations(
         self,
         *,
@@ -1257,6 +1358,11 @@ class MiroFishCandidatePromoter:
         proposed = candidate.get("proposed_change") or {}
         raw_parent_id = payload.get("parent_location_id") if "parent_location_id" in payload else proposed.get("parent_location_id")
         return self._as_optional_int(raw_parent_id, "parent_location_id")
+
+    def _resolve_event_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
+        proposed = candidate.get("proposed_change") or {}
+        raw_location_id = payload.get("location_id") if "location_id" in payload else proposed.get("location_id")
+        return self._as_optional_int(raw_location_id, "location_id")
 
     def _resolve_rumor_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int:
         proposed = candidate.get("proposed_change") or {}

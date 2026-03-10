@@ -254,6 +254,61 @@ def cross_run_event_bundle(
     }
 
 
+def exact_event_duplicate_bundle(
+    *,
+    candidate_id: str,
+    run_id: str,
+    outcome: str,
+    participant_ids: list[str] | None = None,
+    timestamp: str = "2026-03-10T12:05:00Z",
+    location_id: int | None = 301,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    refs = ["actor:royal_court", "org:royal_court"] if participant_ids is None else list(participant_ids)
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change = {
+        "participant_ids": refs,
+        "timestamp": timestamp,
+        "outcome": outcome,
+    }
+    if location_id is not None:
+        proposed_change["location_id"] = location_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_action",
+                "source_type": "manual_event_candidate",
+                "actor_refs": refs,
+                "text": "Witnesses describe the same court denial event.",
+                "timestamp": timestamp,
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_event_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "scenario_event",
+                "target_canonical_type": "Event",
+                "name": "Court issues denial",
+                "summary": "The court publicly denies the forged decree.",
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_event_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def cross_run_rumor_bundle(
     *,
     run_id: str,
@@ -1707,6 +1762,314 @@ def test_preview_auto_merge_candidate_rejects_low_confidence_and_sparse_evidence
     assert sparse_evidence_preview["eligible"] is False
     assert sparse_evidence_preview["reasons"] == [
         "Policy 'safe_existing_location_duplicate_only' requires at least 2 evidence items"
+    ]
+
+
+def test_preview_auto_merge_candidate_for_exact_duplicate_event_is_side_effect_free(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-create",
+            run_id="run-event-create",
+            outcome="success",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="scenario_event", run_id="run-event-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-duplicate",
+            run_id="run-event-duplicate",
+            outcome="success",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-event-duplicate",
+        {
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "location_id": 301,
+        },
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-event-duplicate")
+
+    assert preview["eligible"] is True
+    assert preview["target_canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_event_duplicate_only"
+    assert preview["metadata_preview"]["event_match_outcome"] == "success"
+    assert preview["metadata_preview"]["event_match_date_bucket"] == "2026-03-10"
+    assert preview["metadata_preview"]["merge_match_location_id"] == 301
+    assert detail["status"] == "pending_review"
+    assert detail["target_canonical_id"] is None
+    assert store.list_entity_run_links(run_id="run-event-duplicate", source_candidate_id="cand-event-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_event(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-execute.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-create",
+            run_id="run-event-create",
+            outcome="success",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="scenario_event", run_id="run-event-create")
+    promote_result = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-duplicate",
+            run_id="run-event-duplicate",
+            outcome="success",
+        )
+    )
+
+    result = promoter.auto_merge_candidate(
+        "cand-event-duplicate",
+        {
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "location_id": 301,
+        },
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    detail = store.get_candidate("cand-event-duplicate")
+
+    assert result["candidate"]["status"] == "merged"
+    assert result["canonical_entity"]["canonical_id"] == promote_result["canonical_entity"]["canonical_id"]
+    assert result["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_event_duplicate_only"
+    assert result["run_link"]["metadata"]["event_match_outcome"] == "success"
+    assert result["run_link"]["metadata"]["event_match_date_bucket"] == "2026-03-10"
+    assert result["run_link"]["metadata"]["merge_match_location_id"] == 301
+    assert detail["status"] == "merged"
+    assert detail["target_canonical_id"] == str(promote_result["canonical_entity"]["canonical_id"])
+
+
+def test_preview_auto_merge_candidate_rejects_when_no_exact_duplicate_event_exists(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-create",
+            run_id="run-event-create",
+            outcome="success",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="scenario_event", run_id="run-event-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-no-match",
+            run_id="run-event-no-match",
+            outcome="failure",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-event-no-match",
+        {
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "location_id": 301,
+        },
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires exactly 1 staged canonical Event exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_events(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id in (("cand-event-create-a", "run-event-create-a"), ("cand-event-create-b", "run-event-create-b")):
+        importer.import_result_bundle(
+            exact_event_duplicate_bundle(
+                candidate_id=candidate_id,
+                run_id=run_id,
+                outcome="success",
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="scenario_event", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+                "outcome": "success",
+                "location_id": 301,
+            },
+        )
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-duplicate",
+            run_id="run-event-duplicate",
+            outcome="success",
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-event-duplicate",
+        {
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201, "org:royal_court": 202},
+            "location_id": 301,
+        },
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' rejected due to ambiguous staged canonical Event duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_event_duplicate_gates(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-ongoing",
+            run_id="run-event-ongoing",
+            outcome="ongoing",
+        )
+    )
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-low-confidence",
+            run_id="run-event-low-confidence",
+            outcome="success",
+            confidence=0.89,
+        )
+    )
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-sparse-evidence",
+            run_id="run-event-sparse-evidence",
+            outcome="success",
+            evidence_count=1,
+        )
+    )
+
+    ongoing_preview = promoter.preview_auto_merge_candidate(
+        "cand-event-ongoing",
+        {"world_id": 101, "participant_map": {"actor:royal_court": 201, "org:royal_court": 202}, "location_id": 301},
+        policy="safe_existing_event_duplicate_only",
+    )
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-event-low-confidence",
+        {"world_id": 101, "participant_map": {"actor:royal_court": 201, "org:royal_court": 202}, "location_id": 301},
+        policy="safe_existing_event_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-event-sparse-evidence",
+        {"world_id": 101, "participant_map": {"actor:royal_court": 201, "org:royal_court": 202}, "location_id": 301},
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    assert ongoing_preview["eligible"] is False
+    assert ongoing_preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires terminal non-ongoing outcome"
+    ]
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires at least 2 evidence items"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_missing_event_duplicate_fields(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-event-missing-fields.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-missing-participants",
+            run_id="run-event-missing-participants",
+            outcome="success",
+            participant_ids=[],
+        )
+    )
+    importer.import_result_bundle(
+        exact_event_duplicate_bundle(
+            candidate_id="cand-event-missing-timestamp",
+            run_id="run-event-missing-timestamp",
+            outcome="success",
+            timestamp="",
+        )
+    )
+
+    missing_participants_preview = promoter.preview_auto_merge_candidate(
+        "cand-event-missing-participants",
+        {"world_id": 101, "participant_map": {"actor:royal_court": 201, "org:royal_court": 202}, "location_id": 301},
+        policy="safe_existing_event_duplicate_only",
+    )
+    missing_timestamp_preview = promoter.preview_auto_merge_candidate(
+        "cand-event-missing-timestamp",
+        {"world_id": 101, "participant_map": {"actor:royal_court": 201, "org:royal_court": 202}, "location_id": 301},
+        policy="safe_existing_event_duplicate_only",
+    )
+
+    assert missing_participants_preview["eligible"] is False
+    assert missing_participants_preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires proposed_change.participant_ids"
+    ]
+    assert missing_timestamp_preview["eligible"] is False
+    assert missing_timestamp_preview["reasons"] == [
+        "Policy 'safe_existing_event_duplicate_only' requires proposed_change.timestamp"
     ]
 
 
