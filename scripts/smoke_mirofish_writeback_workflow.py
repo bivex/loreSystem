@@ -31,12 +31,21 @@ def sample_result_bundle() -> dict:
         "scenario_id": "succession-crisis",
         "run_id": "run-full-smoke",
         "generated_at": "2026-03-10T12:00:00Z",
+        "actors": [
+            {"id": "actor:royal_court", "name": "Royal Court Herald", "canonical_id": "char-royal-court-herald", "canonical_type": "Character", "speaker_mode": "representative", "represented_entity_id": "org:royal_court"},
+            {"id": "actor:captain_serik", "name": "Captain Serik", "canonical_id": "char-serik", "canonical_type": "Character", "speaker_mode": "individual"},
+            {"id": "actor:nessa", "name": "Nessa", "canonical_id": "char-nessa", "canonical_type": "Character", "speaker_mode": "individual"},
+        ],
+        "organizations": [
+            {"id": "org:royal_court", "name": "The Royal Court", "canonical_id": "faction-royal-court", "canonical_type": "Faction", "speaker_mode": "official_account"},
+            {"id": "org:town_criers", "name": "Town Criers", "canonical_id": "faction-town-criers", "canonical_type": "Faction", "speaker_mode": "official_account"},
+        ],
         "prediction_summary": {
             "summary": "A forged decree rumor destabilizes trust in the court.",
-            "rumors": [{"name": "Forged decree rumor", "summary": "Town criers amplify doubts.", "confidence": 0.74}],
+            "rumors": [{"name": "Forged decree rumor", "summary": "Town criers amplify doubts.", "actor_refs": ["org:town_criers"], "confidence": 0.74}],
         },
-        "emergent_events": [{"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court"], "confidence": 0.81}],
-        "relationship_changes": [{"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "confidence": 0.67}],
+        "emergent_events": [{"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}],
+        "relationship_changes": [{"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "actor_refs": ["actor:captain_serik", "actor:nessa"], "confidence": 0.67}],
     }
 
 
@@ -88,13 +97,19 @@ def inspect_db(db_path: str) -> dict:
     conn.row_factory = sqlite3.Row
     canonical_rows = [dict(row) for row in conn.execute("SELECT canonical_id, source_candidate_id, canonical_type, tenant_id, world_id FROM mirofish_canonical_entities ORDER BY canonical_id").fetchall()]
     promoted_rows = [dict(row) for row in conn.execute("SELECT candidate_id, candidate_type, status, target_canonical_type, target_canonical_id FROM mirofish_candidate_deltas WHERE status = 'promoted' ORDER BY candidate_type").fetchall()]
+    subject_rows = [dict(row) for row in conn.execute("SELECT subject_row_id, run_id, subject_kind, subject_ref, name, canonical_id, canonical_type, speaker_mode, represented_entity_id FROM mirofish_run_subjects ORDER BY subject_kind, subject_ref").fetchall()]
     conn.close()
-    return {"canonical_rows": canonical_rows, "promoted_rows": promoted_rows}
+    return {"canonical_rows": canonical_rows, "promoted_rows": promoted_rows, "subject_rows": subject_rows}
 
 
 def run_smoke(base_url: str, db_path: str) -> dict:
     ingest_status, ingest_payload = request_json(base_url, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
     assert_ok(ingest_status, ingest_payload, "ingest")
+
+    run_status, run_payload = request_json(base_url, "GET", f"/api/mirofish/writeback/runs/{ingest_payload['data']['run_id']}")
+    assert_ok(run_status, run_payload, "get run detail")
+    evidence_status, evidence_payload = request_json(base_url, "GET", f"/api/mirofish/writeback/runs/{ingest_payload['data']['run_id']}/evidence")
+    assert_ok(evidence_status, evidence_payload, "get run evidence")
 
     list_status, list_payload = request_json(base_url, "GET", "/api/mirofish/writeback/candidate-deltas")
     assert_ok(list_status, list_payload, "list candidates")
@@ -129,6 +144,12 @@ def run_smoke(base_url: str, db_path: str) -> dict:
     db_state = inspect_db(db_path)
     if promoted_payload["data"]["count"] != 3 or len(db_state["canonical_rows"]) != 3:
         raise RuntimeError("Expected exactly 3 promoted candidates and 3 canonical rows")
+    if len(db_state["subject_rows"]) != 5:
+        raise RuntimeError("Expected exactly 5 persisted run subjects")
+    if run_payload["data"]["subjects"]["count"] != 5:
+        raise RuntimeError("Expected run detail to expose 5 normalized subjects")
+    if not any(any(subject["subject_ref"] == "org:town_criers" for subject in item["linked_subjects"]) for item in evidence_payload["data"]["evidence"]):
+        raise RuntimeError("Expected evidence to be linked to persisted subject rows")
 
     return {
         "success": True,
@@ -137,6 +158,7 @@ def run_smoke(base_url: str, db_path: str) -> dict:
         "run_id": ingest_payload["data"]["run_id"],
         "candidate_count": list_payload["data"]["count"],
         "promoted_count": promoted_payload["data"]["count"],
+        "subjects_count": run_payload["data"]["subjects"]["count"],
         "approvals": approvals,
         "promotions": promotions,
         "canonical_types": [row["canonical_type"] for row in db_state["canonical_rows"]],

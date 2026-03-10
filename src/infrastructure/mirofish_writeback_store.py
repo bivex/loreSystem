@@ -42,6 +42,7 @@ class MiroFishWriteBackStore:
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_scenario_results (run_id TEXT PRIMARY KEY, bundle_json TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_runtime_evidence (evidence_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, world_id TEXT NOT NULL, scenario_id TEXT NOT NULL, evidence_type TEXT NOT NULL, source_type TEXT NOT NULL, actor_refs_json TEXT NOT NULL, canonical_refs_json TEXT NOT NULL, text TEXT, structured_payload_json TEXT NOT NULL, timestamp TEXT NOT NULL, confidence REAL NOT NULL, source_refs_json TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_candidate_deltas (candidate_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, world_id TEXT NOT NULL, scenario_id TEXT NOT NULL, candidate_type TEXT NOT NULL, target_canonical_type TEXT, target_canonical_id TEXT, proposed_entity_type TEXT, name TEXT NOT NULL, summary TEXT, proposed_change_json TEXT NOT NULL, evidence_ids_json TEXT NOT NULL, source_refs_json TEXT NOT NULL, confidence REAL NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
+            conn.execute("CREATE TABLE IF NOT EXISTS mirofish_run_subjects (subject_row_id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, world_id TEXT NOT NULL, scenario_id TEXT NOT NULL, subject_kind TEXT NOT NULL, subject_ref TEXT NOT NULL, name TEXT NOT NULL, canonical_id TEXT, canonical_type TEXT, speaker_mode TEXT, represented_entity_id TEXT, metadata_json TEXT NOT NULL, source_payload_json TEXT NOT NULL, created_at TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE, UNIQUE (run_id, subject_kind, subject_ref))")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_canonical_entities (canonical_id INTEGER PRIMARY KEY AUTOINCREMENT, source_candidate_id TEXT UNIQUE NOT NULL, canonical_type TEXT NOT NULL, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, entity_json TEXT NOT NULL, promoted_at TEXT NOT NULL, FOREIGN KEY (source_candidate_id) REFERENCES mirofish_candidate_deltas(candidate_id) ON DELETE CASCADE)")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_entity_run_links (link_id INTEGER PRIMARY KEY AUTOINCREMENT, canonical_id INTEGER NOT NULL, canonical_type TEXT NOT NULL, run_id TEXT NOT NULL, source_candidate_id TEXT, relation_type TEXT NOT NULL, evidence_ids_json TEXT NOT NULL, metadata_json TEXT NOT NULL, linked_at TEXT NOT NULL, FOREIGN KEY (canonical_id) REFERENCES mirofish_canonical_entities(canonical_id) ON DELETE CASCADE, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
 
@@ -57,6 +58,12 @@ class MiroFishWriteBackStore:
             )
             conn.execute("DELETE FROM mirofish_runtime_evidence WHERE run_id = ?", (bundle.run_id,))
             conn.execute("DELETE FROM mirofish_candidate_deltas WHERE run_id = ?", (bundle.run_id,))
+            conn.execute("DELETE FROM mirofish_run_subjects WHERE run_id = ?", (bundle.run_id,))
+            for item in [*bundle.actors, *bundle.organizations]:
+                conn.execute(
+                    "INSERT INTO mirofish_run_subjects (run_id, world_id, scenario_id, subject_kind, subject_ref, name, canonical_id, canonical_type, speaker_mode, represented_entity_id, metadata_json, source_payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (item.run_id, item.world_id, item.scenario_id, item.subject_kind, item.subject_ref, item.name, item.canonical_id, item.canonical_type, item.speaker_mode, item.represented_entity_id, json.dumps(item.metadata, ensure_ascii=False), json.dumps(item.source_payload, ensure_ascii=False), bundle.generated_at),
+                )
             for item in evidence:
                 conn.execute(
                     "INSERT INTO mirofish_runtime_evidence (evidence_id, run_id, world_id, scenario_id, evidence_type, source_type, actor_refs_json, canonical_refs_json, text, structured_payload_json, timestamp, confidence, source_refs_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -67,7 +74,16 @@ class MiroFishWriteBackStore:
                     "INSERT INTO mirofish_candidate_deltas (candidate_id, run_id, world_id, scenario_id, candidate_type, target_canonical_type, target_canonical_id, proposed_entity_type, name, summary, proposed_change_json, evidence_ids_json, source_refs_json, confidence, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (item.candidate_id, item.run_id, item.world_id, item.scenario_id, item.candidate_type, item.target_canonical_type, item.target_canonical_id, item.proposed_entity_type, item.name, item.summary, json.dumps(item.proposed_change, ensure_ascii=False), json.dumps(item.evidence_ids, ensure_ascii=False), json.dumps(item.source_refs, ensure_ascii=False), item.confidence, item.status, item.created_at),
                 )
-        return {"run_id": bundle.run_id, "world_id": bundle.world_id, "scenario_id": bundle.scenario_id, "runtime_evidence_saved": len(evidence), "candidate_deltas_saved": len(candidates)}
+        return {
+            "run_id": bundle.run_id,
+            "world_id": bundle.world_id,
+            "scenario_id": bundle.scenario_id,
+            "runtime_evidence_saved": len(evidence),
+            "candidate_deltas_saved": len(candidates),
+            "actors_saved": len(bundle.actors),
+            "organizations_saved": len(bundle.organizations),
+            "subjects_saved": len(bundle.actors) + len(bundle.organizations),
+        }
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         with self.db.get_connection() as conn:
@@ -77,12 +93,62 @@ class MiroFishWriteBackStore:
             return None
         payload = dict(row)
         payload["bundle"] = json.loads(result_row["bundle_json"]) if result_row else None
+        actors = self.list_run_subjects(run_id=run_id, subject_kind="actor")
+        organizations = self.list_run_subjects(run_id=run_id, subject_kind="organization")
+        payload["subjects"] = {
+            "count": len(actors) + len(organizations),
+            "actors": actors,
+            "organizations": organizations,
+        }
         return payload
 
     def list_evidence(self, run_id: str) -> list[dict[str, Any]]:
         with self.db.get_connection() as conn:
             rows = conn.execute("SELECT * FROM mirofish_runtime_evidence WHERE run_id = ? ORDER BY timestamp, evidence_id", (run_id,)).fetchall()
-        return [self._decode_evidence_row(dict(row)) for row in rows]
+        subject_lookup: dict[str, list[dict[str, Any]]] = {}
+        for subject in self.list_run_subjects(run_id=run_id):
+            subject_lookup.setdefault(subject["subject_ref"], []).append(subject)
+        evidence_items: list[dict[str, Any]] = []
+        for row in rows:
+            item = self._decode_evidence_row(dict(row))
+            linked_subjects: list[dict[str, Any]] = []
+            seen_subject_rows: set[int] = set()
+            for ref in item.get("actor_refs") or []:
+                for subject in subject_lookup.get(str(ref), []):
+                    subject_row_id = int(subject["subject_row_id"])
+                    if subject_row_id in seen_subject_rows:
+                        continue
+                    seen_subject_rows.add(subject_row_id)
+                    linked_subjects.append(subject)
+            item["linked_subjects"] = linked_subjects
+            evidence_items.append(item)
+        return evidence_items
+
+    def list_run_subjects(
+        self,
+        *,
+        run_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_ref: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses = []
+        params: list[Any] = []
+        if run_id is not None:
+            clauses.append("run_id = ?")
+            params.append(run_id)
+        if subject_kind is not None:
+            clauses.append("subject_kind = ?")
+            params.append(subject_kind)
+        if subject_ref is not None:
+            clauses.append("subject_ref = ?")
+            params.append(subject_ref)
+        query = "SELECT * FROM mirofish_run_subjects"
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY subject_kind, name, subject_row_id"
+        with self.db.get_connection() as conn:
+            rows = conn.execute(query, tuple(params)).fetchall()
+        return [self._decode_run_subject_row(dict(row)) for row in rows]
 
     def list_candidates(self, *, world_id: str | None = None, status: str | None = None, candidate_type: str | None = None) -> list[dict[str, Any]]:
         clauses = []
@@ -245,6 +311,11 @@ class MiroFishWriteBackStore:
         row["proposed_change"] = json.loads(row.pop("proposed_change_json"))
         row["evidence_ids"] = json.loads(row.pop("evidence_ids_json"))
         row["source_refs"] = json.loads(row.pop("source_refs_json"))
+        return row
+
+    def _decode_run_subject_row(self, row: dict[str, Any]) -> dict[str, Any]:
+        row["metadata"] = json.loads(row.pop("metadata_json"))
+        row["source_payload"] = json.loads(row.pop("source_payload_json"))
         return row
 
     def _decode_entity_run_link_row(self, row: dict[str, Any]) -> dict[str, Any]:

@@ -11,12 +11,21 @@ def sample_result_bundle() -> dict:
         "scenario_id": "succession-crisis",
         "run_id": "run-123",
         "generated_at": "2026-03-10T12:00:00Z",
+        "actors": [
+            {"id": "actor:royal_court", "name": "Royal Court Herald", "canonical_id": "char-royal-court-herald", "canonical_type": "Character", "speaker_mode": "representative", "represented_entity_id": "org:royal_court"},
+            {"id": "actor:captain_serik", "name": "Captain Serik", "canonical_id": "char-serik", "canonical_type": "Character", "speaker_mode": "individual"},
+            {"id": "actor:nessa", "name": "Nessa", "canonical_id": "char-nessa", "canonical_type": "Character", "speaker_mode": "individual"},
+        ],
+        "organizations": [
+            {"id": "org:royal_court", "name": "The Royal Court", "canonical_id": "faction-royal-court", "canonical_type": "Faction", "speaker_mode": "official_account"},
+            {"id": "org:town_criers", "name": "Town Criers", "canonical_id": "faction-town-criers", "canonical_type": "Faction", "speaker_mode": "official_account"},
+        ],
         "prediction_summary": {
             "summary": "A forged decree rumor destabilizes trust in the court.",
-            "rumors": [{"name": "Forged decree rumor", "summary": "Town criers amplify doubts.", "confidence": 0.74}],
+            "rumors": [{"name": "Forged decree rumor", "summary": "Town criers amplify doubts.", "actor_refs": ["org:town_criers"], "confidence": 0.74}],
         },
-        "emergent_events": [{"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "confidence": 0.81}],
-        "relationship_changes": [{"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "confidence": 0.67}],
+        "emergent_events": [{"name": "Court issues denial", "description": "The Royal Court publicly denies the forgery.", "participant_ids": ["actor:royal_court", "org:royal_court"], "confidence": 0.81}],
+        "relationship_changes": [{"name": "Captain Serik distrusts Nessa", "summary": "Trust drops after the rumor spike.", "actor_refs": ["actor:captain_serik", "actor:nessa"], "confidence": 0.67}],
     }
 
 
@@ -52,6 +61,7 @@ def test_ingest_endpoint_imports_result_bundle(tmp_path):
     assert payload["data"]["run_id"] == "run-123"
     assert payload["data"]["runtime_evidence_saved"] == 4
     assert payload["data"]["candidate_deltas_saved"] == 3
+    assert payload["data"]["subjects_saved"] == 5
 
 
 def test_candidate_review_endpoint_lists_and_filters_candidates(tmp_path):
@@ -76,9 +86,13 @@ def test_run_detail_and_evidence_endpoints_return_review_context(tmp_path):
 
     assert run_status == 200
     assert run_payload["data"]["scenario_id"] == "succession-crisis"
+    assert run_payload["data"]["subjects"]["count"] == 5
+    assert len(run_payload["data"]["subjects"]["actors"]) == 3
+    assert len(run_payload["data"]["subjects"]["organizations"]) == 2
     assert evidence_status == 200
     assert evidence_payload["data"]["run_id"] == "run-123"
     assert evidence_payload["data"]["count"] == 4
+    assert any(any(subject["subject_ref"] == "org:town_criers" for subject in item["linked_subjects"]) for item in evidence_payload["data"]["evidence"])
 
 
 def test_review_action_endpoints_approve_and_reject_candidates(tmp_path):

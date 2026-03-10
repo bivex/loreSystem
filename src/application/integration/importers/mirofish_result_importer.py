@@ -19,7 +19,11 @@ class MiroFishResultImporter:
         evidence = bundle.runtime_evidence or self._derive_runtime_evidence(bundle)
         candidates = bundle.candidate_deltas or self._derive_candidate_deltas(bundle, evidence)
         saved = self.store.save_import(bundle, evidence, candidates)
-        return {**saved, "derived_runtime_evidence": not bool(bundle.runtime_evidence), "derived_candidate_deltas": not bool(bundle.candidate_deltas)}
+        return {
+            **saved,
+            "derived_runtime_evidence": not bool(bundle.runtime_evidence),
+            "derived_candidate_deltas": not bool(bundle.candidate_deltas),
+        }
 
     def _derive_runtime_evidence(self, bundle: MiroFishResultBundle) -> list[RuntimeEvidenceRecord]:
         payload = bundle.raw_payload

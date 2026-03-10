@@ -17,5 +17,8 @@ def test_smoke_script_runs_full_review_promote_flow(tmp_path):
     assert payload["success"] is True
     assert payload["candidate_count"] == 3
     assert payload["promoted_count"] == 3
+    assert payload["subjects_count"] == 5
     assert sorted(payload["canonical_types"]) == ["CharacterRelationship", "Event", "Rumor"]
+    assert len(payload["db_state"]["subject_rows"]) == 5
+    assert any(item["subject_ref"] == "org:town_criers" for item in payload["db_state"]["subject_rows"])
     assert sorted(item["status"] for item in payload["promotions"]) == ["promoted", "promoted", "promoted"]

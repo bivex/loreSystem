@@ -1,6 +1,6 @@
 """Integration helpers for external system bridges."""
 
-from .dto import CandidateDelta, EntityProvenanceLink, GenerationRunRecord, MiroFishResultBundle, RuntimeEvidenceRecord
+from .dto import CandidateDelta, EntityProvenanceLink, GenerationRunRecord, MiroFishResultBundle, RunSubjectRecord, RuntimeEvidenceRecord
 from .importers import MiroFishResultImporter
 from .promoters import MiroFishCandidatePromoter
 from .mirofish_projection_client import MiroFishProjectionClient, build_projection_import_payload
@@ -11,6 +11,7 @@ __all__ = [
     "GenerationRunRecord",
     "EntityProvenanceLink",
     "MiroFishResultBundle",
+    "RunSubjectRecord",
     "RuntimeEvidenceRecord",
     "MiroFishResultImporter",
     "MiroFishCandidatePromoter",
