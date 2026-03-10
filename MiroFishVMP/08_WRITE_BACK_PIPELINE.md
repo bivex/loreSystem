@@ -548,6 +548,7 @@ Confidence лучше считать не LLM-словами, а детерми�
   - `safe_relationship_only`
   - `safe_cross_run_relationship_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
+- optional `dry_run: true` на том же endpoint для preview без side effects
 - только по явно переданным `candidate_id`
 - только при явном `mapping` payload для promote
 - `safe_event_only` → только `scenario_event -> Event`
@@ -564,6 +565,7 @@ Confidence лучше считать не LLM-словами, а детерми�
   - supporting candidate тоже должен пройти safe-gates (`confidence >= 0.90`, минимум 2 evidence items, не `rejected`),
   - отсутствие opposite-polarity staged canonical `CharacterRelationship` для той же directed pair
 - auto-path оставляет audit metadata в `run_link.metadata`
+- `dry_run` делает per-item preview и проверяет не только policy gate, но и promote-side mapping viability
 
 ## 12. Promotion rules по типам
 
@@ -728,6 +730,7 @@ Promote только вручную, если:
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
+- `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
 Пока не реализовано:
 
@@ -743,7 +746,7 @@ Promote только вручную, если:
 - `POST /candidate-deltas/batch/promote`
   - payload: `items[]`, где каждый item содержит `candidate_id` и `mapping`
 - `POST /candidate-deltas/batch/auto-promote`
-  - payload: `policy` + `items[]`
+  - payload: `policy` + `items[]` + optional `dry_run: true`
   - каждый item содержит `candidate_id` и `mapping`
   - текущие допустимые policy:
     - `safe_event_only`
@@ -752,6 +755,14 @@ Promote только вручную, если:
     - `safe_cross_run_relationship_only`
 
 Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
+
+Для `dry_run: true` batch contract сейчас такой:
+
+- тот же endpoint не выполняет auto-approve / promote side effects
+- по каждому item возвращается либо `eligible`, либо `ineligible`
+- preview содержит `reasons`
+- если policy и mapping проходят, preview дополнительно содержит `metadata_preview`
+- preview валидирует не только policy gate, но и то, что mapping реально сможет пройти existing promote path
 
 Для `safe_event_only` item дополнительно проходит такой gate:
 
@@ -909,6 +920,7 @@ Promote только вручную, если:
 - policies `safe_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
 - только `scenario_event -> Event`, `rumor_candidate -> Rumor`, `relationship_change -> CharacterRelationship`
 - только narrow opt-in gate с audit metadata
+- explain/preview через `dry_run: true` на том же endpoint
 - cross-run-aware часть пока реализована только как узкий relationship-only slice, а не как общий policy engine
 
 Пока не сделано в этой фазе:

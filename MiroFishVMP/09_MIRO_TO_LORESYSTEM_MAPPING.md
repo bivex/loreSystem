@@ -185,7 +185,7 @@ Mapping:
 4. `candidate_deltas` → review / approve / reject
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
-7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run relationship slice, и вызывать тот же promote path
+7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run relationship slice, и вызывать тот же promote path; optional `dry_run: true` даёт preview этого же пути без side effects
 8. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
 9. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
 10. canonical entity / merge-linkage → `mirofish_entity_run_links`
@@ -244,10 +244,20 @@ Mapping:
 
 - batch review и batch promote являются wrapper'ом над single-candidate endpoint semantics,
 - batch auto-promote тоже работает как wrapper над существующим promote path,
+- batch auto-promote с `dry_run: true` работает как explain/preview wrapper над тем же promote path,
 - manual create для `Location` / `Faction` / `Character` тоже использует тот же single-candidate promote path,
 - каждый item обрабатывается независимо,
 - ответ агрегирует `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`,
 - частичный успех считается нормальным и не откатывает уже успешные элементы.
+
+Текущий `dry_run` intentionally narrow:
+
+- доступен только на existing `batch/auto-promote` endpoint
+- принимает те же `policy` и `items[]`
+- возвращает `eligible[]` / `ineligible[]` вместо реального promote результата
+- даёт per-item `reasons`
+- при успешном preview возвращает `metadata_preview`
+- не меняет candidate status и не создаёт canonical entity / run-link записи
 
 Текущий auto-promote intentionally narrow:
 

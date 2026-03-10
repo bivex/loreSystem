@@ -55,6 +55,7 @@
 - batch review / batch promotion API поверх single-candidate операций
 - minimal explicit auto-promotion policy endpoint:
   - `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
+  - optional `dry_run: true` даёт explain/preview без side effects
   - текущие policies:
     - `safe_event_only`
     - `safe_rumor_only`
@@ -85,6 +86,7 @@
 - same-db rerun для неизменившегося candidate теперь сохраняет стабильный `canonical_id` и не плодит новые `entity_run_links`
 - auto-promotion пока намеренно узкий и audit-friendly:
   - только explicit opt-in вызов
+  - тот же endpoint умеет `dry_run: true` для preview policy gate + promote viability check
   - `safe_event_only` → только `scenario_event -> Event`
   - `safe_rumor_only` → только `rumor_candidate -> Rumor`
   - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
@@ -94,6 +96,7 @@
   - `safe_relationship_only` дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
   - `safe_cross_run_relationship_only` дополнительно требует хотя бы один supporting run с тем же directed `actor_refs` и той же polarity, плюс отклоняет opposite-polarity staged canonical relationship для той же directed pair
   - auto-path пишет `auto_promote_policy` / `auto_promoted`, а cross-run policy ещё и `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check` в provenance metadata
+  - `dry_run` возвращает per-item `eligible/ineligible`, `reasons`, `metadata_preview` и ничего не меняет в candidate status / canonical entities / run links
 - manual create для `Location` / `Faction` / `Character` остаётся review-only и требует fully explicit mapping payload:
   - `Location` требует как минимум `location_type`
   - `Faction` требует как минимум `faction_type` и `alignment`

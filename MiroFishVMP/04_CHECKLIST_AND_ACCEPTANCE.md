@@ -57,6 +57,7 @@
 - [x] неизменившийся candidate при same-db rerun сохраняет тот же `candidate_id` и тот же `canonical_id`
 - [x] есть прикладная mapping matrix: `09_MIRO_TO_LORESYSTEM_MAPPING.md`
 - [x] есть explicit narrow auto-promotion layer для safe cases: `batch/auto-promote` + `safe_event_only` / `safe_rumor_only` / `safe_relationship_only` / `safe_cross_run_relationship_only`
+- [x] у `batch/auto-promote` есть `dry_run: true` explain/preview режим без side effects на candidate status / canonical rows / run links
 - [x] есть manual create/merge flow для `Location`, `Faction`, `Character` через existing `promote` / `merge` endpoints и staged canonical persistence
 
 ### Что ещё остаётся вне текущего MVP
