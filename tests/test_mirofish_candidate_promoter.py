@@ -351,6 +351,55 @@ def manual_candidate_bundle(
     }
 
 
+def exact_location_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    location_type: str = "castle",
+    parent_location_id: int | None = None,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change = {"location_type": location_type}
+    if parent_location_id is not None:
+        proposed_change["parent_location_id"] = parent_location_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Location",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def long_backstory() -> str:
     return (
         "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
@@ -1363,3 +1412,248 @@ def test_promoter_merges_manual_location_candidate_into_existing_location(tmp_pa
     assert merged["run_link"]["relation_type"] == "merged_into"
     assert merged["run_link"]["metadata"]["reason"] == "alias of existing location"
     assert merged["candidate"]["status"] == "merged"
+
+
+def test_preview_auto_merge_candidate_finds_exact_duplicate_location_without_side_effects(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-preview.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location-create")
+    promoted = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="  Ashen-Keep  ",
+            summary="Scouts clearly describe the same ruined fortress.",
+            run_id="run-location-duplicate",
+            parent_location_id=900,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-location-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+
+    assert preview["eligible"] is True
+    assert preview["candidate_status_before"] == "pending_review"
+    assert preview["would_auto_approve"] is True
+    assert preview["target_canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert preview["target_canonical_type"] == "Location"
+    assert preview["metadata_preview"]["auto_merge_policy"] == "safe_existing_location_duplicate_only"
+    assert preview["metadata_preview"]["merge_match_name"] == "ashen keep"
+    assert store.get_candidate("cand-location-duplicate")["status"] == "pending_review"
+    assert store.list_entity_run_links(run_id="run-location-duplicate", source_candidate_id="cand-location-duplicate") == []
+
+
+def test_auto_merge_candidate_merges_exact_duplicate_location_candidate(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-success.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location-create")
+    promoted = promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="Ashen Keep",
+            summary="A second run confirms the same ruined fortress.",
+            run_id="run-location-duplicate",
+            parent_location_id=900,
+        )
+    )
+
+    merged = promoter.auto_merge_candidate(
+        "cand-location-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+
+    assert merged["canonical_entity"]["canonical_id"] == promoted["canonical_entity"]["canonical_id"]
+    assert merged["run_link"]["relation_type"] == "merged_into"
+    assert merged["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_location_duplicate_only"
+    assert merged["run_link"]["metadata"]["auto_merged"] is True
+    assert merged["run_link"]["metadata"]["duplicate_guard"] == "passed"
+    assert merged["candidate"]["status"] == "merged"
+    assert merged["candidate"]["target_canonical_id"] == str(promoted["canonical_entity"]["canonical_id"])
+    assert len(store.list_entity_run_links(run_id="run-location-duplicate", source_candidate_id="cand-location-duplicate")) == 1
+
+
+def test_preview_auto_merge_candidate_rejects_when_location_signature_does_not_match(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-no-match.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        )
+    )
+    approved_create = _approve_candidate(store, candidate_type="new_entity_candidate", run_id="run-location-create")
+    promoter.promote_candidate(
+        approved_create["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )
+
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="Ashen Keep",
+            summary="This report points to a different sub-site.",
+            run_id="run-location-duplicate",
+            parent_location_id=901,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-location-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_location_duplicate_only' requires exactly 1 staged canonical Location exact duplicate match in the same world"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_ambiguous_duplicate_locations(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-ambiguous.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    for candidate_id, run_id in (("cand-location-create-1", "run-location-create-1"), ("cand-location-create-2", "run-location-create-2")):
+        importer.import_result_bundle(
+            manual_candidate_bundle(
+                candidate_id=candidate_id,
+                target_canonical_type="Location",
+                name="Ashen Keep",
+                summary="A ruined fortress overlooking the northern pass.",
+                run_id=run_id,
+            )
+        )
+        approved = _approve_candidate(store, candidate_type="new_entity_candidate", run_id=run_id)
+        promoter.promote_candidate(
+            approved["candidate_id"],
+            {
+                "tenant_id": 1,
+                "world_id": 101,
+                "location_type": "castle",
+                "parent_location_id": 900,
+            },
+        )
+
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="Ashen Keep",
+            summary="Another run repeats the same location signature.",
+            run_id="run-location-duplicate",
+            parent_location_id=900,
+        )
+    )
+
+    preview = promoter.preview_auto_merge_candidate(
+        "cand-location-duplicate",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+
+    assert preview["eligible"] is False
+    assert preview["reasons"] == [
+        "Policy 'safe_existing_location_duplicate_only' rejected due to ambiguous staged canonical Location duplicate matches"
+    ]
+
+
+def test_preview_auto_merge_candidate_rejects_low_confidence_and_sparse_evidence(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "auto-merge-gates.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-low-confidence",
+            name="Ashen Keep",
+            summary="Weak evidence for the same fortress.",
+            run_id="run-location-low-confidence",
+            confidence=0.85,
+            evidence_count=2,
+        )
+    )
+    importer.import_result_bundle(
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-sparse-evidence",
+            name="Ashen Keep",
+            summary="Only one witness mentions the same fortress.",
+            run_id="run-location-sparse-evidence",
+            confidence=0.95,
+            evidence_count=1,
+        )
+    )
+
+    low_confidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-location-low-confidence",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+    sparse_evidence_preview = promoter.preview_auto_merge_candidate(
+        "cand-location-sparse-evidence",
+        {"world_id": 101},
+        policy="safe_existing_location_duplicate_only",
+    )
+
+    assert low_confidence_preview["eligible"] is False
+    assert low_confidence_preview["reasons"] == [
+        "Policy 'safe_existing_location_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert sparse_evidence_preview["eligible"] is False
+    assert sparse_evidence_preview["reasons"] == [
+        "Policy 'safe_existing_location_duplicate_only' requires at least 2 evidence items"
+    ]

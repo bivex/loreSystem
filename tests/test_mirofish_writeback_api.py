@@ -337,6 +337,55 @@ def manual_candidate_bundle(
     }
 
 
+def exact_location_duplicate_bundle(
+    *,
+    candidate_id: str,
+    name: str,
+    summary: str,
+    run_id: str,
+    location_type: str = "castle",
+    parent_location_id: int | None = None,
+    confidence: float = 0.95,
+    evidence_count: int = 2,
+) -> dict:
+    evidence_ids = [f"{candidate_id}-ev-{index + 1}" for index in range(evidence_count)]
+    proposed_change = {"location_type": location_type}
+    if parent_location_id is not None:
+        proposed_change["parent_location_id"] = parent_location_id
+    return {
+        "schema_version": "1.1",
+        "world_id": "world-1",
+        "scenario_id": "succession-crisis",
+        "run_id": run_id,
+        "generated_at": "2026-03-10T12:00:00Z",
+        "runtime_evidence": [
+            {
+                "evidence_id": evidence_id,
+                "evidence_type": "runtime_observation",
+                "source_type": "manual_candidate",
+                "text": summary,
+                "timestamp": f"2026-03-10T12:0{index + 1}:00Z",
+                "confidence": confidence,
+                "source_refs": [{"collection": "manual_candidates", "index": index}],
+            }
+            for index, evidence_id in enumerate(evidence_ids)
+        ],
+        "candidate_deltas": [
+            {
+                "candidate_id": candidate_id,
+                "candidate_type": "new_entity_candidate",
+                "target_canonical_type": "Location",
+                "name": name,
+                "summary": summary,
+                "proposed_change": proposed_change,
+                "evidence_ids": evidence_ids,
+                "source_refs": [{"collection": "manual_candidates", "index": 0}],
+                "confidence": confidence,
+            }
+        ],
+    }
+
+
 def long_backstory() -> str:
     return (
         "Captain Aria was raised among flood-battered harbor walls, learned diplomacy from smugglers and admirals alike, "
@@ -1473,6 +1522,197 @@ def test_merge_endpoint_links_approved_candidate_to_existing_canonical_entity(tm
     assert payload["data"]["run_link"]["relation_type"] == "merged_into"
     assert payload["data"]["run_link"]["metadata"]["reason"] == "same event"
     assert payload["data"]["candidate"]["status"] == "merged"
+
+
+def test_batch_auto_merge_endpoint_merges_exact_duplicate_location_and_reports_failures(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-location-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-location-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="Ashen Keep",
+            summary="Another run confirms the same fortress.",
+            run_id="run-location-duplicate",
+            parent_location_id=900,
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-no-match",
+            name="Bellwatch Keep",
+            summary="A different fortress should stay pending.",
+            run_id="run-location-no-match",
+            parent_location_id=900,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_location_duplicate_only",
+            "items": [
+                {"candidate_id": "cand-location-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-location-no-match", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-location-duplicate")[1]
+    no_match_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-location-no-match")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_location_duplicate_only"
+    assert payload["data"]["success_count"] == 1
+    assert payload["data"]["failure_count"] == 1
+    assert payload["data"]["succeeded"][0]["candidate_id"] == "cand-location-duplicate"
+    assert payload["data"]["succeeded"][0]["canonical_entity"]["canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["succeeded"][0]["run_link"]["metadata"]["auto_merge_policy"] == "safe_existing_location_duplicate_only"
+    assert payload["data"]["failed"][0]["candidate_id"] == "cand-location-no-match"
+    assert "exact duplicate match" in payload["data"]["failed"][0]["error"]
+    assert duplicate_detail["data"]["status"] == "merged"
+    assert no_match_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_supports_dry_run_without_side_effects(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-dry-run.db"))
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        manual_candidate_bundle(
+            candidate_id="cand-location-create",
+            target_canonical_type="Location",
+            name="Ashen Keep",
+            summary="A ruined fortress overlooking the northern pass.",
+            run_id="run-location-create",
+        ),
+    )
+    call_json(app, "POST", "/api/mirofish/writeback/candidate-deltas/cand-location-create/approve")
+    promote_payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/cand-location-create/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "location_type": "castle",
+            "parent_location_id": 900,
+        },
+    )[1]
+
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-duplicate",
+            name="  Ashen-Keep  ",
+            summary="Another run confirms the same fortress.",
+            run_id="run-location-duplicate",
+            parent_location_id=900,
+        ),
+    )
+    call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/ingest",
+        exact_location_duplicate_bundle(
+            candidate_id="cand-location-low-confidence",
+            name="Ashen Keep",
+            summary="Weak evidence for the same fortress.",
+            run_id="run-location-low-confidence",
+            parent_location_id=900,
+            confidence=0.85,
+            evidence_count=2,
+        ),
+    )
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_location_duplicate_only",
+            "dry_run": True,
+            "items": [
+                {"candidate_id": "cand-location-duplicate", "mapping": {"world_id": 101}},
+                {"candidate_id": "cand-location-low-confidence", "mapping": {"world_id": 101}},
+            ],
+        },
+    )
+
+    duplicate_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-location-duplicate")[1]
+    low_confidence_detail = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas/cand-location-low-confidence")[1]
+
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["policy"] == "safe_existing_location_duplicate_only"
+    assert payload["data"]["dry_run"] is True
+    assert payload["data"]["eligible_count"] == 1
+    assert payload["data"]["ineligible_count"] == 1
+    assert payload["data"]["eligible"][0]["candidate_id"] == "cand-location-duplicate"
+    assert payload["data"]["eligible"][0]["target_canonical_id"] == promote_payload["data"]["canonical_entity"]["canonical_id"]
+    assert payload["data"]["eligible"][0]["metadata_preview"]["auto_merge_policy"] == "safe_existing_location_duplicate_only"
+    assert payload["data"]["ineligible"][0]["candidate_id"] == "cand-location-low-confidence"
+    assert payload["data"]["ineligible"][0]["reasons"] == [
+        "Policy 'safe_existing_location_duplicate_only' requires confidence >= 0.90"
+    ]
+    assert duplicate_detail["data"]["status"] == "pending_review"
+    assert low_confidence_detail["data"]["status"] == "pending_review"
+
+
+def test_batch_auto_merge_endpoint_validates_dry_run_type(tmp_path):
+    app = create_writeback_app(str(tmp_path / "batch-auto-merge-invalid.db"))
+
+    status, payload = call_json(
+        app,
+        "POST",
+        "/api/mirofish/writeback/candidate-deltas/batch/auto-merge",
+        {
+            "policy": "safe_existing_location_duplicate_only",
+            "dry_run": "yes",
+            "items": [{"candidate_id": "cand-location-duplicate", "mapping": {"world_id": 101}}],
+        },
+    )
+
+    assert status == 400
+    assert payload["success"] is False
+    assert payload["error"] == "dry_run must be a boolean"
 
 
 def test_merge_endpoint_requires_approved_candidate(tmp_path):

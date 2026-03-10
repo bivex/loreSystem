@@ -39,6 +39,7 @@ class MiroFishCandidatePromoter:
     SAFE_CROSS_RUN_RUMOR_ONLY_POLICY = "safe_cross_run_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
     SAFE_CROSS_RUN_RELATIONSHIP_ONLY_POLICY = "safe_cross_run_relationship_only"
+    SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY = "safe_existing_location_duplicate_only"
 
     def __init__(self, store: MiroFishWriteBackStore):
         self.store = store
@@ -173,6 +174,70 @@ class MiroFishCandidatePromoter:
             "reasons": reasons,
         }
 
+    def auto_merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None, *, policy: str) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload = dict(mapping or {})
+        validation_metadata = self._validate_auto_merge_candidate(candidate, payload, policy=policy)
+        payload["canonical_id"] = validation_metadata["merge_target_canonical_id"]
+        self._preview_merge_candidate(candidate, payload)
+        if candidate.get("status") == "pending_review":
+            updated_candidate = self.store.update_candidate_status(candidate_id, "approved")
+            if not updated_candidate:
+                raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload["metadata"] = self._build_auto_merge_metadata(payload, validation_metadata, policy=policy)
+        return self.merge_candidate(candidate_id, payload)
+
+    def preview_auto_merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None, *, policy: str) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+
+        payload = dict(mapping or {})
+        candidate_status = str(candidate.get("status") or "").strip()
+
+        try:
+            validation_metadata = self._validate_auto_merge_candidate(candidate, payload, policy=policy)
+            payload["canonical_id"] = validation_metadata["merge_target_canonical_id"]
+            metadata_preview = self._build_auto_merge_metadata(payload, validation_metadata, policy=policy)
+            merge_preview = self._preview_merge_candidate(candidate, payload)
+        except ValueError as exc:
+            return {
+                "candidate_id": candidate_id,
+                "policy": policy,
+                "eligible": False,
+                "candidate": candidate,
+                "candidate_status_before": candidate_status,
+                "reasons": [str(exc)],
+                "metadata_preview": None,
+            }
+
+        reasons = [
+            f"Candidate status '{candidate_status}' is eligible for auto-merge processing",
+            f"Policy '{policy}' gate passed",
+            f"Candidate can be merged into canonical '{merge_preview['canonical_type']}' #{merge_preview['canonical_id']}",
+        ]
+        if candidate_status == "pending_review":
+            reasons.append("Candidate would be auto-approved before merge")
+        if merge_preview.get("already_merged"):
+            reasons.append("Candidate is already merged and would reuse the existing canonical link")
+
+        return {
+            "candidate_id": candidate_id,
+            "policy": policy,
+            "eligible": True,
+            "candidate": candidate,
+            "candidate_status_before": candidate_status,
+            "would_auto_approve": candidate_status == "pending_review",
+            "target_canonical_id": merge_preview["canonical_id"],
+            "target_canonical_type": merge_preview["canonical_type"],
+            "metadata_preview": metadata_preview,
+            "reasons": reasons,
+        }
+
     def merge_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
         candidate = self.store.get_candidate(candidate_id)
         if not candidate:
@@ -187,20 +252,7 @@ class MiroFishCandidatePromoter:
         elif candidate.get("status") != "approved":
             raise ValueError("Only approved candidates can be merged")
 
-        canonical_id = self._as_int(payload.get("canonical_id") or candidate.get("target_canonical_id"), "canonical_id")
-        canonical_entity = self.store.get_canonical_entity(canonical_id)
-        if not canonical_entity:
-            raise LookupError(f"Canonical entity '{canonical_id}' not found")
-
-        requested_type = str(payload.get("canonical_type") or "").strip()
-        if requested_type and requested_type != canonical_entity["canonical_type"]:
-            raise ValueError("canonical_type does not match the target canonical entity")
-
-        candidate_target_type = str(candidate.get("target_canonical_type") or "").strip()
-        if candidate_target_type and candidate_target_type != canonical_entity["canonical_type"]:
-            raise ValueError(
-                f"Candidate target canonical type '{candidate_target_type}' cannot be merged into '{canonical_entity['canonical_type']}'"
-            )
+        canonical_entity = self._resolve_merge_target_canonical_entity(candidate, payload)
 
         run_links = [
             item
@@ -453,6 +505,15 @@ class MiroFishCandidatePromoter:
             return self._validate_safe_cross_run_relationship_policy(candidate, payload)
         raise ValueError(f"Unsupported auto-promotion policy: {policy}")
 
+    def _validate_auto_merge_candidate(self, candidate: dict[str, Any], payload: dict[str, Any], *, policy: str) -> dict[str, Any]:
+        status = str(candidate.get("status") or "").strip()
+        if status not in {"pending_review", "approved", "merged"}:
+            raise ValueError("Auto-merge policy can only process pending_review, approved, or already merged candidates")
+
+        if policy == self.SAFE_EXISTING_LOCATION_DUPLICATE_ONLY_POLICY:
+            return self._validate_safe_existing_location_duplicate_policy(candidate, payload)
+        raise ValueError(f"Unsupported auto-merge policy: {policy}")
+
     def _validate_safe_event_policy(self, candidate: dict[str, Any]) -> dict[str, Any]:
         candidate_type = str(candidate.get("candidate_type") or "").strip()
         if candidate_type != "scenario_event":
@@ -671,6 +732,53 @@ class MiroFishCandidatePromoter:
             "contradiction_check": "passed",
         }
 
+    def _validate_safe_existing_location_duplicate_policy(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        candidate_type = str(candidate.get("candidate_type") or "").strip()
+        if candidate_type != "new_entity_candidate":
+            raise ValueError("Policy 'safe_existing_location_duplicate_only' only supports new_entity_candidate candidates")
+
+        target_canonical_type = str(candidate.get("target_canonical_type") or "").strip()
+        if target_canonical_type != "Location":
+            raise ValueError("Policy 'safe_existing_location_duplicate_only' only supports Location merge targets")
+
+        confidence = float(candidate.get("confidence") or 0.0)
+        if confidence < 0.90:
+            raise ValueError("Policy 'safe_existing_location_duplicate_only' requires confidence >= 0.90")
+
+        evidence_ids = [str(item).strip() for item in (candidate.get("evidence_ids") or []) if str(item).strip()]
+        if len(evidence_ids) < 2:
+            raise ValueError("Policy 'safe_existing_location_duplicate_only' requires at least 2 evidence items")
+
+        location_name = self._normalize_location_name(candidate.get("name") or (candidate.get("proposed_change") or {}).get("name"))
+        if not location_name:
+            raise ValueError("Policy 'safe_existing_location_duplicate_only' requires candidate.name")
+
+        world_id = self._as_int(payload.get("world_id"), "world_id")
+        location_type = self._resolve_location_type_for_candidate(candidate, payload)
+        parent_location_id = self._resolve_parent_location_id_for_candidate(candidate, payload)
+        matches = self._find_exact_duplicate_canonical_locations(
+            world_id=world_id,
+            location_name=location_name,
+            location_type=location_type,
+            parent_location_id=parent_location_id,
+        )
+        if not matches:
+            raise ValueError(
+                "Policy 'safe_existing_location_duplicate_only' requires exactly 1 staged canonical Location exact duplicate match in the same world"
+            )
+        if len(matches) > 1:
+            raise ValueError(
+                "Policy 'safe_existing_location_duplicate_only' rejected due to ambiguous staged canonical Location duplicate matches"
+            )
+
+        return {
+            "merge_target_canonical_id": matches[0]["canonical_id"],
+            "merge_match_name": location_name,
+            "merge_match_location_type": location_type,
+            "merge_match_parent_location_id": parent_location_id,
+            "duplicate_guard": "passed",
+        }
+
     def _find_supporting_relationship_run_ids(
         self,
         candidate: dict[str, Any],
@@ -872,6 +980,26 @@ class MiroFishCandidatePromoter:
             return canonical
         return None
 
+    def _find_exact_duplicate_canonical_locations(
+        self,
+        *,
+        world_id: int,
+        location_name: str,
+        location_type: str,
+        parent_location_id: int | None,
+    ) -> list[dict[str, Any]]:
+        matches: list[dict[str, Any]] = []
+        for canonical in self.store.list_canonical_entities(canonical_type="Location", world_id=world_id):
+            entity = canonical.get("entity") or {}
+            if self._normalize_location_name(entity.get("name")) != location_name:
+                continue
+            if str(entity.get("location_type") or "").strip().casefold() != location_type:
+                continue
+            if self._as_optional_int(entity.get("parent_location_id"), "entity.parent_location_id") != parent_location_id:
+                continue
+            matches.append(canonical)
+        return matches
+
     def _normalize_actor_refs(self, value: Any) -> tuple[str, str] | tuple[()]:
         refs = tuple(str(item).strip() for item in (value or []) if str(item).strip())
         if len(refs) != 2:
@@ -886,6 +1014,9 @@ class MiroFishCandidatePromoter:
         return self._normalize_text_signature(value)
 
     def _normalize_source_name(self, value: Any) -> str:
+        return self._normalize_text_signature(value)
+
+    def _normalize_location_name(self, value: Any) -> str:
         return self._normalize_text_signature(value)
 
     def _normalize_canonical_participant_ids(self, value: Any) -> tuple[int, ...]:
@@ -964,6 +1095,17 @@ class MiroFishCandidatePromoter:
             "auto_promoted": True,
         }
 
+    def _build_auto_merge_metadata(self, payload: dict[str, Any], validation_metadata: dict[str, Any], *, policy: str) -> dict[str, Any]:
+        existing_metadata = payload.get("metadata") or {}
+        if not isinstance(existing_metadata, dict):
+            raise ValueError("metadata must be an object")
+        return {
+            **existing_metadata,
+            **validation_metadata,
+            "auto_merge_policy": policy,
+            "auto_merged": True,
+        }
+
     def _preview_promote_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         if candidate.get("status") == "promoted":
             canonical_entity = self.store.get_canonical_entity_by_candidate(str(candidate.get("candidate_id") or ""))
@@ -981,6 +1123,51 @@ class MiroFishCandidatePromoter:
             "canonical_type": type(entity).__name__,
             "already_promoted": False,
         }
+
+    def _preview_merge_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        if candidate.get("status") == "merged":
+            existing_target_id = self._as_int(candidate.get("target_canonical_id"), "target_canonical_id")
+            requested_target_id = payload.get("canonical_id")
+            if requested_target_id is not None and self._as_int(requested_target_id, "canonical_id") != existing_target_id:
+                raise ValueError("Merged candidate is already linked to a different canonical entity")
+
+        canonical_entity = self._resolve_merge_target_canonical_entity(candidate, payload)
+        return {
+            "canonical_id": canonical_entity["canonical_id"],
+            "canonical_type": canonical_entity["canonical_type"],
+            "already_merged": candidate.get("status") == "merged",
+        }
+
+    def _resolve_merge_target_canonical_entity(self, candidate: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+        canonical_id = self._as_int(payload.get("canonical_id") or candidate.get("target_canonical_id"), "canonical_id")
+        canonical_entity = self.store.get_canonical_entity(canonical_id)
+        if not canonical_entity:
+            raise LookupError(f"Canonical entity '{canonical_id}' not found")
+
+        requested_type = str(payload.get("canonical_type") or "").strip()
+        if requested_type and requested_type != canonical_entity["canonical_type"]:
+            raise ValueError("canonical_type does not match the target canonical entity")
+
+        candidate_target_type = str(candidate.get("target_canonical_type") or "").strip()
+        if candidate_target_type and candidate_target_type != canonical_entity["canonical_type"]:
+            raise ValueError(
+                f"Candidate target canonical type '{candidate_target_type}' cannot be merged into '{canonical_entity['canonical_type']}'"
+            )
+        return canonical_entity
+
+    def _resolve_location_type_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> str:
+        proposed = candidate.get("proposed_change") or {}
+        location_type = self._parse_required_enum(
+            payload.get("location_type") or proposed.get("location_type"),
+            LocationType,
+            "location_type",
+        )
+        return str(location_type.value)
+
+    def _resolve_parent_location_id_for_candidate(self, candidate: dict[str, Any], payload: dict[str, Any]) -> int | None:
+        proposed = candidate.get("proposed_change") or {}
+        raw_parent_id = payload.get("parent_location_id") if "parent_location_id" in payload else proposed.get("parent_location_id")
+        return self._as_optional_int(raw_parent_id, "parent_location_id")
 
     def _parse_event_outcome(self, value: Any) -> EventOutcome:
         text = str(value).strip().lower()
