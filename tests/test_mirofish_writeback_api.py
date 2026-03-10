@@ -112,6 +112,55 @@ def test_review_action_endpoint_returns_404_for_missing_candidate(tmp_path):
     assert payload["success"] is False
 
 
+def test_promote_endpoint_maps_approved_candidate_to_canonical_entity(tmp_path):
+    app = create_writeback_app(str(tmp_path / "promote.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    list_status, list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")
+    candidate_id = list_payload["data"]["candidates"][0]["candidate_id"]
+
+    call_json(app, "POST", f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/approve")
+    status, payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+        },
+    )
+
+    assert list_status == 200
+    assert status == 200
+    assert payload["success"] is True
+    assert payload["data"]["canonical_entity"]["canonical_type"] == "Event"
+    assert payload["data"]["canonical_entity"]["entity"]["participant_ids"] == [201]
+    assert payload["data"]["candidate"]["status"] == "promoted"
+
+
+def test_promote_endpoint_requires_approved_candidate(tmp_path):
+    app = create_writeback_app(str(tmp_path / "promote-gate.db"))
+    call_json(app, "POST", "/api/mirofish/writeback/ingest", sample_result_bundle())
+    list_status, list_payload = call_json(app, "GET", "/api/mirofish/writeback/candidate-deltas?candidate_type=scenario_event")
+    candidate_id = list_payload["data"]["candidates"][0]["candidate_id"]
+
+    status, payload = call_json(
+        app,
+        "POST",
+        f"/api/mirofish/writeback/candidate-deltas/{candidate_id}/promote",
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+        },
+    )
+
+    assert list_status == 200
+    assert status == 400
+    assert payload["success"] is False
+
+
 def test_ingest_endpoint_rejects_invalid_json(tmp_path):
     app = create_writeback_app(str(tmp_path / "bad.db"))
     environ = {

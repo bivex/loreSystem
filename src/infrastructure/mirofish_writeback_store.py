@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +42,7 @@ class MiroFishWriteBackStore:
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_scenario_results (run_id TEXT PRIMARY KEY, bundle_json TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_runtime_evidence (evidence_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, world_id TEXT NOT NULL, scenario_id TEXT NOT NULL, evidence_type TEXT NOT NULL, source_type TEXT NOT NULL, actor_refs_json TEXT NOT NULL, canonical_refs_json TEXT NOT NULL, text TEXT, structured_payload_json TEXT NOT NULL, timestamp TEXT NOT NULL, confidence REAL NOT NULL, source_refs_json TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
             conn.execute("CREATE TABLE IF NOT EXISTS mirofish_candidate_deltas (candidate_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, world_id TEXT NOT NULL, scenario_id TEXT NOT NULL, candidate_type TEXT NOT NULL, target_canonical_type TEXT, target_canonical_id TEXT, proposed_entity_type TEXT, name TEXT NOT NULL, summary TEXT, proposed_change_json TEXT NOT NULL, evidence_ids_json TEXT NOT NULL, source_refs_json TEXT NOT NULL, confidence REAL NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, FOREIGN KEY (run_id) REFERENCES mirofish_scenario_runs(run_id) ON DELETE CASCADE)")
+            conn.execute("CREATE TABLE IF NOT EXISTS mirofish_canonical_entities (canonical_id INTEGER PRIMARY KEY AUTOINCREMENT, source_candidate_id TEXT UNIQUE NOT NULL, canonical_type TEXT NOT NULL, tenant_id INTEGER NOT NULL, world_id INTEGER NOT NULL, entity_json TEXT NOT NULL, promoted_at TEXT NOT NULL, FOREIGN KEY (source_candidate_id) REFERENCES mirofish_candidate_deltas(candidate_id) ON DELETE CASCADE)")
 
     def save_import(self, bundle: MiroFishResultBundle, evidence: list[RuntimeEvidenceRecord], candidates: list[CandidateDelta]) -> dict[str, Any]:
         with self.db.get_connection() as conn:
@@ -120,6 +122,59 @@ class MiroFishWriteBackStore:
         if not row:
             return None
         return self._decode_candidate_row(dict(row))
+
+    def mark_candidate_promoted(self, candidate_id: str, *, canonical_type: str, canonical_id: int) -> dict[str, Any] | None:
+        with self.db.get_connection() as conn:
+            updated = conn.execute(
+                "UPDATE mirofish_candidate_deltas SET status = ?, target_canonical_type = ?, target_canonical_id = ? WHERE candidate_id = ?",
+                ("promoted", canonical_type, str(canonical_id), candidate_id),
+            )
+            if updated.rowcount == 0:
+                return None
+            row = conn.execute("SELECT * FROM mirofish_candidate_deltas WHERE candidate_id = ?", (candidate_id,)).fetchone()
+        if not row:
+            return None
+        return self._decode_candidate_row(dict(row))
+
+    def save_canonical_entity(
+        self,
+        *,
+        source_candidate_id: str,
+        canonical_type: str,
+        tenant_id: int,
+        world_id: int,
+        entity_payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        promoted_at = datetime.now(timezone.utc).isoformat()
+        with self.db.get_connection() as conn:
+            cursor = conn.execute(
+                "INSERT INTO mirofish_canonical_entities (source_candidate_id, canonical_type, tenant_id, world_id, entity_json, promoted_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (source_candidate_id, canonical_type, tenant_id, world_id, "{}", promoted_at),
+            )
+            canonical_id = int(cursor.lastrowid)
+            entity_payload = {**entity_payload, "id": canonical_id}
+            conn.execute(
+                "UPDATE mirofish_canonical_entities SET entity_json = ? WHERE canonical_id = ?",
+                (json.dumps(entity_payload, ensure_ascii=False), canonical_id),
+            )
+        return {
+            "canonical_id": canonical_id,
+            "source_candidate_id": source_candidate_id,
+            "canonical_type": canonical_type,
+            "tenant_id": tenant_id,
+            "world_id": world_id,
+            "entity": entity_payload,
+            "promoted_at": promoted_at,
+        }
+
+    def get_canonical_entity_by_candidate(self, candidate_id: str) -> dict[str, Any] | None:
+        with self.db.get_connection() as conn:
+            row = conn.execute("SELECT * FROM mirofish_canonical_entities WHERE source_candidate_id = ?", (candidate_id,)).fetchone()
+        if not row:
+            return None
+        payload = dict(row)
+        payload["entity"] = json.loads(payload.pop("entity_json"))
+        return payload
 
     def _decode_evidence_row(self, row: dict[str, Any]) -> dict[str, Any]:
         row["actor_refs"] = json.loads(row.pop("actor_refs_json"))

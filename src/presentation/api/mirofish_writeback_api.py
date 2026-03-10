@@ -9,6 +9,7 @@ from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 from src.application.integration.importers import MiroFishResultImporter
+from src.application.integration.promoters import MiroFishCandidatePromoter
 from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
 
 
@@ -20,6 +21,7 @@ class MiroFishWriteBackAPI:
     def __init__(self, db_path: str = "lore_system.db"):
         self.store = MiroFishWriteBackStore(db_path)
         self.importer = MiroFishResultImporter(self.store)
+        self.promoter = MiroFishCandidatePromoter(self.store)
 
     def handle_request(
         self,
@@ -41,6 +43,8 @@ class MiroFishWriteBackAPI:
             parts = [part for part in suffix.split("/") if part]
             if len(parts) == 2 and parts[1] in {"approve", "reject"}:
                 return self._handle_candidate_review_action(parts[0], parts[1])
+            if len(parts) == 2 and parts[1] == "promote":
+                return self._handle_candidate_promote(parts[0], body)
 
         prefix = f"{self.base_path}/runs/"
         if method == "GET" and path.startswith(prefix):
@@ -122,6 +126,21 @@ class MiroFishWriteBackAPI:
                 },
             },
         )
+
+    def _handle_candidate_promote(self, candidate_id: str, body: bytes) -> tuple[int, dict[str, Any]]:
+        if not candidate_id:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": "candidate_id is required"})
+        try:
+            mapping = json.loads(body.decode("utf-8") or "{}")
+        except json.JSONDecodeError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": f"Invalid JSON body: {exc.msg}"})
+        try:
+            result = self.promoter.promote_candidate(candidate_id, mapping)
+        except LookupError as exc:
+            return self._response(HTTPStatus.NOT_FOUND, {"success": False, "error": str(exc)})
+        except ValueError as exc:
+            return self._response(HTTPStatus.BAD_REQUEST, {"success": False, "error": str(exc)})
+        return self._response(HTTPStatus.OK, {"success": True, "data": result})
 
     def wsgi_app(self, environ: dict[str, Any], start_response):
         content_length = int(environ.get("CONTENT_LENGTH") or 0)

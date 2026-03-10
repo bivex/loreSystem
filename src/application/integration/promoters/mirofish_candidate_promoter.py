@@ -1,0 +1,184 @@
+"""Promote approved MiroFish candidate deltas into canonical lore records."""
+
+from __future__ import annotations
+
+from dataclasses import is_dataclass, fields
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from src.domain.entities.character_relationship import CharacterRelationship, RelationshipType
+from src.domain.entities.event import Event
+from src.domain.entities.rumor import Rumor
+from src.domain.value_objects.common import DateRange, Description, EntityId, EventOutcome, TenantId, Timestamp, Version
+from src.infrastructure.mirofish_writeback_store import MiroFishWriteBackStore
+
+
+class MiroFishCandidatePromoter:
+    """Promote approved staged candidate deltas into persisted canonical entities."""
+
+    def __init__(self, store: MiroFishWriteBackStore):
+        self.store = store
+
+    def promote_candidate(self, candidate_id: str, mapping: dict[str, Any] | None = None) -> dict[str, Any]:
+        candidate = self.store.get_candidate(candidate_id)
+        if not candidate:
+            raise LookupError(f"Candidate '{candidate_id}' not found")
+        if candidate.get("status") != "approved":
+            raise ValueError("Only approved candidates can be promoted")
+
+        payload = mapping or {}
+        tenant_id = TenantId(self._as_int(payload.get("tenant_id"), "tenant_id"))
+        world_id_value = self._as_int(payload.get("world_id"), "world_id")
+        world_id = EntityId(world_id_value)
+
+        entity = self._map_candidate(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        canonical_type = type(entity).__name__
+        saved_entity = self.store.save_canonical_entity(
+            source_candidate_id=candidate_id,
+            canonical_type=canonical_type,
+            tenant_id=tenant_id.value,
+            world_id=world_id.value,
+            entity_payload=self._serialize_entity(entity),
+        )
+        updated_candidate = self.store.mark_candidate_promoted(candidate_id, canonical_type=canonical_type, canonical_id=saved_entity["canonical_id"])
+        return {
+            "candidate_id": candidate_id,
+            "canonical_entity": saved_entity,
+            "candidate": updated_candidate,
+        }
+
+    def _map_candidate(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Any:
+        target = str(candidate.get("target_canonical_type") or "").strip()
+        if target == "Event":
+            return self._map_event(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        if target == "Rumor":
+            return self._map_rumor(candidate, payload, tenant_id=tenant_id, world_id=world_id)
+        if target == "CharacterRelationship":
+            return self._map_relationship(candidate, payload, tenant_id=tenant_id)
+        raise ValueError(f"Unsupported canonical target: {target or 'unknown'}")
+
+    def _map_event(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Event:
+        proposed = candidate.get("proposed_change") or {}
+        participant_ids = payload.get("participant_ids")
+        if participant_ids is None:
+            source_participants = proposed.get("participant_ids") or []
+            participant_map = payload.get("participant_map") or {}
+            if source_participants:
+                participant_ids = [participant_map.get(str(item)) for item in source_participants]
+            else:
+                participant_ids = list(participant_map.values())
+        canonical_participants = [EntityId(self._as_int(item, "participant_ids[]")) for item in (participant_ids or []) if item is not None]
+        if not canonical_participants:
+            raise ValueError("Event promotion requires participant_ids or participant_map")
+
+        start_date = self._parse_timestamp(payload.get("start_date") or proposed.get("timestamp") or candidate.get("created_at"))
+        end_date_raw = payload.get("end_date")
+        end_date = self._parse_timestamp(end_date_raw) if end_date_raw else None
+        outcome = self._parse_event_outcome(payload.get("outcome") or proposed.get("outcome") or EventOutcome.ONGOING.value)
+        location_id_raw = payload.get("location_id")
+        location_id = EntityId(self._as_int(location_id_raw, "location_id")) if location_id_raw is not None else None
+        return Event.create(
+            tenant_id=tenant_id,
+            world_id=world_id,
+            name=str(candidate.get("name") or "Promoted event").strip(),
+            description=Description(str(candidate.get("summary") or candidate.get("name") or "Promoted event").strip()),
+            start_date=start_date,
+            end_date=end_date,
+            outcome=outcome,
+            participant_ids=canonical_participants,
+            location_id=location_id,
+        )
+
+    def _map_rumor(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId, world_id: EntityId) -> Rumor:
+        proposed = candidate.get("proposed_change") or {}
+        location_id_raw = payload.get("location_id")
+        location_id = EntityId(self._as_int(location_id_raw, "location_id")) if location_id_raw is not None else None
+        rumor = Rumor.create(
+            tenant_id=tenant_id,
+            world_id=world_id,
+            location_id=location_id,
+            name=str(candidate.get("name") or "Promoted rumor").strip(),
+            description=Description(str(candidate.get("summary") or candidate.get("name") or "Promoted rumor").strip()),
+            truth_level=str(payload.get("truth_level") or proposed.get("truth_level") or "Unverified"),
+            spread_speed=str(payload.get("spread_speed") or proposed.get("spread_speed") or "Moderate"),
+            source_name=str(payload.get("source_name") or proposed.get("source_name") or "").strip() or None,
+            is_active=bool(payload.get("is_active", True)),
+        )
+        credibility_raw = payload.get("credibility_score")
+        if credibility_raw is not None:
+            rumor.update_credibility(self._as_int(credibility_raw, "credibility_score"))
+        return rumor
+
+    def _map_relationship(self, candidate: dict[str, Any], payload: dict[str, Any], *, tenant_id: TenantId) -> CharacterRelationship:
+        proposed = candidate.get("proposed_change") or {}
+        relationship_level = int(payload.get("relationship_level", proposed.get("relationship_level", 0)))
+        relationship_type_raw = str(payload.get("relationship_type") or "").strip().lower()
+        relationship_type = RelationshipType(relationship_type_raw) if relationship_type_raw else self._infer_relationship_type(relationship_level)
+        first_met_event_raw = payload.get("first_met_event_id")
+        first_met_event_id = EntityId(self._as_int(first_met_event_raw, "first_met_event_id")) if first_met_event_raw is not None else None
+        combat_bonus_raw = payload.get("combat_bonus_when_together")
+        combat_bonus = float(combat_bonus_raw) if combat_bonus_raw is not None else None
+        return CharacterRelationship.create(
+            tenant_id=tenant_id,
+            character_from_id=EntityId(self._as_int(payload.get("character_from_id"), "character_from_id")),
+            character_to_id=EntityId(self._as_int(payload.get("character_to_id"), "character_to_id")),
+            relationship_type=relationship_type,
+            description=Description(str(candidate.get("summary") or candidate.get("name") or "Promoted relationship").strip()),
+            relationship_level=relationship_level,
+            is_mutual=bool(payload.get("is_mutual", False)),
+            combat_bonus_when_together=combat_bonus,
+            first_met_event_id=first_met_event_id,
+        )
+
+    def _infer_relationship_type(self, relationship_level: int) -> RelationshipType:
+        if relationship_level <= -30:
+            return RelationshipType.ENEMY
+        if relationship_level >= 30:
+            return RelationshipType.FRIEND
+        return RelationshipType.NEUTRAL
+
+    def _parse_event_outcome(self, value: Any) -> EventOutcome:
+        text = str(value).strip().lower()
+        try:
+            return EventOutcome(text)
+        except ValueError as exc:
+            raise ValueError(f"Invalid outcome: {value}") from exc
+
+    def _parse_timestamp(self, value: Any) -> Timestamp:
+        if isinstance(value, Timestamp):
+            return value
+        text = str(value or "").strip()
+        if not text:
+            return Timestamp.now()
+        if text.endswith("Z"):
+            text = f"{text[:-1]}+00:00"
+        return Timestamp(datetime.fromisoformat(text))
+
+    def _as_int(self, value: Any, field_name: str) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{field_name} must be a positive integer") from exc
+
+    def _serialize_entity(self, entity: Any) -> dict[str, Any]:
+        if isinstance(entity, TenantId | EntityId | Version):
+            return entity.value
+        if isinstance(entity, Description):
+            return entity.value
+        if isinstance(entity, Timestamp):
+            return entity.value.isoformat()
+        if isinstance(entity, DateRange):
+            return {
+                "start_date": self._serialize_entity(entity.start_date),
+                "end_date": self._serialize_entity(entity.end_date),
+            }
+        if isinstance(entity, Enum):
+            return entity.value
+        if isinstance(entity, list):
+            return [self._serialize_entity(item) for item in entity]
+        if isinstance(entity, dict):
+            return {str(key): self._serialize_entity(value) for key, value in entity.items()}
+        if is_dataclass(entity):
+            return {field.name: self._serialize_entity(getattr(entity, field.name)) for field in fields(entity)}
+        return entity

@@ -2,6 +2,7 @@
 
 from .dto import CandidateDelta, MiroFishResultBundle, RuntimeEvidenceRecord
 from .importers import MiroFishResultImporter
+from .promoters import MiroFishCandidatePromoter
 from .mirofish_projection_client import MiroFishProjectionClient, build_projection_import_payload
 from .projection_bundle_exporter import ProjectionBundleExporter
 
@@ -10,6 +11,7 @@ __all__ = [
     "MiroFishResultBundle",
     "RuntimeEvidenceRecord",
     "MiroFishResultImporter",
+    "MiroFishCandidatePromoter",
     "ProjectionBundleExporter",
     "MiroFishProjectionClient",
     "build_projection_import_payload",
