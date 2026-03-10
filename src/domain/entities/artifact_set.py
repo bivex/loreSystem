@@ -48,6 +48,8 @@ class ArtifactSet:
         set_name: str,
         set_type: str,
         total_pieces: int,
+        tier: str = "legendary",
+        rarity: str = "legendary",
     ) -> Self:
         """Factory method to create a new ArtifactSet."""
         if not tenant_id:
@@ -75,6 +77,8 @@ class ArtifactSet:
             tenant_id=tenant_id,
             set_name=set_name,
             set_type=set_type,
+            tier=tier,
+            rarity=rarity,
             total_pieces=total_pieces,
         )
 

@@ -13,6 +13,21 @@
 
 **MythWeave** turns raw narrative text into structured, validated game lore. Feed it a chapter of your game's story, and a team of specialized AI agents will extract characters, locations, quests, factions, items, cinematics — everything — into a clean JSON knowledge base.
 
+## 🔀 How this differs from `MiroFish` technically
+
+This repository is the **canonical lore / world-model layer**. The embedded [`MiroFish/`](MiroFish/) project is a **simulation runtime + interactive report UI**.
+
+| Aspect | `loreSystem` (this repo) | `MiroFish/` subproject |
+|--------|---------------------------|------------------------|
+| Primary role | Structured lore extraction, validation, storage | Multi-agent social simulation, report generation, graph exploration |
+| Backend style | Python-first DDD / repository architecture | Flask API orchestrating simulation and report workflows |
+| Frontend | Optional local GUI (`PyQt6`) + CLI + MCP | Web frontend with `Vue 3` + `Vite` + `D3` |
+| Core AI pattern | Claude Code agent teams + domain extraction skills | OASIS/CAMEL agent simulation + ReportAgent tool calling |
+| Data layer | SQLite / SQLAlchemy / in-memory repositories / Elasticsearch | Zep Cloud + Cognee-style graph memory + runtime action logs |
+| Package/runtime tooling | Poetry/pip-style Python workflow | Mixed `npm` + `uv` + Python backend workflow |
+
+In short: **`loreSystem` compiles the world canon**, while **`MiroFish` simulates how actors behave inside that world**. They are complementary systems, not the same stack in different folders.
+
 ---
 
 ## ✨ Key Features

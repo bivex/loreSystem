@@ -11,10 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.story import Story
-from src.domain.value_objects.common import (
-    TenantId, EntityId, StoryName, Content, StoryType
-)
+from src.application.presentation_contracts import Content, EntityId, Story, StoryName, StoryType, TenantId
 
 
 class StoriesTab(QWidget):

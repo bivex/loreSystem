@@ -11,10 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.item import Item
-from src.domain.value_objects.common import (
-    EntityId, Description, ItemType, Rarity
-)
+from src.application.presentation_contracts import Description, EntityId, Item, ItemType, Rarity
 from src.presentation.gui.lore_data import LoreData
 
 

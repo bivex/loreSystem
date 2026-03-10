@@ -98,6 +98,29 @@
 
 Результат фазы: результаты симуляции доступны внутри loreSystem и не ломают канон.
 
+### Что уже закрыто в reverse path
+
+В `loreSystem` уже реализован безопасный минимум этой фазы и следующего слоя review/promote:
+
+1. import `result bundle` в отдельный SQLite staging store
+2. сохранение `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas`
+3. HTTP review surface для списка candidates и run/evidence readback
+4. review actions `approve` / `reject`
+5. manual promotion для:
+   - `scenario_event -> Event`
+   - `rumor_candidate -> Rumor`
+   - `relationship_change -> CharacterRelationship`
+6. safe canonical persistence в `mirofish_canonical_entities`
+7. explicit `run -> canonical entity` provenance links в `mirofish_entity_run_links`
+8. generic provenance foundation для обычных lore bundle через `LoreData.metadata`
+9. explicit runtime subject staging в `mirofish_run_subjects` для actors / organizations
+10. evidence enrichment через `linked_subjects` на readback path
+11. full smoke script для end-to-end проверки review/promote workflow
+
+То есть reverse path уже не только спроектирован, а доведён до рабочего staging/review/promote MVP.
+
+Практическая narrative-рекомендация для generation side: **стартовать со слуха** и строить материал как **трёхактную арку** — сначала `rumor_candidate`, затем `scenario_event`, затем `relationship_change` и при необходимости `new_entity_candidate`.
+
 ## Фаза 7. Простой пользовательский поток
 
 Минимальный flow в UI/CLI:
@@ -136,6 +159,7 @@
 
 - projection bundle ingestion
 - profile/config generation
+- rumor-first three-act lore generation
 - agent instantiation
 - run orchestration
 - result normalization

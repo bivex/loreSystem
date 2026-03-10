@@ -38,6 +38,35 @@
 - [ ] world deltas требуют явного принятия
 - [ ] timeline branches не перезаписывают основной мир автоматически
 
+### Что уже фактически закрыто в текущем write-back MVP
+
+- [x] `MiroFish result bundle` импортируется в `loreSystem`
+- [x] `scenario_run`, `scenario_result`, `runtime_evidence`, `candidate_deltas` сохраняются отдельно от канона
+- [x] review требует явного действия через `approve` / `reject`
+- [x] promote требует отдельного explicit mapping payload
+- [x] canonical snapshot пишется в отдельную safe table `mirofish_canonical_entities`, а не напрямую в legacy canonical repositories
+- [x] после promote создаётся явная provenance-связь `run -> canonical entity` в `mirofish_entity_run_links`
+- [x] есть single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
+- [x] approved candidate можно safe-merge'ить в уже существующий staged canonical entity без создания нового canonical snapshot
+- [x] есть batch review / batch promotion surface поверх existing single-candidate операций
+- [x] у обычного lore bundle появился top-level provenance layer через `LoreData.metadata`
+- [x] actors / organizations из result bundle нормализуются в `mirofish_run_subjects`
+- [x] runtime evidence readback резолвит `actor_refs` в `linked_subjects`
+- [x] live smoke подтверждает запись в SQLite БД
+- [x] повторный прогон того же smoke в ту же SQLite БД не плодит stale `canonical_entities` / `entity_run_links`
+- [x] неизменившийся candidate при same-db rerun сохраняет тот же `candidate_id` и тот же `canonical_id`
+- [x] есть прикладная mapping matrix: `09_MIRO_TO_LORESYSTEM_MAPPING.md`
+- [x] есть explicit narrow auto-promotion layer для safe cases: `batch/auto-promote` + `safe_event_only` / `safe_cross_run_event_only` / `safe_rumor_only` / `safe_cross_run_rumor_only` / `safe_relationship_only` / `safe_cross_run_relationship_only`
+- [x] есть explicit narrow auto-merge layer для safe duplicate merge cases: `batch/auto-merge` + `safe_existing_location_duplicate_only` / `safe_existing_event_duplicate_only` / `safe_existing_rumor_duplicate_only` / `safe_existing_relationship_duplicate_only` / `safe_existing_faction_duplicate_only`
+- [x] у `batch/auto-promote` есть `dry_run: true` explain/preview режим без side effects на candidate status / canonical rows / run links
+- [x] у `batch/auto-merge` есть `dry_run: true` explain/preview режим без side effects на candidate status / canonical rows / run links
+- [x] есть manual create/merge flow для `Location`, `Faction`, `Character` через existing `promote` / `merge` endpoints и staged canonical persistence
+
+### Что ещё остаётся вне текущего MVP
+
+- [ ] более широкий contradiction-aware / cross-run-aware auto-promotion policy engine вне текущих event/rumor/relationship-only safe slices
+- [ ] background / scheduled auto-promotion
+
 ## 5. Definition of Done для первого MVP
 
 MVP считается готовым, если выполняются все условия:
@@ -88,6 +117,10 @@ MVP считается готовым, если выполняются все у
 - **расширяемой** — можно добавить новые сущности без слома ядра
 - **объяснимой** — видно, откуда взялся прогноз
 - **трассируемой** — видно, из какой канонической сущности появился агент
+- **аудируемой** — видно, из какого `run_id` и `candidate_id` появился promoted или merged canonical linkage
+- **наблюдаемой** — видно, какие key actors / organizations реально участвовали в run и к каким evidence они привязаны
+- **идемпотентной на уровне staging-store** — повторный импорт того же run в ту же SQLite БД не оставляет stale canonical/run-link rows
+- **стабильной по identity для неизменившегося результата** — rerun не меняет `candidate_id` / `canonical_id`, если candidate content не изменился
 - **безопасной для канона** — симуляция не портит базовый мир
 - **полезной для пользователя** — дает не лог, а решение и сравнение сценариев
 
@@ -100,3 +133,5 @@ MVP считается готовым, если выполняются все у
 3. Можно ли вернуть результаты обратно, не разрушив канон?
 
 Если хотя бы один ответ "нет", нужно чинить архитектуру, а не наращивать фичи.
+
+На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + merge/promote, без direct canon write, с явным provenance/run-link следом, с нормализованным subject/evidence слоем и с подтверждённой repeat-run идемпотентностью на same DB**.

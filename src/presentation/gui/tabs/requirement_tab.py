@@ -11,8 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.requirement import Requirement
-from src.domain.value_objects.common import TenantId, EntityId, EntityType
+from src.application.presentation_contracts import EntityId, EntityType, Requirement, TenantId
 
 
 class RequirementTab(QWidget):

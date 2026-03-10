@@ -21,8 +21,7 @@ from src.application.use_cases.progression_simulation import (
     ExportSimulationForVerificationUseCase,
     SimulationRequest,
 )
-from src.domain.value_objects.common import EntityId
-from src.domain.value_objects.progression import StatType
+from src.application.presentation_contracts import EntityId, StatType
 
 
 class ProgressionSimulatorTab(QWidget):

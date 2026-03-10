@@ -9,10 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 
-from src.domain.entities.storyline import Storyline
-from src.domain.value_objects.common import (
-    EntityId, Description, Timestamp, StorylineType
-)
+from src.application.presentation_contracts import Description, EntityId, Storyline, StorylineType, Timestamp
 from src.presentation.gui.lore_data import LoreData
 from src.presentation.gui.i18n import I18n
 

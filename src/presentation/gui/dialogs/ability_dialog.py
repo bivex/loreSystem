@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox, QMessageBox
 )
 
-from src.domain.value_objects.ability import Ability, AbilityName, PowerLevel
+from src.application.presentation_contracts import Ability, AbilityName, PowerLevel
 
 
 class AbilityDialog(QDialog):

@@ -11,9 +11,15 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.progression_state import CharacterState
-from src.domain.value_objects.common import EntityId
-from src.domain.value_objects.progression import CharacterLevel, CharacterClass, ExperiencePoints, StatType, StatValue
+from src.application.presentation_contracts import (
+    CharacterClass,
+    CharacterLevel,
+    CharacterState,
+    EntityId,
+    ExperiencePoints,
+    StatType,
+    StatValue,
+)
 
 
 class ProgressionStatesTab(QWidget):

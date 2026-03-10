@@ -11,9 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 
-from src.domain.entities.progression_event import ProgressionEvent
-from src.domain.value_objects.common import EntityId
-from src.domain.value_objects.progression import EventType
+from src.application.presentation_contracts import EntityId, EventType, ProgressionEvent
 
 
 class ProgressionEventsTab(QWidget):
