@@ -1,1 +1,1 @@
-"""Presentation layer - future CLI and API."""
+"""Presentation layer - CLI, GUI, and lightweight HTTP API surfaces."""
