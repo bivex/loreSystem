@@ -485,9 +485,20 @@ Confidence лучше считать не LLM-словами, а детерми�
 - `< 0.35` -> raw evidence only
 - `0.35 - 0.79` -> candidate yes, canon no
 - `>= 0.80` -> candidate promotable
-- `>= 0.90` + explicit policy -> future auto-promote for narrow safe cases
+- `>= 0.90` + explicit policy -> narrow auto-promote допустим для safe slices
 
 На MVP даже `>= 0.80` не должен автоматически писать в canon без review.
+
+Минимально реализованный slice сейчас такой:
+
+- policy `safe_event_only`
+- explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
+- только по явно переданным `candidate_id`
+- только при явном `mapping` payload для promote
+- только для `scenario_event -> Event`
+- только при `confidence >= 0.90`
+- только при минимум `2 evidence_ids`
+- auto-path оставляет audit metadata в `run_link.metadata`
 
 ## 12. Promotion rules по типам
 
@@ -610,6 +621,7 @@ Promote только вручную, если:
 - `POST /api/mirofish/writeback/candidate-deltas/{candidate_id}/promote`
 - `POST /api/mirofish/writeback/candidate-deltas/batch/review`
 - `POST /api/mirofish/writeback/candidate-deltas/batch/promote`
+- `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
 
 Важно:
 
@@ -621,10 +633,15 @@ Promote только вручную, если:
 - batch endpoints работают как per-item wrapper над существующими single-candidate операциями
 - batch response возвращает `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`
 - partial failure в batch допустим и не откатывает успешно обработанные элементы
+- auto-promote сейчас не является background automation: это отдельный explicit batch endpoint
+- auto-promote policy пока ограничена `safe_event_only` и не распространяется на `Rumor`/`CharacterRelationship`
+- прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
+- audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
 
 Пока не реализовано:
 
-- auto-promotion policy
+- более широкие auto-promotion policies для `Rumor` и `CharacterRelationship`
+- background / scheduled auto-promotion
 
 ### 14.4 Batch contract
 
@@ -634,8 +651,19 @@ Promote только вручную, если:
   - payload: `action` + `candidate_ids[]`
 - `POST /candidate-deltas/batch/promote`
   - payload: `items[]`, где каждый item содержит `candidate_id` и `mapping`
+- `POST /candidate-deltas/batch/auto-promote`
+  - payload: `policy` + `items[]`
+  - каждый item содержит `candidate_id` и `mapping`
+  - текущая допустимая policy: `safe_event_only`
 
 Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
+
+Для `safe_event_only` item дополнительно проходит такой gate:
+
+- `candidate_type == scenario_event`
+- `target_canonical_type == Event`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
 
 ## 15. Какие MCP tools нужны
 
@@ -743,7 +771,20 @@ Promote только вручную, если:
 - selective `Relationship` promote,
 - safe `Rumor` promote.
 
-Статус: **ещё не делалось**.
+Статус: **частично сделано**.
+
+Реально реализован только минимальный slice:
+
+- explicit policy endpoint `batch/auto-promote`
+- policy `safe_event_only`
+- только `scenario_event -> Event`
+- только narrow opt-in gate с audit metadata
+
+Пока не сделано в этой фазе:
+
+- policy-driven auto-promote для `Relationship`
+- policy-driven auto-promote для `Rumor`
+- cross-run / contradiction-aware policy engine
 
 ## 18. MVP recommendation
 

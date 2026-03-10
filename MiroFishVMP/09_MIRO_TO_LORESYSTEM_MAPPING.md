@@ -166,8 +166,9 @@ Mapping:
 4. `candidate_deltas` → review / approve / reject
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
-7. approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
-8. canonical entity / merge-linkage → `mirofish_entity_run_links`
+7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event` candidates и вызывать тот же promote path
+8. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
+9. canonical entity / merge-linkage → `mirofish_entity_run_links`
 
 ## 8.1 Same-DB rerun semantics
 
@@ -207,6 +208,7 @@ Mapping:
 - reviewable candidate deltas
 - single-candidate review detail
 - batch review / batch promotion API
+- minimal batch auto-promotion API (`safe_event_only`)
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
@@ -218,6 +220,15 @@ Mapping:
 Текущая batch-семантика намеренно простая:
 
 - batch review и batch promote являются wrapper'ом над single-candidate endpoint semantics,
+- batch auto-promote тоже работает как wrapper над существующим promote path,
 - каждый item обрабатывается независимо,
 - ответ агрегирует `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`,
 - частичный успех считается нормальным и не откатывает уже успешные элементы.
+
+Текущий auto-promote intentionally narrow:
+
+- policy name: `safe_event_only`
+- только `scenario_event -> Event`
+- только `confidence >= 0.90`
+- только минимум `2 evidence_ids`
+- provenance metadata содержит `auto_promote_policy` и `auto_promoted`

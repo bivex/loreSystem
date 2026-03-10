@@ -53,6 +53,9 @@
 - single-candidate detail read surface: `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 - review actions: `approve` / `reject`
 - batch review / batch promotion API поверх single-candidate операций
+- minimal explicit auto-promotion policy endpoint:
+  - `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
+  - текущая policy: `safe_event_only`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
@@ -70,6 +73,11 @@
 - repeat-run idempotency на одной и той же SQLite БД подтверждена после включения `PRAGMA foreign_keys = ON`
 - derived `runtime_evidence` и `candidate_deltas` теперь получают детерминированные fingerprint-based IDs, а не случайные UUID
 - same-db rerun для неизменившегося candidate теперь сохраняет стабильный `canonical_id` и не плодит новые `entity_run_links`
+- auto-promotion пока намеренно узкий и audit-friendly:
+  - только explicit opt-in вызов
+  - только `scenario_event -> Event`
+  - только `confidence >= 0.90` и минимум `2 evidence_ids`
+  - auto-path пишет `auto_promote_policy` / `auto_promoted` в provenance metadata
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/merge/promote слой.
 
