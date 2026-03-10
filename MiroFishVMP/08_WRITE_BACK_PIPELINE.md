@@ -546,6 +546,7 @@ Confidence лучше считать не LLM-словами, а детерми�
   - `safe_event_only`
   - `safe_cross_run_event_only`
   - `safe_rumor_only`
+  - `safe_cross_run_rumor_only`
   - `safe_relationship_only`
   - `safe_cross_run_relationship_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
@@ -555,6 +556,7 @@ Confidence лучше считать не LLM-словами, а детерми�
 - `safe_event_only` → только `scenario_event -> Event`
 - `safe_cross_run_event_only` → только `scenario_event -> Event`, но с cross-run stability/contradiction gate
 - `safe_rumor_only` → только `rumor_candidate -> Rumor`
+- `safe_cross_run_rumor_only` → только `rumor_candidate -> Rumor`, но с cross-run stability/duplicate guard
 - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
 - `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, но с cross-run stability/contradiction gate
 - для всех safe policy: `confidence >= 0.90`
@@ -567,6 +569,13 @@ Confidence лучше считать не LLM-словами, а детерми�
   - отсутствие staged canonical `Event` с тем же participant set / date bucket и другим terminal outcome,
   - explicit mapping, который реально проходит existing promote path для `Event`
 - `safe_rumor_only` требует explicit `source_name` и `credibility_score`
+- `safe_cross_run_rumor_only` использует все требования `safe_rumor_only`, а затем дополнительно требует:
+  - normalized rumor `name`,
+  - normalized `source_name`,
+  - unresolved truth bucket (`Unverified` или `Partially True`),
+  - explicit `location_id`,
+  - хотя бы 1 additional distinct `run_id` с тем же normalized rumor `name`, тем же normalized `source_name` и тем же unresolved truth bucket,
+  - отсутствие existing staged canonical `Rumor` с тем же normalized `name` / `source_name` / `location_id`
 - `safe_relationship_only` требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
 - `safe_cross_run_relationship_only` использует все требования `safe_relationship_only`, а затем дополнительно требует:
   - `proposed_change.actor_refs` с ровно 2 directed refs,
@@ -736,9 +745,11 @@ Promote только вручную, если:
 - partial failure в batch допустим и не откатывает успешно обработанные элементы
 - auto-promote сейчас не является background automation: это отдельный explicit batch endpoint
 - auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через четыре отдельные именованные policy
+- auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через шесть отдельных именованных policy
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
 - cross-run event policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `event_match_participant_refs`, `event_match_outcome`, `event_match_date_bucket`, `contradiction_check`
+- cross-run rumor policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `rumor_match_name`, `rumor_match_source_name`, `rumor_truth_bucket`, `duplicate_guard`
 - cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 - `dry_run: true` возвращает `eligible[]` / `ineligible[]`, `eligible_count` / `ineligible_count`, per-item `reasons` и `metadata_preview`, но не меняет candidate status и не создаёт canonical rows / run links
 
@@ -762,6 +773,7 @@ Promote только вручную, если:
     - `safe_event_only`
     - `safe_cross_run_event_only`
     - `safe_rumor_only`
+    - `safe_cross_run_rumor_only`
     - `safe_relationship_only`
     - `safe_cross_run_relationship_only`
 
@@ -800,6 +812,17 @@ Promote только вручную, если:
 - `len(evidence_ids) >= 2`
 - mapping содержит `source_name`
 - mapping содержит `credibility_score`
+
+Для `safe_cross_run_rumor_only` item дополнительно проходит такой gate:
+
+- сначала полностью проходит `safe_rumor_only`
+- candidate `name` нормализуется в устойчивый rumor signature
+- `source_name` нормализуется в устойчивый source signature
+- `truth_level` должен попадать только в unresolved bucket: `Unverified` или `Partially True`
+- mapping обязан содержать explicit `location_id`
+- существует хотя бы 1 additional distinct `run_id` с тем же normalized rumor `name`, тем же normalized `source_name` и тем же unresolved truth bucket
+- supporting rumor candidate не `rejected`, имеет `confidence >= 0.90` и `len(evidence_ids) >= 2`
+- в staged canonical `Rumor` нет existing записи с тем же normalized `name` / `source_name` / `location_id`
 
 Для `safe_relationship_only` item дополнительно проходит такой gate:
 
@@ -938,11 +961,11 @@ Promote только вручную, если:
 Реально реализованный slice сейчас такой:
 
 - explicit policy endpoint `batch/auto-promote`
-- policies `safe_event_only`, `safe_cross_run_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
+- policies `safe_event_only`, `safe_cross_run_event_only`, `safe_rumor_only`, `safe_cross_run_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
 - только `scenario_event -> Event`, `rumor_candidate -> Rumor`, `relationship_change -> CharacterRelationship`
 - только narrow opt-in gate с audit metadata
 - explain/preview через `dry_run: true` на том же endpoint
-- cross-run-aware часть пока реализована только как узкие event/relationship slices, а не как общий policy engine
+- cross-run-aware часть пока реализована только как узкие event/rumor/relationship slices, а не как общий policy engine
 
 Пока не сделано в этой фазе:
 
