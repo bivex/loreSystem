@@ -59,6 +59,7 @@
     - `safe_event_only`
     - `safe_rumor_only`
     - `safe_relationship_only`
+    - `safe_cross_run_relationship_only`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
@@ -87,10 +88,12 @@
   - `safe_event_only` → только `scenario_event -> Event`
   - `safe_rumor_only` → только `rumor_candidate -> Rumor`
   - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
-  - во всех 3 policy: `confidence >= 0.90` и минимум `2 evidence_ids`
+  - `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, но уже с cross-run stability gate
+  - базовые gate для всех safe policy: `confidence >= 0.90` и минимум `2 evidence_ids`
   - `safe_rumor_only` дополнительно требует explicit `source_name` и `credibility_score`
   - `safe_relationship_only` дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
-  - auto-path пишет `auto_promote_policy` / `auto_promoted` в provenance metadata
+  - `safe_cross_run_relationship_only` дополнительно требует хотя бы один supporting run с тем же directed `actor_refs` и той же polarity, плюс отклоняет opposite-polarity staged canonical relationship для той же directed pair
+  - auto-path пишет `auto_promote_policy` / `auto_promoted`, а cross-run policy ещё и `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check` в provenance metadata
 - manual create для `Location` / `Faction` / `Character` остаётся review-only и требует fully explicit mapping payload:
   - `Location` требует как минимум `location_type`
   - `Faction` требует как минимум `faction_type` и `alignment`

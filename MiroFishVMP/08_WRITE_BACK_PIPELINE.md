@@ -546,16 +546,23 @@ Confidence лучше считать не LLM-словами, а детерми�
   - `safe_event_only`
   - `safe_rumor_only`
   - `safe_relationship_only`
+  - `safe_cross_run_relationship_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
 - только по явно переданным `candidate_id`
 - только при явном `mapping` payload для promote
 - `safe_event_only` → только `scenario_event -> Event`
 - `safe_rumor_only` → только `rumor_candidate -> Rumor`
 - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
-- для всех policy: `confidence >= 0.90`
-- для всех policy: минимум `2 evidence_ids`
+- `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, но с cross-run stability/contradiction gate
+- для всех safe policy: `confidence >= 0.90`
+- для всех safe policy: минимум `2 evidence_ids`
 - `safe_rumor_only` требует explicit `source_name` и `credibility_score`
 - `safe_relationship_only` требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
+- `safe_cross_run_relationship_only` использует все требования `safe_relationship_only`, а затем дополнительно требует:
+  - `proposed_change.actor_refs` с ровно 2 directed refs,
+  - хотя бы 1 additional distinct `run_id` с тем же directed pair и той же polarity,
+  - supporting candidate тоже должен пройти safe-gates (`confidence >= 0.90`, минимум 2 evidence items, не `rejected`),
+  - отсутствие opposite-polarity staged canonical `CharacterRelationship` для той же directed pair
 - auto-path оставляет audit metadata в `run_link.metadata`
 
 ## 12. Promotion rules по типам
@@ -717,14 +724,15 @@ Promote только вручную, если:
 - batch response возвращает `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`
 - partial failure в batch допустим и не откатывает успешно обработанные элементы
 - auto-promote сейчас не является background automation: это отдельный explicit batch endpoint
-- auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через три отдельные именованные policy
+- auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через четыре отдельные именованные policy
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
+- cross-run relationship policy дополнительно пишет `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 
 Пока не реализовано:
 
 - background / scheduled auto-promotion
-- более широкий contradiction-aware / cross-run-aware policy engine
+- более широкий contradiction-aware / cross-run-aware policy engine за пределами relationship-only safe slice
 
 ### 14.4 Batch contract
 
@@ -741,6 +749,7 @@ Promote только вручную, если:
     - `safe_event_only`
     - `safe_rumor_only`
     - `safe_relationship_only`
+    - `safe_cross_run_relationship_only`
 
 Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
 
@@ -768,6 +777,14 @@ Promote только вручную, если:
 - `len(evidence_ids) >= 2`
 - mapping содержит `character_from_id`, `character_to_id`, `relationship_level`
 - `abs(relationship_level) >= 30`
+
+Для `safe_cross_run_relationship_only` item дополнительно проходит такой gate:
+
+- сначала полностью проходит `safe_relationship_only`
+- `proposed_change.actor_refs` содержит ровно 2 directed refs
+- существует хотя бы 1 additional distinct `run_id` с тем же directed pair и той же relationship polarity
+- supporting relationship candidate не `rejected`, имеет `confidence >= 0.90` и `len(evidence_ids) >= 2`
+- в staged canonical `CharacterRelationship` нет opposite-polarity relationship для той же directed pair
 
 ## 15. Какие MCP tools нужны
 
@@ -889,13 +906,14 @@ Promote только вручную, если:
 Реально реализованный slice сейчас такой:
 
 - explicit policy endpoint `batch/auto-promote`
-- policies `safe_event_only`, `safe_rumor_only`, `safe_relationship_only`
+- policies `safe_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`
 - только `scenario_event -> Event`, `rumor_candidate -> Rumor`, `relationship_change -> CharacterRelationship`
 - только narrow opt-in gate с audit metadata
+- cross-run-aware часть пока реализована только как узкий relationship-only slice, а не как общий policy engine
 
 Пока не сделано в этой фазе:
 
-- cross-run / contradiction-aware policy engine
+- широкий cross-run / contradiction-aware policy engine
 - background / scheduled auto-promotion
 
 ## 18. MVP recommendation

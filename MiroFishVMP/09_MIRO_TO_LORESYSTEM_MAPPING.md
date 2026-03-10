@@ -185,7 +185,7 @@ Mapping:
 4. `candidate_deltas` → review / approve / reject
 5. single candidate detail доступен через `GET /api/mirofish/writeback/candidate-deltas/{candidate_id}`
 6. batch review / batch promotion могут вызывать те же операции для нескольких candidate за один запрос
-7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates и вызывать тот же promote path
+7. explicit `batch/auto-promote` может narrow-gate'ить safe `scenario_event -> Event`, `rumor_candidate -> Rumor` и `relationship_change -> CharacterRelationship` candidates, включая cross-run relationship slice, и вызывать тот же promote path
 8. approved/auto-approved candidate → либо promote в canonical entity, либо merge в existing canonical entity
 9. `new_entity_candidate` может вручную создавать staged `Location` / `Faction` / `Character` через тот же `promote` path
 10. canonical entity / merge-linkage → `mirofish_entity_run_links`
@@ -228,7 +228,7 @@ Mapping:
 - reviewable candidate deltas
 - single-candidate review detail
 - batch review / batch promotion API
-- narrow batch auto-promotion API (`safe_event_only`, `safe_rumor_only`, `safe_relationship_only`)
+- narrow batch auto-promotion API (`safe_event_only`, `safe_rumor_only`, `safe_relationship_only`, `safe_cross_run_relationship_only`)
 - promoted canonical `Event`
 - promoted canonical `Rumor`
 - promoted canonical `CharacterRelationship`
@@ -255,12 +255,14 @@ Mapping:
   - `safe_event_only`
   - `safe_rumor_only`
   - `safe_relationship_only`
-- во всех policy только `confidence >= 0.90`
-- во всех policy только минимум `2 evidence_ids`
+  - `safe_cross_run_relationship_only`
+- во всех safe policy только `confidence >= 0.90`
+- во всех safe policy только минимум `2 evidence_ids`
 - `safe_event_only` → только `scenario_event -> Event`
 - `safe_rumor_only` → только `rumor_candidate -> Rumor` и требует `source_name` + `credibility_score`
 - `safe_relationship_only` → только `relationship_change -> CharacterRelationship` и требует `character_from_id`, `character_to_id`, `relationship_level`, плюс `abs(relationship_level) >= 30`
-- provenance metadata содержит `auto_promote_policy` и `auto_promoted`
+- `safe_cross_run_relationship_only` → только `relationship_change -> CharacterRelationship`, сначала проходит все требования `safe_relationship_only`, затем требует хотя бы один supporting run с тем же directed `actor_refs` и той же polarity и отклоняет opposite-polarity staged canonical relationship для той же directed pair
+- provenance metadata содержит `auto_promote_policy` и `auto_promoted`; для cross-run slice ещё пишутся `cross_run_supporting_run_ids`, `cross_run_distinct_run_count`, `contradiction_check`
 
 Manual create/merge для новых entity types сейчас intentionally explicit:
 

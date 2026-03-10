@@ -56,12 +56,12 @@
 - [x] повторный прогон того же smoke в ту же SQLite БД не плодит stale `canonical_entities` / `entity_run_links`
 - [x] неизменившийся candidate при same-db rerun сохраняет тот же `candidate_id` и тот же `canonical_id`
 - [x] есть прикладная mapping matrix: `09_MIRO_TO_LORESYSTEM_MAPPING.md`
-- [x] есть explicit narrow auto-promotion layer для safe cases: `batch/auto-promote` + `safe_event_only` / `safe_rumor_only` / `safe_relationship_only`
+- [x] есть explicit narrow auto-promotion layer для safe cases: `batch/auto-promote` + `safe_event_only` / `safe_rumor_only` / `safe_relationship_only` / `safe_cross_run_relationship_only`
 - [x] есть manual create/merge flow для `Location`, `Faction`, `Character` через existing `promote` / `merge` endpoints и staged canonical persistence
 
 ### Что ещё остаётся вне текущего MVP
 
-- [ ] contradiction-aware / cross-run-aware auto-promotion policy engine
+- [ ] более широкий contradiction-aware / cross-run-aware auto-promotion policy engine вне текущего relationship-only safe slice
 - [ ] background / scheduled auto-promotion
 
 ## 5. Definition of Done для первого MVP
