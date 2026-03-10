@@ -136,6 +136,8 @@ def test_promote_endpoint_maps_approved_candidate_to_canonical_entity(tmp_path):
     assert payload["success"] is True
     assert payload["data"]["canonical_entity"]["canonical_type"] == "Event"
     assert payload["data"]["canonical_entity"]["entity"]["participant_ids"] == [201]
+    assert payload["data"]["run_link"]["run_id"] == "run-123"
+    assert payload["data"]["canonical_entity"]["run_links"][0]["relation_type"] == "promoted_from"
     assert payload["data"]["candidate"]["status"] == "promoted"
 
 

@@ -41,10 +41,25 @@ class MiroFishCandidatePromoter:
             world_id=world_id.value,
             entity_payload=self._serialize_entity(entity),
         )
+        run_link = self.store.save_entity_run_link(
+            canonical_id=saved_entity["canonical_id"],
+            canonical_type=canonical_type,
+            run_id=str(candidate.get("run_id") or ""),
+            source_candidate_id=candidate_id,
+            relation_type="promoted_from",
+            evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
+            metadata={
+                "candidate_type": candidate.get("candidate_type"),
+                "source_refs": candidate.get("source_refs") or [],
+                "confidence": candidate.get("confidence"),
+            },
+        )
+        saved_entity["run_links"] = [run_link]
         updated_candidate = self.store.mark_candidate_promoted(candidate_id, canonical_type=canonical_type, canonical_id=saved_entity["canonical_id"])
         return {
             "candidate_id": candidate_id,
             "canonical_entity": saved_entity,
+            "run_link": run_link,
             "candidate": updated_candidate,
         }
 

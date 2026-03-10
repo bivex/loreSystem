@@ -51,7 +51,13 @@ def test_promoter_maps_approved_event_candidate(tmp_path):
     assert result["canonical_entity"]["canonical_type"] == "Event"
     assert result["canonical_entity"]["entity"]["world_id"] == 101
     assert result["canonical_entity"]["entity"]["participant_ids"] == [201]
+    assert result["run_link"]["run_id"] == "run-123"
+    assert result["canonical_entity"]["run_links"][0]["relation_type"] == "promoted_from"
     assert result["candidate"]["status"] == "promoted"
+    persisted = store.get_canonical_entity_by_candidate(approved["candidate_id"])
+    assert persisted is not None
+    assert persisted["run_links"][0]["run_id"] == "run-123"
+    assert persisted["run_links"][0]["source_candidate_id"] == approved["candidate_id"]
 
 
 def test_promoter_maps_approved_rumor_and_relationship_candidates(tmp_path):
@@ -89,9 +95,11 @@ def test_promoter_maps_approved_rumor_and_relationship_candidates(tmp_path):
     assert rumor_result["canonical_entity"]["canonical_type"] == "Rumor"
     assert rumor_result["canonical_entity"]["entity"]["credibility_score"] == 7
     assert rumor_result["canonical_entity"]["entity"]["spread_speed"] == "Rapid"
+    assert rumor_result["run_link"]["run_id"] == "run-123"
     assert relationship_result["canonical_entity"]["canonical_type"] == "CharacterRelationship"
     assert relationship_result["canonical_entity"]["entity"]["relationship_type"] == "enemy"
     assert relationship_result["canonical_entity"]["entity"]["relationship_level"] == -35
+    assert relationship_result["run_link"]["metadata"]["candidate_type"] == "relationship_change"
 
 
 def test_promoter_requires_approved_candidate(tmp_path):
