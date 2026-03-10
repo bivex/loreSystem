@@ -124,3 +124,42 @@ def test_promoter_requires_approved_candidate(tmp_path):
         assert "approved candidates" in str(exc)
     else:
         raise AssertionError("Expected ValueError for non-approved candidate")
+
+
+def test_promoter_reuses_canonical_id_for_identical_candidate_on_rerun(tmp_path):
+    store = MiroFishWriteBackStore(tmp_path / "rerun.db")
+    importer = MiroFishResultImporter(store)
+    promoter = MiroFishCandidatePromoter(store)
+
+    importer.import_result_bundle(sample_result_bundle())
+    approved = _approve_candidate(store, candidate_type="scenario_event")
+    first = promoter.promote_candidate(
+        approved["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    importer.import_result_bundle(sample_result_bundle())
+    rerun_candidate = store.list_candidates(world_id="world-1", candidate_type="scenario_event")[0]
+    second = promoter.promote_candidate(
+        rerun_candidate["candidate_id"],
+        {
+            "tenant_id": 1,
+            "world_id": 101,
+            "participant_map": {"actor:royal_court": 201},
+            "outcome": "success",
+            "location_id": 301,
+        },
+    )
+
+    assert rerun_candidate["candidate_id"] == approved["candidate_id"]
+    assert rerun_candidate["status"] == "promoted"
+    assert rerun_candidate["target_canonical_id"] == str(first["canonical_entity"]["canonical_id"])
+    assert second["canonical_entity"]["canonical_id"] == first["canonical_entity"]["canonical_id"]
+    assert second["run_link"]["link_id"] == first["run_link"]["link_id"]
+    assert len(store.list_entity_run_links(run_id="run-123", source_candidate_id=approved["candidate_id"])) == 1

@@ -24,6 +24,35 @@ class MiroFishCandidatePromoter:
         candidate = self.store.get_candidate(candidate_id)
         if not candidate:
             raise LookupError(f"Candidate '{candidate_id}' not found")
+        if candidate.get("status") == "promoted":
+            canonical_entity = self.store.get_canonical_entity_by_candidate(candidate_id)
+            if not canonical_entity:
+                raise LookupError(f"Promoted candidate '{candidate_id}' is missing its canonical entity")
+            run_links = [
+                item
+                for item in canonical_entity.get("run_links") or []
+                if item.get("run_id") == str(candidate.get("run_id") or "") and item.get("source_candidate_id") == candidate_id
+            ]
+            run_link = run_links[0] if run_links else self.store.save_entity_run_link(
+                canonical_id=canonical_entity["canonical_id"],
+                canonical_type=canonical_entity["canonical_type"],
+                run_id=str(candidate.get("run_id") or ""),
+                source_candidate_id=candidate_id,
+                relation_type="promoted_from",
+                evidence_ids=[str(item) for item in (candidate.get("evidence_ids") or []) if str(item).strip()],
+                metadata={
+                    "candidate_type": candidate.get("candidate_type"),
+                    "source_refs": candidate.get("source_refs") or [],
+                    "confidence": candidate.get("confidence"),
+                },
+            )
+            canonical_entity["run_links"] = [run_link]
+            return {
+                "candidate_id": candidate_id,
+                "canonical_entity": canonical_entity,
+                "run_link": run_link,
+                "candidate": candidate,
+            }
         if candidate.get("status") != "approved":
             raise ValueError("Only approved candidates can be promoted")
 

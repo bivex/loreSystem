@@ -50,31 +50,21 @@ class MiroFishWriteBackStore:
     def save_import(self, bundle: MiroFishResultBundle, evidence: list[RuntimeEvidenceRecord], candidates: list[CandidateDelta]) -> dict[str, Any]:
         with self.db.get_connection() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO mirofish_scenario_runs (run_id, world_id, scenario_id, schema_version, world_version, projection_version, generated_at, source_backend, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO mirofish_scenario_runs (run_id, world_id, scenario_id, schema_version, world_version, projection_version, generated_at, source_backend, imported_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(run_id) DO UPDATE SET world_id = excluded.world_id, scenario_id = excluded.scenario_id, schema_version = excluded.schema_version, world_version = excluded.world_version, projection_version = excluded.projection_version, generated_at = excluded.generated_at, source_backend = excluded.source_backend, imported_at = excluded.imported_at",
                 (bundle.run_id, bundle.world_id, bundle.scenario_id, bundle.schema_version, bundle.world_version, bundle.projection_version, bundle.generated_at, bundle.source_backend, bundle.generated_at),
             )
             conn.execute(
-                "INSERT OR REPLACE INTO mirofish_scenario_results (run_id, bundle_json) VALUES (?, ?)",
+                "INSERT INTO mirofish_scenario_results (run_id, bundle_json) VALUES (?, ?) ON CONFLICT(run_id) DO UPDATE SET bundle_json = excluded.bundle_json",
                 (bundle.run_id, json.dumps(bundle.raw_payload, ensure_ascii=False)),
             )
-            conn.execute("DELETE FROM mirofish_runtime_evidence WHERE run_id = ?", (bundle.run_id,))
-            conn.execute("DELETE FROM mirofish_candidate_deltas WHERE run_id = ?", (bundle.run_id,))
             conn.execute("DELETE FROM mirofish_run_subjects WHERE run_id = ?", (bundle.run_id,))
             for item in [*bundle.actors, *bundle.organizations]:
                 conn.execute(
                     "INSERT INTO mirofish_run_subjects (run_id, world_id, scenario_id, subject_kind, subject_ref, name, canonical_id, canonical_type, speaker_mode, represented_entity_id, metadata_json, source_payload_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (item.run_id, item.world_id, item.scenario_id, item.subject_kind, item.subject_ref, item.name, item.canonical_id, item.canonical_type, item.speaker_mode, item.represented_entity_id, json.dumps(item.metadata, ensure_ascii=False), json.dumps(item.source_payload, ensure_ascii=False), bundle.generated_at),
                 )
-            for item in evidence:
-                conn.execute(
-                    "INSERT INTO mirofish_runtime_evidence (evidence_id, run_id, world_id, scenario_id, evidence_type, source_type, actor_refs_json, canonical_refs_json, text, structured_payload_json, timestamp, confidence, source_refs_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (item.evidence_id, item.run_id, item.world_id, item.scenario_id, item.evidence_type, item.source_type, json.dumps(item.actor_refs, ensure_ascii=False), json.dumps(item.canonical_refs, ensure_ascii=False), item.text, json.dumps(item.structured_payload, ensure_ascii=False), item.timestamp, item.confidence, json.dumps(item.source_refs, ensure_ascii=False)),
-                )
-            for item in candidates:
-                conn.execute(
-                    "INSERT INTO mirofish_candidate_deltas (candidate_id, run_id, world_id, scenario_id, candidate_type, target_canonical_type, target_canonical_id, proposed_entity_type, name, summary, proposed_change_json, evidence_ids_json, source_refs_json, confidence, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (item.candidate_id, item.run_id, item.world_id, item.scenario_id, item.candidate_type, item.target_canonical_type, item.target_canonical_id, item.proposed_entity_type, item.name, item.summary, json.dumps(item.proposed_change, ensure_ascii=False), json.dumps(item.evidence_ids, ensure_ascii=False), json.dumps(item.source_refs, ensure_ascii=False), item.confidence, item.status, item.created_at),
-                )
+            self._sync_runtime_evidence(conn, bundle.run_id, evidence)
+            self._sync_candidate_deltas(conn, bundle.run_id, candidates)
         return {
             "run_id": bundle.run_id,
             "world_id": bundle.world_id,
@@ -215,15 +205,19 @@ class MiroFishWriteBackStore:
     ) -> dict[str, Any]:
         promoted_at = datetime.now(timezone.utc).isoformat()
         with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                "INSERT INTO mirofish_canonical_entities (source_candidate_id, canonical_type, tenant_id, world_id, entity_json, promoted_at) VALUES (?, ?, ?, ?, ?, ?)",
-                (source_candidate_id, canonical_type, tenant_id, world_id, "{}", promoted_at),
-            )
-            canonical_id = int(cursor.lastrowid)
+            row = conn.execute("SELECT canonical_id FROM mirofish_canonical_entities WHERE source_candidate_id = ?", (source_candidate_id,)).fetchone()
+            if row:
+                canonical_id = int(row["canonical_id"])
+            else:
+                cursor = conn.execute(
+                    "INSERT INTO mirofish_canonical_entities (source_candidate_id, canonical_type, tenant_id, world_id, entity_json, promoted_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    (source_candidate_id, canonical_type, tenant_id, world_id, "{}", promoted_at),
+                )
+                canonical_id = int(cursor.lastrowid)
             entity_payload = {**entity_payload, "id": canonical_id}
             conn.execute(
-                "UPDATE mirofish_canonical_entities SET entity_json = ? WHERE canonical_id = ?",
-                (json.dumps(entity_payload, ensure_ascii=False), canonical_id),
+                "UPDATE mirofish_canonical_entities SET source_candidate_id = ?, canonical_type = ?, tenant_id = ?, world_id = ?, entity_json = ?, promoted_at = ? WHERE canonical_id = ?",
+                (source_candidate_id, canonical_type, tenant_id, world_id, json.dumps(entity_payload, ensure_ascii=False), promoted_at, canonical_id),
             )
         return {
             "canonical_id": canonical_id,
@@ -258,11 +252,28 @@ class MiroFishWriteBackStore:
     ) -> dict[str, Any]:
         linked_at = datetime.now(timezone.utc).isoformat()
         with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                "INSERT INTO mirofish_entity_run_links (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, evidence_ids_json, metadata_json, linked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), linked_at),
-            )
-            link_id = int(cursor.lastrowid)
+            if source_candidate_id is None:
+                row = conn.execute(
+                    "SELECT link_id FROM mirofish_entity_run_links WHERE canonical_id = ? AND run_id = ? AND relation_type = ? AND source_candidate_id IS NULL",
+                    (canonical_id, run_id, relation_type),
+                ).fetchone()
+            else:
+                row = conn.execute(
+                    "SELECT link_id FROM mirofish_entity_run_links WHERE canonical_id = ? AND run_id = ? AND relation_type = ? AND source_candidate_id = ?",
+                    (canonical_id, run_id, relation_type, source_candidate_id),
+                ).fetchone()
+            if row:
+                link_id = int(row["link_id"])
+                conn.execute(
+                    "UPDATE mirofish_entity_run_links SET canonical_type = ?, evidence_ids_json = ?, metadata_json = ?, linked_at = ? WHERE link_id = ?",
+                    (canonical_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), linked_at, link_id),
+                )
+            else:
+                cursor = conn.execute(
+                    "INSERT INTO mirofish_entity_run_links (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, evidence_ids_json, metadata_json, linked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (canonical_id, canonical_type, run_id, source_candidate_id, relation_type, json.dumps(evidence_ids or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), linked_at),
+                )
+                link_id = int(cursor.lastrowid)
         return {
             "link_id": link_id,
             "canonical_id": canonical_id,
@@ -323,3 +334,28 @@ class MiroFishWriteBackStore:
         row["evidence_ids"] = json.loads(row.pop("evidence_ids_json"))
         row["metadata"] = json.loads(row.pop("metadata_json"))
         return row
+
+    def _delete_missing_run_rows(self, conn: sqlite3.Connection, *, table: str, id_column: str, run_id: str, ids: list[str]) -> None:
+        if ids:
+            placeholders = ", ".join("?" for _ in ids)
+            conn.execute(f"DELETE FROM {table} WHERE run_id = ? AND {id_column} NOT IN ({placeholders})", (run_id, *ids))
+            return
+        conn.execute(f"DELETE FROM {table} WHERE run_id = ?", (run_id,))
+
+    def _sync_runtime_evidence(self, conn: sqlite3.Connection, run_id: str, evidence: list[RuntimeEvidenceRecord]) -> None:
+        evidence_ids = [item.evidence_id for item in evidence]
+        self._delete_missing_run_rows(conn, table="mirofish_runtime_evidence", id_column="evidence_id", run_id=run_id, ids=evidence_ids)
+        for item in evidence:
+            conn.execute(
+                "INSERT INTO mirofish_runtime_evidence (evidence_id, run_id, world_id, scenario_id, evidence_type, source_type, actor_refs_json, canonical_refs_json, text, structured_payload_json, timestamp, confidence, source_refs_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(evidence_id) DO UPDATE SET run_id = excluded.run_id, world_id = excluded.world_id, scenario_id = excluded.scenario_id, evidence_type = excluded.evidence_type, source_type = excluded.source_type, actor_refs_json = excluded.actor_refs_json, canonical_refs_json = excluded.canonical_refs_json, text = excluded.text, structured_payload_json = excluded.structured_payload_json, timestamp = excluded.timestamp, confidence = excluded.confidence, source_refs_json = excluded.source_refs_json",
+                (item.evidence_id, item.run_id, item.world_id, item.scenario_id, item.evidence_type, item.source_type, json.dumps(item.actor_refs, ensure_ascii=False), json.dumps(item.canonical_refs, ensure_ascii=False), item.text, json.dumps(item.structured_payload, ensure_ascii=False), item.timestamp, item.confidence, json.dumps(item.source_refs, ensure_ascii=False)),
+            )
+
+    def _sync_candidate_deltas(self, conn: sqlite3.Connection, run_id: str, candidates: list[CandidateDelta]) -> None:
+        candidate_ids = [item.candidate_id for item in candidates]
+        self._delete_missing_run_rows(conn, table="mirofish_candidate_deltas", id_column="candidate_id", run_id=run_id, ids=candidate_ids)
+        for item in candidates:
+            conn.execute(
+                "INSERT INTO mirofish_candidate_deltas (candidate_id, run_id, world_id, scenario_id, candidate_type, target_canonical_type, target_canonical_id, proposed_entity_type, name, summary, proposed_change_json, evidence_ids_json, source_refs_json, confidence, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(candidate_id) DO UPDATE SET run_id = excluded.run_id, world_id = excluded.world_id, scenario_id = excluded.scenario_id, candidate_type = excluded.candidate_type, target_canonical_type = COALESCE(mirofish_candidate_deltas.target_canonical_type, excluded.target_canonical_type), proposed_entity_type = excluded.proposed_entity_type, name = excluded.name, summary = excluded.summary, proposed_change_json = excluded.proposed_change_json, evidence_ids_json = excluded.evidence_ids_json, source_refs_json = excluded.source_refs_json, confidence = excluded.confidence",
+                (item.candidate_id, item.run_id, item.world_id, item.scenario_id, item.candidate_type, item.target_canonical_type, item.target_canonical_id, item.proposed_entity_type, item.name, item.summary, json.dumps(item.proposed_change, ensure_ascii=False), json.dumps(item.evidence_ids, ensure_ascii=False), json.dumps(item.source_refs, ensure_ascii=False), item.confidence, item.status, item.created_at),
+            )

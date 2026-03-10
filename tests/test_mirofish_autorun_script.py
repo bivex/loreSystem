@@ -61,6 +61,13 @@ def test_autorun_script_is_idempotent_across_two_runs_on_same_db(tmp_path):
     assert second_payload["db_summary"]["counts"]["entity_run_links"] == 3
     assert second_payload["db_summary"]["counts"]["run_subjects"] == 5
 
+    first_promotions = {item["candidate_type"]: item for item in first_payload["smoke"]["promotions"]}
+    second_promotions = {item["candidate_type"]: item for item in second_payload["smoke"]["promotions"]}
+    assert sorted(first_promotions) == sorted(second_promotions) == ["relationship_change", "rumor_candidate", "scenario_event"]
+    for candidate_type in first_promotions:
+        assert second_promotions[candidate_type]["candidate_id"] == first_promotions[candidate_type]["candidate_id"]
+        assert second_promotions[candidate_type]["canonical_id"] == first_promotions[candidate_type]["canonical_id"]
+
     conn = sqlite3.connect(db_path)
     try:
         canonical_count = conn.execute("SELECT COUNT(*) FROM mirofish_canonical_entities").fetchone()[0]
