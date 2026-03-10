@@ -55,7 +55,10 @@
 - batch review / batch promotion API поверх single-candidate операций
 - minimal explicit auto-promotion policy endpoint:
   - `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
-  - текущая policy: `safe_event_only`
+  - текущие policies:
+    - `safe_event_only`
+    - `safe_rumor_only`
+    - `safe_relationship_only`
 - manual promotion для 3 типов:
   - `scenario_event -> Event`
   - `rumor_candidate -> Rumor`
@@ -81,8 +84,12 @@
 - same-db rerun для неизменившегося candidate теперь сохраняет стабильный `canonical_id` и не плодит новые `entity_run_links`
 - auto-promotion пока намеренно узкий и audit-friendly:
   - только explicit opt-in вызов
-  - только `scenario_event -> Event`
-  - только `confidence >= 0.90` и минимум `2 evidence_ids`
+  - `safe_event_only` → только `scenario_event -> Event`
+  - `safe_rumor_only` → только `rumor_candidate -> Rumor`
+  - `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
+  - во всех 3 policy: `confidence >= 0.90` и минимум `2 evidence_ids`
+  - `safe_rumor_only` дополнительно требует explicit `source_name` и `credibility_score`
+  - `safe_relationship_only` дополнительно требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
   - auto-path пишет `auto_promote_policy` / `auto_promoted` в provenance metadata
 - manual create для `Location` / `Faction` / `Character` остаётся review-only и требует fully explicit mapping payload:
   - `Location` требует как минимум `location_type`

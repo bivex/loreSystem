@@ -542,13 +542,20 @@ Confidence лучше считать не LLM-словами, а детерми�
 
 Минимально реализованный slice сейчас такой:
 
-- policy `safe_event_only`
+- policies:
+  - `safe_event_only`
+  - `safe_rumor_only`
+  - `safe_relationship_only`
 - explicit endpoint `POST /api/mirofish/writeback/candidate-deltas/batch/auto-promote`
 - только по явно переданным `candidate_id`
 - только при явном `mapping` payload для promote
-- только для `scenario_event -> Event`
-- только при `confidence >= 0.90`
-- только при минимум `2 evidence_ids`
+- `safe_event_only` → только `scenario_event -> Event`
+- `safe_rumor_only` → только `rumor_candidate -> Rumor`
+- `safe_relationship_only` → только `relationship_change -> CharacterRelationship`
+- для всех policy: `confidence >= 0.90`
+- для всех policy: минимум `2 evidence_ids`
+- `safe_rumor_only` требует explicit `source_name` и `credibility_score`
+- `safe_relationship_only` требует explicit `character_from_id`, `character_to_id`, `relationship_level`, и `abs(relationship_level) >= 30`
 - auto-path оставляет audit metadata в `run_link.metadata`
 
 ## 12. Promotion rules по типам
@@ -710,14 +717,14 @@ Promote только вручную, если:
 - batch response возвращает `requested_count`, `success_count`, `failure_count`, `succeeded[]`, `failed[]`
 - partial failure в batch допустим и не откатывает успешно обработанные элементы
 - auto-promote сейчас не является background automation: это отдельный explicit batch endpoint
-- auto-promote policy пока ограничена `safe_event_only` и не распространяется на `Rumor`/`CharacterRelationship`
+- auto-promote остаётся narrow, но теперь покрывает `Event`, `Rumor` и `CharacterRelationship` через три отдельные именованные policy
 - прошедший policy gate candidate может быть auto-approved только внутри этого explicit endpoint
 - audit metadata для auto-promote пишется в provenance link: `auto_promote_policy`, `auto_promoted`
 
 Пока не реализовано:
 
-- более широкие auto-promotion policies для `Rumor` и `CharacterRelationship`
 - background / scheduled auto-promotion
+- более широкий contradiction-aware / cross-run-aware policy engine
 
 ### 14.4 Batch contract
 
@@ -730,7 +737,10 @@ Promote только вручную, если:
 - `POST /candidate-deltas/batch/auto-promote`
   - payload: `policy` + `items[]`
   - каждый item содержит `candidate_id` и `mapping`
-  - текущая допустимая policy: `safe_event_only`
+  - текущие допустимые policy:
+    - `safe_event_only`
+    - `safe_rumor_only`
+    - `safe_relationship_only`
 
 Оба endpoint'а возвращают поэлементный результат, а не all-or-nothing transaction.
 
@@ -740,6 +750,24 @@ Promote только вручную, если:
 - `target_canonical_type == Event`
 - `confidence >= 0.90`
 - `len(evidence_ids) >= 2`
+
+Для `safe_rumor_only` item дополнительно проходит такой gate:
+
+- `candidate_type == rumor_candidate`
+- `target_canonical_type == Rumor`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
+- mapping содержит `source_name`
+- mapping содержит `credibility_score`
+
+Для `safe_relationship_only` item дополнительно проходит такой gate:
+
+- `candidate_type == relationship_change`
+- `target_canonical_type == CharacterRelationship`
+- `confidence >= 0.90`
+- `len(evidence_ids) >= 2`
+- mapping содержит `character_from_id`, `character_to_id`, `relationship_level`
+- `abs(relationship_level) >= 30`
 
 ## 15. Какие MCP tools нужны
 
@@ -858,18 +886,17 @@ Promote только вручную, если:
 
 Статус: **частично сделано**.
 
-Реально реализован только минимальный slice:
+Реально реализованный slice сейчас такой:
 
 - explicit policy endpoint `batch/auto-promote`
-- policy `safe_event_only`
-- только `scenario_event -> Event`
+- policies `safe_event_only`, `safe_rumor_only`, `safe_relationship_only`
+- только `scenario_event -> Event`, `rumor_candidate -> Rumor`, `relationship_change -> CharacterRelationship`
 - только narrow opt-in gate с audit metadata
 
 Пока не сделано в этой фазе:
 
-- policy-driven auto-promote для `Relationship`
-- policy-driven auto-promote для `Rumor`
 - cross-run / contradiction-aware policy engine
+- background / scheduled auto-promotion
 
 ## 18. MVP recommendation
 
