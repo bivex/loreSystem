@@ -50,6 +50,8 @@
 - [x] actors / organizations из result bundle нормализуются в `mirofish_run_subjects`
 - [x] runtime evidence readback резолвит `actor_refs` в `linked_subjects`
 - [x] live smoke подтверждает запись в SQLite БД
+- [x] повторный прогон того же smoke в ту же SQLite БД не плодит stale `canonical_entities` / `entity_run_links`
+- [x] есть прикладная mapping matrix: `09_MIRO_TO_LORESYSTEM_MAPPING.md`
 
 ### Что ещё остаётся вне текущего MVP
 
@@ -110,6 +112,7 @@ MVP считается готовым, если выполняются все у
 - **трассируемой** — видно, из какой канонической сущности появился агент
 - **аудируемой** — видно, из какого `run_id` и `candidate_id` появился promoted canonical entity
 - **наблюдаемой** — видно, какие key actors / organizations реально участвовали в run и к каким evidence они привязаны
+- **идемпотентной на уровне staging-store** — повторный импорт того же run в ту же SQLite БД не оставляет stale canonical/run-link rows
 - **безопасной для канона** — симуляция не портит базовый мир
 - **полезной для пользователя** — дает не лог, а решение и сравнение сценариев
 
@@ -123,4 +126,4 @@ MVP считается готовым, если выполняются все у
 
 Если хотя бы один ответ "нет", нужно чинить архитектуру, а не наращивать фичи.
 
-На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + promote, без direct canon write, с явным provenance/run-link следом и с нормализованным subject/evidence слоем**.
+На текущем reverse write-back MVP на вопрос №3 уже можно ответить: **да, через staging + review + promote, без direct canon write, с явным provenance/run-link следом, с нормализованным subject/evidence слоем и с подтверждённой repeat-run идемпотентностью на same DB**.

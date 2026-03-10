@@ -26,6 +26,7 @@
 - `06_MIROFISH_REVERSE_ENGINEERING.md` — что реально показал разбор кода `MiroFish`
 - `07_MODELS_AND_PROMPTS.md` — какие модели и prompt-layer'ы реально используются в `MiroFish`
 - `08_WRITE_BACK_PIPELINE.md` — safe reverse path: staging, review, promote, smoke validation
+- `09_MIRO_TO_LORESYSTEM_MAPPING.md` — прикладная матрица маппинга полей и сущностей между `MiroFish` и `loreSystem`
 - `03_IMPLEMENTATION_PLAN.md` — пошаговый план внедрения
 - `04_CHECKLIST_AND_ACCEPTANCE.md` — чеклист, риски и критерии готовности
 - `05_FIRST_DEMO_SCENARIO.md` — первый демонстрационный сценарий, с которого стоит начинать
@@ -37,9 +38,10 @@
 3. `06_MIROFISH_REVERSE_ENGINEERING.md`
 4. `07_MODELS_AND_PROMPTS.md`
 5. `08_WRITE_BACK_PIPELINE.md`
-6. `03_IMPLEMENTATION_PLAN.md`
-7. `05_FIRST_DEMO_SCENARIO.md`
-8. `04_CHECKLIST_AND_ACCEPTANCE.md`
+6. `09_MIRO_TO_LORESYSTEM_MAPPING.md`
+7. `03_IMPLEMENTATION_PLAN.md`
+8. `05_FIRST_DEMO_SCENARIO.md`
+9. `04_CHECKLIST_AND_ACCEPTANCE.md`
 
 ## Актуальный статус reverse path
 
@@ -61,8 +63,12 @@
   - `src/application/integration/dto/provenance.py`
   - `src/presentation/gui/lore_data.py::metadata`
 - full smoke script для end-to-end проверки review/promote workflow
+- convenience wrapper `scripts/autorun_mirofish_live_smoke.py` для fresh-db и same-db smoke прогонов
+- repeat-run idempotency на одной и той же SQLite БД подтверждена после включения `PRAGMA foreign_keys = ON`
 
 Важно: это **не** direct write в старый canonical repository layer. Между simulation output и canon по-прежнему остаётся явный review/promote слой.
+
+Если нужен практический field-level reference, он вынесен отдельно в `09_MIRO_TO_LORESYSTEM_MAPPING.md`.
 
 ## Главная идея
 

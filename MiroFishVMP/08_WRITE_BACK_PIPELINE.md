@@ -35,6 +35,7 @@ Forward path у интеграции уже понятен:
   - `scripts/import_mirofish_results.py`
   - `scripts/run_mirofish_writeback_api.py`
   - `scripts/smoke_mirofish_writeback_workflow.py`
+  - `scripts/autorun_mirofish_live_smoke.py`
 - full live smoke уже прогнан против `lore_system.db` и подтвердил запись в БД:
   - `scenario_run`
   - `scenario_result`
@@ -43,6 +44,9 @@ Forward path у интеграции уже понятен:
   - `canonical_entities`
 - `entity_run_links`
 - `run_subjects`
+- fresh-db и same-db (`--no-reset-db`) smoke сценарии подтверждены отдельно
+
+Практический field-level mapping reference вынесен в `09_MIRO_TO_LORESYSTEM_MAPPING.md`.
 
 ## 1.2 Новый provenance layer
 
@@ -99,6 +103,29 @@ Forward path у интеграции уже понятен:
 Итоговая трассировка становится такой:
 
 `scenario_run -> run_subjects -> runtime_evidence -> candidate_delta -> canonical_entity -> entity_run_link`
+
+## 1.4 Repeat-run semantics и FK enforcement
+
+После обнаружения бага на втором прогоне в ту же SQLite БД в connection provider store включён явный SQLite FK enforcement:
+
+- `PRAGMA foreign_keys = ON` на каждом connection
+
+Практический эффект такой:
+
+- повторный ingest того же `run_id` корректно очищает старый run-scoped state,
+- cascade cleanup теперь реально удаляет старые `mirofish_canonical_entities` и `mirofish_entity_run_links`,
+- двухпроходный smoke на одной и той же БД больше не накапливает дубли.
+
+Подтверждённый same-db результат после фикса:
+
+- `scenario_runs = 1`
+- `runtime_evidence = 4`
+- `candidate_deltas = 3`
+- `run_subjects = 5`
+- `canonical_entities = 3`
+- `entity_run_links = 3`
+
+Важно: текущая система идемпотентна по **содержимому и counts**, но не гарантирует стабильность SQLite autoincrement ID между rerun'ами. То есть canonical rows могут быть пересозданы с новыми числовыми `canonical_id`, при этом stale rows и дубли больше не остаются.
 
 ## 2. Главный принцип
 

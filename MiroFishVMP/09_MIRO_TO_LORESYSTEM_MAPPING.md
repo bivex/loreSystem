@@ -11,6 +11,7 @@
 - candidate deltas
 - promote в canonical entities
 - provenance / run-link слой
+- repeat-run semantics в той же SQLite БД
 
 ## 2. Result bundle envelope
 
@@ -131,6 +132,26 @@ Mapping:
 4. `candidate_deltas` → review / approve / reject
 5. approved candidate → canonical entity (`Event` / `Rumor` / `CharacterRelationship`)
 6. canonical entity → `mirofish_entity_run_links`
+
+## 8.1 Same-DB rerun semantics
+
+При повторном ingest того же logical run в ту же SQLite БД действуют такие правила:
+
+- connection provider store включает `PRAGMA foreign_keys = ON`,
+- staging rows для того же `run_id` перезаписываются,
+- старые `mirofish_canonical_entities` и `mirofish_entity_run_links`, связанные с предыдущим проходом, удаляются через cascade cleanup,
+- итоговые counts после двух проходов остаются стабильными.
+
+Подтверждённый smoke result после фикса:
+
+- `scenario_runs = 1`
+- `runtime_evidence = 4`
+- `candidate_deltas = 3`
+- `run_subjects = 5`
+- `canonical_entities = 3`
+- `entity_run_links = 3`
+
+Нюанс: `canonical_id` и внутренние row ids могут измениться между проходами из-за SQLite autoincrement. Это нормальная часть текущего design — система идемпотентна по содержимому, а не по числовым surrogate IDs.
 
 ## 9. Practical summary
 
