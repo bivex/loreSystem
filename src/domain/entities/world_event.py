@@ -1,94 +1,95 @@
 """WorldEvent entity for global game events."""
 
-from datetime import datetime
-from typing import Optional
-from uuid import UUID, uuid4
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import timedelta
+
+from ..exceptions import InvariantViolation
+from ..value_objects.common import Description, EntityId, TenantId, Timestamp, Version
 
 
+VALID_WORLD_EVENT_SEVERITIES = {"low", "moderate", "high", "critical"}
+
+
+@dataclass
 class WorldEvent:
-    """Represents a global event that affects the entire game world."""
+    """Represents a global event that affects a world scope."""
 
-    def __init__(
-        self,
-        id: UUID,
-        tenant_id: UUID,
-        name: str,
-        event_type: str,
-        description: str,
-        severity: str,
-        start_date: datetime,
-        end_date: Optional[datetime],
-        affected_regions: list[UUID],
-        is_active: bool = True,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
-    ):
-        self.id = id
-        self.tenant_id = tenant_id
-        self.name = name
-        self.event_type = event_type
-        self.description = description
-        self.severity = severity
-        self.start_date = start_date
-        self.end_date = end_date
-        self.affected_regions = affected_regions
-        self.is_active = is_active
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    event_type: str
+    description: Description
+    severity: str
+    start_date: Timestamp
+    end_date: Timestamp | None
+    affected_region_ids: list[EntityId] = field(default_factory=list)
+    is_active: bool = True
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
+    version: Version = field(default_factory=Version)
+
+    def __post_init__(self) -> None:
+        if not self.name or not self.name.strip():
+            raise InvariantViolation("WorldEvent name cannot be empty")
+        if not self.event_type or not self.event_type.strip():
+            raise InvariantViolation("WorldEvent event_type cannot be empty")
+        if self.severity not in VALID_WORLD_EVENT_SEVERITIES:
+            raise InvariantViolation(
+                f"WorldEvent severity must be one of {sorted(VALID_WORLD_EVENT_SEVERITIES)}"
+            )
+        if self.end_date is not None and self.end_date.value < self.start_date.value:
+            raise InvariantViolation("WorldEvent end_date cannot be before start_date")
+        if self.updated_at.value < self.created_at.value:
+            raise InvariantViolation("WorldEvent updated_at cannot be before created_at")
 
     @classmethod
     def create(
         cls,
-        tenant_id: UUID,
+        tenant_id: TenantId,
+        world_id: EntityId,
         name: str,
         event_type: str,
         description: str,
         severity: str = "moderate",
-        start_date: Optional[datetime] = None,
-        duration_days: Optional[int] = None,
+        start_date: Timestamp | None = None,
+        duration_days: int | None = None,
+        affected_region_ids: list[EntityId] | None = None,
+        is_active: bool = True,
     ) -> "WorldEvent":
-        """Factory method to create a new world event."""
-        if not name or not name.strip():
-            raise ValueError("Event name is required")
-        if not event_type or not event_type.strip():
-            raise ValueError("Event type is required")
-        if severity not in ["minor", "moderate", "major", "catastrophic", "apocalyptic"]:
-            raise ValueError("Severity must be one of: minor, moderate, major, catastrophic, apocalyptic")
-
-        start = start_date or datetime.utcnow()
-        end = None
-        if duration_days and duration_days > 0:
-            from datetime import timedelta
-            end = start + timedelta(days=duration_days)
-
+        now = Timestamp.now()
+        start = start_date or now
+        end = Timestamp(start.value + timedelta(days=duration_days)) if duration_days and duration_days > 0 else None
         return cls(
-            id=uuid4(),
             tenant_id=tenant_id,
+            world_id=world_id,
             name=name.strip(),
             event_type=event_type.strip(),
-            description=description.strip(),
+            description=Description(description.strip()),
             severity=severity,
             start_date=start,
             end_date=end,
-            affected_regions=[],
-            is_active=True,
+            affected_region_ids=list(affected_region_ids or []),
+            is_active=is_active,
+            created_at=now,
+            updated_at=now,
+            version=Version(1),
         )
 
     def validate(self) -> bool:
-        """Validate world event data."""
-        return (
-            isinstance(self.name, str) and len(self.name) > 0
-            and isinstance(self.event_type, str) and len(self.event_type) > 0
-            and self.severity in ["minor", "moderate", "major", "catastrophic", "apocalyptic"]
-            and isinstance(self.start_date, datetime)
-            and (self.end_date is None or self.end_date > self.start_date)
-        )
+        try:
+            self.__post_init__()
+        except InvariantViolation:
+            return False
+        return True
 
     def end_event(self) -> None:
-        """Mark the event as ended."""
         self.is_active = False
-        self.end_date = self.end_date or datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.end_date = self.end_date or Timestamp.now()
+        self.updated_at = Timestamp.now()
+        self.version = self.version.increment()
 
     def __repr__(self) -> str:
         return f"<WorldEvent {self.name}: {self.event_type}, severity={self.severity}>"

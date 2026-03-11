@@ -31,10 +31,15 @@
   - `QuestPrerequisite`, `QuestRewardTier`, `QuestTracker`
   - user-facing quest UX fields like `player_briefing`, `journal_summary`, `acceptance_text`, `completion_text`, `failure_text`, `reward_summary`, `objective_hint`
 - Systems slice (`--with-systems`):
-  - `Item`, `Component`, `Socket`
+  - `Item`, `Inventory`, `Material`, `Component`, `Socket`
+  - `CraftingRecipe`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`
+  - `Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`
   - `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
   - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
   - `ProgressionState`, `ProgressionEvent`
+  - `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
+  - `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`
+  - `SeasonalEvent`, `Invasion`, `War`
 - Optional continuity memory (`--with-memory`):
   - exact recall from SQLite world state
   - semantic recall from Qdrant
@@ -45,20 +50,24 @@
 
 ### Priority 1 — Idle RPG / Raid systems
 
-Это следующий предпочтительный слой для `CAMEL.Bridge`, потому что он лучше всего ложится на уже существующий domain model и даст максимальную production-пользу.
+Этот priority-pack остаётся главным gameplay-направлением для `CAMEL.Bridge`: systems-core, starter encounter/world и live-ops warfare slice уже закрыты; следующий production-фокус — legendary/relic reward loop + memory live stabilization.
 
-Уже закрыто в текущем bridge:
+Уже закрыто в текущем bridge (P0 core systems tranche + starter encounter/world slice):
 
-- `Item`, `Component`, `Socket`
+- `Item`, `Inventory`, `Material`, `Component`, `Socket`
+- `CraftingRecipe`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`
+- `Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`
 - `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
 - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
 - `ProgressionState`, `ProgressionEvent`
+- `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
+- `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`
+- `SeasonalEvent`, `Invasion`, `War`
 
 Следующий рекомендуемый фокус внутри этого priority-pack:
 
-- `Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`
-- `Title`, `Rank`, `Leaderboard`, `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
-- затем `Dungeon`, `Raid`, `Arena`, `Instance`, `OpenWorldZone` и legendary/relic item pack
+- `LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`
+- параллельно — memory v1 live stabilization (`real Qdrant smoke`, indexing coverage, cleanup/shaping)
 
 Фокус на сущности:
 

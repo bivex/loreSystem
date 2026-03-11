@@ -4,15 +4,9 @@ Raid Entity
 A Raid represents a large-scale raid event.
 """
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import List, Optional
 
-from ..value_objects.common import (
-    TenantId,
-    EntityId,
-    Description,
-    Version,
-    Timestamp,
-)
+from ..value_objects.common import EntityId, TenantId, Timestamp, Version
 
 
 @dataclass
@@ -70,6 +64,7 @@ class Raid:
         world_id: EntityId,
         name: str,
         description: str,
+        boss_ids: Optional[List[EntityId]] = None,
         difficulty: str = "normal",
         max_players: int = 40,
         min_players: int = 10,
@@ -77,6 +72,9 @@ class Raid:
         has_weekly_lockout: bool = True
     ) -> 'Raid':
         """Factory method to create a new Raid."""
+        normalized_boss_ids = list(boss_ids or [])
+        if not normalized_boss_ids:
+            raise ValueError("Raid.create requires at least one boss_id")
         now = Timestamp.now()
         return cls(
             id=None,
@@ -88,7 +86,7 @@ class Raid:
             max_players=max_players,
             min_players=min_players,
             min_level=min_level,
-            boss_ids=[],
+            boss_ids=normalized_boss_ids,
             has_weekly_lockout=has_weekly_lockout,
             created_at=now,
             updated_at=now,

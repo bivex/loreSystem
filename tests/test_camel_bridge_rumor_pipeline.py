@@ -9,12 +9,18 @@ from src.application.integration.camel_bridge.rumor_agents import CamelChatBacke
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
+from src.domain.entities.dungeon import Dungeon
 from src.domain.entities.enchantment import EnchantmentEffect, EnchantmentType
 from src.domain.entities.experience import ExperienceSource
 from src.domain.entities.glyph import GlyphCategory, GlyphSchool, GlyphTier
+from src.domain.entities.invasion import Invasion
 from src.domain.entities.material import MaterialType
+from src.domain.entities.raid import Raid
 from src.domain.entities.rune import RuneRank, RuneType
+from src.domain.entities.seasonal_event import SeasonalEvent
 from src.domain.entities.trait import TraitCategory, TraitNature
+from src.domain.entities.war import War
+from src.domain.entities.world_event import WorldEvent
 from src.domain.value_objects.common import EntityId, TenantId
 from src.domain.value_objects.progression import CharacterClass, StatType
 from src.infrastructure.camel_bridge_extended_narrative_repository import (
@@ -27,16 +33,19 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeChoiceRepository,
     CamelBridgeConsequenceRepository,
     CamelBridgeBadgeRepository,
+    CamelBridgeArenaRepository,
     CamelBridgeBlueprintRepository,
     CamelBridgeCraftingRecipeRepository,
     CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
+    CamelBridgeDungeonRepository,
     CamelBridgeDropRateRepository,
     CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
     CamelBridgeExperienceRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeInvasionRepository,
     CamelBridgeInventoryRepository,
     CamelBridgeItemRepository,
     CamelBridgeLeaderboardRepository,
@@ -46,6 +55,7 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
+    CamelBridgeOpenWorldZoneRepository,
     CamelBridgePlotBranchRepository,
     CamelBridgePlayerMetricRepository,
     CamelBridgeProgressionEventRepository,
@@ -62,8 +72,10 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAchievementRepository,
     CamelBridgeAttributeRepository,
     CamelBridgePerkRepository,
+    CamelBridgeRaidRepository,
     CamelBridgeRankRepository,
     CamelBridgeRuneRepository,
+    CamelBridgeSeasonalEventRepository,
     CamelBridgeSkillRepository,
     CamelBridgeSocketRepository,
     CamelBridgeStorylineRepository,
@@ -72,7 +84,10 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeTraitRepository,
     CamelBridgeTrophyRepository,
     CamelBridgeVoiceActorRepository,
+    CamelBridgeInstanceRepository,
     CamelBridgeLootTableWeightRepository,
+    CamelBridgeWarRepository,
+    CamelBridgeWorldEventRepository,
 )
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
@@ -837,6 +852,15 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
             "drop_rates": [{"name": "Bellglass Artifact Drops", "category": "artifact", "drop_rate": 0.18, "conditions": ["complete harbor defense", "ring all warning bells"], "affected_item_names": ["Bellglass Reliquary"], "player_level_scaling": {"10": 1.2, "15": 1.35}, "is_event_boosted": True, "boost_multiplier": 1.5, "description": "Event boosted artifact profile for the harbor raid."}],
             "loot_table_weights": [{"name": "Harbor Cache Rare Slot", "description": "Biases the cache toward rare reliquary rewards.", "loot_table_name": "Harbor Cache", "item_type": "artifact", "rarity": "epic", "weight": 0.22, "min_level": 8, "is_unique": True, "conditions": ["night encounter"]}],
             "difficulty_curves": [{"name": "Harbor Panic Curve", "description": "Difficulty pacing for the bellwatch raid.", "curve_type": "sigmoid", "base_level": 1, "max_level": 5, "level_xp_requirement": [100, 220, 380, 610, 900], "scaling_factor": 1.3, "level_time_minutes": [25, 35, 45, 60, 80], "player_count_tiers": {"1": 1, "3": 2, "5": 4}, "is_adaptive": True}],
+            "dungeons": [{"name": "Bellglass Catacombs", "description": "Collapsed tunnels beneath the harbor bell tower.", "difficulty": "hard", "max_players": 5, "min_level": 8, "boss_names": ["Mara Voss"], "has_lockout": True, "lockout_duration": 86400}],
+            "raids": [{"name": "Eclipse Breakwater", "description": "A coordinated raid to stop the harbor blackout ritual.", "difficulty": "heroic", "max_players": 10, "min_players": 4, "min_level": 10, "boss_names": ["Mara Voss", "Iven Hale"], "has_weekly_lockout": True}],
+            "world_events": [{"name": "Harbor Blackout", "description": "A rolling blackout event spreads from the bell towers.", "event_type": "crisis", "severity": "high", "duration_days": 3, "affected_location_names": ["Harbor Quarter"], "is_active": True}],
+            "arenas": [{"name": "Harbor Proving Grounds", "description": "A ranked arena carved out of the breakwater.", "match_type": "team_deathmatch", "team_size": 3, "max_teams": 4, "min_level": 7, "has_ranked_mode": True}],
+            "instances": [{"name": "Black Bell Instance", "description": "A private combat scenario replaying the harbor blackout.", "difficulty": "hard", "max_players": 4, "min_level": 8, "recommended_level": 10, "time_limit": 1800}],
+            "open_world_zones": [{"name": "Bellglass Coast", "description": "A coastal warzone alive with roaming blackout events.", "biome": "coast", "min_level": 6, "max_level": 15, "player_cap": 120, "poi_names": ["Harbor Quarter"], "has_dynamic_events": True}],
+            "seasonal_events": [{"name": "Eclipse Vigil", "description": "A recurring harbor vigil during eclipse season.", "season": "winter", "year_number": 12, "duration_days": 7, "reward_item_names": ["Bellglass Reliquary"], "is_recurring": True, "recurrence_period_days": 365, "is_active": True}],
+            "invasions": [{"name": "Blackwater Incursion", "description": "Raiders push through the lantern line.", "invasion_type": "naval", "invader_name": "Night Tide Corsairs", "target_name": "Harbor Quarter", "force_size": 600, "casualties": 120, "conquest_progress": 45, "is_successful": False, "is_active": True}],
+            "wars": [{"name": "War for Bellglass Coast", "description": "A prolonged struggle over the harbor approaches.", "war_type": "territorial", "aggressor_name": "Night Tide Corsairs", "defender_name": "Harbor Wardens", "conflict_region_name": "Bellglass Coast", "total_casualties": 900, "battles_fought": 6, "territorial_change_names": ["Breakwater Battery"], "victor_name": "Harbor Wardens", "is_active": False}],
         }),
     ])
     service = RumorBridgeService(
@@ -875,6 +899,15 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         drop_rate_repository=CamelBridgeDropRateRepository(db_path),
         loot_table_weight_repository=CamelBridgeLootTableWeightRepository(db_path),
         difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(db_path),
+        dungeon_repository=CamelBridgeDungeonRepository(db_path),
+        raid_repository=CamelBridgeRaidRepository(db_path),
+        world_event_repository=CamelBridgeWorldEventRepository(db_path),
+        arena_repository=CamelBridgeArenaRepository(db_path),
+        instance_repository=CamelBridgeInstanceRepository(db_path),
+        open_world_zone_repository=CamelBridgeOpenWorldZoneRepository(db_path),
+        seasonal_event_repository=CamelBridgeSeasonalEventRepository(db_path),
+        invasion_repository=CamelBridgeInvasionRepository(db_path),
+        war_repository=CamelBridgeWarRepository(db_path),
     )
 
     result = service.generate_story_chain(
@@ -1042,6 +1075,40 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     assert result.difficulty_curves[0].curve_type == "sigmoid"
     assert result.difficulty_curves[0].max_level == 5
     assert result.difficulty_curves[0].is_adaptive is True
+    assert len(result.dungeons) == 1
+    assert result.dungeons[0].name == "Bellglass Catacombs"
+    assert result.dungeons[0].boss_ids == [mara.id]
+    assert result.dungeons[0].world_id == EntityId(1)
+    assert len(result.raids) == 1
+    assert result.raids[0].name == "Eclipse Breakwater"
+    assert set(result.raids[0].boss_ids) == {character.id for character in result.characters}
+    assert len(result.world_events) == 1
+    assert result.world_events[0].name == "Harbor Blackout"
+    assert result.world_events[0].world_id == EntityId(1)
+    assert result.world_events[0].severity == "high"
+    assert result.world_events[0].affected_region_ids == [EntityId(99)]
+    assert len(result.arenas) == 1
+    assert result.arenas[0].name == "Harbor Proving Grounds"
+    assert result.arenas[0].max_teams == 4
+    assert len(result.instances) == 1
+    assert result.instances[0].name == "Black Bell Instance"
+    assert result.instances[0].is_active is False
+    assert len(result.open_world_zones) == 1
+    assert result.open_world_zones[0].name == "Bellglass Coast"
+    assert result.open_world_zones[0].poi_ids == [EntityId(99)]
+    assert result.open_world_zones[0].player_cap == 120
+    assert len(result.seasonal_events) == 1
+    assert result.seasonal_events[0].name == "Eclipse Vigil"
+    assert result.seasonal_events[0].reward_ids == [result.items[0].id]
+    assert len(result.invasions) == 1
+    assert result.invasions[0].name == "Blackwater Incursion"
+    assert result.invasions[0].target_name == "Harbor Quarter"
+    assert result.invasions[0].world_id == EntityId(1)
+    assert len(result.wars) == 1
+    assert result.wars[0].name == "War for Bellglass Coast"
+    assert result.wars[0].conflict_region_name == "Bellglass Coast"
+    assert result.wars[0].victor_name == "Harbor Wardens"
+    assert result.wars[0].is_active is False
 
     conn = sqlite3.connect(db_path)
     try:
@@ -1075,6 +1142,15 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM drop_rates").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM loot_table_weights").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM difficulty_curves").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM dungeons").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM raids").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM world_events").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM arenas").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM instances").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM open_world_zones").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM seasonal_events").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM invasions").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM wars").fetchone()[0] == 1
     finally:
         conn.close()
 
@@ -1124,6 +1200,9 @@ def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
         drop_rate_repository=CamelBridgeDropRateRepository(db_path),
         loot_table_weight_repository=CamelBridgeLootTableWeightRepository(db_path),
         difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(db_path),
+        dungeon_repository=CamelBridgeDungeonRepository(db_path),
+        raid_repository=CamelBridgeRaidRepository(db_path),
+        world_event_repository=CamelBridgeWorldEventRepository(db_path),
         allow_fallback=False,
     )
 
@@ -1138,3 +1217,107 @@ def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
             ),
             include_systems_slice=True,
         )
+
+
+def test_dungeon_create_requires_boss_ids():
+    dungeon = Dungeon.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Bellglass Catacombs",
+        description="Collapsed tunnels beneath the harbor bell tower.",
+        boss_ids=[EntityId(11)],
+    )
+
+    assert dungeon.boss_ids == [EntityId(11)]
+
+
+def test_raid_create_requires_boss_ids():
+    raid = Raid.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Eclipse Breakwater",
+        description="A coordinated raid to stop the harbor blackout ritual.",
+        boss_ids=[EntityId(11), EntityId(12)],
+    )
+
+    assert raid.boss_ids == [EntityId(11), EntityId(12)]
+
+
+def test_world_event_create_uses_bridge_identity_model():
+    world_event = WorldEvent.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Harbor Blackout",
+        event_type="crisis",
+        description="A rolling blackout event spreads from the bell towers.",
+        severity="high",
+        duration_days=3,
+        affected_region_ids=[EntityId(99)],
+    )
+
+    assert world_event.tenant_id == TenantId(1)
+    assert world_event.world_id == EntityId(2)
+    assert world_event.affected_region_ids == [EntityId(99)]
+    assert world_event.validate() is True
+
+
+def test_seasonal_event_create_uses_bridge_identity_model():
+    seasonal_event = SeasonalEvent.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Eclipse Vigil",
+        season="winter",
+        year_number=12,
+        description="A recurring harbor vigil during eclipse season.",
+        duration_days=7,
+        reward_ids=[EntityId(99)],
+    )
+
+    assert seasonal_event.tenant_id == TenantId(1)
+    assert seasonal_event.world_id == EntityId(2)
+    assert seasonal_event.reward_ids == [EntityId(99)]
+    assert seasonal_event.validate() is True
+
+
+def test_invasion_create_uses_bridge_identity_model():
+    invasion = Invasion.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Blackwater Incursion",
+        description="Raiders push through the lantern line.",
+        invasion_type="naval",
+        invader_name="Night Tide Corsairs",
+        target_name="Harbor Quarter",
+        force_size=600,
+        casualties=120,
+        conquest_progress=45.0,
+    )
+
+    assert invasion.tenant_id == TenantId(1)
+    assert invasion.world_id == EntityId(2)
+    assert invasion.target_name == "Harbor Quarter"
+    assert invasion.validate() is True
+
+
+def test_war_create_uses_bridge_identity_model():
+    war = War.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="War for Bellglass Coast",
+        description="A prolonged struggle over the harbor approaches.",
+        war_type="territorial",
+        aggressor_name="Night Tide Corsairs",
+        defender_name="Harbor Wardens",
+        conflict_region_name="Bellglass Coast",
+        total_casualties=900,
+        battles_fought=6,
+        territorial_change_names=["Breakwater Battery"],
+        victor_name="Harbor Wardens",
+        is_active=False,
+    )
+
+    assert war.tenant_id == TenantId(1)
+    assert war.world_id == EntityId(2)
+    assert war.conflict_region_name == "Bellglass Coast"
+    assert war.victor_name == "Harbor Wardens"
+    assert war.validate() is True

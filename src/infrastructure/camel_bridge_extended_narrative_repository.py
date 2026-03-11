@@ -294,6 +294,42 @@ class CamelBridgeDifficultyCurveRepository(_GenericBridgeRepository):
     table_name = "difficulty_curves"
 
 
+class CamelBridgeDungeonRepository(_GenericBridgeRepository):
+    table_name = "dungeons"
+
+
+class CamelBridgeRaidRepository(_GenericBridgeRepository):
+    table_name = "raids"
+
+
+class CamelBridgeWorldEventRepository(_GenericBridgeRepository):
+    table_name = "world_events"
+
+
+class CamelBridgeArenaRepository(_GenericBridgeRepository):
+    table_name = "arenas"
+
+
+class CamelBridgeInstanceRepository(_GenericBridgeRepository):
+    table_name = "instances"
+
+
+class CamelBridgeOpenWorldZoneRepository(_GenericBridgeRepository):
+    table_name = "open_world_zones"
+
+
+class CamelBridgeSeasonalEventRepository(_GenericBridgeRepository):
+    table_name = "seasonal_events"
+
+
+class CamelBridgeInvasionRepository(_GenericBridgeRepository):
+    table_name = "invasions"
+
+
+class CamelBridgeWarRepository(_GenericBridgeRepository):
+    table_name = "wars"
+
+
 class CamelBridgePlotBranchRepository(_GenericBridgeRepository):
     table_name = "plot_branches"
 

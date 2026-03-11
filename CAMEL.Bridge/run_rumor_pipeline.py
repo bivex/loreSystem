@@ -30,8 +30,10 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeBlueprintRepository,
     CamelBridgeCraftingRecipeRepository,
     CamelBridgeBadgeRepository,
+    CamelBridgeArenaRepository,
     CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
+    CamelBridgeDungeonRepository,
     CamelBridgeDropRateRepository,
     CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
@@ -46,6 +48,7 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
+    CamelBridgeOpenWorldZoneRepository,
     CamelBridgePlotBranchRepository,
     CamelBridgePlayerMetricRepository,
     CamelBridgeProgressionEventRepository,
@@ -62,18 +65,24 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAttributeRepository,
     CamelBridgePerkRepository,
     CamelBridgeRankRepository,
+    CamelBridgeRaidRepository,
     CamelBridgeRuneRepository,
+    CamelBridgeSeasonalEventRepository,
     CamelBridgeSkillRepository,
     CamelBridgeTalentTreeRepository,
     CamelBridgeTitleRepository,
     CamelBridgeTraitRepository,
     CamelBridgeTrophyRepository,
     CamelBridgeLootTableWeightRepository,
+    CamelBridgeInstanceRepository,
     CamelBridgeItemRepository,
     CamelBridgeComponentRepository,
     CamelBridgeSocketRepository,
     CamelBridgeStorylineRepository,
+    CamelBridgeInvasionRepository,
     CamelBridgeVoiceActorRepository,
+    CamelBridgeWarRepository,
+    CamelBridgeWorldEventRepository,
 )
 from src.infrastructure.camel_bridge_story_repository import (
     CamelBridgeActRepository,
@@ -99,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
-    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, and DifficultyCurve entities")
+    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, DifficultyCurve, Dungeon, Raid, WorldEvent, Arena, Instance, OpenWorldZone, SeasonalEvent, Invasion, and War entities")
     parser.add_argument("--with-memory", action="store_true", help="Enable SQLite + Qdrant continuity memory using CAMEL_MEMORY_QDRANT_* env settings")
     return parser
 
@@ -169,6 +178,15 @@ def main() -> int:
         drop_rate_repository=CamelBridgeDropRateRepository(args.db_path),
         loot_table_weight_repository=CamelBridgeLootTableWeightRepository(args.db_path),
         difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(args.db_path),
+        dungeon_repository=CamelBridgeDungeonRepository(args.db_path),
+        raid_repository=CamelBridgeRaidRepository(args.db_path),
+        world_event_repository=CamelBridgeWorldEventRepository(args.db_path),
+        arena_repository=CamelBridgeArenaRepository(args.db_path),
+        instance_repository=CamelBridgeInstanceRepository(args.db_path),
+        open_world_zone_repository=CamelBridgeOpenWorldZoneRepository(args.db_path),
+        seasonal_event_repository=CamelBridgeSeasonalEventRepository(args.db_path),
+        invasion_repository=CamelBridgeInvasionRepository(args.db_path),
+        war_repository=CamelBridgeWarRepository(args.db_path),
         plot_branch_repository=CamelBridgePlotBranchRepository(args.db_path),
         branch_point_repository=CamelBridgeBranchPointRepository(args.db_path),
         choice_repository=CamelBridgeChoiceRepository(args.db_path),
@@ -335,6 +353,24 @@ def main() -> int:
             print(f"loot_table_weight[{loot_table_weight.id.value}] {loot_table_weight.name} weight={loot_table_weight.weight}")
         for difficulty_curve in result.difficulty_curves:
             print(f"difficulty_curve[{difficulty_curve.id.value}] {difficulty_curve.name} type={difficulty_curve.curve_type} levels={difficulty_curve.max_level}")
+        for dungeon in result.dungeons:
+            print(f"dungeon[{dungeon.id.value}] {dungeon.name} bosses={len(dungeon.boss_ids)}")
+        for raid in result.raids:
+            print(f"raid[{raid.id.value}] {raid.name} bosses={len(raid.boss_ids)}")
+        for world_event in result.world_events:
+            print(f"world_event[{world_event.id.value}] {world_event.name} severity={world_event.severity}")
+        for arena in result.arenas:
+            print(f"arena[{arena.id.value}] {arena.name} teams={arena.max_teams} ranked={arena.has_ranked_mode}")
+        for instance in result.instances:
+            print(f"instance[{instance.id.value}] {instance.name} difficulty={instance.difficulty} active={instance.is_active}")
+        for zone in result.open_world_zones:
+            print(f"open_world_zone[{zone.id.value}] {zone.name} biome={zone.biome} player_cap={zone.player_cap}")
+        for seasonal_event in result.seasonal_events:
+            print(f"seasonal_event[{seasonal_event.id.value}] {seasonal_event.name} season={seasonal_event.season} active={seasonal_event.is_active}")
+        for invasion in result.invasions:
+            print(f"invasion[{invasion.id.value}] {invasion.name} type={invasion.invasion_type} progress={invasion.conquest_progress}")
+        for war in result.wars:
+            print(f"war[{war.id.value}] {war.name} type={war.war_type} active={war.is_active}")
     return 0
 
 

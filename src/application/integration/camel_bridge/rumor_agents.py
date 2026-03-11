@@ -16,6 +16,7 @@ from src.domain.entities.act import Act, ActStructure, ActType
 from src.domain.entities.achievement import Achievement
 from src.domain.entities.affinity import Affinity
 from src.domain.entities.alternate_reality import AlternateReality, RealityAccess, RealityType
+from src.domain.entities.arena import Arena
 from src.domain.entities.attribute import Attribute, AttributeScale, AttributeType
 from src.domain.entities.branch_point import BranchPoint, BranchPointType
 from src.domain.entities.blueprint import Blueprint, BlueprintRequirement, BlueprintType
@@ -31,6 +32,7 @@ from src.domain.entities.component import Component, ComponentCategory
 from src.domain.entities.consequence import Consequence, ConsequenceSeverity, ConsequenceType
 from src.domain.entities.crafting_recipe import CraftingRecipe, RecipeDifficulty, RecipeIngredient
 from src.domain.entities.disposition import Disposition
+from src.domain.entities.dungeon import Dungeon
 from src.domain.entities.enchantment import Enchantment, EnchantmentEffect, EnchantmentEffectValue, EnchantmentType
 from src.domain.entities.ending import Ending, EndingRarity, EndingType
 from src.domain.entities.episode import Episode, EpisodeType
@@ -40,6 +42,7 @@ from src.domain.entities.flash_forward import FlashForward
 from src.domain.entities.flashback import Flashback
 from src.domain.entities.experience import Experience, ExperienceSource, ExperienceType
 from src.domain.entities.glyph import Glyph, GlyphAbility, GlyphCategory, GlyphModifier, GlyphSchool, GlyphTier
+from src.domain.entities.instance import Instance
 from src.domain.entities.inventory import Inventory, InventorySlot
 from src.domain.entities.item import Item
 from src.domain.entities.level_up import LevelUp, LevelUpType
@@ -48,6 +51,7 @@ from src.domain.entities.material import Material, MaterialType
 from src.domain.entities.moral_choice import ChoiceUrgency, MoralAlignment, MoralChoice
 from src.domain.entities.perk import Perk, PerkSource, PerkType
 from src.domain.entities.motion_capture import AnimationType, CaptureStatus, MotionCapture
+from src.domain.entities.open_world_zone import OpenWorldZone
 from src.domain.entities.plot_branch import BranchStatus, BranchType, PlotBranch
 from src.domain.entities.progression_event import ProgressionEvent
 from src.domain.entities.progression_state import CharacterState, WorldState
@@ -60,11 +64,13 @@ from src.domain.entities.quest_objective import QuestObjective
 from src.domain.entities.quest_prerequisite import QuestPrerequisite
 from src.domain.entities.quest_reward_tier import QuestRewardTier
 from src.domain.entities.quest_tracker import QuestTracker
+from src.domain.entities.raid import Raid
 from src.domain.entities.rank import Rank
 from src.domain.entities.leaderboard import Leaderboard
 from src.domain.entities.badge import Badge
 from src.domain.entities.rune import Rune, RuneBonus, RuneEffect, RuneRank, RuneType
 from src.domain.entities.rumor import Rumor
+from src.domain.entities.seasonal_event import SeasonalEvent
 from src.domain.entities.skill import Skill, SkillCategory, SkillType
 from src.domain.entities.socket import Socket, SocketShape, SocketType
 from src.domain.entities.story import Story
@@ -74,6 +80,9 @@ from src.domain.entities.title import Title
 from src.domain.entities.trait import Trait, TraitCategory, TraitNature
 from src.domain.entities.trophy import Trophy
 from src.domain.entities.voice_actor import VoiceActor, VoiceActorStatus
+from src.domain.entities.invasion import Invasion
+from src.domain.entities.war import War
+from src.domain.entities.world_event import WorldEvent
 from src.domain.repositories.rumor_repository import IRumorRepository
 from src.domain.value_objects.common import (
     Backstory,
@@ -1098,6 +1107,117 @@ class DifficultyCurveDraft:
 
 
 @dataclass(frozen=True)
+class DungeonDraft:
+    name: str
+    description: str
+    difficulty: str = "normal"
+    max_players: int = 5
+    min_level: int = 1
+    boss_names: tuple[str, ...] = field(default_factory=tuple)
+    has_lockout: bool = True
+    lockout_duration: int = 86400
+
+
+@dataclass(frozen=True)
+class RaidDraft:
+    name: str
+    description: str
+    difficulty: str = "normal"
+    max_players: int = 10
+    min_players: int = 2
+    min_level: int = 1
+    boss_names: tuple[str, ...] = field(default_factory=tuple)
+    has_weekly_lockout: bool = True
+
+
+@dataclass(frozen=True)
+class WorldEventDraft:
+    name: str
+    description: str
+    event_type: str = "crisis"
+    severity: str = "moderate"
+    duration_days: int | None = None
+    affected_location_names: tuple[str, ...] = field(default_factory=tuple)
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
+class ArenaDraft:
+    name: str
+    description: str
+    match_type: str = "team_deathmatch"
+    team_size: int = 3
+    max_teams: int = 4
+    min_level: int = 1
+    has_ranked_mode: bool = True
+
+
+@dataclass(frozen=True)
+class InstanceDraft:
+    name: str
+    description: str
+    difficulty: str = "normal"
+    max_players: int = 4
+    min_level: int = 1
+    recommended_level: int = 1
+    time_limit: int = 0
+
+
+@dataclass(frozen=True)
+class OpenWorldZoneDraft:
+    name: str
+    description: str
+    biome: str = "forest"
+    min_level: int = 1
+    max_level: int = 10
+    player_cap: int = 100
+    poi_names: tuple[str, ...] = field(default_factory=tuple)
+    has_dynamic_events: bool = True
+
+
+@dataclass(frozen=True)
+class SeasonalEventDraft:
+    name: str
+    description: str
+    season: str = "winter"
+    year_number: int = 1
+    duration_days: int = 30
+    reward_item_names: tuple[str, ...] = field(default_factory=tuple)
+    is_recurring: bool = True
+    recurrence_period_days: int | None = 365
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
+class InvasionDraft:
+    name: str
+    description: str
+    invasion_type: str = "military"
+    invader_name: str = "Unknown Invader"
+    target_name: str = "Unknown Target"
+    force_size: int = 1000
+    casualties: int = 0
+    conquest_progress: float = 0.0
+    is_successful: bool | None = None
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
+class WarDraft:
+    name: str
+    description: str
+    war_type: str = "territorial"
+    aggressor_name: str = "Unknown Aggressor"
+    defender_name: str = "Unknown Defender"
+    conflict_region_name: str = "Unknown Frontier"
+    total_casualties: int = 0
+    battles_fought: int = 0
+    territorial_change_names: tuple[str, ...] = field(default_factory=tuple)
+    victor_name: str | None = None
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
 class PrologueDraft:
     title: str
     description: str
@@ -1205,6 +1325,15 @@ class NarrativeStructureDraft:
     drop_rates: tuple[DropRateDraft, ...] = field(default_factory=tuple)
     loot_table_weights: tuple[LootTableWeightDraft, ...] = field(default_factory=tuple)
     difficulty_curves: tuple[DifficultyCurveDraft, ...] = field(default_factory=tuple)
+    dungeons: tuple[DungeonDraft, ...] = field(default_factory=tuple)
+    raids: tuple[RaidDraft, ...] = field(default_factory=tuple)
+    world_events: tuple[WorldEventDraft, ...] = field(default_factory=tuple)
+    arenas: tuple[ArenaDraft, ...] = field(default_factory=tuple)
+    instances: tuple[InstanceDraft, ...] = field(default_factory=tuple)
+    open_world_zones: tuple[OpenWorldZoneDraft, ...] = field(default_factory=tuple)
+    seasonal_events: tuple[SeasonalEventDraft, ...] = field(default_factory=tuple)
+    invasions: tuple[InvasionDraft, ...] = field(default_factory=tuple)
+    wars: tuple[WarDraft, ...] = field(default_factory=tuple)
     plot_branches: tuple[PlotBranchDraft, ...] = field(default_factory=tuple)
     branch_points: tuple[BranchPointDraft, ...] = field(default_factory=tuple)
     choices: tuple[ChoiceDraft, ...] = field(default_factory=tuple)
@@ -1280,6 +1409,15 @@ class RumorChainResult:
     drop_rates: list[DropRateRecord] = field(default_factory=list)
     loot_table_weights: list[LootTableWeightRecord] = field(default_factory=list)
     difficulty_curves: list[DifficultyCurveRecord] = field(default_factory=list)
+    dungeons: list[Dungeon] = field(default_factory=list)
+    raids: list[Raid] = field(default_factory=list)
+    world_events: list[WorldEvent] = field(default_factory=list)
+    arenas: list[Arena] = field(default_factory=list)
+    instances: list[Instance] = field(default_factory=list)
+    open_world_zones: list[OpenWorldZone] = field(default_factory=list)
+    seasonal_events: list[SeasonalEvent] = field(default_factory=list)
+    invasions: list[Invasion] = field(default_factory=list)
+    wars: list[War] = field(default_factory=list)
     campaign: Campaign | None = None
     story: Story | None = None
     acts: list[Act] = field(default_factory=list)
@@ -1905,6 +2043,42 @@ class DifficultyCurveStore(Protocol):
     def save(self, entity: DifficultyCurveRecord) -> DifficultyCurveRecord: ...
 
 
+class DungeonStore(Protocol):
+    def save(self, entity: Dungeon) -> Dungeon: ...
+
+
+class RaidStore(Protocol):
+    def save(self, entity: Raid) -> Raid: ...
+
+
+class WorldEventStore(Protocol):
+    def save(self, entity: WorldEvent) -> WorldEvent: ...
+
+
+class ArenaStore(Protocol):
+    def save(self, entity: Arena) -> Arena: ...
+
+
+class InstanceStore(Protocol):
+    def save(self, entity: Instance) -> Instance: ...
+
+
+class OpenWorldZoneStore(Protocol):
+    def save(self, entity: OpenWorldZone) -> OpenWorldZone: ...
+
+
+class SeasonalEventStore(Protocol):
+    def save(self, entity: SeasonalEvent) -> SeasonalEvent: ...
+
+
+class InvasionStore(Protocol):
+    def save(self, entity: Invasion) -> Invasion: ...
+
+
+class WarStore(Protocol):
+    def save(self, entity: War) -> War: ...
+
+
 class CamelChatBackend:
     """Lazy CAMEL backend that only imports CAMEL at runtime."""
 
@@ -2421,6 +2595,167 @@ class DeterministicRumorBackend:
                         "effects": {"quest_complete": "bellwatch_reward_applied"},
                     }
                 ],
+                "player_metrics": [
+                    {
+                        "player_name": "Mara Voss",
+                        "metric_type": "combat_kills",
+                        "value": 27,
+                        "unit": "count",
+                        "session_name": f"{theme.lower()}_raid",
+                        "description": f"Tracks how many enemies Mara defeated during {theme}.",
+                    }
+                ],
+                "drop_rates": [
+                    {
+                        "name": f"{theme.title()} Relic Chance",
+                        "category": "artifact",
+                        "drop_rate": 0.18,
+                        "conditions": ["complete harbor defense", "ring all warning bells"],
+                        "affected_item_names": [f"{theme.title()} Relic"],
+                        "player_level_scaling": {"10": 1.2, "15": 1.35},
+                        "is_event_boosted": True,
+                        "boost_multiplier": 1.5,
+                        "description": f"Boosted artifact drop profile tied to {theme}.",
+                    }
+                ],
+                "loot_table_weights": [
+                    {
+                        "name": f"{theme.title()} Rare Cache",
+                        "description": f"Controls rare cache payouts during {theme}.",
+                        "loot_table_name": "Harbor Cache",
+                        "item_type": "artifact",
+                        "rarity": "epic",
+                        "weight": 0.22,
+                        "min_level": 8,
+                        "is_unique": True,
+                        "conditions": ["night encounter"],
+                    }
+                ],
+                "difficulty_curves": [
+                    {
+                        "name": f"{theme.title()} Pressure Curve",
+                        "description": f"Difficulty pacing model for {theme}.",
+                        "curve_type": "sigmoid",
+                        "base_level": 1,
+                        "max_level": 5,
+                        "level_xp_requirement": [100, 220, 380, 610, 900],
+                        "scaling_factor": 1.3,
+                        "level_time_minutes": [25, 35, 45, 60, 80],
+                        "player_count_tiers": {"1": 1, "3": 2, "5": 4},
+                        "is_adaptive": True,
+                    }
+                ],
+                "dungeons": [
+                    {
+                        "name": f"{theme.title()} Vault",
+                        "description": f"A dungeon tier where the fallout of {theme} is contained.",
+                        "difficulty": "hard",
+                        "max_players": 5,
+                        "min_level": 8,
+                        "boss_names": ["Mara Voss"],
+                        "has_lockout": True,
+                        "lockout_duration": 86400,
+                    }
+                ],
+                "raids": [
+                    {
+                        "name": f"{theme.title()} Siege",
+                        "description": f"A raid encounter escalated from the crisis around {theme}.",
+                        "difficulty": "heroic",
+                        "max_players": 10,
+                        "min_players": 5,
+                        "min_level": 10,
+                        "boss_names": ["Mara Voss", "Iven Hale"],
+                        "has_weekly_lockout": True,
+                    }
+                ],
+                "world_events": [
+                    {
+                        "name": f"{theme.title()} Blackout",
+                        "description": f"A world event spreading the consequences of {theme} across the region.",
+                        "event_type": "crisis",
+                        "severity": "high",
+                        "duration_days": 3,
+                        "affected_location_names": ["Harbor Quarter"],
+                        "is_active": True,
+                    }
+                ],
+                "arenas": [
+                    {
+                        "name": f"{theme.title()} Coliseum",
+                        "description": f"A competitive arena built around the rising tensions of {theme}.",
+                        "match_type": "team_deathmatch",
+                        "team_size": 3,
+                        "max_teams": 4,
+                        "min_level": 6,
+                        "has_ranked_mode": True,
+                    }
+                ],
+                "instances": [
+                    {
+                        "name": f"{theme.title()} Watch Instance",
+                        "description": f"A private combat scenario spun up from the chaos of {theme}.",
+                        "difficulty": "hard",
+                        "max_players": 4,
+                        "min_level": 7,
+                        "recommended_level": 9,
+                        "time_limit": 1800,
+                    }
+                ],
+                "open_world_zones": [
+                    {
+                        "name": f"{theme.title()} Frontier",
+                        "description": f"An open zone reshaped by the aftermath of {theme}.",
+                        "biome": "coast",
+                        "min_level": 5,
+                        "max_level": 15,
+                        "player_cap": 120,
+                        "poi_names": ["Harbor Quarter"],
+                        "has_dynamic_events": True,
+                    }
+                ],
+                "seasonal_events": [
+                    {
+                        "name": f"{theme.title()} Vigil",
+                        "description": f"A recurring seasonal event commemorating the fallout around {theme}.",
+                        "season": "winter",
+                        "year_number": 12,
+                        "duration_days": 7,
+                        "reward_item_names": [f"{theme.title()} Relic"],
+                        "is_recurring": True,
+                        "recurrence_period_days": 365,
+                        "is_active": True,
+                    }
+                ],
+                "invasions": [
+                    {
+                        "name": f"{theme.title()} Incursion",
+                        "description": f"A hostile push exploiting the chaos created by {theme}.",
+                        "invasion_type": "naval",
+                        "invader_name": "Night Tide Corsairs",
+                        "target_name": "Harbor Quarter",
+                        "force_size": 600,
+                        "casualties": 120,
+                        "conquest_progress": 45,
+                        "is_successful": False,
+                        "is_active": True,
+                    }
+                ],
+                "wars": [
+                    {
+                        "name": f"War for {theme.title()}",
+                        "description": f"A prolonged conflict over the political vacuum left by {theme}.",
+                        "war_type": "territorial",
+                        "aggressor_name": "Night Tide Corsairs",
+                        "defender_name": "Harbor Wardens",
+                        "conflict_region_name": "Bellglass Coast",
+                        "total_casualties": 900,
+                        "battles_fought": 6,
+                        "territorial_change_names": ["Breakwater Battery"],
+                        "victor_name": "Harbor Wardens",
+                        "is_active": False,
+                    }
+                ],
                 "plot_branches": [
                     {
                         "name": "Ledger Rebellion",
@@ -2591,7 +2926,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -2656,6 +2991,15 @@ class RumorBridgeService:
         drop_rate_repository: DropRateStore | None = None,
         loot_table_weight_repository: LootTableWeightStore | None = None,
         difficulty_curve_repository: DifficultyCurveStore | None = None,
+        dungeon_repository: DungeonStore | None = None,
+        raid_repository: RaidStore | None = None,
+        world_event_repository: WorldEventStore | None = None,
+        arena_repository: ArenaStore | None = None,
+        instance_repository: InstanceStore | None = None,
+        open_world_zone_repository: OpenWorldZoneStore | None = None,
+        seasonal_event_repository: SeasonalEventStore | None = None,
+        invasion_repository: InvasionStore | None = None,
+        war_repository: WarStore | None = None,
         plot_branch_repository: PlotBranchStore | None = None,
         branch_point_repository: BranchPointStore | None = None,
         choice_repository: ChoiceStore | None = None,
@@ -2726,6 +3070,15 @@ class RumorBridgeService:
         self.drop_rate_repository = drop_rate_repository
         self.loot_table_weight_repository = loot_table_weight_repository
         self.difficulty_curve_repository = difficulty_curve_repository
+        self.dungeon_repository = dungeon_repository
+        self.raid_repository = raid_repository
+        self.world_event_repository = world_event_repository
+        self.arena_repository = arena_repository
+        self.instance_repository = instance_repository
+        self.open_world_zone_repository = open_world_zone_repository
+        self.seasonal_event_repository = seasonal_event_repository
+        self.invasion_repository = invasion_repository
+        self.war_repository = war_repository
         self.plot_branch_repository = plot_branch_repository
         self.branch_point_repository = branch_point_repository
         self.choice_repository = choice_repository
@@ -2845,12 +3198,12 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
-            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. "
-            "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
+            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. For dungeons include name, description, difficulty, optional max_players, optional min_level, optional boss_names, has_lockout, and optional lockout_duration. For raids include name, description, difficulty, optional max_players, optional min_players, optional min_level, optional boss_names, and has_weekly_lockout. For world_events include name, description, event_type, severity, optional duration_days, optional affected_location_names, and is_active. For arenas include name, description, match_type, optional team_size, optional max_teams, optional min_level, and has_ranked_mode. For instances include name, description, difficulty, optional max_players, optional min_level, optional recommended_level, and optional time_limit. For open_world_zones include name, description, biome, optional min_level, optional max_level, optional player_cap, optional poi_names, and has_dynamic_events. "
+            "For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
@@ -2990,6 +3343,19 @@ class RumorBridgeService:
         experiences_payload = self._coerce_narrative_items(payload.get("experiences") or payload.get("experience"))
         progression_states_payload = self._coerce_narrative_items(payload.get("progression_states") or payload.get("progression_state") or payload.get("world_states"))
         progression_events_payload = self._coerce_narrative_items(payload.get("progression_events") or payload.get("progression_event"))
+        player_metrics_payload = self._coerce_narrative_items(payload.get("player_metrics") or payload.get("player_metric"))
+        drop_rates_payload = self._coerce_narrative_items(payload.get("drop_rates") or payload.get("drop_rate"))
+        loot_table_weights_payload = self._coerce_narrative_items(payload.get("loot_table_weights") or payload.get("loot_table_weight"))
+        difficulty_curves_payload = self._coerce_narrative_items(payload.get("difficulty_curves") or payload.get("difficulty_curve"))
+        dungeons_payload = self._coerce_narrative_items(payload.get("dungeons") or payload.get("dungeon"))
+        raids_payload = self._coerce_narrative_items(payload.get("raids") or payload.get("raid"))
+        world_events_payload = self._coerce_narrative_items(payload.get("world_events") or payload.get("world_event"))
+        arenas_payload = self._coerce_narrative_items(payload.get("arenas") or payload.get("arena"))
+        instances_payload = self._coerce_narrative_items(payload.get("instances") or payload.get("instance"))
+        open_world_zones_payload = self._coerce_narrative_items(payload.get("open_world_zones") or payload.get("open_world_zone"))
+        seasonal_events_payload = self._coerce_narrative_items(payload.get("seasonal_events") or payload.get("seasonal_event"))
+        invasions_payload = self._coerce_narrative_items(payload.get("invasions") or payload.get("invasion"))
+        wars_payload = self._coerce_narrative_items(payload.get("wars") or payload.get("war"))
         plot_branches_payload = self._coerce_narrative_items(payload.get("plot_branches") or payload.get("branches"))
         branch_points_payload = self._coerce_narrative_items(payload.get("branch_points"))
         choices_payload = self._coerce_narrative_items(payload.get("choices"))
@@ -3220,19 +3586,55 @@ class RumorBridgeService:
             ),
             player_metrics=tuple(
                 self._build_player_metric_draft(item, index)
-                for index, item in enumerate(payload.get("player_metrics") or [], start=1)
+                for index, item in enumerate(player_metrics_payload, start=1)
             ),
             drop_rates=tuple(
                 self._build_drop_rate_draft(item, index)
-                for index, item in enumerate(payload.get("drop_rates") or [], start=1)
+                for index, item in enumerate(drop_rates_payload, start=1)
             ),
             loot_table_weights=tuple(
                 self._build_loot_table_weight_draft(item, index)
-                for index, item in enumerate(payload.get("loot_table_weights") or [], start=1)
+                for index, item in enumerate(loot_table_weights_payload, start=1)
             ),
             difficulty_curves=tuple(
                 self._build_difficulty_curve_draft(item, index)
-                for index, item in enumerate(payload.get("difficulty_curves") or [], start=1)
+                for index, item in enumerate(difficulty_curves_payload, start=1)
+            ),
+            dungeons=tuple(
+                self._build_dungeon_draft(item, index)
+                for index, item in enumerate(dungeons_payload, start=1)
+            ),
+            raids=tuple(
+                self._build_raid_draft(item, index)
+                for index, item in enumerate(raids_payload, start=1)
+            ),
+            world_events=tuple(
+                self._build_world_event_draft(item, index)
+                for index, item in enumerate(world_events_payload, start=1)
+            ),
+            arenas=tuple(
+                self._build_arena_draft(item, index)
+                for index, item in enumerate(arenas_payload, start=1)
+            ),
+            instances=tuple(
+                self._build_instance_draft(item, index)
+                for index, item in enumerate(instances_payload, start=1)
+            ),
+            open_world_zones=tuple(
+                self._build_open_world_zone_draft(item, index)
+                for index, item in enumerate(open_world_zones_payload, start=1)
+            ),
+            seasonal_events=tuple(
+                self._build_seasonal_event_draft(item, index)
+                for index, item in enumerate(seasonal_events_payload, start=1)
+            ),
+            invasions=tuple(
+                self._build_invasion_draft(item, index)
+                for index, item in enumerate(invasions_payload, start=1)
+            ),
+            wars=tuple(
+                self._build_war_draft(item, index)
+                for index, item in enumerate(wars_payload, start=1)
             ),
             plot_branches=tuple(
                 self._build_plot_branch_draft(item, index)
@@ -4498,6 +4900,190 @@ class RumorBridgeService:
             is_adaptive=self._coerce_bool(payload.get("is_adaptive")),
         )
 
+    def _build_dungeon_draft(self, item: object, index: int) -> DungeonDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return DungeonDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Dungeon {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Dungeon {index} extracted from the rumor chain.",
+            ),
+            difficulty=(self._coerce_optional_text(payload.get("difficulty")) or "normal").lower(),
+            max_players=max(1, self._coerce_positive_int(payload.get("max_players"), 5)),
+            min_level=max(1, self._coerce_positive_int(payload.get("min_level"), 1)),
+            boss_names=self._coerce_text_tuple(payload.get("boss_names") or payload.get("bosses")),
+            has_lockout=self._coerce_bool(payload.get("has_lockout")) if payload.get("has_lockout") is not None else True,
+            lockout_duration=max(0, self._coerce_positive_int(payload.get("lockout_duration"), 86400)),
+        )
+
+    def _build_raid_draft(self, item: object, index: int) -> RaidDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        max_players = max(10, self._coerce_positive_int(payload.get("max_players"), 10))
+        min_players = max(1, self._coerce_positive_int(payload.get("min_players"), 2))
+        if min_players > max_players:
+            min_players = max_players
+        return RaidDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Raid {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Raid {index} extracted from the rumor chain.",
+            ),
+            difficulty=(self._coerce_optional_text(payload.get("difficulty")) or "normal").lower(),
+            max_players=max_players,
+            min_players=min_players,
+            min_level=max(1, self._coerce_positive_int(payload.get("min_level"), 1)),
+            boss_names=self._coerce_text_tuple(payload.get("boss_names") or payload.get("bosses")),
+            has_weekly_lockout=(
+                self._coerce_bool(payload.get("has_weekly_lockout"))
+                if payload.get("has_weekly_lockout") is not None
+                else True
+            ),
+        )
+
+    def _build_world_event_draft(self, item: object, index: int) -> WorldEventDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        severity = (self._coerce_optional_text(payload.get("severity")) or "moderate").lower()
+        if severity not in {"low", "moderate", "high", "critical"}:
+            severity = "moderate"
+        return WorldEventDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"World Event {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"World event {index} extracted from the rumor chain.",
+            ),
+            event_type=(self._coerce_optional_text(payload.get("event_type") or payload.get("type")) or "crisis").lower(),
+            severity=severity,
+            duration_days=self._coerce_positive_optional_int(payload.get("duration_days")),
+            affected_location_names=self._coerce_text_tuple(
+                payload.get("affected_location_names") or payload.get("affected_regions") or payload.get("locations")
+            ),
+            is_active=self._coerce_bool(payload.get("is_active")) if payload.get("is_active") is not None else True,
+        )
+
+    def _build_arena_draft(self, item: object, index: int) -> ArenaDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return ArenaDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Arena {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Arena {index} forged by the rumor chain.",
+            ),
+            match_type=(self._coerce_optional_text(payload.get("match_type") or payload.get("type")) or "team_deathmatch").lower(),
+            team_size=max(1, self._coerce_positive_int(payload.get("team_size"), 3)),
+            max_teams=max(1, self._coerce_positive_int(payload.get("max_teams"), 4)),
+            min_level=max(1, self._coerce_positive_int(payload.get("min_level"), 1)),
+            has_ranked_mode=self._coerce_bool(payload.get("has_ranked_mode")) if payload.get("has_ranked_mode") is not None else True,
+        )
+
+    def _build_instance_draft(self, item: object, index: int) -> InstanceDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        min_level = max(1, self._coerce_positive_int(payload.get("min_level"), 1))
+        recommended_level = max(min_level, self._coerce_positive_int(payload.get("recommended_level"), min_level))
+        return InstanceDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Instance {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Instance {index} spun from the rumor chain.",
+            ),
+            difficulty=(self._coerce_optional_text(payload.get("difficulty")) or "normal").lower(),
+            max_players=max(1, self._coerce_positive_int(payload.get("max_players"), 4)),
+            min_level=min_level,
+            recommended_level=recommended_level,
+            time_limit=max(0, self._coerce_non_negative_optional_int(payload.get("time_limit")) or 0),
+        )
+
+    def _build_open_world_zone_draft(self, item: object, index: int) -> OpenWorldZoneDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        min_level = max(1, self._coerce_positive_int(payload.get("min_level"), 1))
+        max_level = max(min_level, self._coerce_positive_int(payload.get("max_level"), min_level))
+        return OpenWorldZoneDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Zone {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Open-world zone {index} shaped by the rumor chain.",
+            ),
+            biome=(self._coerce_optional_text(payload.get("biome")) or "forest").lower(),
+            min_level=min_level,
+            max_level=max_level,
+            player_cap=max(1, self._coerce_positive_int(payload.get("player_cap"), 100)),
+            poi_names=self._coerce_text_tuple(payload.get("poi_names") or payload.get("locations") or payload.get("points_of_interest")),
+            has_dynamic_events=self._coerce_bool(payload.get("has_dynamic_events")) if payload.get("has_dynamic_events") is not None else True,
+        )
+
+    def _build_seasonal_event_draft(self, item: object, index: int) -> SeasonalEventDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        recurrence_period_days = self._coerce_positive_int(payload.get("recurrence_period_days"), 365)
+        is_recurring = self._coerce_bool(payload.get("is_recurring")) if payload.get("is_recurring") is not None else True
+        return SeasonalEventDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Seasonal Event {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Seasonal event {index} shaped by the rumor chain.",
+            ),
+            season=(self._coerce_optional_text(payload.get("season")) or "winter").lower(),
+            year_number=max(0, self._coerce_positive_int(payload.get("year_number"), 1)),
+            duration_days=max(1, self._coerce_positive_int(payload.get("duration_days"), 30)),
+            reward_item_names=self._coerce_text_tuple(payload.get("reward_item_names") or payload.get("rewards") or payload.get("reward_names")),
+            is_recurring=is_recurring,
+            recurrence_period_days=recurrence_period_days if is_recurring else None,
+            is_active=self._coerce_bool(payload.get("is_active")) if payload.get("is_active") is not None else True,
+        )
+
+    def _build_invasion_draft(self, item: object, index: int) -> InvasionDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return InvasionDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Invasion {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Invasion {index} extracted from the rumor chain.",
+            ),
+            invasion_type=(self._coerce_optional_text(payload.get("invasion_type") or payload.get("type")) or "military").lower(),
+            invader_name=self._first_non_empty_text(payload.get("invader_name"), "Unknown Invader"),
+            target_name=self._first_non_empty_text(payload.get("target_name"), payload.get("target_region_name"), "Unknown Target"),
+            force_size=max(1, self._coerce_positive_int(payload.get("force_size"), 1000)),
+            casualties=max(0, self._coerce_non_negative_optional_int(payload.get("casualties")) or 0),
+            conquest_progress=max(0.0, min(100.0, self._coerce_optional_float(payload.get("conquest_progress")) or 0.0)),
+            is_successful=self._coerce_bool(payload.get("is_successful")) if payload.get("is_successful") is not None else None,
+            is_active=self._coerce_bool(payload.get("is_active")) if payload.get("is_active") is not None else True,
+        )
+
+    def _build_war_draft(self, item: object, index: int) -> WarDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return WarDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"War {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"War {index} extracted from the rumor chain.",
+            ),
+            war_type=(self._coerce_optional_text(payload.get("war_type") or payload.get("type")) or "territorial").lower(),
+            aggressor_name=self._first_non_empty_text(payload.get("aggressor_name"), "Unknown Aggressor"),
+            defender_name=self._first_non_empty_text(payload.get("defender_name"), "Unknown Defender"),
+            conflict_region_name=self._first_non_empty_text(payload.get("conflict_region_name"), payload.get("region_name"), "Unknown Frontier"),
+            total_casualties=max(0, self._coerce_non_negative_optional_int(payload.get("total_casualties")) or 0),
+            battles_fought=max(0, self._coerce_non_negative_optional_int(payload.get("battles_fought")) or 0),
+            territorial_change_names=self._coerce_text_tuple(payload.get("territorial_change_names") or payload.get("territorial_changes")),
+            victor_name=self._coerce_optional_text(payload.get("victor_name") or payload.get("victor")),
+            is_active=self._coerce_bool(payload.get("is_active")) if payload.get("is_active") is not None else True,
+        )
+
     def _build_plot_branch_draft(self, item: object, index: int) -> PlotBranchDraft:
         payload = item if isinstance(item, dict) else {}
         scalar_text = self._coerce_optional_text(item)
@@ -5757,6 +6343,15 @@ class RumorBridgeService:
             drop_rates=chain_result.drop_rates,
             loot_table_weights=chain_result.loot_table_weights,
             difficulty_curves=chain_result.difficulty_curves,
+            dungeons=chain_result.dungeons,
+            raids=chain_result.raids,
+            world_events=chain_result.world_events,
+            arenas=chain_result.arenas,
+            instances=chain_result.instances,
+            open_world_zones=chain_result.open_world_zones,
+            seasonal_events=chain_result.seasonal_events,
+            invasions=chain_result.invasions,
+            wars=chain_result.wars,
             campaign=campaign,
             story=story,
             acts=list(acts_by_number.values()),
@@ -5777,8 +6372,50 @@ class RumorBridgeService:
         )
 
     def _persist_systems_slice(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
-        if not all([self.item_repository, self.inventory_repository, self.material_repository, self.component_repository, self.socket_repository, self.crafting_recipe_repository, self.blueprint_repository, self.enchantment_repository, self.rune_repository, self.glyph_repository, self.title_repository, self.rank_repository, self.leaderboard_repository, self.trophy_repository, self.badge_repository, self.mastery_repository, self.skill_repository, self.perk_repository, self.trait_repository, self.attribute_repository, self.talent_tree_repository, self.achievement_repository, self.level_up_repository, self.experience_repository, self.progression_state_repository, self.progression_event_repository, self.player_metric_repository, self.drop_rate_repository, self.loot_table_weight_repository, self.difficulty_curve_repository]):
-            raise ValueError("Item, inventory, material, component, socket, crafting recipe, blueprint, enchantment, rune, glyph, title, rank, leaderboard, trophy, badge, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, progression event, player metric, drop rate, loot table weight, and difficulty curve repositories are required for systems slice generation")
+        if not all([
+            self.item_repository,
+            self.inventory_repository,
+            self.material_repository,
+            self.component_repository,
+            self.socket_repository,
+            self.crafting_recipe_repository,
+            self.blueprint_repository,
+            self.enchantment_repository,
+            self.rune_repository,
+            self.glyph_repository,
+            self.title_repository,
+            self.rank_repository,
+            self.leaderboard_repository,
+            self.trophy_repository,
+            self.badge_repository,
+            self.mastery_repository,
+            self.skill_repository,
+            self.perk_repository,
+            self.trait_repository,
+            self.attribute_repository,
+            self.talent_tree_repository,
+            self.achievement_repository,
+            self.level_up_repository,
+            self.experience_repository,
+            self.progression_state_repository,
+            self.progression_event_repository,
+            self.player_metric_repository,
+            self.drop_rate_repository,
+            self.loot_table_weight_repository,
+            self.difficulty_curve_repository,
+            self.dungeon_repository,
+            self.raid_repository,
+            self.world_event_repository,
+            self.arena_repository,
+            self.instance_repository,
+            self.open_world_zone_repository,
+            self.seasonal_event_repository,
+            self.invasion_repository,
+            self.war_repository,
+        ]):
+            raise ValueError(
+                "Item, inventory, material, component, socket, crafting recipe, blueprint, enchantment, rune, glyph, title, rank, leaderboard, trophy, badge, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, progression event, player metric, drop rate, loot table weight, difficulty curve, dungeon, raid, world event, arena, instance, open world zone, seasonal event, invasion, and war repositories are required for systems slice generation"
+            )
 
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
@@ -5904,6 +6541,60 @@ class RumorBridgeService:
             if getattr(character, "id", None) is not None
         }
         fallback_character = next((character for character in chain_result.characters if getattr(character, "id", None) is not None), None)
+
+        def resolve_character_ids(names: Sequence[str], *, max_count: int) -> list[EntityId]:
+            resolved: list[EntityId] = []
+            seen: set[int] = set()
+            for name in names:
+                character = characters_by_name.get(self._normalize_lookup_key(name))
+                if character is None or character.id is None or character.id.value in seen:
+                    continue
+                resolved.append(character.id)
+                seen.add(character.id.value)
+                if len(resolved) >= max_count:
+                    return resolved
+            if fallback_character is not None and fallback_character.id is not None and fallback_character.id.value not in seen:
+                resolved.append(fallback_character.id)
+            return resolved[:max_count]
+
+        dungeons: list[Dungeon] = []
+        for dungeon_draft in draft.dungeons:
+            boss_ids = resolve_character_ids(dungeon_draft.boss_names, max_count=3)
+            if not boss_ids:
+                continue
+            dungeons.append(self.dungeon_repository.save(Dungeon.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=dungeon_draft.name,
+                description=dungeon_draft.description,
+                boss_ids=boss_ids,
+                difficulty=dungeon_draft.difficulty,
+                max_players=max(1, dungeon_draft.max_players),
+                min_level=max(1, dungeon_draft.min_level),
+                has_lockout=dungeon_draft.has_lockout,
+                lockout_duration=max(0, dungeon_draft.lockout_duration),
+            )))
+
+        raids: list[Raid] = []
+        for raid_draft in draft.raids:
+            boss_ids = resolve_character_ids(raid_draft.boss_names, max_count=5)
+            if not boss_ids:
+                continue
+            max_players = max(10, raid_draft.max_players)
+            min_players = max(1, min(raid_draft.min_players, max_players))
+            raids.append(self.raid_repository.save(Raid.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=raid_draft.name,
+                description=raid_draft.description,
+                boss_ids=boss_ids,
+                difficulty=raid_draft.difficulty,
+                max_players=max_players,
+                min_players=min_players,
+                min_level=max(1, raid_draft.min_level),
+                has_weekly_lockout=raid_draft.has_weekly_lockout,
+            )))
+
         inventories: list[Inventory] = []
         for inventory_draft in draft.inventories:
             character = characters_by_name.get(self._normalize_lookup_key(inventory_draft.owner_name or "")) or fallback_character
@@ -6644,6 +7335,124 @@ class RumorBridgeService:
                 updated_at=now,
             )))
 
+        world_events: list[WorldEvent] = []
+        affected_region_ids = [EntityId(request.location_id)] if request.location_id is not None else []
+        for world_event_draft in draft.world_events:
+            world_events.append(self.world_event_repository.save(WorldEvent.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=world_event_draft.name,
+                event_type=world_event_draft.event_type,
+                description=world_event_draft.description,
+                severity=world_event_draft.severity,
+                duration_days=world_event_draft.duration_days,
+                affected_region_ids=affected_region_ids,
+                is_active=world_event_draft.is_active,
+            )))
+
+        arenas: list[Arena] = []
+        for arena_draft in draft.arenas:
+            arenas.append(self.arena_repository.save(Arena.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=arena_draft.name,
+                description=arena_draft.description,
+                match_type=arena_draft.match_type,
+                team_size=max(1, arena_draft.team_size),
+                max_teams=max(1, arena_draft.max_teams),
+                min_level=max(1, arena_draft.min_level),
+                has_ranked_mode=arena_draft.has_ranked_mode,
+            )))
+
+        instances: list[Instance] = []
+        for instance_draft in draft.instances:
+            min_level = max(1, instance_draft.min_level)
+            instances.append(self.instance_repository.save(Instance.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=instance_draft.name,
+                description=instance_draft.description,
+                difficulty=instance_draft.difficulty,
+                max_players=max(1, instance_draft.max_players),
+                min_level=min_level,
+                recommended_level=max(min_level, instance_draft.recommended_level),
+                time_limit=max(0, instance_draft.time_limit),
+            )))
+
+        open_world_zones: list[OpenWorldZone] = []
+        zone_poi_ids = [EntityId(request.location_id)] if request.location_id is not None else []
+        for open_world_zone_draft in draft.open_world_zones:
+            min_level = max(1, open_world_zone_draft.min_level)
+            zone = OpenWorldZone.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=open_world_zone_draft.name,
+                description=open_world_zone_draft.description,
+                biome=open_world_zone_draft.biome,
+                min_level=min_level,
+                max_level=max(min_level, open_world_zone_draft.max_level),
+                player_cap=max(1, open_world_zone_draft.player_cap),
+                has_dynamic_events=open_world_zone_draft.has_dynamic_events,
+            )
+            zone.poi_ids = list(zone_poi_ids)
+            open_world_zones.append(self.open_world_zone_repository.save(zone))
+
+        seasonal_events: list[SeasonalEvent] = []
+        for seasonal_event_draft in draft.seasonal_events:
+            reward_ids = [
+                items_by_name[self._normalize_lookup_key(reward_name)].id
+                for reward_name in seasonal_event_draft.reward_item_names
+                if self._normalize_lookup_key(reward_name) in items_by_name
+            ]
+            seasonal_events.append(self.seasonal_event_repository.save(SeasonalEvent.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=seasonal_event_draft.name,
+                season=seasonal_event_draft.season,
+                year_number=max(0, seasonal_event_draft.year_number),
+                description=seasonal_event_draft.description,
+                duration_days=max(1, seasonal_event_draft.duration_days),
+                reward_ids=reward_ids,
+                is_recurring=seasonal_event_draft.is_recurring,
+                recurrence_period_days=max(1, seasonal_event_draft.recurrence_period_days) if seasonal_event_draft.recurrence_period_days is not None else None,
+                is_active=seasonal_event_draft.is_active,
+            )))
+
+        invasions: list[Invasion] = []
+        for invasion_draft in draft.invasions:
+            invasions.append(self.invasion_repository.save(Invasion.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=invasion_draft.name,
+                description=invasion_draft.description,
+                invader_name=invasion_draft.invader_name,
+                target_name=invasion_draft.target_name,
+                invasion_type=invasion_draft.invasion_type,
+                force_size=max(1, invasion_draft.force_size),
+                casualties=max(0, invasion_draft.casualties),
+                conquest_progress=max(0.0, min(100.0, invasion_draft.conquest_progress)),
+                is_successful=invasion_draft.is_successful,
+                is_active=invasion_draft.is_active,
+            )))
+
+        wars: list[War] = []
+        for war_draft in draft.wars:
+            wars.append(self.war_repository.save(War.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=war_draft.name,
+                description=war_draft.description,
+                war_type=war_draft.war_type,
+                aggressor_name=war_draft.aggressor_name,
+                defender_name=war_draft.defender_name,
+                conflict_region_name=war_draft.conflict_region_name,
+                total_casualties=max(0, war_draft.total_casualties),
+                battles_fought=max(0, war_draft.battles_fought),
+                territorial_change_names=list(war_draft.territorial_change_names),
+                victor_name=war_draft.victor_name,
+                is_active=war_draft.is_active,
+            )))
+
         return RumorChainResult(
             rumors=chain_result.rumors,
             characters=chain_result.characters,
@@ -6694,6 +7503,15 @@ class RumorBridgeService:
             drop_rates=drop_rates,
             loot_table_weights=loot_table_weights,
             difficulty_curves=difficulty_curves,
+            dungeons=dungeons,
+            raids=raids,
+            world_events=world_events,
+            arenas=arenas,
+            instances=instances,
+            open_world_zones=open_world_zones,
+            seasonal_events=seasonal_events,
+            invasions=invasions,
+            wars=wars,
             campaign=chain_result.campaign,
             story=chain_result.story,
             acts=chain_result.acts,
@@ -7351,6 +8169,117 @@ class RumorBridgeService:
                     level_time_minutes=(25, 35, 45, 60, 80),
                     player_count_tiers={"1": 1, "3": 2, "5": 4},
                     is_adaptive=True,
+                ),
+            ),
+            dungeons=(
+                DungeonDraft(
+                    name=f"{theme} Vault",
+                    description=f"A dungeon tier where the fallout of {request.theme} is contained.",
+                    difficulty="hard",
+                    max_players=5,
+                    min_level=8,
+                    boss_names=((chain_result.characters[0].name.value,) if chain_result.characters else ("Mara Voss",)),
+                    has_lockout=True,
+                    lockout_duration=86400,
+                ),
+            ),
+            raids=(
+                RaidDraft(
+                    name=f"{theme} Siege",
+                    description=f"A raid encounter escalated from the crisis around {request.theme}.",
+                    difficulty="heroic",
+                    max_players=10,
+                    min_players=5,
+                    min_level=10,
+                    boss_names=tuple(character.name.value for character in chain_result.characters[:2]) or ("Mara Voss",),
+                    has_weekly_lockout=True,
+                ),
+            ),
+            world_events=(
+                WorldEventDraft(
+                    name=f"{theme} Blackout",
+                    description=f"A world event spreading the consequences of {request.theme} across the region.",
+                    event_type="crisis",
+                    severity="high",
+                    duration_days=3,
+                    affected_location_names=("Harbor Quarter",),
+                    is_active=True,
+                ),
+            ),
+            arenas=(
+                ArenaDraft(
+                    name=f"{theme} Arena",
+                    description=f"A PvP arena built around the rivalry unleashed by {request.theme}.",
+                    match_type="team_deathmatch",
+                    team_size=3,
+                    max_teams=4,
+                    min_level=7,
+                    has_ranked_mode=True,
+                ),
+            ),
+            instances=(
+                InstanceDraft(
+                    name=f"{theme} Watch Instance",
+                    description=f"A private scenario where squads replay the crisis around {request.theme}.",
+                    difficulty="hard",
+                    max_players=4,
+                    min_level=8,
+                    recommended_level=10,
+                    time_limit=1800,
+                ),
+            ),
+            open_world_zones=(
+                OpenWorldZoneDraft(
+                    name=f"{theme} Frontier",
+                    description=f"An open-world zone marked by the ongoing fallout of {request.theme}.",
+                    biome="coast",
+                    min_level=6,
+                    max_level=15,
+                    player_cap=120,
+                    poi_names=("Harbor Quarter",),
+                    has_dynamic_events=True,
+                ),
+            ),
+            seasonal_events=(
+                SeasonalEventDraft(
+                    name=f"{theme} Vigil",
+                    description=f"A recurring seasonal event built around the memory of {request.theme}.",
+                    season="winter",
+                    year_number=12,
+                    duration_days=7,
+                    reward_item_names=(f"{theme} Relic",),
+                    is_recurring=True,
+                    recurrence_period_days=365,
+                    is_active=True,
+                ),
+            ),
+            invasions=(
+                InvasionDraft(
+                    name=f"{theme} Incursion",
+                    description=f"A hostile incursion exploiting the chaos of {request.theme}.",
+                    invasion_type="naval",
+                    invader_name="Night Tide Corsairs",
+                    target_name="Harbor Quarter",
+                    force_size=600,
+                    casualties=120,
+                    conquest_progress=45.0,
+                    is_successful=False,
+                    is_active=True,
+                ),
+            ),
+            wars=(
+                WarDraft(
+                    name=f"War for {theme}",
+                    description=f"A prolonged war over the future shaped by {request.theme}.",
+                    war_type="territorial",
+                    aggressor_name="Night Tide Corsairs",
+                    defender_name="Harbor Wardens",
+                    conflict_region_name="Bellglass Coast",
+                    total_casualties=900,
+                    battles_fought=6,
+                    territorial_change_names=("Breakwater Battery",),
+                    victor_name="Harbor Wardens",
+                    is_active=False,
                 ),
             ),
             plot_branches=(

@@ -60,10 +60,14 @@ Roadmap для **предпочтительного current-generation path** в
 
 ### Systems already implemented in bridge
 
-- `Item`, `Component`, `Socket`
+- `Item`, `Inventory`, `Material`, `Component`, `Socket`
+- `CraftingRecipe`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`
+- `Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`
 - `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
 - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
 - `ProgressionState`, `ProgressionEvent`
+- `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
+- `Dungeon`, `Raid`, `WorldEvent`
 
 ### Memory & continuity infrastructure
 
@@ -90,6 +94,8 @@ Roadmap для **предпочтительного current-generation path** в
 - хорошо ложится на уже существующий domain model,
 - расширяет bridge от narrative-first к systems-first gameplay generation.
 
+Статус на сейчас: **P0 core systems tranche закрыт**, плюс закрыт **starter encounter/world + live-ops slice**: `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`, `SeasonalEvent`, `Invasion`, `War`. Незаполненный хвост внутри этого направления — legendary/relic reward loop и memory v1 live-path stabilization.
+
 ### Target entity packs
 
 #### Skills & Progression
@@ -107,47 +113,47 @@ Roadmap для **предпочтительного current-generation path** в
 
 #### Inventory & Crafting
 
-- `Inventory`
-- `CraftingRecipe`
-- `Material`
+- ✅ `Inventory`
+- ✅ `CraftingRecipe`
+- ✅ `Material`
 - ✅ `Component`
-- `Blueprint`
-- `Enchantment`
+- ✅ `Blueprint`
+- ✅ `Enchantment`
 - ✅ `Socket`
-- `Rune`
-- `Glyph`
+- ✅ `Rune`
+- ✅ `Glyph`
 - ✅ `Item`
 
 #### Raid / encounter / reward loop
 
-- `Dungeon`
-- `Raid`
-- `Arena`
-- `Instance`
-- `OpenWorldZone`
+- ✅ `Dungeon`
+- ✅ `Raid`
+- ✅ `Arena`
+- ✅ `Instance`
+- ✅ `OpenWorldZone`
 - `LegendaryWeapon`
 - `MythicalArmor`
 - `DivineItem`
 - `CursedItem`
 - `ArtifactSet`
 - `RelicCollection`
-- `WorldEvent`
-- `SeasonalEvent`
-- `Invasion`
-- `War`
+- ✅ `WorldEvent`
+- ✅ `SeasonalEvent`
+- ✅ `Invasion`
+- ✅ `War`
 
 #### Live-ops / balance / reward tuning
 
 - ✅ `Achievement`
-- `Trophy`
-- `Badge`
-- `Title`
-- `Rank`
-- `Leaderboard`
-- `PlayerMetric`
-- `DropRate`
-- `LootTableWeight`
-- `DifficultyCurve`
+- ✅ `Trophy`
+- ✅ `Badge`
+- ✅ `Title`
+- ✅ `Rank`
+- ✅ `Leaderboard`
+- ✅ `PlayerMetric`
+- ✅ `DropRate`
+- ✅ `LootTableWeight`
+- ✅ `DifficultyCurve`
 
 ### Why this is first
 
@@ -222,13 +228,15 @@ Hyper-casual пригодится как analytics/live-ops extension, но не
 
 ## Implementation order
 
-1. **Finish Inventory & Crafting remainder** (`Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`)
-2. **Finish reward / profile remainder** (`Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`)
-3. **Add analytics / balance slice** (`PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`)
-4. **Stabilize memory v1 live path** (real Qdrant smoke, shaping cleanup, resource cleanup)
-5. **Raid / Dungeon / Legendary Items slice**
-6. **Gacha domain-gap review**
-7. **Hyper-casual domain-gap review**
+1. ✅ **Finish Inventory & Crafting remainder** (`Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`)
+2. ✅ **Finish reward / profile remainder** (`Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`)
+3. ✅ **Add analytics / balance slice** (`PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`)
+4. ✅ **Add starter encounter slice** (`Dungeon`, `Raid`, `WorldEvent`)
+5. **Stabilize memory v1 live path** (real Qdrant smoke, shaping cleanup, resource cleanup)
+6. ✅ **Finish encounter/world remainder** (`SeasonalEvent`, `Invasion`, `War`)
+7. **Legendary / relic reward loop slice**
+8. **Gacha domain-gap review**
+9. **Hyper-casual domain-gap review**
 
 ## Working rule
 

@@ -4,15 +4,9 @@ Dungeon Entity
 A Dungeon represents an instanced dungeon area.
 """
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import List, Optional
 
-from ..value_objects.common import (
-    TenantId,
-    EntityId,
-    Description,
-    Version,
-    Timestamp,
-)
+from ..value_objects.common import EntityId, TenantId, Timestamp, Version
 
 
 @dataclass
@@ -63,6 +57,7 @@ class Dungeon:
         world_id: EntityId,
         name: str,
         description: str,
+        boss_ids: Optional[List[EntityId]] = None,
         difficulty: str = "normal",
         max_players: int = 5,
         min_level: int = 1,
@@ -70,6 +65,9 @@ class Dungeon:
         lockout_duration: int = 86400
     ) -> 'Dungeon':
         """Factory method to create a new Dungeon."""
+        normalized_boss_ids = list(boss_ids or [])
+        if not normalized_boss_ids:
+            raise ValueError("Dungeon.create requires at least one boss_id")
         now = Timestamp.now()
         return cls(
             id=None,
@@ -80,7 +78,7 @@ class Dungeon:
             difficulty=difficulty,
             max_players=max_players,
             min_level=min_level,
-            boss_ids=[],
+            boss_ids=normalized_boss_ids,
             has_lockout=has_lockout,
             lockout_duration=lockout_duration,
             created_at=now,

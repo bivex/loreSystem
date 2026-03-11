@@ -1,105 +1,109 @@
 """SeasonalEvent entity for time-bound recurring events."""
 
-from datetime import datetime
-from typing import Optional
-from uuid import UUID, uuid4
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import timedelta
+
+from ..exceptions import InvariantViolation
+from ..value_objects.common import EntityId, TenantId, Timestamp, Version
 
 
+VALID_SEASONS = {"spring", "summer", "autumn", "winter", "none"}
+
+
+@dataclass
 class SeasonalEvent:
-    """Represents a seasonal or recurring event tied to game calendar."""
+    """Represents a seasonal or recurring event tied to a world calendar."""
 
-    def __init__(
-        self,
-        id: UUID,
-        tenant_id: UUID,
-        name: str,
-        season: str,
-        year_number: int,
-        description: str,
-        rewards: list[UUID],
-        start_date: datetime,
-        end_date: datetime,
-        is_recurring: bool = True,
-        recurrence_period_days: Optional[int] = None,
-        is_active: bool = True,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
-    ):
-        self.id = id
-        self.tenant_id = tenant_id
-        self.name = name
-        self.season = season
-        self.year_number = year_number
-        self.description = description
-        self.rewards = rewards
-        self.start_date = start_date
-        self.end_date = end_date
-        self.is_recurring = is_recurring
-        self.recurrence_period_days = recurrence_period_days
-        self.is_active = is_active
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    season: str
+    year_number: int
+    description: str
+    start_date: Timestamp
+    end_date: Timestamp
+    reward_ids: list[EntityId] = field(default_factory=list)
+    is_recurring: bool = True
+    recurrence_period_days: int | None = None
+    is_active: bool = True
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
+    version: Version = field(default_factory=Version)
+
+    def __post_init__(self) -> None:
+        if not self.name or not self.name.strip():
+            raise InvariantViolation("SeasonalEvent name cannot be empty")
+        if self.season not in VALID_SEASONS:
+            raise InvariantViolation(
+                f"SeasonalEvent season must be one of {sorted(VALID_SEASONS)}"
+            )
+        if self.year_number < 0:
+            raise InvariantViolation("SeasonalEvent year_number cannot be negative")
+        if self.end_date.value < self.start_date.value:
+            raise InvariantViolation("SeasonalEvent end_date cannot be before start_date")
+        if self.is_recurring and self.recurrence_period_days is not None and self.recurrence_period_days <= 0:
+            raise InvariantViolation("SeasonalEvent recurrence_period_days must be positive")
+        if self.updated_at.value < self.created_at.value:
+            raise InvariantViolation("SeasonalEvent updated_at cannot be before created_at")
 
     @classmethod
     def create(
         cls,
-        tenant_id: UUID,
+        tenant_id: TenantId,
+        world_id: EntityId,
         name: str,
         season: str,
         year_number: int,
         description: str,
         duration_days: int = 30,
+        reward_ids: list[EntityId] | None = None,
+        start_date: Timestamp | None = None,
         is_recurring: bool = True,
-        recurrence_period_days: Optional[int] = 365,
+        recurrence_period_days: int | None = 365,
+        is_active: bool = True,
     ) -> "SeasonalEvent":
-        """Factory method to create a new seasonal event."""
-        if not name or not name.strip():
-            raise ValueError("Event name is required")
-        if season not in ["spring", "summer", "autumn", "winter", "none"]:
-            raise ValueError("Season must be one of: spring, summer, autumn, winter, none")
-        if year_number < 0:
-            raise ValueError("Year number cannot be negative")
-        if duration_days <= 0:
-            raise ValueError("Duration must be positive")
-        if is_recurring and recurrence_period_days and recurrence_period_days <= 0:
-            raise ValueError("Recurrence period must be positive")
-
-        start = datetime.utcnow()
-        from datetime import timedelta
-        end = start + timedelta(days=duration_days)
-
+        now = Timestamp.now()
+        start = start_date or now
+        end = Timestamp(start.value + timedelta(days=max(1, duration_days)))
         return cls(
-            id=uuid4(),
             tenant_id=tenant_id,
+            world_id=world_id,
             name=name.strip(),
             season=season,
             year_number=year_number,
             description=description.strip(),
-            rewards=[],
             start_date=start,
             end_date=end,
+            reward_ids=list(reward_ids or []),
             is_recurring=is_recurring,
-            recurrence_period_days=recurrence_period_days,
-            is_active=True,
+            recurrence_period_days=recurrence_period_days if is_recurring else None,
+            is_active=is_active,
+            created_at=now,
+            updated_at=now,
+            version=Version(1),
         )
 
     def validate(self) -> bool:
-        """Validate seasonal event data."""
-        return (
-            isinstance(self.name, str) and len(self.name) > 0
-            and self.season in ["spring", "summer", "autumn", "winter", "none"]
-            and isinstance(self.year_number, int) and self.year_number >= 0
-            and isinstance(self.start_date, datetime)
-            and isinstance(self.end_date, datetime)
-            and self.end_date > self.start_date
-            and (not self.is_recurring or self.recurrence_period_days is None or self.recurrence_period_days > 0)
-        )
+        try:
+            self.__post_init__()
+        except InvariantViolation:
+            return False
+        return True
 
-    def add_reward(self, reward_id: UUID) -> None:
-        """Add a reward to the seasonal event."""
-        if reward_id not in self.rewards:
-            self.rewards.append(reward_id)
-            self.updated_at = datetime.utcnow()
+    def add_reward(self, reward_id: EntityId) -> None:
+        if reward_id not in self.reward_ids:
+            self.reward_ids.append(reward_id)
+            self.updated_at = Timestamp.now()
+            self.version = self.version.increment()
+
+    def end_event(self) -> None:
+        self.is_active = False
+        self.end_date = self.end_date or Timestamp.now()
+        self.updated_at = Timestamp.now()
+        self.version = self.version.increment()
 
     def __repr__(self) -> str:
         return f"<SeasonalEvent {self.name}: {self.season} Y{self.year_number}>"
