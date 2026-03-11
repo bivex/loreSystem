@@ -9,10 +9,13 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol, Sequence
+from uuid import uuid4
 
 from src.domain.entities.act import Act, ActStructure, ActType
+from src.domain.entities.achievement import Achievement
 from src.domain.entities.affinity import Affinity
 from src.domain.entities.alternate_reality import AlternateReality, RealityAccess, RealityType
+from src.domain.entities.attribute import Attribute, AttributeScale, AttributeType
 from src.domain.entities.branch_point import BranchPoint, BranchPointType
 from src.domain.entities.campaign import Campaign, CampaignType
 from src.domain.entities.chapter import Chapter, ChapterType
@@ -22,6 +25,7 @@ from src.domain.entities.character_profile_entry import CharacterProfileEntry
 from src.domain.entities.character_relationship import CharacterRelationship, RelationshipType
 from src.domain.entities.character_variant import CharacterVariant, VariantRarity, VariantType
 from src.domain.entities.choice import Choice
+from src.domain.entities.component import Component, ComponentCategory
 from src.domain.entities.consequence import Consequence, ConsequenceSeverity, ConsequenceType
 from src.domain.entities.disposition import Disposition
 from src.domain.entities.ending import Ending, EndingRarity, EndingType
@@ -30,9 +34,16 @@ from src.domain.entities.epilogue import Epilogue, EpilogueCondition, EpilogueTy
 from src.domain.entities.event import Event
 from src.domain.entities.flash_forward import FlashForward
 from src.domain.entities.flashback import Flashback
+from src.domain.entities.experience import Experience, ExperienceSource, ExperienceType
+from src.domain.entities.item import Item
+from src.domain.entities.level_up import LevelUp, LevelUpType
+from src.domain.entities.mastery import Mastery, MasteryBonus, MasteryBonusType, MasteryCategory
 from src.domain.entities.moral_choice import ChoiceUrgency, MoralAlignment, MoralChoice
+from src.domain.entities.perk import Perk, PerkSource, PerkType
 from src.domain.entities.motion_capture import AnimationType, CaptureStatus, MotionCapture
 from src.domain.entities.plot_branch import BranchStatus, BranchType, PlotBranch
+from src.domain.entities.progression_event import ProgressionEvent
+from src.domain.entities.progression_state import CharacterState, WorldState
 from src.domain.entities.prologue import Prologue, PrologueType
 from src.domain.entities.quest import Quest
 from src.domain.entities.quest_chain import QuestChain
@@ -43,8 +54,12 @@ from src.domain.entities.quest_prerequisite import QuestPrerequisite
 from src.domain.entities.quest_reward_tier import QuestRewardTier
 from src.domain.entities.quest_tracker import QuestTracker
 from src.domain.entities.rumor import Rumor
+from src.domain.entities.skill import Skill, SkillCategory, SkillType
+from src.domain.entities.socket import Socket, SocketShape, SocketType
 from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
+from src.domain.entities.talent_tree import TalentNode, TalentNodeType, TalentTree, TalentTreeType
+from src.domain.entities.trait import Trait, TraitCategory, TraitNature
 from src.domain.entities.voice_actor import VoiceActor, VoiceActorStatus
 from src.domain.repositories.rumor_repository import IRumorRepository
 from src.domain.value_objects.common import (
@@ -57,9 +72,11 @@ from src.domain.value_objects.common import (
     EntityStatus,
     EntityId,
     EventOutcome,
+    ItemType,
     ObjectiveType,
     QuestStatus,
     PrerequisiteType,
+    Rarity,
     StoryName,
     StorylineType,
     StoryType,
@@ -67,6 +84,7 @@ from src.domain.value_objects.common import (
     Timestamp,
     Version,
 )
+from src.domain.value_objects.progression import CharacterClass, CharacterLevel, EventType, ExperiencePoints, RuleReference, StatType, StatValue, TimePoint
 
 
 @dataclass(frozen=True)
@@ -435,6 +453,266 @@ class QuestTrackerDraft:
 
 
 @dataclass(frozen=True)
+class ItemDraft:
+    name: str
+    description: str
+    item_type: str = "artifact"
+    rarity: str | None = "common"
+    location_id: int | None = None
+    level: int | None = None
+    enhancement: int | None = None
+    max_enhancement: int | None = None
+    base_atk: int | None = None
+    base_hp: int | None = None
+    base_def: int | None = None
+    special_stat: str | None = None
+    special_stat_value: float | None = None
+
+
+@dataclass(frozen=True)
+class ComponentDraft:
+    name: str
+    description: str
+    category: str = "other"
+    rarity: str = "common"
+    quality: int = 50
+    durability: int = 100
+    max_durability: int = 100
+    weight: float = 1.0
+    size: str = "medium"
+    is_craftable: bool = True
+    required_skill_level: int | None = None
+    material_ids: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
+class SocketDraft:
+    item_name: str | None = None
+    socket_type: str = "universal"
+    socket_shape: str = "round"
+    slot_index: int = 0
+    rarity: str = "common"
+    is_unlocked: bool = True
+    is_required: bool = False
+    required_material_ids: tuple[int, ...] = ()
+    required_gold: int = 0
+    required_level: int | None = None
+    is_glowing: bool = True
+    glow_color: str | None = None
+    stat_bonus_multiplier: float = 1.0
+    effect_duration_modifier: float = 1.0
+
+
+@dataclass(frozen=True)
+class MasteryBonusDraft:
+    level: int = 1
+    bonus_type: str = "damage"
+    value: float = 0.0
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class MasteryDraft:
+    character_name: str | None = None
+    name: str = "Harbor Mastery"
+    description: str = "A mastery shaped by the rumor chain."
+    category: str = "combat"
+    level: int = 1
+    max_level: int = 100
+    progress: float = 0.0
+    total_experience: int = 0
+    bonuses: tuple[MasteryBonusDraft, ...] = ()
+    unlocked_bonuses: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SkillDraft:
+    character_name: str | None = None
+    name: str = "Harbor Skill"
+    description: str = "A skill shaped by the rumor chain."
+    skill_type: str = "active"
+    category: str = "combat"
+    rarity: str | None = "common"
+    level: int = 1
+    max_level: int = 10
+    experience: int = 0
+    experience_to_next: int = 100
+    power: float = 1.0
+    mastery: int = 0
+    cooldown_seconds: int | None = None
+    mana_cost: int | None = None
+    minimum_level: int = 1
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class PerkDraft:
+    character_name: str | None = None
+    name: str = "Harbor Perk"
+    description: str = "A perk shaped by the rumor chain."
+    perk_type: str = "utility"
+    source: str = "event"
+    rarity: str | None = "common"
+    stat_type: str | None = None
+    stat_modifier: float | None = None
+    resistance_type: str | None = None
+    resistance_value: int | None = None
+    ability_name: str | None = None
+    ability_modifier: str | None = None
+    stacking_limit: int | None = None
+    is_active: bool = True
+    is_hidden: bool = False
+    icon_id: str | None = None
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TraitDraft:
+    character_name: str | None = None
+    name: str = "Harbor Trait"
+    description: str = "A trait shaped by the rumor chain."
+    category: str = "social"
+    nature: str = "mixed"
+    impact_value: int = 0
+    positive_effects: tuple[str, ...] = ()
+    negative_effects: tuple[str, ...] = ()
+    stat_modifiers: dict[str, float] = field(default_factory=dict)
+    conflicts_with: tuple[str, ...] = ()
+    synergizes_with: tuple[str, ...] = ()
+    is_inheritable: bool = True
+    icon_id: str | None = None
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AttributeDraft:
+    character_name: str | None = None
+    name: str = "Harbor Focus"
+    description: str = "An attribute shaped by the rumor chain."
+    attribute_type: str = "mental"
+    scale_type: str = "linear"
+    base_value: float = 10.0
+    current_value: float | None = None
+    maximum_value: float | None = None
+    flat_bonus: float = 0.0
+    percentage_bonus: float = 0.0
+    temporary_bonus: float | None = None
+    is_derived: bool = False
+    derivation_formula: str | None = None
+    source_attributes: tuple[str, ...] = ()
+    minimum_value: float = 0.0
+    display_name: str | None = None
+    icon_id: str | None = None
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TalentNodeDraft:
+    node_id: str = "node_1"
+    name: str = "Talent Node"
+    description: str = "A talent node shaped by the rumor chain."
+    node_type: str = "passive"
+    tier: int = 1
+    column: int = 1
+    point_cost: int = 1
+    prerequisite_node_ids: tuple[str, ...] = ()
+    effects: dict[str, object] = field(default_factory=dict)
+    icon_id: str | None = None
+    is_unlocked: bool = False
+
+
+@dataclass(frozen=True)
+class TalentTreeDraft:
+    character_name: str | None = None
+    name: str = "Harbor Talent Tree"
+    description: str = "A branching talent tree shaped by the rumor chain."
+    talent_tree_type: str = "class"
+    total_points: int = 10
+    points_spent: int = 0
+    nodes: tuple[TalentNodeDraft, ...] = ()
+    unlocked_node_ids: tuple[str, ...] = ()
+    icon_id: str | None = None
+    required_level: int = 1
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AchievementDraft:
+    name: str = "Harbor Achievement"
+    description: str = "An achievement unlocked through the rumor chain."
+    achievement_type: str = "progression"
+    difficulty: str = "medium"
+    is_hidden: bool = False
+    is_repeatable: bool = False
+    icon: str | None = None
+
+
+@dataclass(frozen=True)
+class LevelUpDraft:
+    character_name: str | None = None
+    level_up_type: str = "normal"
+    old_level: int = 1
+    new_level: int = 2
+    stat_increases: dict[str, int] = field(default_factory=dict)
+    skill_points_gained: int = 0
+    choices_made: tuple[str, ...] = ()
+    selected_rewards: tuple[str, ...] = ()
+    health_increase: int | None = None
+    mana_increase: int | None = None
+    attack_increase: int | None = None
+    defense_increase: int | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class ExperienceDraft:
+    character_name: str | None = None
+    experience_type: str = "character_level"
+    total_experience: int = 0
+    current_level: int = 1
+    current_xp: int = 0
+    xp_to_next_level: int = 100
+    xp_multiplier: float = 1.0
+    total_gains: int = 0
+    largest_gain: int | None = None
+    source_breakdown: dict[str, int] = field(default_factory=dict)
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ProgressionCharacterStateDraft:
+    character_name: str | None = None
+    level: int = 1
+    character_class: str | None = None
+    experience: int = 0
+    stats: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ProgressionStateDraft:
+    time_point: int = 0
+    character_states: tuple[ProgressionCharacterStateDraft, ...] = ()
+
+
+@dataclass(frozen=True)
+class ProgressionEventReasonDraft:
+    rule_id: str
+    description: str
+
+
+@dataclass(frozen=True)
+class ProgressionEventDraft:
+    character_name: str | None = None
+    event_type: str = "quest_complete"
+    from_time: int = 0
+    to_time: int | None = None
+    description: str = "A progression event ripples through the rumor chain."
+    reasons: tuple[ProgressionEventReasonDraft, ...] = ()
+    effects: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class PrologueDraft:
     title: str
     description: str
@@ -512,6 +790,20 @@ class NarrativeStructureDraft:
     quest_prerequisites: tuple[QuestPrerequisiteDraft, ...] = field(default_factory=tuple)
     quest_reward_tiers: tuple[QuestRewardTierDraft, ...] = field(default_factory=tuple)
     quest_trackers: tuple[QuestTrackerDraft, ...] = field(default_factory=tuple)
+    items: tuple[ItemDraft, ...] = field(default_factory=tuple)
+    components: tuple[ComponentDraft, ...] = field(default_factory=tuple)
+    sockets: tuple[SocketDraft, ...] = field(default_factory=tuple)
+    masteries: tuple[MasteryDraft, ...] = field(default_factory=tuple)
+    skills: tuple[SkillDraft, ...] = field(default_factory=tuple)
+    perks: tuple[PerkDraft, ...] = field(default_factory=tuple)
+    traits: tuple[TraitDraft, ...] = field(default_factory=tuple)
+    attributes: tuple[AttributeDraft, ...] = field(default_factory=tuple)
+    talent_trees: tuple[TalentTreeDraft, ...] = field(default_factory=tuple)
+    achievements: tuple[AchievementDraft, ...] = field(default_factory=tuple)
+    level_ups: tuple[LevelUpDraft, ...] = field(default_factory=tuple)
+    experiences: tuple[ExperienceDraft, ...] = field(default_factory=tuple)
+    progression_states: tuple[ProgressionStateDraft, ...] = field(default_factory=tuple)
+    progression_events: tuple[ProgressionEventDraft, ...] = field(default_factory=tuple)
     plot_branches: tuple[PlotBranchDraft, ...] = field(default_factory=tuple)
     branch_points: tuple[BranchPointDraft, ...] = field(default_factory=tuple)
     choices: tuple[ChoiceDraft, ...] = field(default_factory=tuple)
@@ -557,6 +849,20 @@ class RumorChainResult:
     quest_prerequisites: list[QuestPrerequisite] = field(default_factory=list)
     quest_reward_tiers: list[QuestRewardTier] = field(default_factory=list)
     quest_trackers: list[QuestTracker] = field(default_factory=list)
+    items: list[Item] = field(default_factory=list)
+    components: list[Component] = field(default_factory=list)
+    sockets: list[Socket] = field(default_factory=list)
+    masteries: list[Mastery] = field(default_factory=list)
+    skills: list[Skill] = field(default_factory=list)
+    perks: list[Perk] = field(default_factory=list)
+    traits: list[Trait] = field(default_factory=list)
+    attributes: list[Attribute] = field(default_factory=list)
+    talent_trees: list[TalentTree] = field(default_factory=list)
+    achievements: list[Achievement] = field(default_factory=list)
+    level_ups: list[LevelUp] = field(default_factory=list)
+    experiences: list[Experience] = field(default_factory=list)
+    progression_states: list[WorldState] = field(default_factory=list)
+    progression_events: list[ProgressionEvent] = field(default_factory=list)
     campaign: Campaign | None = None
     story: Story | None = None
     acts: list[Act] = field(default_factory=list)
@@ -744,6 +1050,62 @@ class QuestRewardTierStore(Protocol):
 
 class QuestTrackerStore(Protocol):
     def save(self, entity: QuestTracker) -> QuestTracker: ...
+
+
+class ItemStore(Protocol):
+    def save(self, entity: Item) -> Item: ...
+
+
+class ComponentStore(Protocol):
+    def save(self, entity: Component) -> Component: ...
+
+
+class SocketStore(Protocol):
+    def save(self, entity: Socket) -> Socket: ...
+
+
+class MasteryStore(Protocol):
+    def save(self, entity: Mastery) -> Mastery: ...
+
+
+class SkillStore(Protocol):
+    def save(self, entity: Skill) -> Skill: ...
+
+
+class PerkStore(Protocol):
+    def save(self, entity: Perk) -> Perk: ...
+
+
+class TraitStore(Protocol):
+    def save(self, entity: Trait) -> Trait: ...
+
+
+class AttributeStore(Protocol):
+    def save(self, entity: Attribute) -> Attribute: ...
+
+
+class TalentTreeStore(Protocol):
+    def save(self, entity: TalentTree) -> TalentTree: ...
+
+
+class AchievementStore(Protocol):
+    def save(self, entity: Achievement) -> Achievement: ...
+
+
+class LevelUpStore(Protocol):
+    def save(self, entity: LevelUp) -> LevelUp: ...
+
+
+class ExperienceStore(Protocol):
+    def save(self, entity: Experience) -> Experience: ...
+
+
+class ProgressionStateStore(Protocol):
+    def save(self, entity: WorldState) -> WorldState: ...
+
+
+class ProgressionEventStore(Protocol):
+    def save(self, entity: ProgressionEvent) -> ProgressionEvent: ...
 
 
 class CamelChatBackend:
@@ -977,6 +1339,241 @@ class DeterministicRumorBackend:
                         "objective_progress": {"Speak to the dockworkers": 1},
                     }
                 ],
+                "items": [
+                    {
+                        "name": f"{theme.title()} Relic",
+                        "description": f"A signature item born from the {theme} unrest.",
+                        "item_type": "artifact",
+                        "rarity": "rare",
+                        "level": 10,
+                        "enhancement": 1,
+                        "max_enhancement": 5,
+                        "special_stat": "crit_rate",
+                        "special_stat_value": 0.08,
+                    }
+                ],
+                "components": [
+                    {
+                        "name": f"{theme.title()} Core",
+                        "description": f"A crafting core used to assemble the {theme} relic.",
+                        "category": "core",
+                        "rarity": "uncommon",
+                        "quality": 65,
+                        "durability": 80,
+                        "max_durability": 100,
+                        "weight": 1.5,
+                        "size": "medium",
+                        "is_craftable": True,
+                    }
+                ],
+                "sockets": [
+                    {
+                        "item_name": f"{theme.title()} Relic",
+                        "socket_type": "rune",
+                        "socket_shape": "round",
+                        "slot_index": 0,
+                        "rarity": "uncommon",
+                        "is_unlocked": True,
+                        "stat_bonus_multiplier": 1.1,
+                    }
+                ],
+                "masteries": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": f"{theme.title()} Tactics",
+                        "description": f"Battlefield instincts refined by surviving the {theme} unrest.",
+                        "category": "combat",
+                        "level": 28,
+                        "max_level": 100,
+                        "progress": 45,
+                        "total_experience": 2800,
+                        "bonuses": [
+                            {"level": 10, "bonus_type": "damage", "value": 0.12, "description": "Stronger strikes under pressure."}
+                        ],
+                        "unlocked_bonuses": ["damage"],
+                        "tags": ["harbor", "rumor_chain"],
+                    }
+                ],
+                "skills": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": f"{theme.title()} Feint",
+                        "description": f"A combat technique refined during the {theme} unrest.",
+                        "skill_type": "ability",
+                        "category": "battle",
+                        "rarity": "rare",
+                        "level": 4,
+                        "max_level": 12,
+                        "experience": 220,
+                        "experience_to_next": 300,
+                        "power": 1.35,
+                        "mastery": 44,
+                        "cooldown_seconds": 12,
+                        "mana_cost": 18,
+                        "minimum_level": 3,
+                        "tags": ["harbor", "counterattack"],
+                    }
+                ],
+                "perks": [
+                    {
+                        "character_name": "Iven Hale",
+                        "name": f"{theme.title()} Broker's Edge",
+                        "description": f"A passive edge gained while navigating the {theme} panic.",
+                        "perk_type": "economic",
+                        "source": "quest_reward",
+                        "rarity": "rare",
+                        "stat_type": "bargaining",
+                        "stat_modifier": 0.15,
+                        "stacking_limit": 1,
+                        "is_active": True,
+                        "is_hidden": False,
+                        "tags": ["harbor", "broker"],
+                    }
+                ],
+                "traits": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": "Bellwatch Resolve",
+                        "description": "Mara holds the harbor line even when the bells turn ominous.",
+                        "category": "social",
+                        "nature": "positive",
+                        "impact_value": 22,
+                        "positive_effects": ["steady morale", "guardian reputation"],
+                        "negative_effects": ["sleepless vigilance"],
+                        "stat_modifiers": {"willpower": 2.0, "vitality": 1.0},
+                        "conflicts_with": ["Harbor Cowardice"],
+                        "synergizes_with": ["Dockside Discount"],
+                        "is_inheritable": False,
+                        "tags": ["harbor", "discipline"],
+                    }
+                ],
+                "attributes": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": "Harbor Focus",
+                        "description": "Mara sharpens her judgment with each tolling bell.",
+                        "attribute_type": "mind",
+                        "scale_type": "static",
+                        "base_value": 14,
+                        "current_value": 16,
+                        "maximum_value": 20,
+                        "flat_bonus": 1,
+                        "percentage_bonus": 7.5,
+                        "temporary_bonus": 0.5,
+                        "minimum_value": 0,
+                        "display_name": "Harbor Focus",
+                        "tags": ["harbor", "discipline"],
+                    }
+                ],
+                "talent_trees": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": f"{theme.title()} Doctrine",
+                        "description": f"A branching doctrine assembled while surviving the {theme} unrest.",
+                        "talent_tree_type": "specialization",
+                        "total_points": 10,
+                        "points_spent": 1,
+                        "required_level": 4,
+                        "tags": ["harbor", "doctrine"],
+                        "nodes": [
+                            {
+                                "id": "watch-step",
+                                "name": "Watch Step",
+                                "description": "A disciplined opening stance.",
+                                "node_type": "active",
+                                "tier": 1,
+                                "column": 1,
+                                "point_cost": 1,
+                                "is_unlocked": True,
+                            },
+                            {
+                                "id": "eclipse-call",
+                                "name": "Eclipse Call",
+                                "description": "A capstone signal that rallies allies.",
+                                "node_type": "ultimate",
+                                "tier": 2,
+                                "column": 2,
+                                "point_cost": 2,
+                                "prerequisite_node_ids": ["watch-step"],
+                                "is_unlocked": False,
+                            },
+                        ],
+                    }
+                ],
+                "achievements": [
+                    {
+                        "name": f"{theme.title()} Survivor",
+                        "description": f"Endure the {theme} panic without letting the harbor fall silent.",
+                        "achievement_type": "challenge",
+                        "difficulty": "hard",
+                        "is_hidden": False,
+                        "is_repeatable": False,
+                        "icon": "achievement_harbor_survivor",
+                    }
+                ],
+                "level_ups": [
+                    {
+                        "character_name": "Mara Voss",
+                        "level_up_type": "mastery",
+                        "old_level": 9,
+                        "new_level": 10,
+                        "stat_increases": {"attack": 2, "defense": 1},
+                        "skill_points_gained": 3,
+                        "selected_rewards": ["Bell Ward", "Harbor Sigil"],
+                        "health_increase": 12,
+                        "mana_increase": 4,
+                        "notes": f"The {theme} panic forced Mara into a harsher doctrine.",
+                    }
+                ],
+                "experiences": [
+                    {
+                        "character_name": "Mara Voss",
+                        "experience_type": "questing",
+                        "total_experience": 1840,
+                        "current_level": 10,
+                        "current_xp": 140,
+                        "xp_to_next_level": 320,
+                        "xp_multiplier": 1.15,
+                        "total_gains": 6,
+                        "largest_gain": 450,
+                        "source_breakdown": {"quest": 900, "event": 490, "achievement": 450},
+                        "tags": ["harbor", "eclipse"],
+                    }
+                ],
+                "progression_states": [
+                    {
+                        "time_point": 1,
+                        "character_states": [
+                            {
+                                "character_name": "Mara Voss",
+                                "level": 10,
+                                "character_class": "knight",
+                                "experience": 1840,
+                                "stats": {"attack": 18, "defense": 16, "agility": 12},
+                            },
+                            {
+                                "character_name": "Iven Hale",
+                                "level": 8,
+                                "character_class": "assassin",
+                                "experience": 1320,
+                                "stats": {"strength": 11, "dexterity": 17, "willpower": 9},
+                            },
+                        ],
+                    }
+                ],
+                "progression_events": [
+                    {
+                        "character_name": "Mara Voss",
+                        "event_type": "quest",
+                        "from_time": 1,
+                        "to_time": 2,
+                        "description": f"Mara cashes in the {theme} pact and advances the watch.",
+                        "reasons": [
+                            {"rule_id": "harbor_contract", "description": "The harbor pact rewards those who hold the line."}
+                        ],
+                        "effects": {"quest_complete": "bellwatch_reward_applied"},
+                    }
+                ],
                 "plot_branches": [
                     {
                         "name": "Ledger Rebellion",
@@ -1147,7 +1744,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, components, sockets, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -1182,6 +1779,20 @@ class RumorBridgeService:
         quest_prerequisite_repository: QuestPrerequisiteStore | None = None,
         quest_reward_tier_repository: QuestRewardTierStore | None = None,
         quest_tracker_repository: QuestTrackerStore | None = None,
+        item_repository: ItemStore | None = None,
+        component_repository: ComponentStore | None = None,
+        socket_repository: SocketStore | None = None,
+        mastery_repository: MasteryStore | None = None,
+        skill_repository: SkillStore | None = None,
+        perk_repository: PerkStore | None = None,
+        trait_repository: TraitStore | None = None,
+        attribute_repository: AttributeStore | None = None,
+        talent_tree_repository: TalentTreeStore | None = None,
+        achievement_repository: AchievementStore | None = None,
+        level_up_repository: LevelUpStore | None = None,
+        experience_repository: ExperienceStore | None = None,
+        progression_state_repository: ProgressionStateStore | None = None,
+        progression_event_repository: ProgressionEventStore | None = None,
         plot_branch_repository: PlotBranchStore | None = None,
         branch_point_repository: BranchPointStore | None = None,
         choice_repository: ChoiceStore | None = None,
@@ -1221,6 +1832,20 @@ class RumorBridgeService:
         self.quest_prerequisite_repository = quest_prerequisite_repository
         self.quest_reward_tier_repository = quest_reward_tier_repository
         self.quest_tracker_repository = quest_tracker_repository
+        self.item_repository = item_repository
+        self.component_repository = component_repository
+        self.socket_repository = socket_repository
+        self.mastery_repository = mastery_repository
+        self.skill_repository = skill_repository
+        self.perk_repository = perk_repository
+        self.trait_repository = trait_repository
+        self.attribute_repository = attribute_repository
+        self.talent_tree_repository = talent_tree_repository
+        self.achievement_repository = achievement_repository
+        self.level_up_repository = level_up_repository
+        self.experience_repository = experience_repository
+        self.progression_state_repository = progression_state_repository
+        self.progression_event_repository = progression_event_repository
         self.plot_branch_repository = plot_branch_repository
         self.branch_point_repository = branch_point_repository
         self.choice_repository = choice_repository
@@ -1246,7 +1871,12 @@ class RumorBridgeService:
             raise RuntimeError("CAMEL bridge did not produce any rumor drafts")
         return [self.repository.save(self._rumor_to_entity(request, draft)) for draft in self._dedupe_rumors(request, drafts, request.count)]
 
-    def generate_story_chain(self, request: RumorGenerationRequest, include_narrative_structure: bool = False) -> RumorChainResult:
+    def generate_story_chain(
+        self,
+        request: RumorGenerationRequest,
+        include_narrative_structure: bool = False,
+        include_systems_slice: bool = False,
+    ) -> RumorChainResult:
         if not (self.character_repository and self.event_repository and self.relationship_repository):
             raise ValueError("Character, event, and relationship repositories are required for story chain generation")
 
@@ -1270,46 +1900,12 @@ class RumorBridgeService:
             relationships.append(self.relationship_repository.save(relation, EntityId(request.world_id)))
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
-        if include_narrative_structure:
-            narrative = self.generate_narrative_structure(request, result)
-            result = RumorChainResult(
-                rumors=result.rumors,
-                characters=result.characters,
-                events=result.events,
-                relationships=result.relationships,
-                character_evolutions=narrative.character_evolutions,
-                character_variants=narrative.character_variants,
-                character_profile_entries=narrative.character_profile_entries,
-                motion_captures=narrative.motion_captures,
-                voice_actors=narrative.voice_actors,
-                affinities=narrative.affinities,
-                dispositions=narrative.dispositions,
-                quests=narrative.quests,
-                quest_chains=narrative.quest_chains,
-                quest_givers=narrative.quest_givers,
-                quest_nodes=narrative.quest_nodes,
-                quest_objectives=narrative.quest_objectives,
-                quest_prerequisites=narrative.quest_prerequisites,
-                quest_reward_tiers=narrative.quest_reward_tiers,
-                quest_trackers=narrative.quest_trackers,
-                campaign=narrative.campaign,
-                story=narrative.story,
-                acts=narrative.acts,
-                chapters=narrative.chapters,
-                episodes=narrative.episodes,
-                storylines=narrative.storylines,
-                plot_branches=narrative.plot_branches,
-                branch_points=narrative.branch_points,
-                choices=narrative.choices,
-                consequences=narrative.consequences,
-                moral_choices=narrative.moral_choices,
-                alternate_realities=narrative.alternate_realities,
-                flashbacks=narrative.flashbacks,
-                flash_forwards=narrative.flash_forwards,
-                endings=narrative.endings,
-                prologue=narrative.prologue,
-                epilogue=narrative.epilogue,
-            )
+        if include_narrative_structure or include_systems_slice:
+            draft = self._generate_enriched_structure_draft(request, result)
+            if include_narrative_structure:
+                result = self._persist_narrative_structure(request, result, draft)
+            if include_systems_slice:
+                result = self._persist_systems_slice(request, result, draft)
         return result
 
     def generate_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> RumorChainResult:
@@ -1323,15 +1919,18 @@ class RumorBridgeService:
             self.epilogue_repository,
         ]):
             raise ValueError("Campaign/story repositories are required for narrative structure generation")
+        draft = self._generate_enriched_structure_draft(request, chain_result)
+        return self._persist_narrative_structure(request, chain_result, draft)
+
+    def _generate_enriched_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> NarrativeStructureDraft:
         try:
             agent_name, system_message = DEFAULT_NARRATIVE_AGENT_PROMPT
             raw = self.backend.generate(system_message, self._build_narrative_prompt(request, chain_result, agent_name))
-            draft = self._parse_narrative_structure(raw)
+            return self._parse_narrative_structure(raw)
         except Exception:
             if not self.allow_fallback:
                 raise
-            draft = self._fallback_narrative_structure_draft(request, chain_result)
-        return self._persist_narrative_structure(request, chain_result, draft)
+            return self._fallback_narrative_structure_draft(request, chain_result)
 
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str) -> str:
         return (
@@ -1349,10 +1948,11 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, components, sockets, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
+            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. "
             "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
@@ -1436,6 +2036,20 @@ class RumorBridgeService:
         quest_prerequisites_payload = self._coerce_narrative_items(payload.get("quest_prerequisites"))
         quest_reward_tiers_payload = self._coerce_narrative_items(payload.get("quest_reward_tiers"))
         quest_trackers_payload = self._coerce_narrative_items(payload.get("quest_trackers"))
+        items_payload = self._coerce_narrative_items(payload.get("items"))
+        components_payload = self._coerce_narrative_items(payload.get("components"))
+        sockets_payload = self._coerce_narrative_items(payload.get("sockets"))
+        masteries_payload = self._coerce_narrative_items(payload.get("masteries") or payload.get("mastery"))
+        skills_payload = self._coerce_narrative_items(payload.get("skills") or payload.get("skill"))
+        perks_payload = self._coerce_narrative_items(payload.get("perks") or payload.get("perk"))
+        traits_payload = self._coerce_narrative_items(payload.get("traits") or payload.get("trait"))
+        attributes_payload = self._coerce_narrative_items(payload.get("attributes") or payload.get("attribute"))
+        talent_trees_payload = self._coerce_narrative_items(payload.get("talent_trees") or payload.get("talent_tree"))
+        achievements_payload = self._coerce_narrative_items(payload.get("achievements") or payload.get("achievement"))
+        level_ups_payload = self._coerce_narrative_items(payload.get("level_ups") or payload.get("level_up"))
+        experiences_payload = self._coerce_narrative_items(payload.get("experiences") or payload.get("experience"))
+        progression_states_payload = self._coerce_narrative_items(payload.get("progression_states") or payload.get("progression_state") or payload.get("world_states"))
+        progression_events_payload = self._coerce_narrative_items(payload.get("progression_events") or payload.get("progression_event"))
         plot_branches_payload = self._coerce_narrative_items(payload.get("plot_branches") or payload.get("branches"))
         branch_points_payload = self._coerce_narrative_items(payload.get("branch_points"))
         choices_payload = self._coerce_narrative_items(payload.get("choices"))
@@ -1559,6 +2173,62 @@ class RumorBridgeService:
             quest_trackers=tuple(
                 self._build_quest_tracker_draft(item, index)
                 for index, item in enumerate(quest_trackers_payload, start=1)
+            ),
+            items=tuple(
+                self._build_item_draft(item, index)
+                for index, item in enumerate(items_payload, start=1)
+            ),
+            components=tuple(
+                self._build_component_draft(item, index)
+                for index, item in enumerate(components_payload, start=1)
+            ),
+            sockets=tuple(
+                self._build_socket_draft(item, index)
+                for index, item in enumerate(sockets_payload, start=1)
+            ),
+            masteries=tuple(
+                self._build_mastery_draft(item, index)
+                for index, item in enumerate(masteries_payload, start=1)
+            ),
+            skills=tuple(
+                self._build_skill_draft(item, index)
+                for index, item in enumerate(skills_payload, start=1)
+            ),
+            perks=tuple(
+                self._build_perk_draft(item, index)
+                for index, item in enumerate(perks_payload, start=1)
+            ),
+            traits=tuple(
+                self._build_trait_draft(item, index)
+                for index, item in enumerate(traits_payload, start=1)
+            ),
+            attributes=tuple(
+                self._build_attribute_draft(item, index)
+                for index, item in enumerate(attributes_payload, start=1)
+            ),
+            talent_trees=tuple(
+                self._build_talent_tree_draft(item, index)
+                for index, item in enumerate(talent_trees_payload, start=1)
+            ),
+            achievements=tuple(
+                self._build_achievement_draft(item, index)
+                for index, item in enumerate(achievements_payload, start=1)
+            ),
+            level_ups=tuple(
+                self._build_level_up_draft(item, index)
+                for index, item in enumerate(level_ups_payload, start=1)
+            ),
+            experiences=tuple(
+                self._build_experience_draft(item, index)
+                for index, item in enumerate(experiences_payload, start=1)
+            ),
+            progression_states=tuple(
+                self._build_progression_state_draft(item, index)
+                for index, item in enumerate(progression_states_payload, start=1)
+            ),
+            progression_events=tuple(
+                self._build_progression_event_draft(item, index)
+                for index, item in enumerate(progression_events_payload, start=1)
             ),
             plot_branches=tuple(
                 self._build_plot_branch_draft(item, index)
@@ -1940,6 +2610,415 @@ class RumorBridgeService:
             failed_node_names=self._coerce_text_tuple(payload.get("failed_node_names") or payload.get("failed_nodes")),
             objective_progress=self._coerce_int_dict(payload.get("objective_progress")),
             quest_chain_completions=self._coerce_int_dict(payload.get("quest_chain_completions") or payload.get("chain_completions")),
+        )
+
+    def _build_item_draft(self, item: object, index: int) -> ItemDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return ItemDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Relic {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A noteworthy item shaped by the current rumor chain.",
+            ),
+            item_type=str(payload.get("item_type") or payload.get("type") or "artifact"),
+            rarity=self._coerce_optional_text(payload.get("rarity")),
+            location_id=self._coerce_optional_int(payload.get("location_id")),
+            level=self._coerce_optional_int(payload.get("level")),
+            enhancement=self._coerce_optional_int(payload.get("enhancement")),
+            max_enhancement=self._coerce_optional_int(payload.get("max_enhancement")),
+            base_atk=self._coerce_optional_int(payload.get("base_atk")),
+            base_hp=self._coerce_optional_int(payload.get("base_hp")),
+            base_def=self._coerce_optional_int(payload.get("base_def")),
+            special_stat=self._coerce_optional_text(payload.get("special_stat")),
+            special_stat_value=self._coerce_optional_float(payload.get("special_stat_value")),
+        )
+
+    def _build_component_draft(self, item: object, index: int) -> ComponentDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return ComponentDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Component {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A crafting component related to the generated items.",
+            ),
+            category=str(payload.get("category") or "other"),
+            rarity=str(payload.get("rarity") or "common"),
+            quality=self._coerce_positive_int(payload.get("quality"), 50),
+            durability=max(0, self._coerce_optional_int(payload.get("durability")) or 100),
+            max_durability=max(1, self._coerce_optional_int(payload.get("max_durability")) or 100),
+            weight=max(0.0, self._coerce_optional_float(payload.get("weight")) or 1.0),
+            size=(self._coerce_optional_text(payload.get("size")) or "medium").lower(),
+            is_craftable=self._coerce_bool(payload.get("is_craftable", True)),
+            required_skill_level=self._coerce_positive_optional_int(payload.get("required_skill_level")),
+            material_ids=self._coerce_positive_int_tuple(payload.get("material_ids")),
+        )
+
+    def _build_socket_draft(self, item: object, index: int) -> SocketDraft:
+        payload = item if isinstance(item, dict) else {}
+        return SocketDraft(
+            item_name=self._coerce_optional_text(payload.get("item_name") or payload.get("item")),
+            socket_type=str(payload.get("socket_type") or payload.get("type") or "universal"),
+            socket_shape=str(payload.get("socket_shape") or payload.get("shape") or "round"),
+            slot_index=max(0, self._coerce_optional_int(payload.get("slot_index")) or max(index - 1, 0)),
+            rarity=str(payload.get("rarity") or "common"),
+            is_unlocked=self._coerce_bool(payload.get("is_unlocked", True)),
+            is_required=self._coerce_bool(payload.get("is_required", False)),
+            required_material_ids=self._coerce_positive_int_tuple(payload.get("required_material_ids")),
+            required_gold=max(0, self._coerce_optional_int(payload.get("required_gold")) or 0),
+            required_level=self._coerce_positive_optional_int(payload.get("required_level")),
+            is_glowing=self._coerce_bool(payload.get("is_glowing", True)),
+            glow_color=self._coerce_optional_text(payload.get("glow_color")),
+            stat_bonus_multiplier=max(0.0, self._coerce_optional_float(payload.get("stat_bonus_multiplier")) or 1.0),
+            effect_duration_modifier=max(0.0, self._coerce_optional_float(payload.get("effect_duration_modifier")) or 1.0),
+        )
+
+    def _build_mastery_bonus_draft(self, item: object, index: int) -> MasteryBonusDraft:
+        payload = item if isinstance(item, dict) else {}
+        return MasteryBonusDraft(
+            level=self._coerce_positive_int(payload.get("level"), max(index, 1)),
+            bonus_type=str(payload.get("bonus_type") or payload.get("type") or "damage"),
+            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            description=self._coerce_optional_text(payload.get("description")),
+        )
+
+    def _build_mastery_draft(self, item: object, index: int) -> MasteryDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        bonuses_payload = payload.get("bonuses") if isinstance(payload.get("bonuses"), list) else []
+        max_level = self._coerce_positive_int(payload.get("max_level"), 100)
+        level = self._coerce_non_negative_optional_int(payload.get("level")) or 1
+        return MasteryDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Mastery {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A mastery shaped by the current rumor chain.",
+            ),
+            category=str(payload.get("category") or "combat"),
+            level=max(0, min(level, max_level)),
+            max_level=max_level,
+            progress=max(0.0, min(100.0, self._coerce_optional_float(payload.get("progress")) or 0.0)),
+            total_experience=max(0, self._coerce_optional_int(payload.get("total_experience")) or 0),
+            bonuses=tuple(
+                self._build_mastery_bonus_draft(bonus, bonus_index)
+                for bonus_index, bonus in enumerate(bonuses_payload, start=1)
+            ),
+            unlocked_bonuses=self._coerce_text_tuple(payload.get("unlocked_bonuses") or payload.get("unlocks")),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_skill_draft(self, item: object, index: int) -> SkillDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        max_level = self._coerce_positive_int(payload.get("max_level"), 10)
+        level = self._coerce_positive_int(payload.get("level"), 1)
+        if level > max_level:
+            level = max_level
+        return SkillDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Skill {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A skill shaped by the current rumor chain.",
+            ),
+            skill_type=str(payload.get("skill_type") or payload.get("type") or "active"),
+            category=str(payload.get("category") or "combat"),
+            rarity=self._coerce_optional_text(payload.get("rarity")) or "common",
+            level=max(1, level),
+            max_level=max_level,
+            experience=max(0, self._coerce_optional_int(payload.get("experience")) or 0),
+            experience_to_next=max(1, self._coerce_optional_int(payload.get("experience_to_next")) or 100),
+            power=max(0.0, self._coerce_optional_float(payload.get("power")) or 1.0),
+            mastery=max(0, min(100, self._coerce_optional_int(payload.get("mastery")) or 0)),
+            cooldown_seconds=self._coerce_non_negative_optional_int(payload.get("cooldown_seconds")),
+            mana_cost=self._coerce_non_negative_optional_int(payload.get("mana_cost")),
+            minimum_level=max(1, self._coerce_positive_int(payload.get("minimum_level"), 1)),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_perk_draft(self, item: object, index: int) -> PerkDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return PerkDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Perk {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A perk shaped by the current rumor chain.",
+            ),
+            perk_type=str(payload.get("perk_type") or payload.get("type") or "utility"),
+            source=str(payload.get("source") or payload.get("perk_source") or "event"),
+            rarity=self._coerce_optional_text(payload.get("rarity")) or "common",
+            stat_type=self._coerce_optional_text(payload.get("stat_type") or payload.get("stat")),
+            stat_modifier=self._coerce_optional_float(payload.get("stat_modifier")),
+            resistance_type=self._coerce_optional_text(payload.get("resistance_type")),
+            resistance_value=self._coerce_non_negative_optional_int(payload.get("resistance_value")),
+            ability_name=self._coerce_optional_text(payload.get("ability_name") or payload.get("skill_name") or payload.get("ability")),
+            ability_modifier=self._coerce_optional_text(payload.get("ability_modifier")),
+            stacking_limit=self._coerce_non_negative_optional_int(payload.get("stacking_limit")),
+            is_active=self._coerce_bool(payload.get("is_active", True)),
+            is_hidden=self._coerce_bool(payload.get("is_hidden", False)),
+            icon_id=self._coerce_optional_text(payload.get("icon_id")),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_trait_draft(self, item: object, index: int) -> TraitDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        stat_modifiers_payload = self._coerce_object_dict(payload.get("stat_modifiers"))
+        return TraitDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Trait {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A trait shaped by the current rumor chain.",
+            ),
+            category=str(payload.get("category") or "social"),
+            nature=str(payload.get("nature") or "mixed"),
+            impact_value=max(-100, min(100, self._coerce_optional_int(payload.get("impact_value") or payload.get("impact")) or 0)),
+            positive_effects=self._coerce_text_tuple(payload.get("positive_effects") or payload.get("benefits")),
+            negative_effects=self._coerce_text_tuple(payload.get("negative_effects") or payload.get("drawbacks")),
+            stat_modifiers={
+                str(key): float(value)
+                for key, value in stat_modifiers_payload.items()
+                if isinstance(value, (int, float))
+            },
+            conflicts_with=self._coerce_text_tuple(payload.get("conflicts_with") or payload.get("conflicts")),
+            synergizes_with=self._coerce_text_tuple(payload.get("synergizes_with") or payload.get("synergies")),
+            is_inheritable=self._coerce_bool(payload.get("is_inheritable", True)),
+            icon_id=self._coerce_optional_text(payload.get("icon_id") or payload.get("icon")),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_attribute_draft(self, item: object, index: int) -> AttributeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        base_value = self._coerce_optional_float(payload.get("base_value") or payload.get("base"))
+        current_value = self._coerce_optional_float(payload.get("current_value") or payload.get("current"))
+        maximum_value = self._coerce_optional_float(payload.get("maximum_value") or payload.get("max_value") or payload.get("maximum"))
+        minimum_value = self._coerce_optional_float(payload.get("minimum_value") or payload.get("min_value") or payload.get("minimum"))
+        flat_bonus = self._coerce_optional_float(payload.get("flat_bonus"))
+        percentage_bonus = self._coerce_optional_float(payload.get("percentage_bonus") or payload.get("percent_bonus"))
+        temporary_bonus = self._coerce_optional_float(payload.get("temporary_bonus") or payload.get("temp_bonus"))
+        return AttributeDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Attribute {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "An attribute shaped by the current rumor chain.",
+            ),
+            attribute_type=str(payload.get("attribute_type") or payload.get("type") or "mental"),
+            scale_type=str(payload.get("scale_type") or payload.get("scale") or "linear"),
+            base_value=float(base_value if base_value is not None else 10.0),
+            current_value=float(current_value) if current_value is not None else None,
+            maximum_value=float(maximum_value) if maximum_value is not None else None,
+            flat_bonus=float(flat_bonus) if flat_bonus is not None else 0.0,
+            percentage_bonus=float(percentage_bonus) if percentage_bonus is not None else 0.0,
+            temporary_bonus=float(temporary_bonus) if temporary_bonus is not None else None,
+            is_derived=self._coerce_bool(payload.get("is_derived", False)),
+            derivation_formula=self._coerce_optional_text(payload.get("derivation_formula") or payload.get("formula")),
+            source_attributes=self._coerce_text_tuple(payload.get("source_attributes") or payload.get("sources")),
+            minimum_value=float(minimum_value) if minimum_value is not None else 0.0,
+            display_name=self._coerce_optional_text(payload.get("display_name")),
+            icon_id=self._coerce_optional_text(payload.get("icon_id") or payload.get("icon")),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_talent_node_draft(self, item: object, index: int) -> TalentNodeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return TalentNodeDraft(
+            node_id=self._coerce_optional_text(payload.get("id") or payload.get("node_id")) or f"node_{index}",
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Talent Node {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A talent node shaped by the current rumor chain.",
+            ),
+            node_type=str(payload.get("node_type") or payload.get("type") or "passive"),
+            tier=max(1, self._coerce_positive_int(payload.get("tier"), index)),
+            column=max(1, self._coerce_positive_int(payload.get("column"), 1)),
+            point_cost=max(1, self._coerce_positive_int(payload.get("point_cost"), 1)),
+            prerequisite_node_ids=self._coerce_text_tuple(payload.get("prerequisite_node_ids") or payload.get("prerequisites")),
+            effects=self._coerce_object_dict(payload.get("effects")),
+            icon_id=self._coerce_optional_text(payload.get("icon_id")),
+            is_unlocked=self._coerce_bool(payload.get("is_unlocked", False)),
+        )
+
+    def _build_talent_tree_draft(self, item: object, index: int) -> TalentTreeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        nodes = tuple(
+            self._build_talent_node_draft(node, node_index)
+            for node_index, node in enumerate(self._coerce_narrative_items(payload.get("nodes")), start=1)
+        )
+        unlocked_node_ids = self._coerce_text_tuple(payload.get("unlocked_node_ids") or payload.get("unlocks"))
+        if not unlocked_node_ids and nodes:
+            unlocked_node_ids = tuple(node.node_id for node in nodes if node.is_unlocked)
+        derived_points_spent = sum(node.point_cost for node in nodes if node.node_id in set(unlocked_node_ids))
+        points_spent = self._coerce_non_negative_optional_int(payload.get("points_spent"))
+        if points_spent is None:
+            points_spent = derived_points_spent
+        total_points = max(1, self._coerce_positive_int(payload.get("total_points"), max(points_spent, len(nodes) or 1)))
+        if points_spent > total_points:
+            total_points = points_spent
+        return TalentTreeDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Talent Tree {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A branching talent tree shaped by the current rumor chain.",
+            ),
+            talent_tree_type=str(payload.get("talent_tree_type") or payload.get("tree_type") or payload.get("type") or "class"),
+            total_points=total_points,
+            points_spent=max(0, points_spent),
+            nodes=nodes,
+            unlocked_node_ids=unlocked_node_ids,
+            icon_id=self._coerce_optional_text(payload.get("icon_id")),
+            required_level=max(1, self._coerce_positive_int(payload.get("required_level"), 1)),
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_achievement_draft(self, item: object, index: int) -> AchievementDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return AchievementDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Achievement {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "An achievement unlocked through the current rumor chain.",
+            ),
+            achievement_type=self._coerce_achievement_type(str(payload.get("achievement_type") or payload.get("type") or "progression")),
+            difficulty=self._coerce_achievement_difficulty(str(payload.get("difficulty") or "medium")),
+            is_hidden=self._coerce_bool(payload.get("is_hidden", False)),
+            is_repeatable=self._coerce_bool(payload.get("is_repeatable", False)),
+            icon=self._coerce_optional_text(payload.get("icon") or payload.get("icon_id")),
+        )
+
+    def _build_level_up_draft(self, item: object, index: int) -> LevelUpDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        old_level = max(1, self._coerce_positive_int(payload.get("old_level") or payload.get("from_level"), max(index, 1)))
+        new_level = max(old_level + 1, self._coerce_positive_int(payload.get("new_level") or payload.get("to_level"), old_level + 1))
+        stat_increases_payload = self._coerce_object_dict(payload.get("stat_increases") or payload.get("stats"))
+        stat_increases = {
+            str(key): max(0, self._coerce_optional_int(value) or 0)
+            for key, value in stat_increases_payload.items()
+        }
+        return LevelUpDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            level_up_type=str(payload.get("level_up_type") or payload.get("type") or "normal"),
+            old_level=old_level,
+            new_level=new_level,
+            stat_increases=stat_increases,
+            skill_points_gained=max(0, self._coerce_optional_int(payload.get("skill_points_gained")) or 0),
+            choices_made=self._coerce_text_tuple(payload.get("choices_made") or payload.get("choices")),
+            selected_rewards=self._coerce_text_tuple(payload.get("selected_rewards") or payload.get("rewards")),
+            health_increase=self._coerce_non_negative_optional_int(payload.get("health_increase")),
+            mana_increase=self._coerce_non_negative_optional_int(payload.get("mana_increase")),
+            attack_increase=self._coerce_non_negative_optional_int(payload.get("attack_increase")),
+            defense_increase=self._coerce_non_negative_optional_int(payload.get("defense_increase")),
+            notes=self._first_non_empty_text(payload.get("notes"), scalar_text) if self._first_non_empty_text(payload.get("notes"), scalar_text, "") else None,
+        )
+
+    def _build_experience_draft(self, item: object, index: int) -> ExperienceDraft:
+        payload = item if isinstance(item, dict) else {}
+        total_experience = max(0, self._coerce_optional_int(payload.get("total_experience") or payload.get("xp_total")) or 0)
+        current_level = max(1, self._coerce_positive_int(payload.get("current_level") or payload.get("level"), max(index, 1)))
+        current_xp = max(0, self._coerce_optional_int(payload.get("current_xp") or payload.get("xp_current")) or 0)
+        xp_to_next_level = max(1, self._coerce_positive_int(payload.get("xp_to_next_level") or payload.get("next_level_xp"), 100))
+        source_breakdown_payload = self._coerce_object_dict(payload.get("source_breakdown") or payload.get("sources"))
+        source_breakdown = {
+            str(key): max(0, self._coerce_optional_int(value) or 0)
+            for key, value in source_breakdown_payload.items()
+        }
+        return ExperienceDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            experience_type=str(payload.get("experience_type") or payload.get("type") or "character_level"),
+            total_experience=total_experience,
+            current_level=current_level,
+            current_xp=current_xp,
+            xp_to_next_level=max(xp_to_next_level, current_xp or 1),
+            xp_multiplier=max(0.0, self._coerce_optional_float(payload.get("xp_multiplier")) or 1.0),
+            total_gains=max(0, self._coerce_optional_int(payload.get("total_gains")) or len(source_breakdown)),
+            largest_gain=self._coerce_non_negative_optional_int(payload.get("largest_gain")),
+            source_breakdown=source_breakdown,
+            tags=self._coerce_text_tuple(payload.get("tags")),
+        )
+
+    def _build_progression_state_draft(self, item: object, index: int) -> ProgressionStateDraft:
+        payload = item if isinstance(item, dict) else {}
+        character_states_payload = self._coerce_narrative_items(payload.get("character_states") or payload.get("characters") or payload.get("states"))
+        character_states: list[ProgressionCharacterStateDraft] = []
+        for offset, state_item in enumerate(character_states_payload, start=1):
+            state_payload = state_item if isinstance(state_item, dict) else {}
+            stats_payload = self._coerce_object_dict(state_payload.get("stats"))
+            character_states.append(
+                ProgressionCharacterStateDraft(
+                    character_name=self._coerce_optional_text(state_payload.get("character_name") or state_payload.get("character")),
+                    level=max(1, self._coerce_positive_int(state_payload.get("level"), offset)),
+                    character_class=self._coerce_optional_text(state_payload.get("character_class") or state_payload.get("class")),
+                    experience=max(0, self._coerce_optional_int(state_payload.get("experience") or state_payload.get("xp")) or 0),
+                    stats={
+                        str(key): max(0, self._coerce_optional_int(value) or 0)
+                        for key, value in stats_payload.items()
+                    },
+                )
+            )
+        return ProgressionStateDraft(
+            time_point=max(0, self._coerce_optional_int(payload.get("time_point") or payload.get("tick")) or (index - 1)),
+            character_states=tuple(character_states),
+        )
+
+    def _build_progression_event_draft(self, item: object, index: int) -> ProgressionEventDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        reasons_payload = self._coerce_narrative_items(payload.get("reasons") or payload.get("reason"))
+        reasons: list[ProgressionEventReasonDraft] = []
+        for offset, reason_item in enumerate(reasons_payload, start=1):
+            reason_payload = reason_item if isinstance(reason_item, dict) else {}
+            reason_text = self._coerce_optional_text(reason_item)
+            description = self._first_non_empty_text(
+                reason_payload.get("description"),
+                reason_text,
+                f"Progression reason {offset}",
+            )
+            reasons.append(
+                ProgressionEventReasonDraft(
+                    rule_id=self._compact_title(reason_payload.get("rule_id") or f"progression_rule_{index}_{offset}", fallback=f"progression_rule_{index}_{offset}").lower().replace(" ", "_"),
+                    description=description,
+                )
+            )
+        effects_payload = self._coerce_object_dict(payload.get("effects"))
+        effects = {
+            str(key): self._first_non_empty_text(value, f"effect_{offset}")
+            for offset, (key, value) in enumerate(effects_payload.items(), start=1)
+        }
+        from_time = max(0, self._coerce_optional_int(payload.get("from_time") or payload.get("time_point")) or (index - 1))
+        to_time = self._coerce_optional_int(payload.get("to_time"))
+        return ProgressionEventDraft(
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            event_type=str(payload.get("event_type") or payload.get("type") or "quest_complete"),
+            from_time=from_time,
+            to_time=max(from_time + 1, to_time) if to_time is not None else None,
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A progression event advances the current rumor chain.",
+            ),
+            reasons=tuple(reasons),
+            effects=effects,
         )
 
     def _build_plot_branch_draft(self, item: object, index: int) -> PlotBranchDraft:
@@ -3171,6 +4250,20 @@ class RumorBridgeService:
             quest_prerequisites=quest_prerequisites,
             quest_reward_tiers=quest_reward_tiers,
             quest_trackers=quest_trackers,
+            items=chain_result.items,
+            components=chain_result.components,
+            sockets=chain_result.sockets,
+            masteries=chain_result.masteries,
+            skills=chain_result.skills,
+            perks=chain_result.perks,
+            traits=chain_result.traits,
+            attributes=chain_result.attributes,
+            talent_trees=chain_result.talent_trees,
+            achievements=chain_result.achievements,
+            level_ups=chain_result.level_ups,
+            experiences=chain_result.experiences,
+            progression_states=chain_result.progression_states,
+            progression_events=chain_result.progression_events,
             campaign=campaign,
             story=story,
             acts=list(acts_by_number.values()),
@@ -3188,6 +4281,456 @@ class RumorBridgeService:
             endings=endings,
             prologue=prologue,
             epilogue=epilogue,
+        )
+
+    def _persist_systems_slice(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
+        if not all([self.item_repository, self.component_repository, self.socket_repository, self.mastery_repository, self.skill_repository, self.perk_repository, self.trait_repository, self.attribute_repository, self.talent_tree_repository, self.achievement_repository, self.level_up_repository, self.experience_repository, self.progression_state_repository, self.progression_event_repository]):
+            raise ValueError("Item, component, socket, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, and progression event repositories are required for systems slice generation")
+
+        tenant_id = TenantId(request.tenant_id)
+        world_id = EntityId(request.world_id)
+
+        items: list[Item] = []
+        items_by_name: dict[str, Item] = {}
+        for item_draft in draft.items:
+            item = self.item_repository.save(Item.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=item_draft.name,
+                description=Description(item_draft.description),
+                item_type=self._coerce_item_type(item_draft.item_type),
+                rarity=self._coerce_optional_rarity(item_draft.rarity),
+                location_id=EntityId(item_draft.location_id or request.location_id) if (item_draft.location_id or request.location_id) else None,
+                level=self._coerce_item_level(item_draft.level),
+                enhancement=self._coerce_non_negative_optional_int(item_draft.enhancement),
+                max_enhancement=self._coerce_non_negative_optional_int(item_draft.max_enhancement),
+                base_atk=self._coerce_non_negative_optional_int(item_draft.base_atk),
+                base_hp=self._coerce_non_negative_optional_int(item_draft.base_hp),
+                base_def=self._coerce_non_negative_optional_int(item_draft.base_def),
+                special_stat=item_draft.special_stat,
+                special_stat_value=item_draft.special_stat_value,
+            ))
+            items.append(item)
+            items_by_name[self._normalize_lookup_key(item.name)] = item
+
+        components: list[Component] = []
+        for component_draft in draft.components:
+            durability = max(0, component_draft.durability)
+            max_durability = max(1, component_draft.max_durability)
+            if durability > max_durability:
+                durability = max_durability
+            components.append(self.component_repository.save(Component.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=component_draft.name,
+                description=Description(component_draft.description),
+                category=self._coerce_component_category(component_draft.category),
+                rarity=self._coerce_rarity(component_draft.rarity),
+                quality=max(1, min(100, component_draft.quality)),
+                durability=durability,
+                max_durability=max_durability,
+                weight=max(0.0, component_draft.weight),
+                size=component_draft.size,
+                is_craftable=component_draft.is_craftable,
+                required_skill_level=self._coerce_positive_optional_int(component_draft.required_skill_level),
+                material_ids=[EntityId(item_id) for item_id in component_draft.material_ids],
+            )))
+
+        sockets: list[Socket] = []
+        fallback_item = items[0] if items else None
+        for socket_draft in draft.sockets:
+            item = items_by_name.get(self._normalize_lookup_key(socket_draft.item_name or "")) or fallback_item
+            if item is None or item.id is None:
+                continue
+            sockets.append(self.socket_repository.save(Socket.create(
+                tenant_id=tenant_id,
+                item_id=item.id,
+                socket_type=self._coerce_socket_type(socket_draft.socket_type),
+                socket_shape=self._coerce_socket_shape(socket_draft.socket_shape),
+                slot_index=max(0, socket_draft.slot_index),
+                rarity=self._coerce_rarity(socket_draft.rarity),
+                is_unlocked=socket_draft.is_unlocked,
+                is_required=socket_draft.is_required,
+                required_material_ids=[EntityId(item_id) for item_id in socket_draft.required_material_ids],
+                required_gold=max(0, socket_draft.required_gold),
+                required_level=self._coerce_positive_optional_int(socket_draft.required_level),
+                is_glowing=socket_draft.is_glowing,
+                glow_color=socket_draft.glow_color,
+                stat_bonus_multiplier=max(0.0, socket_draft.stat_bonus_multiplier),
+                effect_duration_modifier=max(0.0, socket_draft.effect_duration_modifier),
+            )))
+
+        masteries: list[Mastery] = []
+        characters_by_name = {
+            self._normalize_lookup_key(character.name.value): character
+            for character in chain_result.characters
+            if getattr(character, "id", None) is not None
+        }
+        fallback_character = next((character for character in chain_result.characters if getattr(character, "id", None) is not None), None)
+        for mastery_draft in draft.masteries:
+            character = characters_by_name.get(self._normalize_lookup_key(mastery_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            masteries.append(self.mastery_repository.save(Mastery.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                name=mastery_draft.name,
+                description=Description(mastery_draft.description),
+                category=self._coerce_mastery_category(mastery_draft.category),
+                level=max(0, min(mastery_draft.level, mastery_draft.max_level)),
+                max_level=max(1, mastery_draft.max_level),
+                progress=max(0.0, min(100.0, mastery_draft.progress)),
+                total_experience=max(0, mastery_draft.total_experience),
+                bonuses=[
+                    MasteryBonus(
+                        level=max(1, min(bonus.level, mastery_draft.max_level)),
+                        bonus_type=self._coerce_mastery_bonus_type(bonus.bonus_type),
+                        value=bonus.value,
+                        description=bonus.description,
+                    )
+                    for bonus in mastery_draft.bonuses
+                ] or None,
+                unlocked_bonuses=list(mastery_draft.unlocked_bonuses),
+                tags=list(mastery_draft.tags) or None,
+            )))
+
+        skills: list[Skill] = []
+        for skill_draft in draft.skills:
+            character = characters_by_name.get(self._normalize_lookup_key(skill_draft.character_name or "")) or fallback_character
+            skills.append(self.skill_repository.save(Skill.create(
+                tenant_id=tenant_id,
+                character_id=character.id if character is not None else None,
+                name=skill_draft.name,
+                description=Description(skill_draft.description),
+                skill_type=self._coerce_skill_type(skill_draft.skill_type),
+                category=self._coerce_skill_category(skill_draft.category),
+                rarity=self._coerce_optional_rarity(skill_draft.rarity),
+                level=max(1, min(skill_draft.level, skill_draft.max_level)),
+                max_level=max(1, skill_draft.max_level),
+                experience=max(0, skill_draft.experience),
+                experience_to_next=max(1, skill_draft.experience_to_next),
+                power=max(0.0, skill_draft.power),
+                mastery=max(0, min(100, skill_draft.mastery)),
+                cooldown_seconds=self._coerce_non_negative_optional_int(skill_draft.cooldown_seconds),
+                mana_cost=self._coerce_non_negative_optional_int(skill_draft.mana_cost),
+                minimum_level=max(1, skill_draft.minimum_level),
+                tags=list(skill_draft.tags) or None,
+            )))
+
+        skills_by_name = {
+            self._normalize_lookup_key(skill.name): skill
+            for skill in skills
+            if getattr(skill, "id", None) is not None
+        }
+
+        perks: list[Perk] = []
+        for perk_draft in draft.perks:
+            character = characters_by_name.get(self._normalize_lookup_key(perk_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            perk_type = self._coerce_perk_type(perk_draft.perk_type)
+            ability = skills_by_name.get(self._normalize_lookup_key(perk_draft.ability_name or ""))
+            if perk_type == PerkType.ABILITY_MODIFIER and ability is None:
+                perk_type = PerkType.UTILITY
+            perks.append(self.perk_repository.save(Perk.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                name=perk_draft.name,
+                description=Description(perk_draft.description),
+                perk_type=perk_type,
+                source=self._coerce_perk_source(perk_draft.source),
+                rarity=self._coerce_optional_rarity(perk_draft.rarity),
+                stat_type=perk_draft.stat_type if perk_type == PerkType.STAT_BOOST else None,
+                stat_modifier=perk_draft.stat_modifier if perk_type == PerkType.STAT_BOOST else None,
+                resistance_type=perk_draft.resistance_type if perk_type == PerkType.RESISTANCE else None,
+                resistance_value=perk_draft.resistance_value if perk_type == PerkType.RESISTANCE else None,
+                ability_id=ability.id if perk_type == PerkType.ABILITY_MODIFIER and ability is not None else None,
+                ability_modifier=perk_draft.ability_modifier if perk_type == PerkType.ABILITY_MODIFIER else None,
+                stacking_limit=self._coerce_non_negative_optional_int(perk_draft.stacking_limit),
+                is_active=perk_draft.is_active,
+                is_hidden=perk_draft.is_hidden,
+                icon_id=perk_draft.icon_id,
+                tags=list(perk_draft.tags) or None,
+            )))
+
+        traits: list[Trait] = []
+        for trait_draft in draft.traits:
+            character = characters_by_name.get(self._normalize_lookup_key(trait_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            nature = self._coerce_trait_nature(trait_draft.nature)
+            impact_value = max(-100, min(100, trait_draft.impact_value))
+            if nature == TraitNature.POSITIVE and impact_value <= 0:
+                impact_value = max(1, abs(impact_value) or 15)
+            elif nature == TraitNature.NEGATIVE and impact_value >= 0:
+                impact_value = -max(1, abs(impact_value) or 15)
+            traits.append(self.trait_repository.save(Trait.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                name=trait_draft.name,
+                description=Description(trait_draft.description),
+                category=self._coerce_trait_category(trait_draft.category),
+                nature=nature,
+                impact_value=impact_value,
+                positive_effects=list(trait_draft.positive_effects) or None,
+                negative_effects=list(trait_draft.negative_effects) or None,
+                stat_modifiers=trait_draft.stat_modifiers or None,
+                conflicts_with=list(trait_draft.conflicts_with) or None,
+                synergizes_with=list(trait_draft.synergizes_with) or None,
+                is_inheritable=trait_draft.is_inheritable,
+                icon_id=trait_draft.icon_id,
+                tags=list(trait_draft.tags) or None,
+            )))
+
+        attributes: list[Attribute] = []
+        for attribute_draft in draft.attributes:
+            character = characters_by_name.get(self._normalize_lookup_key(attribute_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            base_value = attribute_draft.base_value
+            minimum_value = min(attribute_draft.minimum_value, base_value)
+            current_value = attribute_draft.current_value if attribute_draft.current_value is not None else base_value
+            maximum_value = attribute_draft.maximum_value if attribute_draft.maximum_value is not None else max(base_value, current_value)
+            current_value = min(max(current_value, minimum_value), maximum_value)
+            attributes.append(self.attribute_repository.save(Attribute.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                name=attribute_draft.name,
+                description=Description(attribute_draft.description),
+                attribute_type=self._coerce_attribute_type(attribute_draft.attribute_type),
+                scale_type=self._coerce_attribute_scale(attribute_draft.scale_type),
+                base_value=base_value,
+                current_value=current_value,
+                maximum_value=max(maximum_value, current_value),
+                flat_bonus=attribute_draft.flat_bonus,
+                percentage_bonus=attribute_draft.percentage_bonus,
+                temporary_bonus=attribute_draft.temporary_bonus,
+                is_derived=attribute_draft.is_derived,
+                derivation_formula=attribute_draft.derivation_formula,
+                source_attributes=list(attribute_draft.source_attributes) or None,
+                minimum_value=minimum_value,
+                display_name=attribute_draft.display_name,
+                icon_id=attribute_draft.icon_id,
+                tags=list(attribute_draft.tags) or None,
+            )))
+
+        talent_trees: list[TalentTree] = []
+        for talent_tree_draft in draft.talent_trees:
+            character = characters_by_name.get(self._normalize_lookup_key(talent_tree_draft.character_name or "")) or fallback_character
+            nodes = [
+                TalentNode(
+                    id=node_draft.node_id,
+                    name=node_draft.name,
+                    description=Description(node_draft.description),
+                    node_type=self._coerce_talent_node_type(node_draft.node_type),
+                    tier=max(1, node_draft.tier),
+                    column=max(1, node_draft.column),
+                    point_cost=max(1, node_draft.point_cost),
+                    prerequisite_node_ids=list(node_draft.prerequisite_node_ids),
+                    effects=dict(node_draft.effects) or None,
+                    icon_id=node_draft.icon_id,
+                    is_unlocked=node_draft.is_unlocked,
+                )
+                for node_draft in talent_tree_draft.nodes
+            ]
+            unlocked_node_ids = list(talent_tree_draft.unlocked_node_ids) or [node.id for node in nodes if node.is_unlocked]
+            unlocked_set = set(unlocked_node_ids)
+            for node in nodes:
+                node.is_unlocked = node.is_unlocked or node.id in unlocked_set
+            points_spent = talent_tree_draft.points_spent or sum(node.point_cost for node in nodes if node.is_unlocked)
+            total_points = max(1, talent_tree_draft.total_points, points_spent)
+            talent_tree = TalentTree.create(
+                tenant_id=tenant_id,
+                character_id=character.id if character is not None else None,
+                name=talent_tree_draft.name,
+                description=Description(talent_tree_draft.description),
+                talent_tree_type=self._coerce_talent_tree_type(talent_tree_draft.talent_tree_type),
+                total_points=total_points,
+                points_spent=max(0, min(points_spent, total_points)),
+                nodes=nodes,
+                unlocked_node_ids=unlocked_node_ids,
+                icon_id=talent_tree_draft.icon_id,
+                required_level=max(1, talent_tree_draft.required_level),
+                tags=list(talent_tree_draft.tags) or None,
+            )
+            object.__setattr__(talent_tree, "max_tier", max((node.tier for node in nodes if node.is_unlocked), default=0))
+            talent_trees.append(self.talent_tree_repository.save(talent_tree))
+
+        achievements: list[Achievement] = []
+        for achievement_draft in draft.achievements:
+            achievements.append(self.achievement_repository.save(Achievement.create(
+                tenant_id=tenant_id,
+                name=achievement_draft.name,
+                description=achievement_draft.description,
+                achievement_type=self._coerce_achievement_type(achievement_draft.achievement_type),
+                difficulty=self._coerce_achievement_difficulty(achievement_draft.difficulty),
+                is_hidden=achievement_draft.is_hidden,
+                is_repeatable=achievement_draft.is_repeatable,
+                icon=achievement_draft.icon,
+            )))
+
+        level_ups: list[LevelUp] = []
+        for level_up_draft in draft.level_ups:
+            character = characters_by_name.get(self._normalize_lookup_key(level_up_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            level_ups.append(self.level_up_repository.save(LevelUp.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                level_up_type=self._coerce_level_up_type(level_up_draft.level_up_type),
+                old_level=max(1, level_up_draft.old_level),
+                new_level=max(level_up_draft.old_level + 1, level_up_draft.new_level),
+                stat_increases=dict(level_up_draft.stat_increases) or None,
+                skill_points_gained=max(0, level_up_draft.skill_points_gained),
+                choices_made=list(level_up_draft.choices_made) or None,
+                selected_rewards=list(level_up_draft.selected_rewards) or None,
+                health_increase=self._coerce_non_negative_optional_int(level_up_draft.health_increase),
+                mana_increase=self._coerce_non_negative_optional_int(level_up_draft.mana_increase),
+                attack_increase=self._coerce_non_negative_optional_int(level_up_draft.attack_increase),
+                defense_increase=self._coerce_non_negative_optional_int(level_up_draft.defense_increase),
+                notes=Description(level_up_draft.notes) if level_up_draft.notes else None,
+            )))
+
+        experiences: list[Experience] = []
+        for experience_draft in draft.experiences:
+            character = characters_by_name.get(self._normalize_lookup_key(experience_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            source_breakdown = {
+                self._coerce_experience_source(key): value
+                for key, value in experience_draft.source_breakdown.items()
+            }
+            experiences.append(self.experience_repository.save(Experience.create(
+                tenant_id=tenant_id,
+                character_id=character.id,
+                experience_type=self._coerce_experience_type(experience_draft.experience_type),
+                total_experience=max(0, experience_draft.total_experience),
+                current_level=max(1, experience_draft.current_level),
+                current_xp=max(0, experience_draft.current_xp),
+                xp_to_next_level=max(1, experience_draft.xp_to_next_level),
+                xp_multiplier=max(0.0, experience_draft.xp_multiplier),
+                total_gains=max(0, experience_draft.total_gains),
+                largest_gain=self._coerce_non_negative_optional_int(experience_draft.largest_gain),
+                source_breakdown=source_breakdown or None,
+                tags=list(experience_draft.tags) or None,
+            )))
+
+        progression_states: list[WorldState] = []
+        for progression_state_draft in draft.progression_states:
+            time_point = TimePoint(max(0, progression_state_draft.time_point))
+            character_states: dict[EntityId, CharacterState] = {}
+            for state_draft in progression_state_draft.character_states:
+                character = characters_by_name.get(self._normalize_lookup_key(state_draft.character_name or "")) or fallback_character
+                if character is None or character.id is None:
+                    continue
+                stats = {
+                    self._coerce_stat_type(key): StatValue(max(0, value))
+                    for key, value in state_draft.stats.items()
+                }
+                character_states[character.id] = CharacterState(
+                    character_id=character.id,
+                    time_point=time_point,
+                    level=CharacterLevel(max(1, state_draft.level)),
+                    character_class=self._coerce_character_class(state_draft.character_class or "warrior"),
+                    experience=ExperiencePoints(max(0, state_draft.experience)),
+                    stats=stats,
+                    created_at=Timestamp.now(),
+                )
+            if not character_states:
+                continue
+            world_state = WorldState(
+                world_id=world_id,
+                time_point=time_point,
+                character_states=character_states,
+                created_at=Timestamp.now(),
+            )
+            object.__setattr__(world_state, "tenant_id", tenant_id)
+            object.__setattr__(world_state, "updated_at", world_state.created_at)
+            object.__setattr__(world_state, "version", Version(1))
+            object.__setattr__(world_state, "name", f"Progression State {time_point}")
+            progression_states.append(self.progression_state_repository.save(world_state))
+
+        progression_events: list[ProgressionEvent] = []
+        for progression_event_draft in draft.progression_events:
+            character = characters_by_name.get(self._normalize_lookup_key(progression_event_draft.character_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            from_time = TimePoint(max(0, progression_event_draft.from_time))
+            to_time = TimePoint(max(from_time.value + 1, progression_event_draft.to_time or (from_time.value + 1)))
+            reasons = [
+                RuleReference(rule_id=reason.rule_id, description=reason.description)
+                for reason in progression_event_draft.reasons
+            ] or [
+                RuleReference(rule_id="progression_event", description=progression_event_draft.description)
+            ]
+            effects = progression_event_draft.effects or {
+                "state_change": f"event(c{character.id.value}, {self._coerce_progression_event_type(progression_event_draft.event_type).value}, {to_time})"
+            }
+            progression_events.append(self.progression_event_repository.save(ProgressionEvent(
+                id=str(uuid4()),
+                tenant_id=tenant_id,
+                world_id=world_id,
+                character_id=character.id,
+                event_type=self._coerce_progression_event_type(progression_event_draft.event_type),
+                from_time=from_time,
+                to_time=to_time,
+                description=progression_event_draft.description,
+                created_at=Timestamp.now(),
+                reasons=reasons,
+                effects=effects,
+            )))
+
+        return RumorChainResult(
+            rumors=chain_result.rumors,
+            characters=chain_result.characters,
+            events=chain_result.events,
+            relationships=chain_result.relationships,
+            character_evolutions=chain_result.character_evolutions,
+            character_variants=chain_result.character_variants,
+            character_profile_entries=chain_result.character_profile_entries,
+            motion_captures=chain_result.motion_captures,
+            voice_actors=chain_result.voice_actors,
+            affinities=chain_result.affinities,
+            dispositions=chain_result.dispositions,
+            quests=chain_result.quests,
+            quest_chains=chain_result.quest_chains,
+            quest_givers=chain_result.quest_givers,
+            quest_nodes=chain_result.quest_nodes,
+            quest_objectives=chain_result.quest_objectives,
+            quest_prerequisites=chain_result.quest_prerequisites,
+            quest_reward_tiers=chain_result.quest_reward_tiers,
+            quest_trackers=chain_result.quest_trackers,
+            items=items,
+            components=components,
+            sockets=sockets,
+            masteries=masteries,
+            skills=skills,
+            perks=perks,
+            traits=traits,
+            attributes=attributes,
+            talent_trees=talent_trees,
+            achievements=achievements,
+            level_ups=level_ups,
+            experiences=experiences,
+            progression_states=progression_states,
+            progression_events=progression_events,
+            campaign=chain_result.campaign,
+            story=chain_result.story,
+            acts=chain_result.acts,
+            chapters=chain_result.chapters,
+            episodes=chain_result.episodes,
+            storylines=chain_result.storylines,
+            plot_branches=chain_result.plot_branches,
+            branch_points=chain_result.branch_points,
+            choices=chain_result.choices,
+            consequences=chain_result.consequences,
+            moral_choices=chain_result.moral_choices,
+            alternate_realities=chain_result.alternate_realities,
+            flashbacks=chain_result.flashbacks,
+            flash_forwards=chain_result.flash_forwards,
+            endings=chain_result.endings,
+            prologue=chain_result.prologue,
+            epilogue=chain_result.epilogue,
         )
 
     def _fallback_narrative_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> NarrativeStructureDraft:
@@ -3355,6 +4898,246 @@ class RumorBridgeService:
                     active_chain_names=("Harbor Reckoning",),
                     active_node_names=("Warn the Docks",),
                     objective_progress={"Speak to the dockworkers": 1},
+                ),
+            ),
+            items=(
+                ItemDraft(
+                    name=f"{theme} Relic",
+                    description=f"A signature item born from {request.theme}.",
+                    item_type="artifact",
+                    rarity="rare",
+                    location_id=request.location_id,
+                    level=10,
+                    enhancement=1,
+                    max_enhancement=5,
+                    special_stat="crit_rate",
+                    special_stat_value=0.08,
+                ),
+            ),
+            components=(
+                ComponentDraft(
+                    name=f"{theme} Core",
+                    description=f"A crafting core used to assemble the {theme.lower()} relic.",
+                    category="core",
+                    rarity="uncommon",
+                    quality=65,
+                    durability=80,
+                    max_durability=100,
+                    weight=1.5,
+                    size="medium",
+                    is_craftable=True,
+                ),
+            ),
+            sockets=(
+                SocketDraft(
+                    item_name=f"{theme} Relic",
+                    socket_type="rune",
+                    socket_shape="round",
+                    slot_index=0,
+                    rarity="uncommon",
+                    is_unlocked=True,
+                    stat_bonus_multiplier=1.1,
+                ),
+            ),
+            masteries=(
+                MasteryDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name=f"{theme} Tactics",
+                    description=f"Battlefield instincts sharpened by surviving {request.theme}.",
+                    category="combat",
+                    level=28,
+                    max_level=100,
+                    progress=45.0,
+                    total_experience=2800,
+                    bonuses=(
+                        MasteryBonusDraft(level=10, bonus_type="damage", value=0.12, description="Stronger strikes under pressure."),
+                    ),
+                    unlocked_bonuses=("damage",),
+                    tags=("harbor", "rumor_chain"),
+                ),
+            ),
+            skills=(
+                SkillDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name=f"{theme} Feint",
+                    description=f"A combat technique improvised during {request.theme}.",
+                    skill_type="active",
+                    category="combat",
+                    rarity="rare",
+                    level=4,
+                    max_level=12,
+                    experience=220,
+                    experience_to_next=300,
+                    power=1.35,
+                    mastery=44,
+                    cooldown_seconds=12,
+                    mana_cost=18,
+                    minimum_level=3,
+                    tags=("harbor", "counterattack"),
+                ),
+            ),
+            perks=(
+                PerkDraft(
+                    character_name=(chain_result.characters[-1].name.value if chain_result.characters else "Iven Hale"),
+                    name=f"{theme} Broker's Edge",
+                    description=f"A passive edge earned while surviving {request.theme}.",
+                    perk_type="economic",
+                    source="quest_reward",
+                    rarity="rare",
+                    stat_type="bargaining",
+                    stat_modifier=0.15,
+                    stacking_limit=1,
+                    is_active=True,
+                    is_hidden=False,
+                    tags=("harbor", "broker"),
+                ),
+            ),
+            traits=(
+                TraitDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name="Bellwatch Resolve",
+                    description="The harbor bells trained Mara into a sleepless guardian.",
+                    category="charisma",
+                    nature="boon",
+                    impact_value=22,
+                    positive_effects=("steady morale", "guardian reputation"),
+                    negative_effects=("sleepless vigilance",),
+                    stat_modifiers={"willpower": 2.0, "health": 1.0},
+                    conflicts_with=("Harbor Cowardice",),
+                    synergizes_with=(f"{theme} Broker's Edge",),
+                    is_inheritable=False,
+                    tags=("harbor", "discipline"),
+                ),
+            ),
+            attributes=(
+                AttributeDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name="Harbor Focus",
+                    description="The harbor bells sharpen Mara's tactical judgment.",
+                    attribute_type="mind",
+                    scale_type="static",
+                    base_value=14.0,
+                    current_value=16.0,
+                    maximum_value=20.0,
+                    flat_bonus=1.0,
+                    percentage_bonus=7.5,
+                    temporary_bonus=0.5,
+                    minimum_value=0.0,
+                    display_name="Harbor Focus",
+                    tags=("harbor", "discipline"),
+                ),
+            ),
+            talent_trees=(
+                TalentTreeDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name=f"{theme} Doctrine",
+                    description=f"A branching doctrine improvised during {request.theme}.",
+                    talent_tree_type="specialization",
+                    total_points=8,
+                    points_spent=1,
+                    nodes=(
+                        TalentNodeDraft(
+                            node_id="watch-step",
+                            name="Watch Step",
+                            description="A disciplined opening stance.",
+                            node_type="active",
+                            tier=1,
+                            column=1,
+                            point_cost=1,
+                            is_unlocked=True,
+                        ),
+                        TalentNodeDraft(
+                            node_id="eclipse-call",
+                            name="Eclipse Call",
+                            description="A capstone signal that rallies allies.",
+                            node_type="ultimate",
+                            tier=2,
+                            column=2,
+                            point_cost=2,
+                            prerequisite_node_ids=("watch-step",),
+                            is_unlocked=False,
+                        ),
+                    ),
+                    unlocked_node_ids=("watch-step",),
+                    required_level=4,
+                    tags=("harbor", "doctrine"),
+                ),
+            ),
+            achievements=(
+                AchievementDraft(
+                    name=f"{theme} Survivor",
+                    description=f"Endure the {request.theme} panic without letting the harbor fall silent.",
+                    achievement_type="challenge",
+                    difficulty="hard",
+                    is_hidden=False,
+                    is_repeatable=False,
+                    icon="achievement_harbor_survivor",
+                ),
+            ),
+            level_ups=(
+                LevelUpDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    level_up_type="mastery",
+                    old_level=9,
+                    new_level=10,
+                    stat_increases={"attack": 2, "defense": 1},
+                    skill_points_gained=3,
+                    selected_rewards=("Bell Ward", "Harbor Sigil"),
+                    health_increase=12,
+                    mana_increase=4,
+                    notes=f"The {request.theme} panic forced a harsher doctrine.",
+                ),
+            ),
+            experiences=(
+                ExperienceDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    experience_type="questing",
+                    total_experience=1840,
+                    current_level=10,
+                    current_xp=140,
+                    xp_to_next_level=320,
+                    xp_multiplier=1.15,
+                    total_gains=6,
+                    largest_gain=450,
+                    source_breakdown={"quest": 900, "event": 490, "achievement": 450},
+                    tags=("harbor", "eclipse"),
+                ),
+            ),
+            progression_states=(
+                ProgressionStateDraft(
+                    time_point=1,
+                    character_states=(
+                        ProgressionCharacterStateDraft(
+                            character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                            level=10,
+                            character_class="knight",
+                            experience=1840,
+                            stats={"attack": 18, "defense": 16, "agility": 12},
+                        ),
+                        ProgressionCharacterStateDraft(
+                            character_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                            level=8,
+                            character_class="assassin",
+                            experience=1320,
+                            stats={"strength": 11, "dexterity": 17, "willpower": 9},
+                        ),
+                    ),
+                ),
+            ),
+            progression_events=(
+                ProgressionEventDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    event_type="quest",
+                    from_time=1,
+                    to_time=2,
+                    description=f"{request.theme.title()} resolves into a watch oath that advances the harbor defenders.",
+                    reasons=(
+                        ProgressionEventReasonDraft(
+                            rule_id="harbor_contract",
+                            description="The harbor pact rewards those who hold the line.",
+                        ),
+                    ),
+                    effects={"quest_complete": "bellwatch_reward_applied"},
                 ),
             ),
             plot_branches=(
@@ -3733,6 +5516,261 @@ class RumorBridgeService:
         aliases = {"opening": "introduction", "story": "rising_action"}
         return self._coerce_enum(value, ChapterType, ChapterType.RISING_ACTION, aliases)
 
+    def _coerce_item_type(self, value: str) -> ItemType:
+        aliases = {"equipment": "armor", "relic": "artifact", "trinket": "artifact"}
+        return self._coerce_enum(value, ItemType, ItemType.OTHER, aliases)
+
+    def _coerce_optional_rarity(self, value: str | None) -> Rarity | None:
+        if not value:
+            return None
+        return self._coerce_rarity(value)
+
+    def _coerce_rarity(self, value: str) -> Rarity:
+        aliases = {"unique": "legendary"}
+        return self._coerce_enum(value, Rarity, Rarity.COMMON, aliases)
+
+    def _coerce_component_category(self, value: str) -> ComponentCategory:
+        aliases = {"gem_socket": "socket", "gemslot": "socket", "gear": "mechanism"}
+        return self._coerce_enum(value, ComponentCategory, ComponentCategory.OTHER, aliases)
+
+    def _coerce_socket_type(self, value: str) -> SocketType:
+        aliases = {"gem": "circle", "any": "universal", "all": "universal"}
+        return self._coerce_enum(value, SocketType, SocketType.UNIVERSAL, aliases)
+
+    def _coerce_socket_shape(self, value: str) -> SocketShape:
+        aliases = {"triangle": "triangular", "hexagon": "hexagonal", "diamond": "diamond_shaped", "star": "star_shaped"}
+        return self._coerce_enum(value, SocketShape, SocketShape.ROUND, aliases)
+
+    def _coerce_mastery_category(self, value: str) -> MasteryCategory:
+        aliases = {
+            "weapon_skill": "weapon",
+            "spellcasting": "magic",
+            "smithing": "crafting",
+            "diplomacy": "social",
+            "battle": "combat",
+            "survival": "exploration",
+        }
+        return self._coerce_enum(value, MasteryCategory, MasteryCategory.COMBAT, aliases)
+
+    def _coerce_mastery_bonus_type(self, value: str) -> MasteryBonusType:
+        aliases = {
+            "crit": "crit_rate",
+            "critical": "crit_rate",
+            "haste": "speed",
+            "crafting_quality": "quality",
+            "output": "yield",
+            "mana_cost": "resource_cost",
+        }
+        return self._coerce_enum(value, MasteryBonusType, MasteryBonusType.DAMAGE, aliases)
+
+    def _coerce_skill_type(self, value: str) -> SkillType:
+        aliases = {
+            "ability": "active",
+            "spell": "active",
+            "buff": "passive",
+            "trigger": "triggered",
+            "proc": "triggered",
+        }
+        return self._coerce_enum(value, SkillType, SkillType.ACTIVE, aliases)
+
+    def _coerce_skill_category(self, value: str) -> SkillCategory:
+        aliases = {
+            "battle": "combat",
+            "spellcasting": "magic",
+            "craft": "crafting",
+            "speech": "social",
+            "sneak": "stealth",
+            "exploration": "survival",
+        }
+        return self._coerce_enum(value, SkillCategory, SkillCategory.COMBAT, aliases)
+
+    def _coerce_perk_type(self, value: str) -> PerkType:
+        aliases = {
+            "buff": "stat_boost",
+            "discount": "economic",
+            "merchant": "economic",
+            "charisma": "social",
+            "status_resist": "resistance",
+            "quality_of_life": "utility",
+            "ability": "ability_modifier",
+        }
+        return self._coerce_enum(value, PerkType, PerkType.UTILITY, aliases)
+
+    def _coerce_perk_source(self, value: str) -> PerkSource:
+        aliases = {
+            "quest": "quest_reward",
+            "achievement_unlock": "achievement",
+            "level": "level_up",
+            "heritage": "inheritance",
+            "event_reward": "event",
+            "choice_reward": "choice",
+        }
+        return self._coerce_enum(value, PerkSource, PerkSource.EVENT, aliases)
+
+    def _coerce_trait_category(self, value: str) -> TraitCategory:
+        aliases = {
+            "persona": "personality",
+            "body": "physical",
+            "mind": "mental",
+            "charisma": "social",
+            "reputation": "social",
+            "arcane": "magical",
+            "heritage": "racial",
+            "bloodline": "racial",
+        }
+        return self._coerce_enum(value, TraitCategory, TraitCategory.SOCIAL, aliases)
+
+    def _coerce_trait_nature(self, value: str) -> TraitNature:
+        aliases = {
+            "boon": "positive",
+            "blessing": "positive",
+            "flaw": "negative",
+            "curse": "negative",
+            "neutral": "mixed",
+            "balanced": "mixed",
+        }
+        return self._coerce_enum(value, TraitNature, TraitNature.MIXED, aliases)
+
+    def _coerce_attribute_type(self, value: str) -> AttributeType:
+        aliases = {
+            "body": "physical",
+            "combat": "physical",
+            "mind": "mental",
+            "spirit": "spiritual",
+            "soul": "spiritual",
+            "persona": "social",
+            "charisma": "social",
+        }
+        return self._coerce_enum(value, AttributeType, AttributeType.MENTAL, aliases)
+
+    def _coerce_attribute_scale(self, value: str) -> AttributeScale:
+        aliases = {
+            "static": "fixed",
+            "flat": "fixed",
+            "growth": "linear",
+            "curve": "exponential",
+            "log": "logarithmic",
+        }
+        return self._coerce_enum(value, AttributeScale, AttributeScale.LINEAR, aliases)
+
+    def _coerce_talent_tree_type(self, value: str) -> TalentTreeType:
+        aliases = {
+            "spec": "specialization",
+            "specialist": "specialization",
+            "archetype": "class",
+            "species": "racial",
+            "general": "universal",
+        }
+        return self._coerce_enum(value, TalentTreeType, TalentTreeType.CLASS, aliases)
+
+    def _coerce_talent_node_type(self, value: str) -> TalentNodeType:
+        aliases = {
+            "skill": "active",
+            "stat": "boost",
+            "proc": "trigger",
+            "capstone": "ultimate",
+            "passive_bonus": "passive",
+        }
+        return self._coerce_enum(value, TalentNodeType, TalentNodeType.PASSIVE, aliases)
+
+    def _coerce_achievement_type(self, value: str) -> str:
+        normalized = str(value or "progression").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "story": "progression",
+            "milestone": "progression",
+            "secret": "hidden",
+            "collector": "collection",
+            "gather": "collection",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"progression", "challenge", "hidden", "collection"} else "progression"
+
+    def _coerce_achievement_difficulty(self, value: str) -> str:
+        normalized = str(value or "medium").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "trivial": "easy",
+            "normal": "medium",
+            "tough": "hard",
+            "nightmare": "insane",
+            "extreme": "insane",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"easy", "medium", "hard", "insane"} else "medium"
+
+    def _coerce_level_up_type(self, value: str) -> LevelUpType:
+        aliases = {
+            "regular": "normal",
+            "standard": "normal",
+            "milestone": "mastery",
+            "ascension": "prestige",
+            "transform": "evolution",
+        }
+        return self._coerce_enum(value, LevelUpType, LevelUpType.NORMAL, aliases)
+
+    def _coerce_experience_type(self, value: str) -> ExperienceType:
+        aliases = {
+            "level": "character_level",
+            "character": "character_level",
+            "combat_xp": "combat",
+            "craft": "crafting",
+            "explore": "exploration",
+            "socializing": "social",
+            "quest": "questing",
+        }
+        return self._coerce_enum(value, ExperienceType, ExperienceType.CHARACTER_LEVEL, aliases)
+
+    def _coerce_experience_source(self, value: str) -> ExperienceSource:
+        aliases = {
+            "combat": "kill",
+            "battle": "kill",
+            "questing": "quest",
+            "crafting": "craft",
+            "exploration": "discover",
+            "discovery": "discover",
+            "social": "interact",
+            "interaction": "interact",
+            "story": "event",
+        }
+        return self._coerce_enum(value, ExperienceSource, ExperienceSource.BONUS, aliases)
+
+    def _coerce_character_class(self, value: str) -> CharacterClass:
+        aliases = {
+            "fighter": "warrior",
+            "knight": "paladin",
+            "cleric": "paladin",
+            "wizard": "mage",
+            "sorcerer": "mage",
+            "assassin": "rogue",
+        }
+        return self._coerce_enum(value, CharacterClass, CharacterClass.WARRIOR, aliases)
+
+    def _coerce_stat_type(self, value: str) -> StatType:
+        aliases = {
+            "attack": "strength",
+            "power": "strength",
+            "defense": "vitality",
+            "health": "vitality",
+            "hp": "vitality",
+            "mana": "willpower",
+            "spirit": "willpower",
+            "magic": "intellect",
+            "dexterity": "agility",
+            "speed": "agility",
+        }
+        return self._coerce_enum(value, StatType, StatType.STRENGTH, aliases)
+
+    def _coerce_progression_event_type(self, value: str) -> EventType:
+        aliases = {
+            "level": "level_up",
+            "stat": "stat_increase",
+            "class": "class_change",
+            "unlock": "ability_unlock",
+            "quest": "quest_complete",
+            "xp_gain": "quest_complete",
+            "experience_gain": "quest_complete",
+        }
+        return self._coerce_enum(value, EventType, EventType.QUEST_COMPLETE, aliases)
+
     def _coerce_episode_type(self, value: str) -> EpisodeType:
         aliases = {"story": "narrative", "story_beat": "narrative"}
         return self._coerce_enum(value, EpisodeType, EpisodeType.NARRATIVE, aliases)
@@ -3785,6 +5823,20 @@ class RumorBridgeService:
             return float(value)
         except Exception:
             return None
+
+    def _coerce_positive_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        return parsed if parsed is not None and parsed > 0 else None
+
+    def _coerce_non_negative_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        return parsed if parsed is not None and parsed >= 0 else None
+
+    def _coerce_item_level(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None or parsed < 1:
+            return None
+        return min(parsed, 100)
 
     def _coerce_optional_datetime(self, value: object) -> datetime | None:
         if value is None or value == "":

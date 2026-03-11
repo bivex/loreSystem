@@ -29,11 +29,16 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeConsequenceRepository,
     CamelBridgeDispositionRepository,
     CamelBridgeEndingRepository,
+    CamelBridgeExperienceRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeLevelUpRepository,
+    CamelBridgeMasteryRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
     CamelBridgePlotBranchRepository,
+    CamelBridgeProgressionEventRepository,
+    CamelBridgeProgressionStateRepository,
     CamelBridgeQuestChainRepository,
     CamelBridgeQuestGiverRepository,
     CamelBridgeQuestNodeRepository,
@@ -42,6 +47,15 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeQuestRepository,
     CamelBridgeQuestRewardTierRepository,
     CamelBridgeQuestTrackerRepository,
+    CamelBridgeAchievementRepository,
+    CamelBridgeAttributeRepository,
+    CamelBridgePerkRepository,
+    CamelBridgeSkillRepository,
+    CamelBridgeTalentTreeRepository,
+    CamelBridgeTraitRepository,
+    CamelBridgeItemRepository,
+    CamelBridgeComponentRepository,
+    CamelBridgeSocketRepository,
     CamelBridgeStorylineRepository,
     CamelBridgeVoiceActorRepository,
 )
@@ -69,6 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
+    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Component, Socket, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, and ProgressionEvent entities")
     return parser
 
 
@@ -106,6 +121,20 @@ def main() -> int:
         quest_prerequisite_repository=CamelBridgeQuestPrerequisiteRepository(args.db_path),
         quest_reward_tier_repository=CamelBridgeQuestRewardTierRepository(args.db_path),
         quest_tracker_repository=CamelBridgeQuestTrackerRepository(args.db_path),
+        item_repository=CamelBridgeItemRepository(args.db_path),
+        component_repository=CamelBridgeComponentRepository(args.db_path),
+        socket_repository=CamelBridgeSocketRepository(args.db_path),
+        mastery_repository=CamelBridgeMasteryRepository(args.db_path),
+        skill_repository=CamelBridgeSkillRepository(args.db_path),
+        perk_repository=CamelBridgePerkRepository(args.db_path),
+        trait_repository=CamelBridgeTraitRepository(args.db_path),
+        attribute_repository=CamelBridgeAttributeRepository(args.db_path),
+        talent_tree_repository=CamelBridgeTalentTreeRepository(args.db_path),
+        achievement_repository=CamelBridgeAchievementRepository(args.db_path),
+        level_up_repository=CamelBridgeLevelUpRepository(args.db_path),
+        experience_repository=CamelBridgeExperienceRepository(args.db_path),
+        progression_state_repository=CamelBridgeProgressionStateRepository(args.db_path),
+        progression_event_repository=CamelBridgeProgressionEventRepository(args.db_path),
         plot_branch_repository=CamelBridgePlotBranchRepository(args.db_path),
         branch_point_repository=CamelBridgeBranchPointRepository(args.db_path),
         choice_repository=CamelBridgeChoiceRepository(args.db_path),
@@ -135,6 +164,7 @@ def main() -> int:
             character_names=tuple(args.character),
         ),
         include_narrative_structure=args.with_campaign_story,
+        include_systems_slice=args.with_systems,
     )
     for rumor in result.rumors:
         print(f"[{rumor.id.value}] {rumor.name}: {rumor.truth_level} / {rumor.spread_speed}")
@@ -207,6 +237,37 @@ def main() -> int:
             print(f"flash_forward[{flash_forward.id.value}] {flash_forward.name}")
         for ending in result.endings:
             print(f"ending[{ending.id.value}] {ending.title}")
+    if args.with_systems:
+        for item in result.items:
+            print(f"item[{item.id.value}] {item.name}")
+        for component in result.components:
+            print(f"component[{component.id.value}] {component.name}")
+        for socket in result.sockets:
+            print(f"socket[{socket.id.value}] {socket.socket_type.value} item={socket.item_id.value}")
+        for mastery in result.masteries:
+            print(f"mastery[{mastery.id.value}] {mastery.name} character={mastery.character_id.value}")
+        for skill in result.skills:
+            owner = skill.character_id.value if skill.character_id is not None else "template"
+            print(f"skill[{skill.id.value}] {skill.name} character={owner}")
+        for perk in result.perks:
+            print(f"perk[{perk.id.value}] {perk.name} character={perk.character_id.value}")
+        for trait in result.traits:
+            print(f"trait[{trait.id.value}] {trait.name} {trait.nature.value} character={trait.character_id.value}")
+        for attribute in result.attributes:
+            print(f"attribute[{attribute.id.value}] {attribute.name} {attribute.current_value}/{attribute.maximum_value} character={attribute.character_id.value}")
+        for talent_tree in result.talent_trees:
+            owner = talent_tree.character_id.value if talent_tree.character_id is not None else "template"
+            print(f"talent_tree[{talent_tree.id.value}] {talent_tree.name} character={owner}")
+        for achievement in result.achievements:
+            print(f"achievement[{achievement.id.value}] {achievement.name} difficulty={achievement.difficulty}")
+        for level_up in result.level_ups:
+            print(f"level_up[{level_up.id.value}] {level_up.old_level}->{level_up.new_level} character={level_up.character_id.value}")
+        for experience in result.experiences:
+            print(f"experience[{experience.id.value}] {experience.experience_type.value} level={experience.current_level} character={experience.character_id.value}")
+        for progression_state in result.progression_states:
+            print(f"progression_state[{progression_state.id.value}] {progression_state.time_point} characters={len(progression_state.character_states)}")
+        for progression_event in result.progression_events:
+            print(f"progression_event[{progression_event.id}] {progression_event.event_type.value} {progression_event.from_time}->{progression_event.to_time} character={progression_event.character_id.value}")
     return 0
 
 

@@ -6,7 +6,11 @@ import pytest
 
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend
+from src.domain.entities.attribute import AttributeScale, AttributeType
+from src.domain.entities.experience import ExperienceSource
+from src.domain.entities.trait import TraitCategory, TraitNature
 from src.domain.value_objects.common import EntityId, TenantId
+from src.domain.value_objects.progression import CharacterClass, StatType
 from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAffinityRepository,
     CamelBridgeAlternateRealityRepository,
@@ -18,11 +22,18 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeConsequenceRepository,
     CamelBridgeDispositionRepository,
     CamelBridgeEndingRepository,
+    CamelBridgeExperienceRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeItemRepository,
+    CamelBridgeLevelUpRepository,
+    CamelBridgeMasteryRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
     CamelBridgePlotBranchRepository,
+    CamelBridgeProgressionEventRepository,
+    CamelBridgeProgressionStateRepository,
+    CamelBridgeComponentRepository,
     CamelBridgeQuestChainRepository,
     CamelBridgeQuestGiverRepository,
     CamelBridgeQuestNodeRepository,
@@ -31,7 +42,14 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeQuestRepository,
     CamelBridgeQuestRewardTierRepository,
     CamelBridgeQuestTrackerRepository,
+    CamelBridgeAchievementRepository,
+    CamelBridgeAttributeRepository,
+    CamelBridgePerkRepository,
+    CamelBridgeSkillRepository,
+    CamelBridgeSocketRepository,
     CamelBridgeStorylineRepository,
+    CamelBridgeTalentTreeRepository,
+    CamelBridgeTraitRepository,
     CamelBridgeVoiceActorRepository,
 )
 from src.infrastructure.camel_bridge_rumor_repository import (
@@ -592,4 +610,208 @@ def test_strict_mode_disables_narrative_structure_fallbacks(tmp_path):
                 character_names=("Tarin", "Mira"),
             ),
             include_narrative_structure=True,
+        )
+
+
+def test_camel_bridge_generates_systems_slice(tmp_path):
+    db_path = str(tmp_path / "systems.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        json.dumps({
+            "items": [{"name": "Bellglass Reliquary", "description": "A relic that stores harbor omens.", "item_type": "relic", "rarity": "unique", "level": 12, "enhancement": 2, "max_enhancement": 6, "base_def": 14, "special_stat": "ward_strength", "special_stat_value": 0.25}],
+            "components": [{"name": "Reliquary Socket Ring", "description": "A mounting ring for omen stones.", "category": "gem_socket", "rarity": "uncommon", "quality": 72, "durability": 90, "max_durability": 120, "weight": 0.8, "size": "small", "is_craftable": True, "required_skill_level": 4}],
+            "sockets": [{"item_name": "Bellglass Reliquary", "socket_type": "any", "socket_shape": "hexagon", "slot_index": 1, "rarity": "uncommon", "is_unlocked": True, "required_gold": 15, "stat_bonus_multiplier": 1.2, "effect_duration_modifier": 1.15}],
+            "masteries": [{"character_name": "Mara Voss", "name": "Harbor Counterstroke", "description": "Mara turns panic into timing.", "category": "battle", "level": 18, "max_level": 60, "progress": 58, "total_experience": 3600, "bonuses": [{"level": 5, "bonus_type": "crit", "value": 0.18, "description": "Lantern sight."}], "unlocked_bonuses": ["crit"], "tags": ["harbor", "omen"]}],
+            "skills": [{"character_name": "Iven Hale", "name": "Belltower Lunge", "description": "Iven turns the bellrope into a combat opener.", "skill_type": "ability", "category": "battle", "rarity": "rare", "level": 5, "max_level": 12, "experience": 240, "experience_to_next": 360, "power": 1.4, "mastery": 61, "cooldown_seconds": 9, "mana_cost": 14, "minimum_level": 3, "tags": ["bell", "counterattack"]}],
+            "perks": [{"character_name": "Iven Hale", "name": "Dockside Discount", "description": "Harbor merchants shave their prices for the bell-watch.", "perk_type": "discount", "source": "quest", "rarity": "rare", "stacking_limit": 2, "is_active": True, "is_hidden": False, "tags": ["harbor", "trade"]}],
+            "traits": [{"character_name": "Mara Voss", "name": "Bellwatch Resolve", "description": "Mara holds the harbor line.", "category": "charisma", "nature": "boon", "impact_value": 22, "positive_effects": ["steady morale"], "negative_effects": ["sleepless vigilance"], "stat_modifiers": {"willpower": 2.0, "health": 1.0}, "conflicts_with": ["Harbor Cowardice"], "synergizes_with": ["Dockside Discount"], "is_inheritable": False, "tags": ["harbor", "discipline"]}],
+            "attributes": [{"character_name": "Mara Voss", "name": "Harbor Focus", "description": "Mara sharpens her judgment with each bell.", "attribute_type": "mind", "scale_type": "static", "base_value": 14, "current_value": 16, "maximum_value": 20, "flat_bonus": 1, "percentage_bonus": 7.5, "temporary_bonus": 0.5, "minimum_value": 0, "display_name": "Harbor Focus", "tags": ["harbor", "discipline"]}],
+            "talent_trees": [{"character_name": "Mara Voss", "name": "Harbor Bell Doctrine", "description": "Mara maps the bell-watch into a specialization tree.", "talent_tree_type": "spec", "total_points": 12, "required_level": 4, "tags": ["harbor", "doctrine"], "nodes": [{"id": "watch-step", "name": "Watch Step", "description": "A disciplined opener.", "node_type": "skill", "tier": 1, "column": 1, "point_cost": 1, "is_unlocked": True}, {"id": "eclipse-call", "name": "Eclipse Call", "description": "A capstone bell signal.", "node_type": "capstone", "tier": 2, "column": 2, "point_cost": 2, "prerequisite_node_ids": ["watch-step"], "is_unlocked": False}]}],
+            "achievements": [{"name": "Harbor Nightwatch", "description": "Keep the harbor standing through the bell panic.", "achievement_type": "secret", "difficulty": "nightmare", "is_hidden": True, "is_repeatable": False, "icon": "achievement_nightwatch"}],
+            "level_ups": [{"character_name": "Mara Voss", "level_up_type": "transform", "old_level": 9, "new_level": 10, "stat_increases": {"attack": 2, "defense": 1}, "skill_points_gained": 3, "choices_made": ["Kept the harbor sigil"], "selected_rewards": ["Bell Ward"], "health_increase": 12, "mana_increase": 4, "notes": "Mara hardens into a new eclipse doctrine."}],
+            "experiences": [{"character_name": "Mara Voss", "experience_type": "quest", "total_experience": 1840, "current_level": 10, "current_xp": 140, "xp_to_next_level": 320, "xp_multiplier": 1.15, "total_gains": 6, "largest_gain": 450, "source_breakdown": {"questing": 900, "story": 490, "achievement": 450}, "tags": ["harbor", "eclipse"]}],
+            "progression_states": [{"time_point": 1, "character_states": [{"character_name": "Mara Voss", "level": 10, "character_class": "knight", "experience": 1840, "stats": {"attack": 18, "defense": 16, "agility": 12}}, {"character_name": "Iven Hale", "level": 8, "character_class": "assassin", "experience": 1320, "stats": {"strength": 11, "dexterity": 17, "willpower": 9}}]}],
+            "progression_events": [{"character_name": "Mara Voss", "event_type": "quest", "from_time": 1, "to_time": 2, "description": "Mara cashes in the bellwatch pact.", "reasons": [{"rule_id": "harbor_contract", "description": "The pact rewards harbor defense."}], "effects": {"quest_complete": "bellwatch_reward_applied"}}],
+        }),
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        item_repository=CamelBridgeItemRepository(db_path),
+        component_repository=CamelBridgeComponentRepository(db_path),
+        socket_repository=CamelBridgeSocketRepository(db_path),
+        mastery_repository=CamelBridgeMasteryRepository(db_path),
+        skill_repository=CamelBridgeSkillRepository(db_path),
+        perk_repository=CamelBridgePerkRepository(db_path),
+        trait_repository=CamelBridgeTraitRepository(db_path),
+        attribute_repository=CamelBridgeAttributeRepository(db_path),
+        talent_tree_repository=CamelBridgeTalentTreeRepository(db_path),
+        achievement_repository=CamelBridgeAchievementRepository(db_path),
+        level_up_repository=CamelBridgeLevelUpRepository(db_path),
+        experience_repository=CamelBridgeExperienceRepository(db_path),
+        progression_state_repository=CamelBridgeProgressionStateRepository(db_path),
+        progression_event_repository=CamelBridgeProgressionEventRepository(db_path),
+    )
+
+    result = service.generate_story_chain(
+        RumorGenerationRequest(
+            tenant_id=1,
+            world_id=1,
+            theme="harbor panic",
+            context="Citizens fear the next eclipse.",
+            count=2,
+            location_id=99,
+            character_names=("Mara Voss", "Iven Hale"),
+        ),
+        include_systems_slice=True,
+    )
+
+    assert len(result.items) == 1
+    assert result.items[0].item_type.value == "artifact"
+    assert result.items[0].rarity.value == "legendary"
+    assert len(result.components) == 1
+    assert result.components[0].category.value == "socket"
+    assert len(result.sockets) == 1
+    assert result.sockets[0].socket_type.value == "universal"
+    assert result.sockets[0].socket_shape.value == "hexagonal"
+    assert result.sockets[0].item_id == result.items[0].id
+    assert len(result.masteries) == 1
+    assert result.masteries[0].category.value == "combat"
+    assert result.masteries[0].bonuses[0].bonus_type.value == "crit_rate"
+    assert result.masteries[0].character_id in {character.id for character in result.characters}
+    assert len(result.skills) == 1
+    assert result.skills[0].skill_type.value == "active"
+    assert result.skills[0].category.value == "combat"
+    assert result.skills[0].mastery == 61
+    assert result.skills[0].character_id in {character.id for character in result.characters}
+    mara = next(character for character in result.characters if character.name.value == "Mara Voss")
+    assert len(result.perks) == 1
+    assert result.perks[0].perk_type.value == "economic"
+    assert result.perks[0].source.value == "quest_reward"
+    assert result.perks[0].stacking_limit == 2
+    assert result.perks[0].character_id in {character.id for character in result.characters}
+    assert len(result.traits) == 1
+    assert result.traits[0].category == TraitCategory.SOCIAL
+    assert result.traits[0].nature == TraitNature.POSITIVE
+    assert result.traits[0].impact_value == 22
+    assert result.traits[0].stat_modifiers == {"willpower": 2.0, "health": 1.0}
+    assert result.traits[0].character_id == mara.id
+    assert len(result.attributes) == 1
+    assert result.attributes[0].attribute_type == AttributeType.MENTAL
+    assert result.attributes[0].scale_type == AttributeScale.FIXED
+    assert result.attributes[0].base_value == 14
+    assert result.attributes[0].current_value == 16
+    assert result.attributes[0].maximum_value == 20
+    assert result.attributes[0].character_id == mara.id
+    assert len(result.talent_trees) == 1
+    assert result.talent_trees[0].talent_tree_type.value == "specialization"
+    assert result.talent_trees[0].nodes[0].node_type.value == "active"
+    assert result.talent_trees[0].nodes[1].node_type.value == "ultimate"
+    assert result.talent_trees[0].unlocked_node_ids == ["watch-step"]
+    assert result.talent_trees[0].character_id in {character.id for character in result.characters}
+    assert len(result.achievements) == 1
+    assert result.achievements[0].achievement_type == "hidden"
+    assert result.achievements[0].difficulty == "insane"
+    assert result.achievements[0].is_hidden is True
+    assert len(result.level_ups) == 1
+    assert result.level_ups[0].level_up_type.value == "evolution"
+    assert result.level_ups[0].old_level == 9
+    assert result.level_ups[0].new_level == 10
+    assert result.level_ups[0].skill_points_gained == 3
+    assert result.level_ups[0].stat_increases == {"attack": 2, "defense": 1}
+    assert result.level_ups[0].character_id in {character.id for character in result.characters}
+    assert len(result.experiences) == 1
+    assert result.experiences[0].experience_type.value == "questing"
+    assert result.experiences[0].current_level == 10
+    assert result.experiences[0].xp_multiplier == 1.15
+    assert result.experiences[0].source_breakdown is not None
+    assert result.experiences[0].source_breakdown[ExperienceSource.QUEST] == 900
+    assert result.experiences[0].source_breakdown[ExperienceSource.EVENT] == 490
+    assert result.experiences[0].character_id in {character.id for character in result.characters}
+    assert len(result.progression_states) == 1
+    assert result.progression_states[0].time_point.value == 1
+    assert getattr(result.progression_states[0], "tenant_id").value == 1
+    assert getattr(result.progression_states[0], "id").value > 0
+    mara_state = result.progression_states[0].get_character_state(mara.id)
+    assert mara_state is not None
+    assert mara_state.character_class == CharacterClass.PALADIN
+    assert mara_state.stats[StatType.STRENGTH].value == 18
+    assert mara_state.stats[StatType.VITALITY].value == 16
+    assert len(result.progression_events) == 1
+    assert result.progression_events[0].event_type.value == "quest_complete"
+    assert result.progression_events[0].from_time.value == 1
+    assert result.progression_events[0].to_time.value == 2
+    assert result.progression_events[0].reasons[0].rule_id == "harbor_contract"
+    assert result.progression_events[0].effects["quest_complete"] == "bellwatch_reward_applied"
+    assert result.progression_events[0].character_id == mara.id
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM items").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM components").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM sockets").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM masterys").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM skills").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM perks").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM traits").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM attributes").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM talent_trees").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM achievements").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM level_ups").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM experiences").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM progression_states").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM progression_events").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
+def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
+    db_path = str(tmp_path / "strict_systems.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([
+            '[{"name":"Ember Court Whisper","description":"A whisper spreads through the court.","source_name":"Whisper Broker"}]',
+            '[{"name":"Ashen Proclamation","description":"A crier amplifies the rumor.","source_name":"Town Crier"}]',
+            '[{"name":"Cinder Procession","description":"The court erupts into motion.","participant_names":["Tarin","Mira"],"outcome":"mixed"}]',
+            '[{"character_from_name":"Tarin","character_to_name":"Mira","description":"They survive the court purge together.","relationship_type":"ally","relationship_level":20,"is_mutual":true}]',
+            'bad systems json',
+        ]),
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        item_repository=CamelBridgeItemRepository(db_path),
+        component_repository=CamelBridgeComponentRepository(db_path),
+        socket_repository=CamelBridgeSocketRepository(db_path),
+        mastery_repository=CamelBridgeMasteryRepository(db_path),
+        skill_repository=CamelBridgeSkillRepository(db_path),
+        perk_repository=CamelBridgePerkRepository(db_path),
+        trait_repository=CamelBridgeTraitRepository(db_path),
+        attribute_repository=CamelBridgeAttributeRepository(db_path),
+        talent_tree_repository=CamelBridgeTalentTreeRepository(db_path),
+        achievement_repository=CamelBridgeAchievementRepository(db_path),
+        level_up_repository=CamelBridgeLevelUpRepository(db_path),
+        experience_repository=CamelBridgeExperienceRepository(db_path),
+        progression_state_repository=CamelBridgeProgressionStateRepository(db_path),
+        progression_event_repository=CamelBridgeProgressionEventRepository(db_path),
+        allow_fallback=False,
+    )
+
+    with pytest.raises(Exception):
+        service.generate_story_chain(
+            RumorGenerationRequest(
+                tenant_id=1,
+                world_id=1,
+                theme="ember court",
+                count=2,
+                character_names=("Tarin", "Mira"),
+            ),
+            include_systems_slice=True,
         )

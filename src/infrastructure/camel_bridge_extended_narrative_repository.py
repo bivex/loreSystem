@@ -174,6 +174,62 @@ class CamelBridgeQuestTrackerRepository(_GenericBridgeRepository):
     table_name = "quest_trackers"
 
 
+class CamelBridgeItemRepository(_GenericBridgeRepository):
+    table_name = "items"
+
+
+class CamelBridgeComponentRepository(_GenericBridgeRepository):
+    table_name = "components"
+
+
+class CamelBridgeSocketRepository(_GenericBridgeRepository):
+    table_name = "sockets"
+
+
+class CamelBridgeMasteryRepository(_GenericBridgeRepository):
+    table_name = "masterys"
+
+
+class CamelBridgeSkillRepository(_GenericBridgeRepository):
+    table_name = "skills"
+
+
+class CamelBridgePerkRepository(_GenericBridgeRepository):
+    table_name = "perks"
+
+
+class CamelBridgeTraitRepository(_GenericBridgeRepository):
+    table_name = "traits"
+
+
+class CamelBridgeAttributeRepository(_GenericBridgeRepository):
+    table_name = "attributes"
+
+
+class CamelBridgeTalentTreeRepository(_GenericBridgeRepository):
+    table_name = "talent_trees"
+
+
+class CamelBridgeAchievementRepository(_GenericBridgeRepository):
+    table_name = "achievements"
+
+
+class CamelBridgeLevelUpRepository(_GenericBridgeRepository):
+    table_name = "level_ups"
+
+
+class CamelBridgeExperienceRepository(_GenericBridgeRepository):
+    table_name = "experiences"
+
+
+class CamelBridgeProgressionStateRepository(_GenericBridgeRepository):
+    table_name = "progression_states"
+
+
+class CamelBridgeProgressionEventRepository(_GenericBridgeRepository):
+    table_name = "progression_events"
+
+
 class CamelBridgePlotBranchRepository(_GenericBridgeRepository):
     table_name = "plot_branches"
 

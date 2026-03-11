@@ -24,18 +24,18 @@ class Achievement:
     """An achievement that players can complete."""
     
     tenant_id: TenantId
-    id: Optional[EntityId] = None
     name: str
     description: Description
     achievement_type: str  # "progression", "challenge", "hidden", "collection"
     difficulty: str  # "easy", "medium", "hard", "insane"
+    created_at: Timestamp
+    updated_at: Timestamp
+    id: Optional[EntityId] = None
     reward_ids: List[EntityId] = field(default_factory=list)  # IDs of rewards (items, titles, etc.)
     is_hidden: bool = False
     is_repeatable: bool = False
     prerequisites: List[EntityId] = field(default_factory=list)  # Requirements to unlock
     icon: Optional[str] = None
-    created_at: Timestamp
-    updated_at: Timestamp
     version: Version = field(default_factory=Version)
     
     def __post_init__(self):
@@ -85,7 +85,7 @@ class Achievement:
             icon=icon,
             created_at=now,
             updated_at=now,
-            version=Version(1, 0, 0),
+            version=Version(1),
         )
     
     def unlock(self) -> "Achievement":
