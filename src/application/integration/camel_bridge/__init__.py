@@ -1,6 +1,9 @@
 """CAMEL rumor bridge helpers."""
 
 from .rumor_agents import (
+    CanonicalPersistContext,
+    CanonicalPersistEngine,
+    CanonicalPersistRegistry,
     CamelChatBackend,
     DeterministicRumorBackend,
     RumorChainResult,
@@ -20,6 +23,9 @@ from .memory import (
 )
 
 __all__ = [
+    "CanonicalPersistContext",
+    "CanonicalPersistEngine",
+    "CanonicalPersistRegistry",
     "CamelChatBackend",
     "CharacterRelationshipDraft",
     "DeterministicRumorBackend",
