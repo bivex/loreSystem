@@ -330,6 +330,30 @@ class CamelBridgeWarRepository(_GenericBridgeRepository):
     table_name = "wars"
 
 
+class CamelBridgeLegendaryWeaponRepository(_GenericBridgeRepository):
+    table_name = "legendary_weapons"
+
+
+class CamelBridgeMythicalArmorRepository(_GenericBridgeRepository):
+    table_name = "mythical_armors"
+
+
+class CamelBridgeDivineItemRepository(_GenericBridgeRepository):
+    table_name = "divine_items"
+
+
+class CamelBridgeCursedItemRepository(_GenericBridgeRepository):
+    table_name = "cursed_items"
+
+
+class CamelBridgeArtifactSetRepository(_GenericBridgeRepository):
+    table_name = "artifact_sets"
+
+
+class CamelBridgeRelicCollectionRepository(_GenericBridgeRepository):
+    table_name = "relic_collections"
+
+
 class CamelBridgePlotBranchRepository(_GenericBridgeRepository):
     table_name = "plot_branches"
 

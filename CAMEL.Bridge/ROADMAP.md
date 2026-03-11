@@ -94,7 +94,7 @@ Roadmap для **предпочтительного current-generation path** в
 - хорошо ложится на уже существующий domain model,
 - расширяет bridge от narrative-first к systems-first gameplay generation.
 
-Статус на сейчас: **P0 core systems tranche закрыт**, плюс закрыт **starter encounter/world + live-ops slice**: `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`, `SeasonalEvent`, `Invasion`, `War`. Незаполненный хвост внутри этого направления — legendary/relic reward loop и memory v1 live-path stabilization.
+Статус на сейчас: **P0 core systems tranche закрыт**, плюс закрыт **starter encounter/world + live-ops slice**: `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`, `SeasonalEvent`, `Invasion`, `War`, а также весь **legendary / relic reward loop**: `LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`. Незаполненный хвост внутри этого направления — memory v1 live-path stabilization.
 
 ### Target entity packs
 
@@ -131,12 +131,12 @@ Roadmap для **предпочтительного current-generation path** в
 - ✅ `Arena`
 - ✅ `Instance`
 - ✅ `OpenWorldZone`
-- `LegendaryWeapon`
-- `MythicalArmor`
-- `DivineItem`
-- `CursedItem`
-- `ArtifactSet`
-- `RelicCollection`
+- ✅ `LegendaryWeapon`
+- ✅ `MythicalArmor`
+- ✅ `DivineItem`
+- ✅ `CursedItem`
+- ✅ `ArtifactSet`
+- ✅ `RelicCollection`
 - ✅ `WorldEvent`
 - ✅ `SeasonalEvent`
 - ✅ `Invasion`
@@ -234,7 +234,7 @@ Hyper-casual пригодится как analytics/live-ops extension, но не
 4. ✅ **Add starter encounter slice** (`Dungeon`, `Raid`, `WorldEvent`)
 5. **Stabilize memory v1 live path** (real Qdrant smoke, shaping cleanup, resource cleanup)
 6. ✅ **Finish encounter/world remainder** (`SeasonalEvent`, `Invasion`, `War`)
-7. **Legendary / relic reward loop slice**
+7. ✅ **Legendary / relic reward loop slice** (`LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`)
 8. **Gacha domain-gap review**
 9. **Hyper-casual domain-gap review**
 

@@ -31,7 +31,9 @@ from src.domain.entities.choice import Choice
 from src.domain.entities.component import Component, ComponentCategory
 from src.domain.entities.consequence import Consequence, ConsequenceSeverity, ConsequenceType
 from src.domain.entities.crafting_recipe import CraftingRecipe, RecipeDifficulty, RecipeIngredient
+from src.domain.entities.cursed_item import CursedItem
 from src.domain.entities.disposition import Disposition
+from src.domain.entities.divine_item import DivineItem
 from src.domain.entities.dungeon import Dungeon
 from src.domain.entities.enchantment import Enchantment, EnchantmentEffect, EnchantmentEffectValue, EnchantmentType
 from src.domain.entities.ending import Ending, EndingRarity, EndingType
@@ -46,9 +48,12 @@ from src.domain.entities.instance import Instance
 from src.domain.entities.inventory import Inventory, InventorySlot
 from src.domain.entities.item import Item
 from src.domain.entities.level_up import LevelUp, LevelUpType
+from src.domain.entities.legendary_weapon import LegendaryWeapon
+from src.domain.entities.artifact_set import ArtifactSet
 from src.domain.entities.mastery import Mastery, MasteryBonus, MasteryBonusType, MasteryCategory
 from src.domain.entities.material import Material, MaterialType
 from src.domain.entities.moral_choice import ChoiceUrgency, MoralAlignment, MoralChoice
+from src.domain.entities.mythical_armor import MythicalArmor
 from src.domain.entities.perk import Perk, PerkSource, PerkType
 from src.domain.entities.motion_capture import AnimationType, CaptureStatus, MotionCapture
 from src.domain.entities.open_world_zone import OpenWorldZone
@@ -68,6 +73,7 @@ from src.domain.entities.raid import Raid
 from src.domain.entities.rank import Rank
 from src.domain.entities.leaderboard import Leaderboard
 from src.domain.entities.badge import Badge
+from src.domain.entities.relic_collection import RelicCollection
 from src.domain.entities.rune import Rune, RuneBonus, RuneEffect, RuneRank, RuneType
 from src.domain.entities.rumor import Rumor
 from src.domain.entities.seasonal_event import SeasonalEvent
@@ -1218,6 +1224,72 @@ class WarDraft:
 
 
 @dataclass(frozen=True)
+class LegendaryWeaponDraft:
+    name: str
+    description: str
+    weapon_type: str = "sword"
+    damage: int = 0
+    rarity: str = "legendary"
+    special_ability: str = ""
+
+
+@dataclass(frozen=True)
+class MythicalArmorDraft:
+    name: str
+    description: str
+    armor_type: str = "plate"
+    defense: int = 0
+    rarity: str = "mythic"
+    special_protection: str = ""
+
+
+@dataclass(frozen=True)
+class DivineItemDraft:
+    name: str
+    description: str
+    item_type: str = "relic"
+    power: int = 0
+    rarity: str = "divine"
+    deity_name: str = ""
+    domain: str = ""
+    divine_ability: str = ""
+
+
+@dataclass(frozen=True)
+class CursedItemDraft:
+    name: str
+    description: str
+    item_type: str = "amulet"
+    power: int = 0
+    curse_type: str = "corruption"
+    rarity: str = "cursed"
+    benefit: str = ""
+    curse_effect: str = ""
+    risk_level: str = "high"
+
+
+@dataclass(frozen=True)
+class ArtifactSetDraft:
+    name: str
+    description: str
+    set_type: str = "mixed"
+    total_pieces: int = 3
+    rarity: str = "legendary"
+    set_bonus: str = ""
+
+
+@dataclass(frozen=True)
+class RelicCollectionDraft:
+    name: str
+    description: str
+    collection_type: str = "ancient"
+    total_relics: int = 3
+    rarity: str = "legendary"
+    collection_power: int = 0
+    completion_reward: str = ""
+
+
+@dataclass(frozen=True)
 class PrologueDraft:
     title: str
     description: str
@@ -1334,6 +1406,12 @@ class NarrativeStructureDraft:
     seasonal_events: tuple[SeasonalEventDraft, ...] = field(default_factory=tuple)
     invasions: tuple[InvasionDraft, ...] = field(default_factory=tuple)
     wars: tuple[WarDraft, ...] = field(default_factory=tuple)
+    legendary_weapons: tuple[LegendaryWeaponDraft, ...] = field(default_factory=tuple)
+    mythical_armors: tuple[MythicalArmorDraft, ...] = field(default_factory=tuple)
+    divine_items: tuple[DivineItemDraft, ...] = field(default_factory=tuple)
+    cursed_items: tuple[CursedItemDraft, ...] = field(default_factory=tuple)
+    artifact_sets: tuple[ArtifactSetDraft, ...] = field(default_factory=tuple)
+    relic_collections: tuple[RelicCollectionDraft, ...] = field(default_factory=tuple)
     plot_branches: tuple[PlotBranchDraft, ...] = field(default_factory=tuple)
     branch_points: tuple[BranchPointDraft, ...] = field(default_factory=tuple)
     choices: tuple[ChoiceDraft, ...] = field(default_factory=tuple)
@@ -1418,6 +1496,12 @@ class RumorChainResult:
     seasonal_events: list[SeasonalEvent] = field(default_factory=list)
     invasions: list[Invasion] = field(default_factory=list)
     wars: list[War] = field(default_factory=list)
+    legendary_weapons: list[LegendaryWeapon] = field(default_factory=list)
+    mythical_armors: list[MythicalArmor] = field(default_factory=list)
+    divine_items: list[DivineItem] = field(default_factory=list)
+    cursed_items: list[CursedItem] = field(default_factory=list)
+    artifact_sets: list[ArtifactSet] = field(default_factory=list)
+    relic_collections: list[RelicCollection] = field(default_factory=list)
     campaign: Campaign | None = None
     story: Story | None = None
     acts: list[Act] = field(default_factory=list)
@@ -2077,6 +2161,30 @@ class InvasionStore(Protocol):
 
 class WarStore(Protocol):
     def save(self, entity: War) -> War: ...
+
+
+class LegendaryWeaponStore(Protocol):
+    def save(self, entity: LegendaryWeapon) -> LegendaryWeapon: ...
+
+
+class MythicalArmorStore(Protocol):
+    def save(self, entity: MythicalArmor) -> MythicalArmor: ...
+
+
+class DivineItemStore(Protocol):
+    def save(self, entity: DivineItem) -> DivineItem: ...
+
+
+class CursedItemStore(Protocol):
+    def save(self, entity: CursedItem) -> CursedItem: ...
+
+
+class ArtifactSetStore(Protocol):
+    def save(self, entity: ArtifactSet) -> ArtifactSet: ...
+
+
+class RelicCollectionStore(Protocol):
+    def save(self, entity: RelicCollection) -> RelicCollection: ...
 
 
 class CamelChatBackend:
@@ -2756,6 +2864,72 @@ class DeterministicRumorBackend:
                         "is_active": False,
                     }
                 ],
+                "legendary_weapons": [
+                    {
+                        "name": f"{theme.title()} Oathblade",
+                        "description": f"A legendary weapon forged from the crisis around {theme}.",
+                        "weapon_type": "sword",
+                        "damage": 128,
+                        "rarity": "legendary",
+                        "special_ability": "Releases a warding pulse when the bells ring.",
+                    }
+                ],
+                "mythical_armors": [
+                    {
+                        "name": f"{theme.title()} Aegis",
+                        "description": f"A mythical armor set worn by defenders shaped by {theme}.",
+                        "armor_type": "plate",
+                        "defense": 94,
+                        "rarity": "mythic",
+                        "special_protection": "Absorbs the first surge of eclipse damage.",
+                    }
+                ],
+                "divine_items": [
+                    {
+                        "name": f"{theme.title()} Reliquary",
+                        "description": f"A divine relic preserving the last blessing against {theme}.",
+                        "item_type": "relic",
+                        "power": 111,
+                        "rarity": "divine",
+                        "deity_name": "Tidemother",
+                        "domain": "storms",
+                        "divine_ability": "Calls down a protective tide over allies.",
+                    }
+                ],
+                "cursed_items": [
+                    {
+                        "name": f"{theme.title()} Griefthorn Idol",
+                        "description": f"A cursed focus born from the unresolved grief around {theme}.",
+                        "item_type": "amulet",
+                        "power": 87,
+                        "curse_type": "corruption",
+                        "rarity": "cursed",
+                        "benefit": "Amplifies dusk magic near graves.",
+                        "curse_effect": "Slowly drains warmth from nearby allies.",
+                        "risk_level": "high",
+                    }
+                ],
+                "artifact_sets": [
+                    {
+                        "name": f"{theme.title()} Harrowglass Regalia",
+                        "description": f"A fractured regalia recovered from the aftermath of {theme}.",
+                        "set_type": "armor",
+                        "total_pieces": 4,
+                        "rarity": "mythical",
+                        "set_bonus": "When fully restored, the regalia veils allies against curse surges.",
+                    }
+                ],
+                "relic_collections": [
+                    {
+                        "name": f"Archive of {theme.title()}",
+                        "description": f"A relic collection assembled to preserve the surviving truths of {theme}.",
+                        "collection_type": "historical",
+                        "total_relics": 3,
+                        "rarity": "legendary",
+                        "collection_power": 133,
+                        "completion_reward": "Unlocks the Litany of Salt.",
+                    }
+                ],
                 "plot_branches": [
                     {
                         "name": "Ledger Rebellion",
@@ -2926,7 +3100,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -3000,6 +3174,12 @@ class RumorBridgeService:
         seasonal_event_repository: SeasonalEventStore | None = None,
         invasion_repository: InvasionStore | None = None,
         war_repository: WarStore | None = None,
+        legendary_weapon_repository: LegendaryWeaponStore | None = None,
+        mythical_armor_repository: MythicalArmorStore | None = None,
+        divine_item_repository: DivineItemStore | None = None,
+        cursed_item_repository: CursedItemStore | None = None,
+        artifact_set_repository: ArtifactSetStore | None = None,
+        relic_collection_repository: RelicCollectionStore | None = None,
         plot_branch_repository: PlotBranchStore | None = None,
         branch_point_repository: BranchPointStore | None = None,
         choice_repository: ChoiceStore | None = None,
@@ -3079,6 +3259,12 @@ class RumorBridgeService:
         self.seasonal_event_repository = seasonal_event_repository
         self.invasion_repository = invasion_repository
         self.war_repository = war_repository
+        self.legendary_weapon_repository = legendary_weapon_repository
+        self.mythical_armor_repository = mythical_armor_repository
+        self.divine_item_repository = divine_item_repository
+        self.cursed_item_repository = cursed_item_repository
+        self.artifact_set_repository = artifact_set_repository
+        self.relic_collection_repository = relic_collection_repository
         self.plot_branch_repository = plot_branch_repository
         self.branch_point_repository = branch_point_repository
         self.choice_repository = choice_repository
@@ -3198,12 +3384,12 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
             "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. For dungeons include name, description, difficulty, optional max_players, optional min_level, optional boss_names, has_lockout, and optional lockout_duration. For raids include name, description, difficulty, optional max_players, optional min_players, optional min_level, optional boss_names, and has_weekly_lockout. For world_events include name, description, event_type, severity, optional duration_days, optional affected_location_names, and is_active. For arenas include name, description, match_type, optional team_size, optional max_teams, optional min_level, and has_ranked_mode. For instances include name, description, difficulty, optional max_players, optional min_level, optional recommended_level, and optional time_limit. For open_world_zones include name, description, biome, optional min_level, optional max_level, optional player_cap, optional poi_names, and has_dynamic_events. "
-            "For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
+            "For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For legendary_weapons include name, description, weapon_type, optional damage, rarity, and optional special_ability. For mythical_armors include name, description, armor_type, optional defense, rarity, and optional special_protection. For divine_items include name, description, item_type, optional power, rarity, optional deity_name, optional domain, and optional divine_ability. For cursed_items include name, description, item_type, optional power, curse_type, rarity, optional benefit, optional curse_effect, and optional risk_level. For artifact_sets include name, description, set_type, total_pieces, rarity, and optional set_bonus. For relic_collections include name, description, collection_type, total_relics, rarity, optional collection_power, and optional completion_reward. For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
@@ -3356,6 +3542,12 @@ class RumorBridgeService:
         seasonal_events_payload = self._coerce_narrative_items(payload.get("seasonal_events") or payload.get("seasonal_event"))
         invasions_payload = self._coerce_narrative_items(payload.get("invasions") or payload.get("invasion"))
         wars_payload = self._coerce_narrative_items(payload.get("wars") or payload.get("war"))
+        legendary_weapons_payload = self._coerce_narrative_items(payload.get("legendary_weapons") or payload.get("legendary_weapon"))
+        mythical_armors_payload = self._coerce_narrative_items(payload.get("mythical_armors") or payload.get("mythical_armor"))
+        divine_items_payload = self._coerce_narrative_items(payload.get("divine_items") or payload.get("divine_item"))
+        cursed_items_payload = self._coerce_narrative_items(payload.get("cursed_items") or payload.get("cursed_item"))
+        artifact_sets_payload = self._coerce_narrative_items(payload.get("artifact_sets") or payload.get("artifact_set"))
+        relic_collections_payload = self._coerce_narrative_items(payload.get("relic_collections") or payload.get("relic_collection"))
         plot_branches_payload = self._coerce_narrative_items(payload.get("plot_branches") or payload.get("branches"))
         branch_points_payload = self._coerce_narrative_items(payload.get("branch_points"))
         choices_payload = self._coerce_narrative_items(payload.get("choices"))
@@ -3635,6 +3827,30 @@ class RumorBridgeService:
             wars=tuple(
                 self._build_war_draft(item, index)
                 for index, item in enumerate(wars_payload, start=1)
+            ),
+            legendary_weapons=tuple(
+                self._build_legendary_weapon_draft(item, index)
+                for index, item in enumerate(legendary_weapons_payload, start=1)
+            ),
+            mythical_armors=tuple(
+                self._build_mythical_armor_draft(item, index)
+                for index, item in enumerate(mythical_armors_payload, start=1)
+            ),
+            divine_items=tuple(
+                self._build_divine_item_draft(item, index)
+                for index, item in enumerate(divine_items_payload, start=1)
+            ),
+            cursed_items=tuple(
+                self._build_cursed_item_draft(item, index)
+                for index, item in enumerate(cursed_items_payload, start=1)
+            ),
+            artifact_sets=tuple(
+                self._build_artifact_set_draft(item, index)
+                for index, item in enumerate(artifact_sets_payload, start=1)
+            ),
+            relic_collections=tuple(
+                self._build_relic_collection_draft(item, index)
+                for index, item in enumerate(relic_collections_payload, start=1)
             ),
             plot_branches=tuple(
                 self._build_plot_branch_draft(item, index)
@@ -5084,6 +5300,108 @@ class RumorBridgeService:
             is_active=self._coerce_bool(payload.get("is_active")) if payload.get("is_active") is not None else True,
         )
 
+    def _build_legendary_weapon_draft(self, item: object, index: int) -> LegendaryWeaponDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return LegendaryWeaponDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Legendary Weapon {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Legendary weapon {index} extracted from the rumor chain.",
+            ),
+            weapon_type=(self._coerce_optional_text(payload.get("weapon_type") or payload.get("type")) or "sword").lower(),
+            damage=max(0, self._coerce_non_negative_optional_int(payload.get("damage")) or 0),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            special_ability=self._coerce_optional_text(payload.get("special_ability") or payload.get("ability")) or "",
+        )
+
+    def _build_mythical_armor_draft(self, item: object, index: int) -> MythicalArmorDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return MythicalArmorDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Mythical Armor {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Mythical armor {index} extracted from the rumor chain.",
+            ),
+            armor_type=(self._coerce_optional_text(payload.get("armor_type") or payload.get("type")) or "plate").lower(),
+            defense=max(0, self._coerce_non_negative_optional_int(payload.get("defense")) or 0),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "mythic").lower(),
+            special_protection=self._coerce_optional_text(payload.get("special_protection") or payload.get("protection")) or "",
+        )
+
+    def _build_divine_item_draft(self, item: object, index: int) -> DivineItemDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return DivineItemDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Divine Item {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Divine item {index} extracted from the rumor chain.",
+            ),
+            item_type=(self._coerce_optional_text(payload.get("item_type") or payload.get("type")) or "relic").lower(),
+            power=max(0, self._coerce_non_negative_optional_int(payload.get("power")) or 0),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "divine").lower(),
+            deity_name=self._coerce_optional_text(payload.get("deity_name") or payload.get("deity")) or "",
+            domain=self._coerce_optional_text(payload.get("domain")) or "",
+            divine_ability=self._coerce_optional_text(payload.get("divine_ability") or payload.get("ability")) or "",
+        )
+
+    def _build_cursed_item_draft(self, item: object, index: int) -> CursedItemDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return CursedItemDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Cursed Item {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Cursed item {index} extracted from the rumor chain.",
+            ),
+            item_type=(self._coerce_optional_text(payload.get("item_type") or payload.get("type")) or "amulet").lower(),
+            power=max(0, self._coerce_non_negative_optional_int(payload.get("power")) or 0),
+            curse_type=(self._coerce_optional_text(payload.get("curse_type")) or "corruption").lower(),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "cursed").lower(),
+            benefit=self._coerce_optional_text(payload.get("benefit")) or "",
+            curse_effect=self._coerce_optional_text(payload.get("curse_effect") or payload.get("effect")) or "",
+            risk_level=(self._coerce_optional_text(payload.get("risk_level")) or "high").lower(),
+        )
+
+    def _build_artifact_set_draft(self, item: object, index: int) -> ArtifactSetDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return ArtifactSetDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Artifact Set {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Artifact set {index} extracted from the rumor chain.",
+            ),
+            set_type=(self._coerce_optional_text(payload.get("set_type") or payload.get("type")) or "mixed").lower(),
+            total_pieces=max(2, self._coerce_non_negative_optional_int(payload.get("total_pieces")) or 3),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            set_bonus=self._coerce_optional_text(payload.get("set_bonus") or payload.get("bonus")) or "",
+        )
+
+    def _build_relic_collection_draft(self, item: object, index: int) -> RelicCollectionDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return RelicCollectionDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Relic Collection {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Relic collection {index} extracted from the rumor chain.",
+            ),
+            collection_type=(self._coerce_optional_text(payload.get("collection_type") or payload.get("type")) or "ancient").lower(),
+            total_relics=max(1, self._coerce_non_negative_optional_int(payload.get("total_relics")) or 3),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            collection_power=max(0, self._coerce_non_negative_optional_int(payload.get("collection_power") or payload.get("power")) or 0),
+            completion_reward=self._coerce_optional_text(payload.get("completion_reward") or payload.get("reward")) or "",
+        )
+
     def _build_plot_branch_draft(self, item: object, index: int) -> PlotBranchDraft:
         payload = item if isinstance(item, dict) else {}
         scalar_text = self._coerce_optional_text(item)
@@ -6352,6 +6670,12 @@ class RumorBridgeService:
             seasonal_events=chain_result.seasonal_events,
             invasions=chain_result.invasions,
             wars=chain_result.wars,
+            legendary_weapons=chain_result.legendary_weapons,
+            mythical_armors=chain_result.mythical_armors,
+            divine_items=chain_result.divine_items,
+            cursed_items=chain_result.cursed_items,
+            artifact_sets=chain_result.artifact_sets,
+            relic_collections=chain_result.relic_collections,
             campaign=campaign,
             story=story,
             acts=list(acts_by_number.values()),
@@ -6412,9 +6736,15 @@ class RumorBridgeService:
             self.seasonal_event_repository,
             self.invasion_repository,
             self.war_repository,
+            self.legendary_weapon_repository,
+            self.mythical_armor_repository,
+            self.divine_item_repository,
+            self.cursed_item_repository,
+            self.artifact_set_repository,
+            self.relic_collection_repository,
         ]):
             raise ValueError(
-                "Item, inventory, material, component, socket, crafting recipe, blueprint, enchantment, rune, glyph, title, rank, leaderboard, trophy, badge, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, progression event, player metric, drop rate, loot table weight, difficulty curve, dungeon, raid, world event, arena, instance, open world zone, seasonal event, invasion, and war repositories are required for systems slice generation"
+                "Item, inventory, material, component, socket, crafting recipe, blueprint, enchantment, rune, glyph, title, rank, leaderboard, trophy, badge, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, progression event, player metric, drop rate, loot table weight, difficulty curve, dungeon, raid, world event, arena, instance, open world zone, seasonal event, invasion, war, legendary weapon, mythical armor, divine item, cursed item, artifact set, and relic collection repositories are required for systems slice generation"
             )
 
         tenant_id = TenantId(request.tenant_id)
@@ -7453,6 +7783,90 @@ class RumorBridgeService:
                 is_active=war_draft.is_active,
             )))
 
+        legendary_weapons: list[LegendaryWeapon] = []
+        for legendary_weapon_draft in draft.legendary_weapons:
+            legendary_weapons.append(self.legendary_weapon_repository.save(LegendaryWeapon.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=legendary_weapon_draft.name,
+                description=legendary_weapon_draft.description,
+                weapon_type=legendary_weapon_draft.weapon_type,
+                damage=max(0, legendary_weapon_draft.damage),
+                rarity=legendary_weapon_draft.rarity,
+                special_ability=legendary_weapon_draft.special_ability,
+            )))
+
+        mythical_armors: list[MythicalArmor] = []
+        for mythical_armor_draft in draft.mythical_armors:
+            mythical_armors.append(self.mythical_armor_repository.save(MythicalArmor.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=mythical_armor_draft.name,
+                description=mythical_armor_draft.description,
+                armor_type=mythical_armor_draft.armor_type,
+                defense=max(0, mythical_armor_draft.defense),
+                rarity=mythical_armor_draft.rarity,
+                special_protection=mythical_armor_draft.special_protection,
+            )))
+
+        divine_items: list[DivineItem] = []
+        for divine_item_draft in draft.divine_items:
+            divine_items.append(self.divine_item_repository.save(DivineItem.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=divine_item_draft.name,
+                description=divine_item_draft.description,
+                item_type=divine_item_draft.item_type,
+                power=max(0, divine_item_draft.power),
+                rarity=divine_item_draft.rarity,
+                deity_name=divine_item_draft.deity_name,
+                domain=divine_item_draft.domain,
+                divine_ability=divine_item_draft.divine_ability,
+            )))
+
+        cursed_items: list[CursedItem] = []
+        for cursed_item_draft in draft.cursed_items:
+            cursed_items.append(self.cursed_item_repository.save(CursedItem.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=cursed_item_draft.name,
+                description=cursed_item_draft.description,
+                item_type=cursed_item_draft.item_type,
+                power=max(0, cursed_item_draft.power),
+                curse_type=cursed_item_draft.curse_type,
+                rarity=cursed_item_draft.rarity,
+                benefit=cursed_item_draft.benefit,
+                curse_effect=cursed_item_draft.curse_effect,
+                risk_level=cursed_item_draft.risk_level,
+            )))
+
+        artifact_sets: list[ArtifactSet] = []
+        for artifact_set_draft in draft.artifact_sets:
+            artifact_sets.append(self.artifact_set_repository.save(ArtifactSet.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=artifact_set_draft.name,
+                description=artifact_set_draft.description,
+                set_type=artifact_set_draft.set_type,
+                total_pieces=max(2, artifact_set_draft.total_pieces),
+                rarity=artifact_set_draft.rarity,
+                set_bonus=artifact_set_draft.set_bonus,
+            )))
+
+        relic_collections: list[RelicCollection] = []
+        for relic_collection_draft in draft.relic_collections:
+            relic_collections.append(self.relic_collection_repository.save(RelicCollection.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=relic_collection_draft.name,
+                description=relic_collection_draft.description,
+                collection_type=relic_collection_draft.collection_type,
+                total_relics=max(1, relic_collection_draft.total_relics),
+                rarity=relic_collection_draft.rarity,
+                collection_power=max(0, relic_collection_draft.collection_power),
+                completion_reward=relic_collection_draft.completion_reward,
+            )))
+
         return RumorChainResult(
             rumors=chain_result.rumors,
             characters=chain_result.characters,
@@ -7512,6 +7926,12 @@ class RumorBridgeService:
             seasonal_events=seasonal_events,
             invasions=invasions,
             wars=wars,
+            legendary_weapons=legendary_weapons,
+            mythical_armors=mythical_armors,
+            divine_items=divine_items,
+            cursed_items=cursed_items,
+            artifact_sets=artifact_sets,
+            relic_collections=relic_collections,
             campaign=chain_result.campaign,
             story=chain_result.story,
             acts=chain_result.acts,
@@ -8280,6 +8700,72 @@ class RumorBridgeService:
                     territorial_change_names=("Breakwater Battery",),
                     victor_name="Harbor Wardens",
                     is_active=False,
+                ),
+            ),
+            legendary_weapons=(
+                LegendaryWeaponDraft(
+                    name=f"{theme} Oathblade",
+                    description=f"A legendary weapon forged to answer the crisis around {request.theme}.",
+                    weapon_type="sword",
+                    damage=128,
+                    rarity="legendary",
+                    special_ability="Releases a warding pulse when the bells ring.",
+                ),
+            ),
+            mythical_armors=(
+                MythicalArmorDraft(
+                    name=f"{theme} Aegis",
+                    description=f"A mythical armor carried by the defenders shaped by {request.theme}.",
+                    armor_type="plate",
+                    defense=94,
+                    rarity="mythic",
+                    special_protection="Absorbs the first surge of eclipse damage.",
+                ),
+            ),
+            divine_items=(
+                DivineItemDraft(
+                    name=f"{theme} Reliquary",
+                    description=f"A divine relic preserving the last blessing against {request.theme}.",
+                    item_type="relic",
+                    power=111,
+                    rarity="divine",
+                    deity_name="Tidemother",
+                    domain="storms",
+                    divine_ability="Calls down a protective tide over allies.",
+                ),
+            ),
+            cursed_items=(
+                CursedItemDraft(
+                    name=f"{theme} Griefthorn Idol",
+                    description=f"A cursed focus formed from the unresolved losses around {request.theme}.",
+                    item_type="amulet",
+                    power=87,
+                    curse_type="corruption",
+                    rarity="cursed",
+                    benefit="Amplifies dusk magic near graves.",
+                    curse_effect="Slowly drains warmth from nearby allies.",
+                    risk_level="high",
+                ),
+            ),
+            artifact_sets=(
+                ArtifactSetDraft(
+                    name=f"{theme} Harrowglass Regalia",
+                    description=f"A shattered regalia restored piece by piece after {request.theme}.",
+                    set_type="armor",
+                    total_pieces=4,
+                    rarity="mythical",
+                    set_bonus="When fully restored, the regalia veils allies against curse surges.",
+                ),
+            ),
+            relic_collections=(
+                RelicCollectionDraft(
+                    name=f"Archive of {theme}",
+                    description=f"A relic collection preserving the truths uncovered during {request.theme}.",
+                    collection_type="historical",
+                    total_relics=3,
+                    rarity="legendary",
+                    collection_power=133,
+                    completion_reward="Unlocks the Litany of Salt.",
                 ),
             ),
             plot_branches=(

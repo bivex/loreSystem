@@ -9,13 +9,19 @@ from src.application.integration.camel_bridge.rumor_agents import CamelChatBacke
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
+from src.domain.entities.cursed_item import CursedItem
 from src.domain.entities.dungeon import Dungeon
+from src.domain.entities.divine_item import DivineItem
 from src.domain.entities.enchantment import EnchantmentEffect, EnchantmentType
 from src.domain.entities.experience import ExperienceSource
 from src.domain.entities.glyph import GlyphCategory, GlyphSchool, GlyphTier
 from src.domain.entities.invasion import Invasion
+from src.domain.entities.legendary_weapon import LegendaryWeapon
+from src.domain.entities.artifact_set import ArtifactSet
 from src.domain.entities.material import MaterialType
+from src.domain.entities.mythical_armor import MythicalArmor
 from src.domain.entities.raid import Raid
+from src.domain.entities.relic_collection import RelicCollection
 from src.domain.entities.rune import RuneRank, RuneType
 from src.domain.entities.seasonal_event import SeasonalEvent
 from src.domain.entities.trait import TraitCategory, TraitNature
@@ -34,11 +40,14 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeConsequenceRepository,
     CamelBridgeBadgeRepository,
     CamelBridgeArenaRepository,
+    CamelBridgeArtifactSetRepository,
     CamelBridgeBlueprintRepository,
     CamelBridgeCraftingRecipeRepository,
+    CamelBridgeCursedItemRepository,
     CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
     CamelBridgeDungeonRepository,
+    CamelBridgeDivineItemRepository,
     CamelBridgeDropRateRepository,
     CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
@@ -49,12 +58,14 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeInventoryRepository,
     CamelBridgeItemRepository,
     CamelBridgeLeaderboardRepository,
+    CamelBridgeLegendaryWeaponRepository,
     CamelBridgeLevelUpRepository,
     CamelBridgeMasteryRepository,
     CamelBridgeMaterialRepository,
     CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
+    CamelBridgeMythicalArmorRepository,
     CamelBridgeOpenWorldZoneRepository,
     CamelBridgePlotBranchRepository,
     CamelBridgePlayerMetricRepository,
@@ -74,6 +85,7 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgePerkRepository,
     CamelBridgeRaidRepository,
     CamelBridgeRankRepository,
+    CamelBridgeRelicCollectionRepository,
     CamelBridgeRuneRepository,
     CamelBridgeSeasonalEventRepository,
     CamelBridgeSkillRepository,
@@ -861,6 +873,12 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
             "seasonal_events": [{"name": "Eclipse Vigil", "description": "A recurring harbor vigil during eclipse season.", "season": "winter", "year_number": 12, "duration_days": 7, "reward_item_names": ["Bellglass Reliquary"], "is_recurring": True, "recurrence_period_days": 365, "is_active": True}],
             "invasions": [{"name": "Blackwater Incursion", "description": "Raiders push through the lantern line.", "invasion_type": "naval", "invader_name": "Night Tide Corsairs", "target_name": "Harbor Quarter", "force_size": 600, "casualties": 120, "conquest_progress": 45, "is_successful": False, "is_active": True}],
             "wars": [{"name": "War for Bellglass Coast", "description": "A prolonged struggle over the harbor approaches.", "war_type": "territorial", "aggressor_name": "Night Tide Corsairs", "defender_name": "Harbor Wardens", "conflict_region_name": "Bellglass Coast", "total_casualties": 900, "battles_fought": 6, "territorial_change_names": ["Breakwater Battery"], "victor_name": "Harbor Wardens", "is_active": False}],
+            "legendary_weapons": [{"name": "Bellglass Oathblade", "description": "A legendary sword forged for the harbor oathkeepers.", "weapon_type": "sword", "damage": 128, "rarity": "legendary", "special_ability": "Releases a warding pulse when the bells ring."}],
+            "mythical_armors": [{"name": "Nightwatch Aegis", "description": "A mythical armor carried by the last lantern wardens.", "armor_type": "plate", "defense": 94, "rarity": "mythic", "special_protection": "Absorbs the first surge of eclipse damage."}],
+            "divine_items": [{"name": "Bellglass Reliquary of the Tidemother", "description": "A divine reliquary holding the harbor's last blessing.", "item_type": "relic", "power": 111, "rarity": "divine", "deity_name": "Tidemother", "domain": "storms", "divine_ability": "Calls down a protective tide over allies."}],
+            "cursed_items": [{"name": "Griefthorn Idol", "description": "A cursed focus formed from the harbor dead.", "item_type": "amulet", "power": 87, "curse_type": "corruption", "rarity": "cursed", "benefit": "Amplifies dusk magic near graves.", "curse_effect": "Slowly drains warmth from nearby allies.", "risk_level": "high"}],
+            "artifact_sets": [{"name": "Harrowglass Regalia", "description": "A shattered regalia restored from the harbor coup.", "set_type": "armor", "total_pieces": 4, "rarity": "mythical", "set_bonus": "When fully restored, the regalia veils allies against curse surges."}],
+            "relic_collections": [{"name": "Archive of the Drowned Saints", "description": "A relic collection assembled from drowned shrine recoveries.", "collection_type": "historical", "total_relics": 3, "rarity": "legendary", "collection_power": 133, "completion_reward": "Unlocks the Litany of Salt."}],
         }),
     ])
     service = RumorBridgeService(
@@ -908,6 +926,12 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         seasonal_event_repository=CamelBridgeSeasonalEventRepository(db_path),
         invasion_repository=CamelBridgeInvasionRepository(db_path),
         war_repository=CamelBridgeWarRepository(db_path),
+        legendary_weapon_repository=CamelBridgeLegendaryWeaponRepository(db_path),
+        mythical_armor_repository=CamelBridgeMythicalArmorRepository(db_path),
+        divine_item_repository=CamelBridgeDivineItemRepository(db_path),
+        cursed_item_repository=CamelBridgeCursedItemRepository(db_path),
+        artifact_set_repository=CamelBridgeArtifactSetRepository(db_path),
+        relic_collection_repository=CamelBridgeRelicCollectionRepository(db_path),
     )
 
     result = service.generate_story_chain(
@@ -1109,6 +1133,27 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     assert result.wars[0].conflict_region_name == "Bellglass Coast"
     assert result.wars[0].victor_name == "Harbor Wardens"
     assert result.wars[0].is_active is False
+    assert len(result.legendary_weapons) == 1
+    assert result.legendary_weapons[0].name == "Bellglass Oathblade"
+    assert result.legendary_weapons[0].damage == 128
+    assert len(result.mythical_armors) == 1
+    assert result.mythical_armors[0].name == "Nightwatch Aegis"
+    assert result.mythical_armors[0].defense == 94
+    assert len(result.divine_items) == 1
+    assert result.divine_items[0].name == "Bellglass Reliquary of the Tidemother"
+    assert result.divine_items[0].deity_name == "Tidemother"
+    assert result.divine_items[0].power == 111
+    assert len(result.cursed_items) == 1
+    assert result.cursed_items[0].name == "Griefthorn Idol"
+    assert result.cursed_items[0].curse_type == "corruption"
+    assert result.cursed_items[0].power == 87
+    assert len(result.artifact_sets) == 1
+    assert result.artifact_sets[0].name == "Harrowglass Regalia"
+    assert result.artifact_sets[0].total_pieces == 4
+    assert len(result.relic_collections) == 1
+    assert result.relic_collections[0].name == "Archive of the Drowned Saints"
+    assert result.relic_collections[0].total_relics == 3
+    assert result.relic_collections[0].collection_power == 133
 
     conn = sqlite3.connect(db_path)
     try:
@@ -1151,6 +1196,12 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM seasonal_events").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM invasions").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM wars").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM legendary_weapons").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM mythical_armors").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM divine_items").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM cursed_items").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM artifact_sets").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM relic_collections").fetchone()[0] == 1
     finally:
         conn.close()
 
@@ -1321,3 +1372,125 @@ def test_war_create_uses_bridge_identity_model():
     assert war.conflict_region_name == "Bellglass Coast"
     assert war.victor_name == "Harbor Wardens"
     assert war.validate() is True
+
+
+def test_legendary_weapon_create_uses_bridge_identity_model():
+    legendary_weapon = LegendaryWeapon.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Bellglass Oathblade",
+        description="A legendary sword forged for the harbor oathkeepers.",
+        weapon_type="sword",
+        damage=128,
+        rarity="legendary",
+        special_ability="Releases a warding pulse when the bells ring.",
+    )
+
+    assert legendary_weapon.tenant_id == TenantId(1)
+    assert legendary_weapon.world_id == EntityId(2)
+    assert legendary_weapon.damage == 128
+    assert legendary_weapon.special_ability == "Releases a warding pulse when the bells ring."
+    assert legendary_weapon.validate() is True
+
+
+def test_mythical_armor_create_uses_bridge_identity_model():
+    mythical_armor = MythicalArmor.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Nightwatch Aegis",
+        description="A mythical armor carried by the last lantern wardens.",
+        armor_type="plate",
+        defense=94,
+        rarity="mythic",
+        special_protection="Absorbs the first surge of eclipse damage.",
+    )
+
+    assert mythical_armor.tenant_id == TenantId(1)
+    assert mythical_armor.world_id == EntityId(2)
+    assert mythical_armor.defense == 94
+    assert mythical_armor.special_protection == "Absorbs the first surge of eclipse damage."
+    assert mythical_armor.validate() is True
+
+
+def test_divine_item_create_uses_bridge_identity_model():
+    divine_item = DivineItem.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Bellglass Reliquary of the Tidemother",
+        description="A divine reliquary holding the harbor's last blessing.",
+        item_type="relic",
+        power=111,
+        rarity="divine",
+        deity_name="Tidemother",
+        domain="storms",
+        divine_ability="Calls down a protective tide over allies.",
+    )
+
+    assert divine_item.tenant_id == TenantId(1)
+    assert divine_item.world_id == EntityId(2)
+    assert divine_item.power == 111
+    assert divine_item.deity_name == "Tidemother"
+    assert divine_item.domain == "storms"
+    assert divine_item.validate() is True
+
+
+def test_cursed_item_create_uses_bridge_identity_model():
+    cursed_item = CursedItem.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Griefthorn Idol",
+        description="A cursed focus formed from the harbor dead.",
+        item_type="amulet",
+        power=87,
+        curse_type="corruption",
+        rarity="cursed",
+        benefit="Amplifies dusk magic near graves.",
+        curse_effect="Slowly drains warmth from nearby allies.",
+        risk_level="high",
+    )
+
+    assert cursed_item.tenant_id == TenantId(1)
+    assert cursed_item.world_id == EntityId(2)
+    assert cursed_item.power == 87
+    assert cursed_item.curse_type == "corruption"
+    assert cursed_item.validate() is True
+
+
+def test_artifact_set_create_uses_bridge_identity_model():
+    artifact_set = ArtifactSet.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Harrowglass Regalia",
+        description="A shattered regalia restored from the harbor coup.",
+        set_type="armor",
+        total_pieces=4,
+        rarity="mythical",
+        set_bonus="When fully restored, the regalia veils allies against curse surges.",
+    )
+
+    assert artifact_set.tenant_id == TenantId(1)
+    assert artifact_set.world_id == EntityId(2)
+    assert artifact_set.total_pieces == 4
+    assert artifact_set.set_bonus == "When fully restored, the regalia veils allies against curse surges."
+    assert artifact_set.validate() is True
+
+
+def test_relic_collection_create_uses_bridge_identity_model():
+    relic_collection = RelicCollection.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(2),
+        name="Archive of the Drowned Saints",
+        description="A relic collection assembled from drowned shrine recoveries.",
+        collection_type="historical",
+        total_relics=3,
+        rarity="legendary",
+        collection_power=133,
+        completion_reward="Unlocks the Litany of Salt.",
+    )
+
+    assert relic_collection.tenant_id == TenantId(1)
+    assert relic_collection.world_id == EntityId(2)
+    assert relic_collection.total_relics == 3
+    assert relic_collection.collection_power == 133
+    assert relic_collection.completion_reward == "Unlocks the Litany of Salt."
+    assert relic_collection.validate() is True

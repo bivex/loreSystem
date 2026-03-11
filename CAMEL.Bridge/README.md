@@ -46,6 +46,8 @@
   - `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
   - `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`
   - `SeasonalEvent`, `Invasion`, `War`
+  - `LegendaryWeapon`, `MythicalArmor`, `DivineItem`
+  - `CursedItem`, `ArtifactSet`, `RelicCollection`
 - Optional continuity memory (`--with-memory`):
   - exact recall from SQLite world state
   - semantic recall from Qdrant
@@ -56,7 +58,7 @@
 
 ### Priority 1 — Idle RPG / Raid systems
 
-Этот priority-pack остаётся главным gameplay-направлением для `CAMEL.Bridge`: systems-core, starter encounter/world и live-ops warfare slice уже закрыты; следующий production-фокус — legendary/relic reward loop + memory live stabilization.
+Этот priority-pack остаётся главным gameplay-направлением для `CAMEL.Bridge`: systems-core, starter encounter/world, live-ops warfare slice и весь legendary/relic reward loop уже закрыты; следующий production-фокус — memory live stabilization.
 
 Уже закрыто в текущем bridge (P0 core systems tranche + starter encounter/world slice):
 
@@ -69,11 +71,12 @@
 - `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
 - `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`
 - `SeasonalEvent`, `Invasion`, `War`
+- `LegendaryWeapon`, `MythicalArmor`, `DivineItem`
+- `CursedItem`, `ArtifactSet`, `RelicCollection`
 
 Следующий рекомендуемый фокус внутри этого priority-pack:
 
-- `LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`
-- параллельно — memory v1 live stabilization (`real Qdrant smoke`, indexing coverage, cleanup/shaping)
+- memory v1 live stabilization (`real Qdrant smoke`, indexing coverage, cleanup/shaping)
 
 Фокус на сущности:
 

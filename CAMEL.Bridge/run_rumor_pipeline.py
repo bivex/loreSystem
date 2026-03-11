@@ -31,9 +31,12 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeCraftingRecipeRepository,
     CamelBridgeBadgeRepository,
     CamelBridgeArenaRepository,
+    CamelBridgeArtifactSetRepository,
     CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
     CamelBridgeDungeonRepository,
+    CamelBridgeCursedItemRepository,
+    CamelBridgeDivineItemRepository,
     CamelBridgeDropRateRepository,
     CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
@@ -42,12 +45,14 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeFlashbackRepository,
     CamelBridgeInventoryRepository,
     CamelBridgeLeaderboardRepository,
+    CamelBridgeLegendaryWeaponRepository,
     CamelBridgeLevelUpRepository,
     CamelBridgeMasteryRepository,
     CamelBridgeMaterialRepository,
     CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
+    CamelBridgeMythicalArmorRepository,
     CamelBridgeOpenWorldZoneRepository,
     CamelBridgePlotBranchRepository,
     CamelBridgePlayerMetricRepository,
@@ -66,6 +71,7 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgePerkRepository,
     CamelBridgeRankRepository,
     CamelBridgeRaidRepository,
+    CamelBridgeRelicCollectionRepository,
     CamelBridgeRuneRepository,
     CamelBridgeSeasonalEventRepository,
     CamelBridgeSkillRepository,
@@ -108,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
-    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, DifficultyCurve, Dungeon, Raid, WorldEvent, Arena, Instance, OpenWorldZone, SeasonalEvent, Invasion, and War entities")
+    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, DifficultyCurve, Dungeon, Raid, WorldEvent, Arena, Instance, OpenWorldZone, SeasonalEvent, Invasion, War, LegendaryWeapon, MythicalArmor, DivineItem, CursedItem, ArtifactSet, and RelicCollection entities")
     parser.add_argument("--with-memory", action="store_true", help="Enable SQLite + Qdrant continuity memory using CAMEL_MEMORY_QDRANT_* env settings")
     return parser
 
@@ -187,6 +193,12 @@ def main() -> int:
         seasonal_event_repository=CamelBridgeSeasonalEventRepository(args.db_path),
         invasion_repository=CamelBridgeInvasionRepository(args.db_path),
         war_repository=CamelBridgeWarRepository(args.db_path),
+        legendary_weapon_repository=CamelBridgeLegendaryWeaponRepository(args.db_path),
+        mythical_armor_repository=CamelBridgeMythicalArmorRepository(args.db_path),
+        divine_item_repository=CamelBridgeDivineItemRepository(args.db_path),
+        cursed_item_repository=CamelBridgeCursedItemRepository(args.db_path),
+        artifact_set_repository=CamelBridgeArtifactSetRepository(args.db_path),
+        relic_collection_repository=CamelBridgeRelicCollectionRepository(args.db_path),
         plot_branch_repository=CamelBridgePlotBranchRepository(args.db_path),
         branch_point_repository=CamelBridgeBranchPointRepository(args.db_path),
         choice_repository=CamelBridgeChoiceRepository(args.db_path),
@@ -371,6 +383,18 @@ def main() -> int:
             print(f"invasion[{invasion.id.value}] {invasion.name} type={invasion.invasion_type} progress={invasion.conquest_progress}")
         for war in result.wars:
             print(f"war[{war.id.value}] {war.name} type={war.war_type} active={war.is_active}")
+        for legendary_weapon in result.legendary_weapons:
+            print(f"legendary_weapon[{legendary_weapon.id.value}] {legendary_weapon.name} damage={legendary_weapon.damage}")
+        for mythical_armor in result.mythical_armors:
+            print(f"mythical_armor[{mythical_armor.id.value}] {mythical_armor.name} defense={mythical_armor.defense}")
+        for divine_item in result.divine_items:
+            print(f"divine_item[{divine_item.id.value}] {divine_item.name} power={divine_item.power}")
+        for cursed_item in result.cursed_items:
+            print(f"cursed_item[{cursed_item.id.value}] {cursed_item.name} curse={cursed_item.curse_type} power={cursed_item.power}")
+        for artifact_set in result.artifact_sets:
+            print(f"artifact_set[{artifact_set.id.value}] {artifact_set.name} pieces={artifact_set.total_pieces}")
+        for relic_collection in result.relic_collections:
+            print(f"relic_collection[{relic_collection.id.value}] {relic_collection.name} relics={relic_collection.total_relics} power={relic_collection.collection_power}")
     return 0
 
 
