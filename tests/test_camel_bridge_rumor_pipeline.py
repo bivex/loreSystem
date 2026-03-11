@@ -795,6 +795,47 @@ def test_narrative_prompt_includes_deterministic_anchors():
     assert "Preserve at least one relationship thread: Mara Voss trusts Iven Hale after the raid." in prompt
 
 
+def test_narrative_prompt_dedupes_memory_backed_anchor_facts():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs"), SimpleNamespace(name="Lantern Decree")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+    memory_context = "\n".join([
+        "Continuity memory:",
+        "Theme anchor: harbor panic",
+        "Focus characters: Mara Voss, Iven Hale",
+        "Character-linked canon:",
+        "- Rumor: Dockside Murmurs",
+        "World-state canon:",
+        "- Event: Blue Lantern Raid",
+    ])
+
+    prompt = service._build_narrative_prompt(
+        request,
+        chain_result,
+        "Narrative Oracle",
+        memory_context,
+        include_systems_slice=False,
+    )
+
+    assert "Rumors:" not in prompt
+    assert "Events:" not in prompt
+    assert "Relationships:" not in prompt
+    assert "Keep these characters central" not in prompt
+    assert "Escalate from these confirmed events" not in prompt
+    assert "Preserve at least one relationship thread: Mara Voss trusts Iven Hale after the raid." in prompt
+
+
 def test_narrative_draft_stabilization_backfills_sparse_payload():
     class SparseBackend:
         def generate(self, system_message: str, user_message: str) -> str:

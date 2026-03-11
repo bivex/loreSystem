@@ -9,7 +9,7 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Iterator, Protocol, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -618,35 +618,42 @@ class LoreMemoryService:
     exact_limit: int = 6
     semantic_limit: int = 4
     indexed_types: tuple[str, ...] = field(default_factory=lambda: DEFAULT_INDEXED_MEMORY_TYPES)
+    prompt_char_budget: int = 1400
+    prompt_section_doc_limit: int = 2
+    prompt_doc_char_limit: int = 140
 
     def build_prompt_context(self, *, tenant_id: int, world_id: int, theme: str, context: str = "", character_names: Sequence[str] = ()) -> str:
         focus_names = _normalize_name_list(character_names)
         exact_docs = self.sqlite_reader.load_recent_documents(tenant_id, world_id, character_names=character_names)
-        exact_docs = [doc for doc in exact_docs if doc.entity_type in self.indexed_types][: self.exact_limit]
+        exact_docs = self._dedupe_prompt_docs(
+            doc for doc in exact_docs
+            if doc.entity_type in self.indexed_types
+        )[: self.exact_limit]
         semantic_docs: list[MemoryDocument] = []
         if self.qdrant_index:
             query_text = f"Theme: {theme}\nContext: {context}\nCharacters: {', '.join(focus_names)}"
             seen = {(doc.entity_type, doc.entity_id) for doc in exact_docs}
-            semantic_docs = [
+            semantic_docs = self._dedupe_prompt_docs(
                 doc for doc in self.qdrant_index.search(query_text, tenant_id=tenant_id, world_id=world_id, limit=self.semantic_limit * 2)
                 if (doc.entity_type, doc.entity_id) not in seen
-            ][: self.semantic_limit]
+            )[: self.semantic_limit]
         if not exact_docs and not semantic_docs:
             return ""
         lines = ["Continuity memory:"]
         if theme.strip():
-            lines.append(f"Theme anchor: {_trim(theme, 140)}")
+            self._append_prompt_line(lines, f"Theme anchor: {_trim(theme, 120)}")
         if context.strip():
-            lines.append(f"Current request: {_trim(context, 180)}")
+            self._append_prompt_line(lines, f"Current request: {_trim(context, 140)}")
         if focus_names:
-            lines.append(f"Focus characters: {', '.join(focus_names)}")
+            self._append_prompt_line(lines, f"Focus characters: {', '.join(focus_names[:2])}")
         character_exact, world_exact = self._partition_prompt_docs(exact_docs, focus_names)
         character_semantic, world_semantic = self._partition_prompt_docs(semantic_docs, focus_names)
-        self._extend_prompt_section(lines, "Character-linked canon:", character_exact)
-        self._extend_prompt_section(lines, "World-state canon:", world_exact)
-        self._extend_prompt_section(lines, "Character-linked semantic recalls:", character_semantic)
-        self._extend_prompt_section(lines, "World-state semantic recalls:", world_semantic)
-        lines.append("Use this memory to preserve named characters, established events/relationships, and unresolved lore threads. Continue canon instead of replacing it.")
+        seen_rendered: set[str] = set()
+        self._extend_prompt_section(lines, "Character-linked canon:", character_exact, seen_rendered)
+        self._extend_prompt_section(lines, "World-state canon:", world_exact, seen_rendered)
+        self._extend_prompt_section(lines, "Character-linked semantic recalls:", character_semantic, seen_rendered)
+        self._extend_prompt_section(lines, "World-state semantic recalls:", world_semantic, seen_rendered)
+        self._append_prompt_line(lines, "Preserve named characters, established events, and unresolved lore threads. Continue canon; do not replace it.")
         return "\n".join(lines)
 
     def _partition_prompt_docs(self, docs: Sequence[MemoryDocument], focus_names: Sequence[str]) -> tuple[list[MemoryDocument], list[MemoryDocument]]:
@@ -663,11 +670,68 @@ class LoreMemoryService:
                 world_state.append(doc)
         return character_linked, world_state
 
-    def _extend_prompt_section(self, lines: list[str], heading: str, docs: Sequence[MemoryDocument]) -> None:
+    def _extend_prompt_section(
+        self,
+        lines: list[str],
+        heading: str,
+        docs: Sequence[MemoryDocument],
+        seen_rendered: set[str],
+    ) -> None:
         if not docs:
             return
-        lines.append(heading)
-        lines.extend(f"- {doc.summary_text}" for doc in docs)
+        start_len = len(lines)
+        if not self._append_prompt_line(lines, heading):
+            return
+        added_count = 0
+        for doc in docs:
+            if added_count >= self.prompt_section_doc_limit:
+                break
+            rendered_summary = self._render_prompt_summary(doc)
+            rendered_key = rendered_summary.casefold()
+            if rendered_key in seen_rendered:
+                continue
+            if not self._append_prompt_summary_line(lines, rendered_summary):
+                break
+            seen_rendered.add(rendered_key)
+            added_count += 1
+        if added_count == 0:
+            del lines[start_len:]
+
+    def _append_prompt_line(self, lines: list[str], line: str) -> bool:
+        candidate = "\n".join((*lines, line))
+        if len(candidate) > self.prompt_char_budget:
+            return False
+        lines.append(line)
+        return True
+
+    def _append_prompt_summary_line(self, lines: list[str], summary: str) -> bool:
+        rendered = f"- {summary}"
+        if self._append_prompt_line(lines, rendered):
+            return True
+        current = "\n".join(lines)
+        separator = 1 if current else 0
+        available = self.prompt_char_budget - len(current) - separator
+        summary_budget = available - 2
+        if summary_budget < 8:
+            return False
+        return self._append_prompt_line(lines, f"- {_trim(summary, summary_budget)}")
+
+    def _dedupe_prompt_docs(self, docs: Sequence[MemoryDocument] | Iterator[MemoryDocument]) -> list[MemoryDocument]:
+        result: list[MemoryDocument] = []
+        seen_ids: set[tuple[str, str]] = set()
+        seen_summaries: set[str] = set()
+        for doc in docs:
+            entity_key = (doc.entity_type, doc.entity_id)
+            summary_key = doc.summary_text.strip().casefold()
+            if entity_key in seen_ids or summary_key in seen_summaries:
+                continue
+            seen_ids.add(entity_key)
+            seen_summaries.add(summary_key)
+            result.append(doc)
+        return result
+
+    def _render_prompt_summary(self, doc: MemoryDocument) -> str:
+        return replace(doc, summary_text=_trim(doc.summary_text, self.prompt_doc_char_limit)).summary_text
 
     def index_world_snapshot(self, *, tenant_id: int, world_id: int) -> int:
         if not self.qdrant_index:

@@ -192,6 +192,47 @@ def test_memory_service_builds_structured_continuity_packet():
     assert "- World Event: Eclipse Watch" in context
 
 
+def test_memory_service_budgets_and_dedupes_prompt_context():
+    repeated_summary = "Event: Blue Lantern Raid — Wardens sweep the harbor after the bells ring."
+
+    class StubReader:
+        def load_recent_documents(self, tenant_id, world_id, *, character_names=(), limit_per_type=3):
+            return [
+                MemoryDocument("e1", tenant_id, world_id, "event", "2", repeated_summary),
+                MemoryDocument("e1-dup", tenant_id, world_id, "event", "2", repeated_summary),
+                MemoryDocument("c1", tenant_id, world_id, "character", "1", "Character: Mara Voss — role=scout; backstory: She tracks the bells.", ("Mara Voss",)),
+            ]
+
+    class StubIndex:
+        def search(self, query_text, *, tenant_id, world_id, limit):
+            return [
+                MemoryDocument("e2-dup", tenant_id, world_id, "event", "9", repeated_summary),
+                MemoryDocument("q1", tenant_id, world_id, "quest", "4", "Quest: Ash Bell Ledger — Recover the ledger before dawn while the harbor spirals into panic and the bells keep sounding through the mist.", ("Mara Voss",)),
+            ]
+
+    context = LoreMemoryService(
+        StubReader(),
+        qdrant_index=StubIndex(),
+        exact_limit=10,
+        semantic_limit=10,
+        prompt_char_budget=420,
+        prompt_section_doc_limit=2,
+        prompt_doc_char_limit=70,
+    ).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+
+    assert len(context) <= 420
+    assert context.count("Event: Blue Lantern Raid") == 1
+    assert "Quest: Ash Bell Ledger" in context
+    assert "bells keep sounding through the mist." not in context
+    assert "…" in context
+
+
 def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id(tmp_path):
     db_path = str(tmp_path / "memory_generic.db")
     _seed_world(db_path)
