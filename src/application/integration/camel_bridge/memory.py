@@ -8,6 +8,7 @@ import math
 import os
 import re
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass, field
 from typing import Protocol, Sequence
 from urllib.error import HTTPError, URLError
@@ -155,11 +156,16 @@ class QdrantMemoryIndex:
     def ensure_collection(self) -> None:
         if self._collection_ready:
             return
-        self._request_json(
-            "PUT",
-            f"/collections/{self.collection_name}",
-            {"vectors": {"size": self.embedder.dimension, "distance": "Cosine"}},
-        )
+        try:
+            self._request_json(
+                "PUT",
+                f"/collections/{self.collection_name}",
+                {"vectors": {"size": self.embedder.dimension, "distance": "Cosine"}},
+            )
+        except RuntimeError as exc:
+            details = str(exc)
+            if "HTTP 409" not in details or "already exists" not in details:
+                raise
         self._collection_ready = True
 
     def upsert(self, documents: Sequence[MemoryDocument]) -> None:
@@ -232,7 +238,7 @@ class SQLiteLoreMemoryReader:
         self.db_path = db_path
 
     def load_recent_documents(self, tenant_id: int, world_id: int, *, character_names: Sequence[str] = (), limit_per_type: int = 3) -> list[MemoryDocument]:
-        with self._connection() as conn:
+        with closing(self._connection()) as conn:
             docs: list[MemoryDocument] = []
             docs.extend(self._character_docs(conn, tenant_id, world_id, character_names, limit_per_type))
             docs.extend(self._simple_docs(conn, tenant_id, world_id, "rumors", "rumor", limit_per_type, "name", "description", extra_fields=("truth_level", "spread_speed")))
@@ -255,6 +261,10 @@ class SQLiteLoreMemoryReader:
     def _table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
         row = conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", (table_name,)).fetchone()
         return row is not None
+
+    def _table_columns(self, conn: sqlite3.Connection, table_name: str) -> set[str]:
+        rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+        return {str(row[1]) for row in rows}
 
     def _point_id(self, tenant_id: int, world_id: int, entity_type: str, entity_id: object) -> str:
         return str(uuid5(NAMESPACE_URL, f"{tenant_id}:{world_id}:{entity_type}:{entity_id}"))
@@ -340,9 +350,14 @@ class SQLiteLoreMemoryReader:
         ]
 
     def _character_bound_docs(self, conn: sqlite3.Connection, tenant_id: int, world_id: int, table_name: str, entity_type: str, limit: int, character_names: Sequence[str], *, extra_fields: Sequence[str] = ()) -> list[MemoryDocument]:
-        if not self._table_exists(conn, table_name) or not self._table_exists(conn, "characters"):
+        if not self._table_exists(conn, table_name):
             return []
         names = _normalize_name_list(character_names)
+        columns = self._table_columns(conn, table_name)
+        if "character_id" not in columns:
+            return self._generic_bridge_docs(conn, tenant_id, world_id, table_name, entity_type, limit, names, extra_fields=extra_fields)
+        if not self._table_exists(conn, "characters"):
+            return []
         base_sql = (
             f"SELECT t.*, c.name AS character_name FROM {table_name} t "
             "LEFT JOIN characters c ON c.id = t.character_id "
@@ -373,6 +388,44 @@ class SQLiteLoreMemoryReader:
                 entity_id=str(row["id"]),
                 summary_text=summary,
                 character_names=_normalize_name_list((row["character_name"],)),
+            ))
+        return docs
+
+    def _generic_bridge_docs(self, conn: sqlite3.Connection, tenant_id: int, world_id: int, table_name: str, entity_type: str, limit: int, character_names: tuple[str, ...], *, extra_fields: Sequence[str] = ()) -> list[MemoryDocument]:
+        rows = conn.execute(
+            f"SELECT * FROM {table_name} WHERE tenant_id = ? AND world_id = ? ORDER BY id DESC LIMIT ?",
+            (tenant_id, world_id, limit),
+        ).fetchall()
+        requested = {name.lower() for name in character_names}
+        docs: list[MemoryDocument] = []
+        for row in rows:
+            payload_text = str(row["payload_json"] or "{}").strip()
+            try:
+                payload = json.loads(payload_text) if payload_text else {}
+            except json.JSONDecodeError:
+                payload = {}
+            related_names = _normalize_name_list(
+                tuple(payload.get(key) for key in ("character_name", "character_from_name", "character_to_name") if payload.get(key))
+                + tuple(value for value in payload.get("character_names", ()) if value)
+                + tuple(value for value in payload.get("participant_names", ()) if value)
+            )
+            if requested and related_names and not any(name.lower() in requested for name in related_names):
+                continue
+            label = str(row["label"] or payload.get("name") or payload.get("title") or entity_type.title()).strip()
+            body = str(payload.get("description") or label).strip()
+            extras = ", ".join(f"{field}={payload.get(field)}" for field in extra_fields if payload.get(field) not in (None, ""))
+            subject = ", ".join(related_names) if related_names else "world state"
+            summary = f"{entity_type.replace('_', ' ').title()} for {subject}: {label} — {_trim(body, 140)}"
+            if extras:
+                summary += f" [{extras}]"
+            docs.append(MemoryDocument(
+                point_id=self._point_id(tenant_id, world_id, entity_type, row["id"]),
+                tenant_id=tenant_id,
+                world_id=world_id,
+                entity_type=entity_type,
+                entity_id=str(row["id"]),
+                summary_text=summary,
+                character_names=related_names,
             ))
         return docs
 

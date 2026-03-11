@@ -1,4 +1,5 @@
 import sqlite3
+import json
 
 from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest
 from src.application.integration.camel_bridge.memory import HashingTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
@@ -108,6 +109,33 @@ def test_sqlite_memory_service_builds_exact_context_from_world_state(tmp_path):
     assert "Relationship: Mara Voss" in context
 
 
+def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id(tmp_path):
+    db_path = str(tmp_path / "memory_generic.db")
+    _seed_world(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "CREATE TABLE traits (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER, label TEXT, payload_json TEXT NOT NULL, created_at TEXT, updated_at TEXT, version INTEGER)",
+        )
+        conn.execute(
+            "INSERT INTO traits (tenant_id, world_id, label, payload_json, created_at, updated_at, version) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (1, 1, "Harbor Instinct", json.dumps({"name": "Harbor Instinct", "description": "Mara senses danger before the bells ring.", "character_name": "Mara Voss", "category": "social", "nature": "positive"}), "2026-03-10T00:00:00+00:00", "2026-03-10T00:00:00+00:00", 1),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    context = LoreMemoryService(SQLiteLoreMemoryReader(db_path)).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss",),
+    )
+
+    assert "Trait for Mara Voss: Harbor Instinct" in context
+
+
 def test_qdrant_memory_index_upsert_and_search_use_expected_http_contract(monkeypatch):
     calls = []
     index = QdrantMemoryIndex("http://qdrant.local", collection_name="lore_memory", embedder=HashingTextEmbedder(dimension=8))
@@ -131,3 +159,21 @@ def test_qdrant_memory_index_upsert_and_search_use_expected_http_contract(monkey
         {"key": "world_id", "match": {"value": 7}},
     ]
     assert results[0].summary_text == "Rumor: Harbor bells precede riots."
+
+
+def test_qdrant_memory_index_tolerates_collection_already_exists(monkeypatch):
+    calls = []
+    index = QdrantMemoryIndex("http://qdrant.local", collection_name="lore_memory", embedder=HashingTextEmbedder(dimension=8))
+
+    def fake_request(method: str, path: str, payload=None):
+        calls.append((method, path, payload))
+        if path == "/collections/lore_memory":
+            raise RuntimeError('Qdrant request failed with HTTP 409: {"status":{"error":"Wrong input: Collection `lore_memory` already exists!"}}')
+        return {"status": "ok", "result": True}
+
+    monkeypatch.setattr(index, "_request_json", fake_request)
+
+    index.upsert([MemoryDocument(point_id="p1", tenant_id=1, world_id=7, entity_type="rumor", entity_id="9", summary_text="Rumor: Harbor bells precede riots.")])
+
+    assert calls[0][0:2] == ("PUT", "/collections/lore_memory")
+    assert calls[1][0:2] == ("PUT", "/collections/lore_memory/points")
