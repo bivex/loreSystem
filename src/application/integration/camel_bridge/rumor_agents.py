@@ -3585,20 +3585,82 @@ class RumorBridgeService:
         relationship_threads = list(self._grounded_relationship_threads(chain_result))
 
         lines = ["\nDeterministic narrative anchors:", f"- Keep the main throughline centered on the theme: {request.theme}."]
-        if cast_names and not self._memory_mentions_values(memory_context, cast_names[:2]):
-            lines.append(f"- Keep these characters central: {', '.join(cast_names[:2])}.")
-        if rumor_names and not self._memory_mentions_values(memory_context, rumor_names[:2]):
-            lines.append(f"- Treat these rumors as established setup beats: {', '.join(rumor_names[:2])}.")
-        if event_names and not self._memory_mentions_values(memory_context, event_names[:1]):
-            lines.append(f"- Escalate from these confirmed events: {', '.join(event_names[:1])}.")
-        if relationship_threads:
-            lines.append(f"- Preserve at least one relationship thread: {relationship_threads[0]}")
+        payload_lines = self._select_narrative_anchor_lines(
+            memory_context,
+            cast_names=cast_names,
+            rumor_names=rumor_names,
+            event_names=event_names,
+            relationship_threads=relationship_threads,
+        )
+        lines.extend(payload_lines)
         lines.append("- Prefer one coherent campaign/story spine over disconnected subplots.")
         return "\n".join(lines) + "\n"
 
+    def _select_narrative_anchor_lines(
+        self,
+        memory_context: str,
+        *,
+        cast_names: Sequence[str],
+        rumor_names: Sequence[str],
+        event_names: Sequence[str],
+        relationship_threads: Sequence[str],
+    ) -> list[str]:
+        candidates: list[tuple[int, str]] = []
+
+        uncovered_relationships = self._filter_uncovered_memory_values(memory_context, relationship_threads, limit=1)
+        if uncovered_relationships:
+            candidates.append((400, f"- Preserve at least one relationship thread: {uncovered_relationships[0]}"))
+
+        uncovered_events = self._filter_uncovered_memory_values(memory_context, event_names, limit=1)
+        if uncovered_events:
+            candidates.append((300, f"- Escalate from these confirmed events: {', '.join(uncovered_events)}."))
+
+        uncovered_rumors = self._filter_uncovered_memory_values(memory_context, rumor_names, limit=2)
+        if uncovered_rumors:
+            candidates.append((200, f"- Treat these rumors as established setup beats: {', '.join(uncovered_rumors)}."))
+
+        uncovered_cast = self._filter_uncovered_memory_values(memory_context, cast_names, limit=2)
+        if uncovered_cast:
+            candidates.append((100, f"- Keep these characters central: {', '.join(uncovered_cast)}."))
+
+        payload_line_limit = 4
+        return [line for _, line in sorted(candidates, reverse=True)[:payload_line_limit]]
+
+    def _filter_uncovered_memory_values(self, memory_context: str, values: Sequence[str], *, limit: int) -> tuple[str, ...]:
+        result: list[str] = []
+        for value in values:
+            text = self._coerce_optional_text(value)
+            if not text or self._memory_covers_value(memory_context, text):
+                continue
+            result.append(text)
+            if len(result) >= limit:
+                break
+        return tuple(result)
+
     def _memory_mentions_values(self, memory_context: str, values: Sequence[str]) -> bool:
+        filtered = [value for value in values if self._coerce_optional_text(value)]
+        return bool(filtered) and all(self._memory_covers_value(memory_context, value) for value in filtered)
+
+    def _memory_covers_value(self, memory_context: str, value: str) -> bool:
         memory = memory_context.casefold()
-        return bool(memory) and all(value.casefold() in memory for value in values if value)
+        text = self._coerce_optional_text(value)
+        if not memory or not text:
+            return False
+        lowered = text.casefold()
+        if lowered in memory:
+            return True
+        value_tokens = self._anchor_tokens(text)
+        memory_tokens = self._anchor_tokens(memory_context)
+        if not value_tokens or not memory_tokens:
+            return False
+        threshold = len(value_tokens) if len(value_tokens) <= 3 else max(2, (len(value_tokens) * 2 + 2) // 3)
+        return len(value_tokens & memory_tokens) >= threshold
+
+    def _anchor_tokens(self, value: object) -> set[str]:
+        text = self._coerce_optional_text(value)
+        if not text:
+            return set()
+        return {token for token in re.findall(r"[^\W_]+", text.casefold()) if len(token) >= 3}
 
     def _chain_text_value(self, value: object, *, attribute: str | None = None, clip: int | None = None) -> str | None:
         target = getattr(value, attribute, value) if attribute else value

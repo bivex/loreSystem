@@ -836,6 +836,68 @@ def test_narrative_prompt_dedupes_memory_backed_anchor_facts():
     assert "Preserve at least one relationship thread: Mara Voss trusts Iven Hale after the raid." in prompt
 
 
+def test_narrative_prompt_keeps_only_uncovered_anchor_values():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs"), SimpleNamespace(name="Lantern Decree")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+    memory_context = "\n".join([
+        "Continuity memory:",
+        "Theme anchor: harbor panic",
+        "Character-linked canon:",
+        "- Rumor: Dockside Murmurs",
+    ])
+
+    prompt = service._build_narrative_prompt(
+        request,
+        chain_result,
+        "Narrative Oracle",
+        memory_context,
+        include_systems_slice=False,
+    )
+
+    assert "Treat these rumors as established setup beats: Lantern Decree." in prompt
+    assert "Treat these rumors as established setup beats: Dockside Murmurs, Lantern Decree." not in prompt
+
+
+def test_narrative_prompt_uses_token_coverage_for_memory_backed_events():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+    memory_context = "Witnesses say the Blue Lantern Raid began at dusk and spread panic through the harbor."
+
+    prompt = service._build_narrative_prompt(
+        request,
+        chain_result,
+        "Narrative Oracle",
+        memory_context,
+        include_systems_slice=False,
+    )
+
+    assert "Escalate from these confirmed events: Blue Lantern Raid." not in prompt
+
+
 def test_narrative_draft_stabilization_backfills_sparse_payload():
     class SparseBackend:
         def generate(self, system_message: str, user_message: str) -> str:
