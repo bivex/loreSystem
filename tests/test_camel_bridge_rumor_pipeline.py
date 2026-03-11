@@ -173,11 +173,11 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
             "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
             "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
             "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
-            "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active"}],
+            "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active", "player_briefing": "Dockmaster Elra needs a runner who can beat the bells to the waterfront.", "journal_summary": "Warn the harbor before fear becomes riot.", "acceptance_text": "Carry Elra's warning to the dockworkers and light the signal pyre before curfew.", "completion_text": "The harbor answers the bells with preparation, not panic.", "failure_text": "The warning comes too late and panic claims the piers.", "reward_summary": "Bellkeeper's Reward: silver, experience, and dockside trust."}],
             "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
             "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "location_id": 99, "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
             "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"], "position": 1}],
-            "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "target_quantity": 1}],
+            "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "target_quantity": 1, "objective_hint": "Start with Iven Hale at the eastern piers."}],
             "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
             "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Practical aid for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
             "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
@@ -287,6 +287,13 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     assert len(result.flashbacks) == 1
     assert len(result.flash_forwards) == 1
     assert len(result.endings) == 1
+    assert result.quests[0].player_briefing == "Dockmaster Elra needs a runner who can beat the bells to the waterfront."
+    assert result.quests[0].journal_summary == "Warn the harbor before fear becomes riot."
+    assert result.quests[0].acceptance_text == "Carry Elra's warning to the dockworkers and light the signal pyre before curfew."
+    assert result.quests[0].completion_text == "The harbor answers the bells with preparation, not panic."
+    assert result.quests[0].failure_text == "The warning comes too late and panic claims the piers."
+    assert result.quests[0].reward_summary == "Bellkeeper's Reward: silver, experience, and dockside trust."
+    assert result.quest_objectives[0].objective_hint == "Start with Iven Hale at the eastern piers."
 
     conn = sqlite3.connect(db_path)
     try:
@@ -322,6 +329,11 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM flashbacks").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM flash_forwards").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM endings").fetchone()[0] == 1
+        quest_payload = json.loads(conn.execute("SELECT payload_json FROM quests LIMIT 1").fetchone()[0])
+        objective_payload = json.loads(conn.execute("SELECT payload_json FROM quest_objectives LIMIT 1").fetchone()[0])
+        assert quest_payload["player_briefing"] == "Dockmaster Elra needs a runner who can beat the bells to the waterfront."
+        assert quest_payload["reward_summary"] == "Bellkeeper's Reward: silver, experience, and dockside trust."
+        assert objective_payload["objective_hint"] == "Start with Iven Hale at the eastern piers."
     finally:
         conn.close()
 
@@ -340,11 +352,11 @@ def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
         "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
         "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
         "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
-        "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers"], "participant_names": ["Mara Voss"], "reward_tier_names": ["Bellkeeper's Reward"]}],
+        "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers"], "participant_names": ["Mara Voss"], "reward_tier_names": ["Bellkeeper's Reward"], "player_briefing": "Move before the bells do.", "journal_summary": "Warn the docks.", "acceptance_text": "Take the warning to the waterfront.", "completion_text": "The docks stand ready.", "failure_text": "The docks fall into panic.", "reward_summary": "Bellkeeper's Reward."}],
         "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
         "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
         "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"]}],
-        "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale"}],
+        "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "objective_hint": "Look for Iven Hale near the first mooring post."}],
         "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
         "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Reward for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
         "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
@@ -404,10 +416,17 @@ def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
     assert [affinity.category for affinity in draft.affinities] == ["trust"]
     assert [disposition.attitude for disposition in draft.dispositions] == ["unfriendly"]
     assert [quest.name for quest in draft.quests] == ["Silence Before the Bell"]
+    assert [quest.player_briefing for quest in draft.quests] == ["Move before the bells do."]
+    assert [quest.journal_summary for quest in draft.quests] == ["Warn the docks."]
+    assert [quest.acceptance_text for quest in draft.quests] == ["Take the warning to the waterfront."]
+    assert [quest.completion_text for quest in draft.quests] == ["The docks stand ready."]
+    assert [quest.failure_text for quest in draft.quests] == ["The docks fall into panic."]
+    assert [quest.reward_summary for quest in draft.quests] == ["Bellkeeper's Reward."]
     assert [chain.name for chain in draft.quest_chains] == ["Harbor Reckoning"]
     assert [giver.name for giver in draft.quest_givers] == ["Dockmaster Elra"]
     assert [node.name for node in draft.quest_nodes] == ["Warn the Docks"]
     assert [objective.description for objective in draft.quest_objectives] == ["Speak to the dockworkers"]
+    assert [objective.objective_hint for objective in draft.quest_objectives] == ["Look for Iven Hale near the first mooring post."]
     assert [prerequisite.description for prerequisite in draft.quest_prerequisites] == ["Complete Silence Before the Bell"]
     assert [reward_tier.name for reward_tier in draft.quest_reward_tiers] == ["Bellkeeper's Reward"]
     assert [tracker.player_character_name for tracker in draft.quest_trackers] == ["Mara Voss"]

@@ -40,6 +40,12 @@ class Quest:
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
+    player_briefing: Optional[str] = None
+    journal_summary: Optional[str] = None
+    acceptance_text: Optional[str] = None
+    completion_text: Optional[str] = None
+    failure_text: Optional[str] = None
+    reward_summary: Optional[str] = None
     
     def __post_init__(self):
         """Validate invariants after construction."""
@@ -73,7 +79,13 @@ class Quest:
             reward_ids=self.reward_ids,
             created_at=self.created_at,
             updated_at=Timestamp.now(),
-            version=self.version.increment()
+            version=self.version.increment(),
+            player_briefing=self.player_briefing,
+            journal_summary=self.journal_summary,
+            acceptance_text=self.acceptance_text,
+            completion_text=self.completion_text,
+            failure_text=self.failure_text,
+            reward_summary=self.reward_summary,
         )
     
     def fail(self) -> 'Quest':
@@ -93,5 +105,11 @@ class Quest:
             reward_ids=self.reward_ids,
             created_at=self.created_at,
             updated_at=Timestamp.now(),
-            version=self.version.increment()
+            version=self.version.increment(),
+            player_briefing=self.player_briefing,
+            journal_summary=self.journal_summary,
+            acceptance_text=self.acceptance_text,
+            completion_text=self.completion_text,
+            failure_text=self.failure_text,
+            reward_summary=self.reward_summary,
         )

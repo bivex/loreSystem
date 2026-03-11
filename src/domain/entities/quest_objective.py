@@ -46,6 +46,7 @@ class QuestObjective:
     created_at: Timestamp
     updated_at: Timestamp
     version: Version
+    objective_hint: Optional[str] = None
     
     def __post_init__(self):
         """Validate invariants after construction."""
@@ -82,6 +83,7 @@ class QuestObjective:
         is_optional: bool = False,
         is_hidden: bool = False,
         order_index: int = 0,
+        objective_hint: Optional[str] = None,
     ) -> 'QuestObjective':
         """
         Factory method for creating a new QuestObjective.
@@ -105,6 +107,7 @@ class QuestObjective:
             created_at=now,
             updated_at=now,
             version=Version(1),
+            objective_hint=objective_hint,
         )
     
     def update_progress(self, amount: int = 1) -> None:
@@ -154,6 +157,7 @@ class QuestObjective:
             created_at=self.created_at,
             updated_at=Timestamp.now(),
             version=self.version.increment(),
+            objective_hint=self.objective_hint,
         )
     
     def reset(self) -> 'QuestObjective':
@@ -176,6 +180,7 @@ class QuestObjective:
             created_at=self.created_at,
             updated_at=Timestamp.now(),
             version=self.version.increment(),
+            objective_hint=self.objective_hint,
         )
     
     def is_complete(self) -> bool:

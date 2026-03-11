@@ -333,6 +333,12 @@ class QuestDraft:
     participant_names: tuple[str, ...] = ()
     reward_tier_names: tuple[str, ...] = ()
     status: str = "active"
+    player_briefing: str | None = None
+    journal_summary: str | None = None
+    acceptance_text: str | None = None
+    completion_text: str | None = None
+    failure_text: str | None = None
+    reward_summary: str | None = None
 
 
 @dataclass(frozen=True)
@@ -368,6 +374,7 @@ class QuestObjectiveDraft:
     is_optional: bool = False
     is_hidden: bool = False
     order_index: int = 0
+    objective_hint: str | None = None
 
 
 @dataclass(frozen=True)
@@ -897,6 +904,12 @@ class DeterministicRumorBackend:
                     {
                         "name": "Silence Before the Bell",
                         "description": "Carry the final warning through the harbor before panic erupts.",
+                        "player_briefing": "Dockmaster Elra needs a runner who can cross the piers before fear becomes riot.",
+                        "journal_summary": "Warn the harbor before the bells turn rumor into stampede.",
+                        "acceptance_text": "Take the warning to the dockworkers and light the signal pyre before curfew shuts the waterfront.",
+                        "completion_text": "The piers answer in time, and the harbor meets the bells with preparation instead of panic.",
+                        "failure_text": "The warning arrives too late; panic spreads faster than the truth.",
+                        "reward_summary": "Bellkeeper's Reward: 25 silver and enough goodwill to keep the watch on your side.",
                         "objectives": ["Speak to the dockworkers", "Light the signal pyre"],
                         "participant_names": ["Mara Voss", "Iven Hale"],
                         "reward_tier_names": ["Bellkeeper's Reward"],
@@ -935,6 +948,7 @@ class DeterministicRumorBackend:
                         "description": "Speak to the dockworkers",
                         "objective_type": "talk",
                         "target_name": "Iven Hale",
+                        "objective_hint": "Start at the eastern piers where Iven Hale is rallying the night shift.",
                     }
                 ],
                 "quest_prerequisites": [
@@ -1133,7 +1147,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -1338,7 +1352,7 @@ class RumorBridgeService:
             "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
-            "For quests include name, description, objectives, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, and optional target_name. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. "
+            "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
             "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
@@ -1814,6 +1828,12 @@ class RumorBridgeService:
             participant_names=self._coerce_text_tuple(payload.get("participant_names") or payload.get("participants")),
             reward_tier_names=self._coerce_text_tuple(payload.get("reward_tier_names") or payload.get("rewards")),
             status=str(payload.get("status") or "active"),
+            player_briefing=self._coerce_optional_text(payload.get("player_briefing") or payload.get("briefing")),
+            journal_summary=self._coerce_optional_text(payload.get("journal_summary") or payload.get("journal_entry")),
+            acceptance_text=self._coerce_optional_text(payload.get("acceptance_text") or payload.get("accept_text")),
+            completion_text=self._coerce_optional_text(payload.get("completion_text") or payload.get("completion_summary")),
+            failure_text=self._coerce_optional_text(payload.get("failure_text") or payload.get("failure_summary")),
+            reward_summary=self._coerce_optional_text(payload.get("reward_summary") or payload.get("reward_text")),
         )
 
     def _build_quest_chain_draft(self, item: object, index: int) -> QuestChainDraft:
@@ -1855,6 +1875,7 @@ class RumorBridgeService:
             is_optional=self._coerce_bool(payload.get("is_optional", False)),
             is_hidden=self._coerce_bool(payload.get("is_hidden", False)),
             order_index=self._coerce_optional_int(payload.get("order_index")) or max(index - 1, 0),
+            objective_hint=self._coerce_optional_text(payload.get("objective_hint") or payload.get("hint")),
         )
 
     def _build_quest_reward_tier_draft(self, item: object, index: int) -> QuestRewardTierDraft:
@@ -2627,6 +2648,12 @@ class RumorBridgeService:
                     created_at=now,
                     updated_at=now,
                     version=Version(1),
+                    player_briefing=quest_draft.player_briefing,
+                    journal_summary=quest_draft.journal_summary,
+                    acceptance_text=quest_draft.acceptance_text,
+                    completion_text=quest_draft.completion_text,
+                    failure_text=quest_draft.failure_text,
+                    reward_summary=quest_draft.reward_summary,
                 ))
                 quests.append(quest)
                 quests_by_name[self._normalize_lookup_key(quest.name)] = quest
@@ -2705,6 +2732,7 @@ class RumorBridgeService:
                     is_optional=objective_draft.is_optional,
                     is_hidden=objective_draft.is_hidden,
                     order_index=objective_draft.order_index,
+                    objective_hint=objective_draft.objective_hint,
                 ))
                 quest_objectives.append(objective)
                 quest_objectives_by_description[self._normalize_lookup_key(str(objective.description))] = objective
@@ -3254,6 +3282,12 @@ class RumorBridgeService:
                 QuestDraft(
                     name="Silence Before the Bell",
                     description="Carry the final warning through the harbor before the bells trigger panic.",
+                    player_briefing="Dockmaster Elra needs someone fast and trusted to move the warning before curfew closes the piers.",
+                    journal_summary="Warn the harbor and light the signal pyre before the bells turn fear into chaos.",
+                    acceptance_text="Elra presses a sealed note into your hand. Get the dockworkers moving and light the pyre before the watch locks the waterfront.",
+                    completion_text="The warning reaches the last pier in time. Lanterns answer the bells, and the harbor stands ready instead of blind.",
+                    failure_text="The bells outrun the warning. By the time the truth spreads, the harbor is already breaking into panic.",
+                    reward_summary="Bellkeeper's Reward: 25 silver, 120 experience, and the dockworkers' trust.",
                     objectives=("Speak to the dockworkers", "Light the signal pyre"),
                     participant_names=tuple(character.name.value for character in chain_result.characters[:2]),
                     reward_tier_names=("Bellkeeper's Reward",),
@@ -3294,6 +3328,7 @@ class RumorBridgeService:
                     description="Speak to the dockworkers",
                     objective_type="talk",
                     target_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                    objective_hint="Find Iven Hale near the eastern piers; he can spread the warning faster than the town criers.",
                 ),
             ),
             quest_prerequisites=(
