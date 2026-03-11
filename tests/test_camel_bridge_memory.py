@@ -3,6 +3,7 @@ import json
 
 from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest, build_memory_service_from_env
 from src.application.integration.camel_bridge.memory import HashingTextEmbedder, LocalNgramTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
+from src.application.integration.camel_bridge.memory_benchmark import run_curated_embedding_benchmark
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
     CamelBridgeCharacterRepository,
@@ -221,3 +222,14 @@ def test_build_memory_service_from_env_supports_legacy_hash_backend(monkeypatch,
 
     assert isinstance(service.qdrant_index.embedder, HashingTextEmbedder)
     assert service.qdrant_index.embedder.dimension == 64
+
+
+def test_curated_embedding_benchmark_keeps_local_ahead_of_legacy_hash():
+    local = run_curated_embedding_benchmark(LocalNgramTextEmbedder(dimension=384), backend_name="local")
+    legacy = run_curated_embedding_benchmark(HashingTextEmbedder(dimension=96), backend_name="hash")
+
+    local_ranks = {result.label: result.first_relevant_rank for result in local.query_results}
+
+    assert local.hits_at_1 > legacy.hits_at_1
+    assert local.mean_reciprocal_rank > legacy.mean_reciprocal_rank
+    assert local_ranks["harbor_rumor"] == 1
