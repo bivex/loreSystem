@@ -143,11 +143,53 @@ def test_sqlite_memory_service_builds_exact_context_from_world_state(tmp_path):
         character_names=("Mara Voss", "Iven Hale"),
     )
 
-    assert "Known canon from SQLite:" in context
+    assert "Theme anchor: harbor panic" in context
+    assert "Focus characters: Mara Voss, Iven Hale" in context
+    assert "Character-linked canon:" in context
+    assert "World-state canon:" in context
     assert "Character: Mara Voss" in context
     assert "Rumor: Dockside Murmurs" in context or "Rumor: Lantern Decree" in context
     assert "Event: Blue Lantern Raid" in context
     assert "Relationship: Mara Voss" in context
+
+
+def test_memory_service_builds_structured_continuity_packet():
+    class StubReader:
+        def load_recent_documents(self, tenant_id, world_id, *, character_names=(), limit_per_type=3):
+            return [
+                MemoryDocument("c1", tenant_id, world_id, "character", "1", "Character: Mara Voss — role=scout; backstory: She tracks the bells.", ("Mara Voss",)),
+                MemoryDocument("e1", tenant_id, world_id, "event", "2", "Event: Blue Lantern Raid — Wardens sweep the harbor after the bells ring."),
+                MemoryDocument("r1", tenant_id, world_id, "relationship", "3", "Relationship: Mara Voss → Iven Hale — Trust forged under eclipse pressure.", ("Mara Voss", "Iven Hale")),
+            ]
+
+    class StubIndex:
+        def search(self, query_text, *, tenant_id, world_id, limit):
+            return [
+                MemoryDocument("q1", tenant_id, world_id, "quest", "4", "Quest: Ash Bell Ledger — Recover the ledger before dawn.", ("Mara Voss",)),
+                MemoryDocument("w1", tenant_id, world_id, "world_event", "5", "World Event: Eclipse Watch — Bell towers go silent across the coast."),
+            ]
+
+    context = LoreMemoryService(StubReader(), qdrant_index=StubIndex(), exact_limit=10, semantic_limit=10).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+
+    assert "Continuity memory:" in context
+    assert "Theme anchor: harbor panic" in context
+    assert "Current request: Citizens fear the eclipse." in context
+    assert "Focus characters: Mara Voss, Iven Hale" in context
+    assert "Character-linked canon:" in context
+    assert "- Character: Mara Voss" in context
+    assert "- Relationship: Mara Voss → Iven Hale" in context
+    assert "World-state canon:" in context
+    assert "- Event: Blue Lantern Raid" in context
+    assert "Character-linked semantic recalls:" in context
+    assert "- Quest: Ash Bell Ledger" in context
+    assert "World-state semantic recalls:" in context
+    assert "- World Event: Eclipse Watch" in context
 
 
 def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id(tmp_path):

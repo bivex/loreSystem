@@ -1,11 +1,12 @@
 import json
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
-from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend
+from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend, RumorChainResult
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
@@ -722,6 +723,132 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         assert objective_payload["objective_hint"] == "Start with Iven Hale at the eastern piers."
     finally:
         conn.close()
+
+
+def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
+    class RecordingBackend:
+        def __init__(self):
+            self.calls: list[tuple[str, str]] = []
+
+        def generate(self, system_message: str, user_message: str) -> str:
+            self.calls.append((system_message, user_message))
+            return "{}"
+
+    backend = RecordingBackend()
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=backend)
+    request = RumorGenerationRequest(tenant_id=1, world_id=1, theme="harbor panic", context="Citizens fear the next eclipse.")
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs")],
+        characters=[],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+
+    service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=False)
+
+    narrative_system_message, narrative_prompt = backend.calls[-1]
+    assert "quest_trackers" in narrative_system_message
+    assert "items, inventories" not in narrative_system_message
+    assert "For quests include" in narrative_prompt
+    assert "For items include" not in narrative_prompt
+
+    service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=True)
+
+    systems_system_message, systems_prompt = backend.calls[-1]
+    assert "items, inventories" in systems_system_message
+    assert "For items include" in systems_prompt
+
+
+def test_narrative_prompt_includes_deterministic_anchors():
+    class RecordingBackend:
+        def __init__(self):
+            self.calls: list[tuple[str, str]] = []
+
+        def generate(self, system_message: str, user_message: str) -> str:
+            self.calls.append((system_message, user_message))
+            return "{}"
+
+    backend = RecordingBackend()
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=backend)
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs"), SimpleNamespace(name="Lantern Decree")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+
+    service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=False)
+
+    _, prompt = backend.calls[-1]
+    assert "Deterministic narrative anchors:" in prompt
+    assert "Keep the main throughline centered on the theme: harbor panic." in prompt
+    assert "Keep these characters central: Mara Voss, Iven Hale." in prompt
+    assert "Treat these rumors as established setup beats: Dockside Murmurs, Lantern Decree." in prompt
+    assert "Escalate from these confirmed events: Blue Lantern Raid." in prompt
+    assert "Preserve at least one relationship thread: Mara Voss trusts Iven Hale after the raid." in prompt
+
+
+def test_narrative_draft_stabilization_backfills_sparse_payload():
+    class SparseBackend:
+        def generate(self, system_message: str, user_message: str) -> str:
+            return "{}"
+
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=SparseBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+
+    draft = service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=False)
+
+    assert draft.story.content.startswith("Citizens fear the next eclipse.")
+    assert len(draft.acts) == 3
+    assert draft.acts[0].key_events == ("Dockside Murmurs",)
+    assert len(draft.chapters) == 3
+    assert len(draft.episodes) == 3
+    assert draft.storylines[0].event_names == ("Blue Lantern Raid",)
+    assert "Dockside Murmurs" in draft.prologue.description
+
+
+def test_fallback_narrative_structure_is_grounded_on_chain_result():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[SimpleNamespace(name="Dockside Murmurs")],
+        characters=[SimpleNamespace(name="Mara Voss"), SimpleNamespace(name="Iven Hale")],
+        events=[SimpleNamespace(name="Blue Lantern Raid")],
+        relationships=[SimpleNamespace(description="Mara Voss trusts Iven Hale after the raid.")],
+    )
+
+    draft = service._fallback_narrative_structure_draft(request, chain_result)
+
+    assert draft.story.description == "The main story behind harbor panic, following Mara Voss through Blue Lantern Raid."
+    assert draft.storylines[0].event_names == ("Blue Lantern Raid",)
+    assert draft.acts[2].key_events == ("Mara Voss trusts Iven Hale after the raid.",)
+    assert draft.quests[0].participant_names == ("Mara Voss", "Iven Hale")
+    assert draft.flashbacks[0].trigger_event_name == "Blue Lantern Raid"
 
 
 def test_narrative_parser_accepts_groq_gpt_oss_live_shape():

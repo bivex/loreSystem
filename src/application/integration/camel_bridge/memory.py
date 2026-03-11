@@ -620,11 +620,12 @@ class LoreMemoryService:
     indexed_types: tuple[str, ...] = field(default_factory=lambda: DEFAULT_INDEXED_MEMORY_TYPES)
 
     def build_prompt_context(self, *, tenant_id: int, world_id: int, theme: str, context: str = "", character_names: Sequence[str] = ()) -> str:
+        focus_names = _normalize_name_list(character_names)
         exact_docs = self.sqlite_reader.load_recent_documents(tenant_id, world_id, character_names=character_names)
         exact_docs = [doc for doc in exact_docs if doc.entity_type in self.indexed_types][: self.exact_limit]
         semantic_docs: list[MemoryDocument] = []
         if self.qdrant_index:
-            query_text = f"Theme: {theme}\nContext: {context}\nCharacters: {', '.join(character_names)}"
+            query_text = f"Theme: {theme}\nContext: {context}\nCharacters: {', '.join(focus_names)}"
             seen = {(doc.entity_type, doc.entity_id) for doc in exact_docs}
             semantic_docs = [
                 doc for doc in self.qdrant_index.search(query_text, tenant_id=tenant_id, world_id=world_id, limit=self.semantic_limit * 2)
@@ -633,14 +634,40 @@ class LoreMemoryService:
         if not exact_docs and not semantic_docs:
             return ""
         lines = ["Continuity memory:"]
-        if exact_docs:
-            lines.append("Known canon from SQLite:")
-            lines.extend(f"- {doc.summary_text}" for doc in exact_docs)
-        if semantic_docs:
-            lines.append("Semantically related recalls from Qdrant:")
-            lines.extend(f"- {doc.summary_text}" for doc in semantic_docs)
-        lines.append("Use this memory to stay consistent, avoid duplicates, and continue existing lore threads.")
+        if theme.strip():
+            lines.append(f"Theme anchor: {_trim(theme, 140)}")
+        if context.strip():
+            lines.append(f"Current request: {_trim(context, 180)}")
+        if focus_names:
+            lines.append(f"Focus characters: {', '.join(focus_names)}")
+        character_exact, world_exact = self._partition_prompt_docs(exact_docs, focus_names)
+        character_semantic, world_semantic = self._partition_prompt_docs(semantic_docs, focus_names)
+        self._extend_prompt_section(lines, "Character-linked canon:", character_exact)
+        self._extend_prompt_section(lines, "World-state canon:", world_exact)
+        self._extend_prompt_section(lines, "Character-linked semantic recalls:", character_semantic)
+        self._extend_prompt_section(lines, "World-state semantic recalls:", world_semantic)
+        lines.append("Use this memory to preserve named characters, established events/relationships, and unresolved lore threads. Continue canon instead of replacing it.")
         return "\n".join(lines)
+
+    def _partition_prompt_docs(self, docs: Sequence[MemoryDocument], focus_names: Sequence[str]) -> tuple[list[MemoryDocument], list[MemoryDocument]]:
+        requested = {name.casefold() for name in _normalize_name_list(focus_names)}
+        if not requested:
+            return [], list(docs)
+        character_linked: list[MemoryDocument] = []
+        world_state: list[MemoryDocument] = []
+        for doc in docs:
+            doc_names = {name.casefold() for name in doc.character_names}
+            if doc_names & requested:
+                character_linked.append(doc)
+            else:
+                world_state.append(doc)
+        return character_linked, world_state
+
+    def _extend_prompt_section(self, lines: list[str], heading: str, docs: Sequence[MemoryDocument]) -> None:
+        if not docs:
+            return
+        lines.append(heading)
+        lines.extend(f"- {doc.summary_text}" for doc in docs)
 
     def index_world_snapshot(self, *, tenant_id: int, world_id: int) -> int:
         if not self.qdrant_index:

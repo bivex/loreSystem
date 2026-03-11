@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import json
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Callable, Generic, Protocol, Sequence, TypeVar
 from uuid import uuid4
@@ -3099,9 +3099,26 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
     "Bond Archivist",
     "Infer one character relationship from the rumors and event as compact JSON with character_from_name, character_to_name, description, relationship_type, relationship_level, is_mutual.",
 )
+NARRATIVE_STRUCTURE_KEYS = (
+    "campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, "
+    "affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, "
+    "quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, "
+    "alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings"
+)
+SYSTEMS_SLICE_KEYS = (
+    "items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, "
+    "ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, "
+    "experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, "
+    "dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, "
+    "mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections"
+)
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+    f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+)
+DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT = (
+    "Saga Architect",
+    f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -3342,7 +3359,12 @@ class RumorBridgeService:
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
         if include_narrative_structure or include_systems_slice:
-            draft = self._generate_enriched_structure_draft(request, result, memory_context)
+            draft = self._generate_enriched_structure_draft(
+                request,
+                result,
+                memory_context,
+                include_systems_slice=include_systems_slice,
+            )
             if include_narrative_structure:
                 result = self._persist_narrative_structure(request, result, draft)
             if include_systems_slice:
@@ -3361,7 +3383,12 @@ class RumorBridgeService:
             self.epilogue_repository,
         ]):
             raise ValueError("Campaign/story repositories are required for narrative structure generation")
-        draft = self._generate_enriched_structure_draft(request, chain_result, self._memory_context_for(request))
+        draft = self._generate_enriched_structure_draft(
+            request,
+            chain_result,
+            self._memory_context_for(request),
+            include_systems_slice=False,
+        )
         return self._persist_narrative_structure(request, chain_result, draft)
 
     @contextmanager
@@ -3465,15 +3492,38 @@ class RumorBridgeService:
         ):
             return self._persist_systems_slice_unbatched(request, chain_result, draft)
 
-    def _generate_enriched_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult, memory_context: str = "") -> NarrativeStructureDraft:
+    def _generate_enriched_structure_draft(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        memory_context: str = "",
+        *,
+        include_systems_slice: bool = False,
+    ) -> NarrativeStructureDraft:
         try:
-            agent_name, system_message = DEFAULT_NARRATIVE_AGENT_PROMPT
-            raw = self.backend.generate(system_message, self._build_narrative_prompt(request, chain_result, agent_name, memory_context))
-            return self._parse_narrative_structure(raw)
+            agent_name, system_message = self._narrative_agent_prompt(include_systems_slice)
+            raw = self.backend.generate(
+                system_message,
+                self._build_narrative_prompt(
+                    request,
+                    chain_result,
+                    agent_name,
+                    memory_context,
+                    include_systems_slice=include_systems_slice,
+                ),
+            )
+            return self._stabilize_narrative_structure_draft(
+                request,
+                chain_result,
+                self._parse_narrative_structure(raw),
+            )
         except Exception:
             if not self.allow_fallback:
                 raise
             return self._fallback_narrative_structure_draft(request, chain_result)
+
+    def _narrative_agent_prompt(self, include_systems_slice: bool) -> tuple[str, str]:
+        return DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT if include_systems_slice else DEFAULT_NARRATIVE_AGENT_PROMPT
 
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
         prompt = (
@@ -3484,7 +3534,15 @@ class RumorBridgeService:
         )
         return self._append_memory_context(prompt, memory_context)
 
-    def _build_narrative_prompt(self, request: RumorGenerationRequest, chain_result: RumorChainResult, agent_name: str, memory_context: str = "") -> str:
+    def _build_narrative_prompt(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        agent_name: str,
+        memory_context: str = "",
+        *,
+        include_systems_slice: bool = False,
+    ) -> str:
         prompt = (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
@@ -3492,17 +3550,191 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            f"Return one JSON object with {self._narrative_scope_keys(include_systems_slice)}. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
-            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. For dungeons include name, description, difficulty, optional max_players, optional min_level, optional boss_names, has_lockout, and optional lockout_duration. For raids include name, description, difficulty, optional max_players, optional min_players, optional min_level, optional boss_names, and has_weekly_lockout. For world_events include name, description, event_type, severity, optional duration_days, optional affected_location_names, and is_active. For arenas include name, description, match_type, optional team_size, optional max_teams, optional min_level, and has_ranked_mode. For instances include name, description, difficulty, optional max_players, optional min_level, optional recommended_level, and optional time_limit. For open_world_zones include name, description, biome, optional min_level, optional max_level, optional player_cap, optional poi_names, and has_dynamic_events. "
-            "For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For legendary_weapons include name, description, weapon_type, optional damage, rarity, and optional special_ability. For mythical_armors include name, description, armor_type, optional defense, rarity, and optional special_protection. For divine_items include name, description, item_type, optional power, rarity, optional deity_name, optional domain, and optional divine_ability. For cursed_items include name, description, item_type, optional power, curse_type, rarity, optional benefit, optional curse_effect, and optional risk_level. For artifact_sets include name, description, set_type, total_pieces, rarity, and optional set_bonus. For relic_collections include name, description, collection_type, total_relics, rarity, optional collection_power, and optional completion_reward. For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
+            "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
         )
+        prompt += self._narrative_anchor_block(request, chain_result)
+        if include_systems_slice:
+            prompt += self._narrative_systems_instructions()
         return self._append_memory_context(prompt, memory_context)
+
+    def _narrative_scope_keys(self, include_systems_slice: bool) -> str:
+        if include_systems_slice:
+            return f"{NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}"
+        return NARRATIVE_STRUCTURE_KEYS
+
+    def _narrative_systems_instructions(self) -> str:
+        return (
+            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. For dungeons include name, description, difficulty, optional max_players, optional min_level, optional boss_names, has_lockout, and optional lockout_duration. For raids include name, description, difficulty, optional max_players, optional min_players, optional min_level, optional boss_names, and has_weekly_lockout. For world_events include name, description, event_type, severity, optional duration_days, optional affected_location_names, and is_active. For arenas include name, description, match_type, optional team_size, optional max_teams, optional min_level, and has_ranked_mode. For instances include name, description, difficulty, optional max_players, optional min_level, optional recommended_level, and optional time_limit. For open_world_zones include name, description, biome, optional min_level, optional max_level, optional player_cap, optional poi_names, and has_dynamic_events. For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For legendary_weapons include name, description, weapon_type, optional damage, rarity, and optional special_ability. For mythical_armors include name, description, armor_type, optional defense, rarity, and optional special_protection. For divine_items include name, description, item_type, optional power, rarity, optional deity_name, optional domain, and optional divine_ability. For cursed_items include name, description, item_type, optional power, curse_type, rarity, optional benefit, optional curse_effect, and optional risk_level. For artifact_sets include name, description, set_type, total_pieces, rarity, and optional set_bonus. For relic_collections include name, description, collection_type, total_relics, rarity, optional collection_power, and optional completion_reward. "
+        )
+
+    def _narrative_anchor_block(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> str:
+        cast_names = list(self._grounded_character_names(request, chain_result))
+        rumor_names = list(self._grounded_rumor_names(chain_result))
+        event_names = list(self._grounded_event_names(chain_result))
+        relationship_threads = list(self._grounded_relationship_threads(chain_result))
+
+        lines = ["\nDeterministic narrative anchors:", f"- Keep the main throughline centered on the theme: {request.theme}."]
+        if cast_names:
+            lines.append(f"- Keep these characters central: {', '.join(cast_names[:4])}.")
+        if rumor_names:
+            lines.append(f"- Treat these rumors as established setup beats: {', '.join(rumor_names[:3])}.")
+        if event_names:
+            lines.append(f"- Escalate from these confirmed events: {', '.join(event_names[:3])}.")
+        if relationship_threads:
+            lines.append(f"- Preserve at least one relationship thread: {relationship_threads[0]}")
+        lines.append("- Prefer one coherent campaign/story spine over disconnected subplots.")
+        return "\n".join(lines) + "\n"
+
+    def _chain_text_value(self, value: object, *, attribute: str | None = None, clip: int | None = None) -> str | None:
+        target = getattr(value, attribute, value) if attribute else value
+        target = getattr(target, "value", target)
+        text = self._coerce_optional_text(target)
+        if not text:
+            return None
+        if clip and len(text) > clip:
+            return text[: clip - 1].rstrip() + "…"
+        return text
+
+    def _unique_text_tuple(self, values: Sequence[object]) -> tuple[str, ...]:
+        result: list[str] = []
+        seen: set[str] = set()
+        for value in values:
+            text = self._coerce_optional_text(value)
+            if not text:
+                continue
+            lowered = text.casefold()
+            if lowered in seen:
+                continue
+            seen.add(lowered)
+            result.append(text)
+        return tuple(result)
+
+    def _grounded_character_names(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> tuple[str, ...]:
+        values: list[object] = list(request.character_names)
+        values.extend(self._chain_text_value(character, attribute="name") for character in chain_result.characters)
+        return self._unique_text_tuple(values)
+
+    def _grounded_rumor_names(self, chain_result: RumorChainResult) -> tuple[str, ...]:
+        return self._unique_text_tuple(self._chain_text_value(rumor, attribute="name") for rumor in chain_result.rumors)
+
+    def _grounded_event_names(self, chain_result: RumorChainResult) -> tuple[str, ...]:
+        return self._unique_text_tuple(self._chain_text_value(event, attribute="name") for event in chain_result.events)
+
+    def _grounded_relationship_threads(self, chain_result: RumorChainResult) -> tuple[str, ...]:
+        return self._unique_text_tuple(
+            self._chain_text_value(relationship, attribute="description", clip=160)
+            for relationship in chain_result.relationships
+        )
+
+    def _grounded_story_seed(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> str:
+        rumors = self._grounded_rumor_names(chain_result)
+        events = self._grounded_event_names(chain_result)
+        relationships = self._grounded_relationship_threads(chain_result)
+        parts: list[str] = []
+        if self._coerce_optional_text(request.context):
+            parts.append(request.context.strip())
+        if rumors:
+            parts.append(f"Established rumors like {', '.join(rumors[:2])} push the setting toward open consequence.")
+        if events:
+            parts.append(f"Confirmed events escalate into {', '.join(events[:2])}.")
+        if relationships:
+            parts.append(f"The emotional throughline stays anchored in {relationships[0]}")
+        return " ".join(parts) or f"{request.theme.title()} grows from whispers into public consequence."
+
+    def _prefer_grounded_text(self, current: object, fallback: str, *, generic: Sequence[str] = ()) -> str:
+        text = self._coerce_optional_text(current)
+        if not text:
+            return fallback
+        generic_keys = {item.casefold() for item in generic}
+        if text.casefold() in generic_keys:
+            return fallback
+        return text
+
+    def _top_up_drafts(self, drafts: Sequence[object], fallback: Sequence[object]) -> tuple[object, ...]:
+        if drafts:
+            return tuple(drafts)
+        return tuple(fallback)
+
+    def _stabilize_narrative_structure_draft(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        draft: NarrativeStructureDraft,
+    ) -> NarrativeStructureDraft:
+        fallback = self._fallback_narrative_structure_draft(request, chain_result)
+        campaign = replace(
+            draft.campaign,
+            title=self._prefer_grounded_text(draft.campaign.title, fallback.campaign.title, generic=("Harbor Campaign",)),
+            description=self._prefer_grounded_text(draft.campaign.description, fallback.campaign.description, generic=("A campaign born from mounting unrest.",)),
+        )
+        story = replace(
+            draft.story,
+            name=self._prefer_grounded_text(draft.story.name, fallback.story.name, generic=("Harbor Chronicle",)),
+            description=self._prefer_grounded_text(draft.story.description, fallback.story.description, generic=("A central tale rising from the rumors.",)),
+            content=self._prefer_grounded_text(draft.story.content, fallback.story.content, generic=("Rumors transform into a structured narrative arc.",)),
+        )
+        prologue = draft.prologue
+        if prologue is None:
+            prologue = fallback.prologue
+        elif fallback.prologue is not None:
+            prologue = replace(
+                prologue,
+                description=self._prefer_grounded_text(prologue.description, fallback.prologue.description, generic=("The opening conditions of the unrest.",)),
+                content=self._prefer_grounded_text(prologue.content, fallback.prologue.content, generic=("Before the first public confrontation, the city learns to fear silence.",)),
+            )
+        epilogue = draft.epilogue
+        if epilogue is None:
+            epilogue = fallback.epilogue
+        elif fallback.epilogue is not None:
+            epilogue = replace(
+                epilogue,
+                description=self._prefer_grounded_text(epilogue.description, fallback.epilogue.description, generic=("The closing aftermath.",)),
+                content=self._prefer_grounded_text(epilogue.content, fallback.epilogue.content, generic=("The city records the cost of the unrest.",)),
+            )
+        acts = self._top_up_drafts(draft.acts, fallback.acts)
+        acts = tuple(
+            replace(
+                act,
+                description=self._prefer_grounded_text(act.description, fallback.acts[min(index, len(fallback.acts) - 1)].description, generic=("A major dramatic phase in the campaign.",)),
+                key_events=act.key_events or fallback.acts[min(index, len(fallback.acts) - 1)].key_events,
+            )
+            for index, act in enumerate(acts)
+        )
+        chapters = self._top_up_drafts(draft.chapters, fallback.chapters)
+        chapters = tuple(
+            replace(
+                chapter,
+                description=self._prefer_grounded_text(chapter.description, fallback.chapters[min(index, len(fallback.chapters) - 1)].description, generic=("A chapter that escalates the campaign story.",)),
+                act_numbers=chapter.act_numbers or fallback.chapters[min(index, len(fallback.chapters) - 1)].act_numbers,
+            )
+            for index, chapter in enumerate(chapters)
+        )
+        episodes = self._top_up_drafts(draft.episodes, fallback.episodes)
+        episodes = tuple(
+            replace(
+                episode,
+                description=self._prefer_grounded_text(episode.description, fallback.episodes[min(index, len(fallback.episodes) - 1)].description, generic=("A playable story beat inside the chapter.",)),
+                chapter_number=(episode.chapter_number if 1 <= episode.chapter_number <= max(len(chapters), 1) else fallback.episodes[min(index, len(fallback.episodes) - 1)].chapter_number),
+            )
+            for index, episode in enumerate(episodes)
+        )
+        storylines = self._top_up_drafts(draft.storylines, fallback.storylines)
+        storylines = tuple(
+            replace(
+                storyline,
+                description=self._prefer_grounded_text(storyline.description, fallback.storylines[min(index, len(fallback.storylines) - 1)].description, generic=("A storyline that threads rumors into a larger arc.",)),
+                event_names=storyline.event_names or fallback.storylines[min(index, len(fallback.storylines) - 1)].event_names,
+            )
+            for index, storyline in enumerate(storylines)
+        )
+        return replace(draft, campaign=campaign, story=story, prologue=prologue, epilogue=epilogue, acts=acts, chapters=chapters, episodes=episodes, storylines=storylines)
 
     def _build_event_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], memory_context: str = "") -> str:
         rumor_lines = "\n".join(f"- {rumor.name}: {rumor.description}" for rumor in rumors)
@@ -8061,31 +8293,41 @@ class RumorBridgeService:
 
     def _fallback_narrative_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> NarrativeStructureDraft:
         theme = request.theme.strip().title() or "Harbor"
+        character_names = self._grounded_character_names(request, chain_result)
+        rumor_names = self._grounded_rumor_names(chain_result)
+        event_names = self._grounded_event_names(chain_result)
+        relationship_threads = self._grounded_relationship_threads(chain_result)
+        primary_character = character_names[0] if character_names else "Mara Voss"
+        secondary_character = character_names[1] if len(character_names) > 1 else "Iven Hale"
+        primary_rumor = rumor_names[0] if rumor_names else f"{theme} Whisper"
+        primary_event = event_names[0] if event_names else f"{theme} Rising"
+        primary_thread = relationship_threads[0] if relationship_threads else f"{primary_character} and {secondary_character} stay bound by the unrest."
+        story_seed = self._grounded_story_seed(request, chain_result)
         return NarrativeStructureDraft(
-            campaign=CampaignDraft(title=f"{theme} Campaign", description=f"A campaign shaped by {request.theme}.", campaign_type="main_story", recommended_level=5, estimated_hours=8),
-            story=StoryDraft(name=f"{theme} Chronicle", description=f"The main story behind {request.theme}.", content=f"{request.context or request.theme} evolves from whispered danger into public consequence.", story_type="linear"),
-            prologue=PrologueDraft(title="Before the First Whisper", description="The opening setup.", content=f"Before the first clash, {request.theme} already haunts the city.", prologue_type="world_building", estimated_minutes=10),
+            campaign=CampaignDraft(title=f"{theme} Campaign", description=f"A campaign shaped by {request.theme} as {primary_rumor} gives way to {primary_event}.", campaign_type="main_story", recommended_level=5, estimated_hours=8),
+            story=StoryDraft(name=f"{theme} Chronicle", description=f"The main story behind {request.theme}, following {primary_character} through {primary_event}.", content=story_seed, story_type="linear"),
+            prologue=PrologueDraft(title="Before the First Whisper", description=f"The opening setup around {primary_rumor}.", content=f"Before the first clash, {primary_character} hears {primary_rumor.lower()} while {request.theme} tightens across the city.", prologue_type="world_building", estimated_minutes=10),
             acts=(
-                ActDraft(title="Act I - Setup", description="Tension gathers.", act_number=1, act_type="setup", structure="three_act", key_events=tuple(r.name for r in chain_result.rumors[:1]), estimated_minutes=30),
-                ActDraft(title="Act II - Confrontation", description="Conflict erupts.", act_number=2, act_type="rising_action", structure="three_act", key_events=tuple(e.name for e in chain_result.events[:1]), estimated_minutes=40),
-                ActDraft(title="Act III - Resolution", description="Consequences settle.", act_number=3, act_type="resolution", structure="three_act", key_events=tuple(r.description for r in chain_result.relationships[:1]), estimated_minutes=25),
+                ActDraft(title="Act I - Setup", description=f"{primary_rumor} turns background fear into visible tension.", act_number=1, act_type="setup", structure="three_act", key_events=tuple(rumor_names[:1]) or (primary_rumor,), estimated_minutes=30),
+                ActDraft(title="Act II - Confrontation", description=f"{primary_event} forces the conflict into the open.", act_number=2, act_type="rising_action", structure="three_act", key_events=tuple(event_names[:1]) or (primary_event,), estimated_minutes=40),
+                ActDraft(title="Act III - Resolution", description=f"The fallout settles around {primary_thread}", act_number=3, act_type="resolution", structure="three_act", key_events=tuple(relationship_threads[:1]) or (primary_thread,), estimated_minutes=25),
             ),
             chapters=(
-                ChapterDraft(title="Chapter 1", description="The first omen.", sequence_number=1, act_numbers=(1,), chapter_type="introduction", estimated_minutes=20),
-                ChapterDraft(title="Chapter 2", description="The harbor ignites.", sequence_number=2, act_numbers=(2,), chapter_type="climax", estimated_minutes=25),
-                ChapterDraft(title="Chapter 3", description="Oaths remain.", sequence_number=3, act_numbers=(3,), chapter_type="resolution", estimated_minutes=20),
+                ChapterDraft(title="Chapter 1", description=f"{primary_character} catches the first hints of {primary_rumor}.", sequence_number=1, act_numbers=(1,), chapter_type="introduction", estimated_minutes=20),
+                ChapterDraft(title="Chapter 2", description=f"{primary_event} tears through the harbor's fragile calm.", sequence_number=2, act_numbers=(2,), chapter_type="climax", estimated_minutes=25),
+                ChapterDraft(title="Chapter 3", description=f"The city absorbs the cost of {primary_thread}", sequence_number=3, act_numbers=(3,), chapter_type="resolution", estimated_minutes=20),
             ),
             episodes=(
-                EpisodeDraft(title="Episode 1", description="A clue surfaces.", sequence_number=1, chapter_number=1, episode_type="narrative", estimated_minutes=12),
-                EpisodeDraft(title="Episode 2", description="Crowds surge.", sequence_number=2, chapter_number=2, episode_type="narrative", estimated_minutes=15),
-                EpisodeDraft(title="Episode 3", description="Alliances harden.", sequence_number=3, chapter_number=3, episode_type="narrative", estimated_minutes=12),
+                EpisodeDraft(title="Episode 1", description=f"{primary_rumor} stops sounding harmless.", sequence_number=1, chapter_number=1, episode_type="narrative", estimated_minutes=12),
+                EpisodeDraft(title="Episode 2", description=f"The chase tightens around {primary_event}.", sequence_number=2, chapter_number=2, episode_type="narrative", estimated_minutes=15),
+                EpisodeDraft(title="Episode 3", description=f"{primary_character} and {secondary_character} decide what truth survives.", sequence_number=3, chapter_number=3, episode_type="narrative", estimated_minutes=12),
             ),
             storylines=(
-                StorylineDraft(name=f"{theme} Main Line", description=f"A storyline following how {request.theme} reshapes public order.", storyline_type="main"),
+                StorylineDraft(name=f"{theme} Main Line", description=f"A storyline that carries {primary_rumor} forward into {primary_event}.", storyline_type="main", event_names=tuple(event_names[:2])),
             ),
             character_variants=(
                 CharacterVariantDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name="Bellwarden Disguise",
                     description="A covert look used to move through the harbor without drawing notice.",
                     variant_type="costume",
@@ -8094,7 +8336,7 @@ class RumorBridgeService:
             ),
             character_evolutions=(
                 CharacterEvolutionDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     current_stage="advanced",
                     evolution_type="story_unlocked",
                     previous_stage="intermediate",
@@ -8106,7 +8348,7 @@ class RumorBridgeService:
             ),
             character_profile_entries=(
                 CharacterProfileEntryDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     field_name="fear",
                     field_value="Hears the harbor bells in every silence.",
                     is_public=False,
@@ -8116,7 +8358,7 @@ class RumorBridgeService:
                 MotionCaptureDraft(
                     name="Harbor Warning Gesture",
                     file_path="captures/harbor_warning.fbx",
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     actor_name="Talan Reed",
                     animation_type="social",
                     status="completed",
@@ -8126,21 +8368,21 @@ class RumorBridgeService:
                 VoiceActorDraft(
                     name="Talan Reed",
                     language="Common",
-                    character_names=((chain_result.characters[0].name.value,) if chain_result.characters else ("Mara Voss",)),
+                    character_names=(primary_character,),
                     status="active",
                 ),
             ),
             affinities=(
                 AffinityDraft(
-                    source_name=(chain_result.characters[0].name.value if len(chain_result.characters) > 0 else "Mara Voss"),
-                    target_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                    source_name=primary_character,
+                    target_name=secondary_character,
                     category="trust",
                     value=0.8,
                 ),
             ),
             dispositions=(
                 DispositionDraft(
-                    entity_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    entity_name=primary_character,
                     target_type="faction",
                     target_value="Harbor Guard",
                     attitude="unfriendly",
@@ -8158,7 +8400,7 @@ class RumorBridgeService:
                     failure_text="The bells outrun the warning. By the time the truth spreads, the harbor is already breaking into panic.",
                     reward_summary="Bellkeeper's Reward: 25 silver, 120 experience, and the dockworkers' trust.",
                     objectives=("Speak to the dockworkers", "Light the signal pyre"),
-                    participant_names=tuple(character.name.value for character in chain_result.characters[:2]),
+                    participant_names=tuple(character_names[:2]),
                     reward_tier_names=("Bellkeeper's Reward",),
                 ),
             ),
@@ -8174,7 +8416,7 @@ class RumorBridgeService:
                 QuestGiverDraft(
                     name="Dockmaster Elra",
                     description="A veteran dockmaster who turns rumor into urgent errands.",
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     quest_chain_names=("Harbor Reckoning",),
                     quest_node_names=("Warn the Docks",),
                     greeting_message="If the bells ring again, we lose the night.",
@@ -8196,7 +8438,7 @@ class RumorBridgeService:
                     quest_node_name="Warn the Docks",
                     description="Speak to the dockworkers",
                     objective_type="talk",
-                    target_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                    target_name=secondary_character,
                     objective_hint="Find Iven Hale near the eastern piers; he can spread the warning faster than the town criers.",
                 ),
             ),
@@ -8220,7 +8462,7 @@ class RumorBridgeService:
             ),
             quest_trackers=(
                 QuestTrackerDraft(
-                    player_character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    player_character_name=primary_character,
                     active_chain_names=("Harbor Reckoning",),
                     active_node_names=("Warn the Docks",),
                     objective_progress={"Speak to the dockworkers": 1},
@@ -8242,7 +8484,7 @@ class RumorBridgeService:
             ),
             inventories=(
                 InventoryDraft(
-                    owner_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    owner_name=primary_character,
                     capacity=24,
                     gold=180,
                     slots=(
@@ -8430,7 +8672,7 @@ class RumorBridgeService:
             ),
             masteries=(
                 MasteryDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name=f"{theme} Tactics",
                     description=f"Battlefield instincts sharpened by surviving {request.theme}.",
                     category="combat",
@@ -8447,7 +8689,7 @@ class RumorBridgeService:
             ),
             skills=(
                 SkillDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name=f"{theme} Feint",
                     description=f"A combat technique improvised during {request.theme}.",
                     skill_type="active",
@@ -8467,7 +8709,7 @@ class RumorBridgeService:
             ),
             perks=(
                 PerkDraft(
-                    character_name=(chain_result.characters[-1].name.value if chain_result.characters else "Iven Hale"),
+                    character_name=secondary_character,
                     name=f"{theme} Broker's Edge",
                     description=f"A passive edge earned while surviving {request.theme}.",
                     perk_type="economic",
@@ -8483,7 +8725,7 @@ class RumorBridgeService:
             ),
             traits=(
                 TraitDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name="Bellwatch Resolve",
                     description="The harbor bells trained Mara into a sleepless guardian.",
                     category="charisma",
@@ -8500,7 +8742,7 @@ class RumorBridgeService:
             ),
             attributes=(
                 AttributeDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name="Harbor Focus",
                     description="The harbor bells sharpen Mara's tactical judgment.",
                     attribute_type="mind",
@@ -8518,7 +8760,7 @@ class RumorBridgeService:
             ),
             talent_trees=(
                 TalentTreeDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     name=f"{theme} Doctrine",
                     description=f"A branching doctrine improvised during {request.theme}.",
                     talent_tree_type="specialization",
@@ -8585,7 +8827,7 @@ class RumorBridgeService:
             ),
             level_ups=(
                 LevelUpDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     level_up_type="mastery",
                     old_level=9,
                     new_level=10,
@@ -8599,7 +8841,7 @@ class RumorBridgeService:
             ),
             experiences=(
                 ExperienceDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     experience_type="questing",
                     total_experience=1840,
                     current_level=10,
@@ -8617,14 +8859,14 @@ class RumorBridgeService:
                     time_point=1,
                     character_states=(
                         ProgressionCharacterStateDraft(
-                            character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                            character_name=primary_character,
                             level=10,
                             character_class="knight",
                             experience=1840,
                             stats={"attack": 18, "defense": 16, "agility": 12},
                         ),
                         ProgressionCharacterStateDraft(
-                            character_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                            character_name=secondary_character,
                             level=8,
                             character_class="assassin",
                             experience=1320,
@@ -8635,7 +8877,7 @@ class RumorBridgeService:
             ),
             progression_events=(
                 ProgressionEventDraft(
-                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    character_name=primary_character,
                     event_type="quest",
                     from_time=1,
                     to_time=2,
@@ -8651,7 +8893,7 @@ class RumorBridgeService:
             ),
             player_metrics=(
                 PlayerMetricDraft(
-                    player_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    player_name=primary_character,
                     metric_type="combat_kills",
                     value=27,
                     unit="count",
@@ -8706,7 +8948,7 @@ class RumorBridgeService:
                     difficulty="hard",
                     max_players=5,
                     min_level=8,
-                    boss_names=((chain_result.characters[0].name.value,) if chain_result.characters else ("Mara Voss",)),
+                    boss_names=(primary_character,),
                     has_lockout=True,
                     lockout_duration=86400,
                 ),
@@ -8719,7 +8961,7 @@ class RumorBridgeService:
                     max_players=10,
                     min_players=5,
                     min_level=10,
-                    boss_names=tuple(character.name.value for character in chain_result.characters[:2]) or ("Mara Voss",),
+                    boss_names=tuple(character_names[:2]) or (primary_character,),
                     has_weekly_lockout=True,
                 ),
             ),
@@ -8948,17 +9190,17 @@ class RumorBridgeService:
                     name="First Bell at Dusk",
                     description="Mara remembers the first night the harbor learned fear.",
                     scene_id="prologue_1",
-                    trigger_event_name=chain_result.events[0].name if chain_result.events else None,
-                    character_names=tuple(character.name.value for character in chain_result.characters[:1]),
+                    trigger_event_name=event_names[0] if event_names else None,
+                    character_names=(primary_character,),
                     filter_effect="sepia",
                 ),
             ),
-            epilogue=EpilogueDraft(title="After the Rebellion", description="The closing aftermath.", content="The city records the cost of the unrest.", epilogue_type="aftermath", trigger_condition="always", estimated_minutes=10),
+            epilogue=EpilogueDraft(title="After the Rebellion", description=f"The closing aftermath of {primary_event}.", content=f"The city records the cost of {primary_thread}", epilogue_type="aftermath", trigger_condition="always", estimated_minutes=10),
             flash_forwards=(
                 FlashForwardDraft(
                     name="Harbor Under Ash",
                     description="A prophetic glimpse of what the bells may still destroy.",
-                    hinted_event_name=chain_result.events[0].name if chain_result.events else None,
+                    hinted_event_name=event_names[0] if event_names else None,
                     clarity_level="vivid",
                     is_prophetic=True,
                 ),
