@@ -18,6 +18,18 @@ from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeEventRepository,
     CamelBridgeRumorRepository,
 )
+from src.infrastructure.camel_bridge_extended_narrative_repository import (
+    CamelBridgeAlternateRealityRepository,
+    CamelBridgeBranchPointRepository,
+    CamelBridgeChoiceRepository,
+    CamelBridgeConsequenceRepository,
+    CamelBridgeEndingRepository,
+    CamelBridgeFlashForwardRepository,
+    CamelBridgeFlashbackRepository,
+    CamelBridgeMoralChoiceRepository,
+    CamelBridgePlotBranchRepository,
+    CamelBridgeStorylineRepository,
+)
 from src.infrastructure.camel_bridge_story_repository import (
     CamelBridgeActRepository,
     CamelBridgeCampaignRepository,
@@ -41,7 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--db-path", default="lore_system.db")
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
-    parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign, Story, Act, Chapter, Episode, Prologue, and Epilogue entities")
+    parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching narrative entities such as Storyline, PlotBranch, BranchPoint, Flashback, FlashForward, and Ending")
     return parser
 
 
@@ -63,6 +75,16 @@ def main() -> int:
         episode_repository=CamelBridgeEpisodeRepository(args.db_path),
         prologue_repository=CamelBridgePrologueRepository(args.db_path),
         epilogue_repository=CamelBridgeEpilogueRepository(args.db_path),
+        storyline_repository=CamelBridgeStorylineRepository(args.db_path),
+        plot_branch_repository=CamelBridgePlotBranchRepository(args.db_path),
+        branch_point_repository=CamelBridgeBranchPointRepository(args.db_path),
+        choice_repository=CamelBridgeChoiceRepository(args.db_path),
+        consequence_repository=CamelBridgeConsequenceRepository(args.db_path),
+        moral_choice_repository=CamelBridgeMoralChoiceRepository(args.db_path),
+        alternate_reality_repository=CamelBridgeAlternateRealityRepository(args.db_path),
+        flashback_repository=CamelBridgeFlashbackRepository(args.db_path),
+        flash_forward_repository=CamelBridgeFlashForwardRepository(args.db_path),
+        ending_repository=CamelBridgeEndingRepository(args.db_path),
         allow_fallback=not strict_model,
     )
     if loaded_env:
@@ -103,8 +125,28 @@ def main() -> int:
             print(f"chapter[{chapter.id.value}] #{chapter.sequence_number} {chapter.title}")
         for episode in result.episodes:
             print(f"episode[{episode.id.value}] #{episode.sequence_number} {episode.title}")
+        for storyline in result.storylines:
+            print(f"storyline[{storyline.id.value}] {storyline.name}")
+        for plot_branch in result.plot_branches:
+            print(f"plot_branch[{plot_branch.id.value}] {plot_branch.name}")
+        for branch_point in result.branch_points:
+            print(f"branch_point[{branch_point.id.value}] {branch_point.description}")
+        for choice in result.choices:
+            print(f"choice[{choice.id.value}] {choice.prompt}")
+        for consequence in result.consequences:
+            print(f"consequence[{consequence.id.value}] {consequence.description}")
+        for moral_choice in result.moral_choices:
+            print(f"moral_choice[{moral_choice.id.value}] {moral_choice.prompt}")
+        for alternate_reality in result.alternate_realities:
+            print(f"alternate_reality[{alternate_reality.id.value}] {alternate_reality.name}")
+        for flashback in result.flashbacks:
+            print(f"flashback[{flashback.id.value}] {flashback.name}")
         if result.epilogue:
             print(f"epilogue[{result.epilogue.id.value}] {result.epilogue.title}")
+        for flash_forward in result.flash_forwards:
+            print(f"flash_forward[{flash_forward.id.value}] {flash_forward.name}")
+        for ending in result.endings:
+            print(f"ending[{ending.id.value}] {ending.title}")
     return 0
 
 

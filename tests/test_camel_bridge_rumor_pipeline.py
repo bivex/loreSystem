@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from pathlib import Path
 
@@ -6,6 +7,18 @@ import pytest
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend
 from src.domain.value_objects.common import EntityId, TenantId
+from src.infrastructure.camel_bridge_extended_narrative_repository import (
+    CamelBridgeAlternateRealityRepository,
+    CamelBridgeBranchPointRepository,
+    CamelBridgeChoiceRepository,
+    CamelBridgeConsequenceRepository,
+    CamelBridgeEndingRepository,
+    CamelBridgeFlashForwardRepository,
+    CamelBridgeFlashbackRepository,
+    CamelBridgeMoralChoiceRepository,
+    CamelBridgePlotBranchRepository,
+    CamelBridgeStorylineRepository,
+)
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
     CamelBridgeCharacterRepository,
@@ -134,7 +147,28 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
         '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
         '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
-        '{"campaign":{"title":"Campaign of Blue Lanterns","description":"A harbor campaign built around civil unrest.","campaign_type":"main_story","recommended_level":6,"estimated_hours":10},"story":{"name":"Blue Lantern Chronicle","description":"The campaign\'s central storyline.","content":"A chain of rumors leads to rebellion.","story_type":"linear"},"prologue":{"title":"Before the Raid","description":"How fear first took hold.","content":"The city learned to fear the bells before the raid.","prologue_type":"backstory","estimated_minutes":9},"acts":[{"title":"Act I - The Whisper Network","description":"The rumor web expands.","act_number":1,"act_type":"setup","structure":"three_act","key_events":["Dockside Murmurs"]},{"title":"Act II - Blue Fire","description":"The raid reaches its peak.","act_number":2,"act_type":"rising_action","structure":"three_act","key_events":["Blue Lantern Raid"]}],"chapters":[{"title":"Chapter 1 - Hushed Piers","description":"The first warnings spread.","sequence_number":1,"act_numbers":[1],"chapter_type":"introduction"},{"title":"Chapter 2 - The Magistrate Moves","description":"Power answers panic.","sequence_number":2,"act_numbers":[2],"chapter_type":"climax"}],"episodes":[{"title":"Episode 1 - Bellkeeper","description":"The bellkeeper reveals the omen.","sequence_number":1,"chapter_number":1,"episode_type":"narrative"},{"title":"Episode 2 - Ash on Water","description":"The harbor answers with fire.","sequence_number":2,"chapter_number":2,"episode_type":"narrative"}],"epilogue":{"title":"Harbor Reckoning","description":"What remains after the crackdown.","content":"The harbor never forgets the names whispered that night.","epilogue_type":"aftermath","trigger_condition":"always","estimated_minutes":8}}',
+        json.dumps({
+            "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
+            "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
+            "storylines": [{"name": "Lantern Line", "description": "Tracks how harbor whispers become raids.", "storyline_type": "main", "events": ["Blue Lantern Raid"]}],
+            "plot_branches": [
+                {"name": "Revolt at Dawn", "description": "The harbor rises openly.", "story_content": "The ledger becomes a banner for rebellion.", "branch_type": "major", "consequence_descriptions": ["The wardens tighten control over the harbor."]},
+                {"name": "Silence Before Ash", "description": "The truth is buried to preserve order.", "story_content": "The city survives under harsher law.", "branch_type": "temporary", "consequence_descriptions": ["The wardens tighten control over the harbor."], "is_reversible": True},
+            ],
+            "branch_points": [{"description": "The survivors choose what kind of harbor remains.", "branch_point_type": "choice", "choice_prompt": "Who do the survivors trust when the bells ring?", "branch_names": ["Revolt at Dawn", "Silence Before Ash"]}],
+            "choices": [{"prompt": "Who do the survivors trust when the bells ring?", "choice_type": "decision", "options": [{"label": "Trust Mara", "consequence": "Mara reveals the hidden ledger.", "next_story": "Blue Lantern Chronicle"}, {"label": "Trust Iven", "consequence": "Iven opens the armory for a last stand.", "next_story": None}]}],
+            "consequences": [{"description": "The wardens tighten control over the harbor.", "consequence_type": "story", "severity": "major", "trigger_choice_prompt": "Who do the survivors trust when the bells ring?"}],
+            "moral_choices": [{"prompt": "Will the survivors expose the magistrate or shield the city from panic?", "description": "Truth may save the harbor or break it.", "choice_alignment": "neutral", "urgency": "high", "options": [{"label": "Expose the magistrate", "outcome": "The public rises immediately.", "alignment": "good"}, {"label": "Shield the city", "outcome": "Order holds, but corruption survives.", "alignment": "lawful"}], "consequence_descriptions": ["The wardens tighten control over the harbor."]}],
+            "alternate_realities": [{"name": "Bellglass Reflection", "description": "An echo-reality where the eclipse never ends.", "reality_type": "alternate_possibility", "access_method": "choice", "divergence_point": "The harbor chose silence.", "entry_points": ["Broken bell tower"], "exit_points": ["Flooded archive"]}],
+            "flashbacks": [{"name": "The First Bell", "description": "Mara remembers the omen that started it all.", "scene_id": "prologue_1", "trigger_event": "Blue Lantern Raid", "characters": ["Mara Voss"], "filter_effect": "sepia"}],
+            "prologue": {"title": "Before the Raid", "description": "How fear first took hold.", "content": "The city learned to fear the bells before the raid.", "prologue_type": "backstory", "estimated_minutes": 9},
+            "acts": [{"title": "Act I - The Whisper Network", "description": "The rumor web expands.", "act_number": 1, "act_type": "setup", "structure": "three_act", "key_events": ["Dockside Murmurs"]}, {"title": "Act II - Blue Fire", "description": "The raid reaches its peak.", "act_number": 2, "act_type": "rising_action", "structure": "three_act", "key_events": ["Blue Lantern Raid"]}],
+            "chapters": [{"title": "Chapter 1 - Hushed Piers", "description": "The first warnings spread.", "sequence_number": 1, "act_numbers": [1], "chapter_type": "introduction"}, {"title": "Chapter 2 - The Magistrate Moves", "description": "Power answers panic.", "sequence_number": 2, "act_numbers": [2], "chapter_type": "climax"}],
+            "episodes": [{"title": "Episode 1 - Bellkeeper", "description": "The bellkeeper reveals the omen.", "sequence_number": 1, "chapter_number": 1, "episode_type": "narrative"}, {"title": "Episode 2 - Ash on Water", "description": "The harbor answers with fire.", "sequence_number": 2, "chapter_number": 2, "episode_type": "narrative"}],
+            "epilogue": {"title": "Harbor Reckoning", "description": "What remains after the crackdown.", "content": "The harbor never forgets the names whispered that night.", "epilogue_type": "aftermath", "trigger_condition": "always", "estimated_minutes": 8},
+            "flash_forwards": [{"name": "Ashes on the Tide", "description": "A prophetic glimpse of the harbor still burning.", "hinted_event": "Blue Lantern Raid", "clarity_level": "vivid", "is_prophetic": True}],
+            "endings": [{"title": "Lanterns at Dawn", "description": "The city accepts the cost of truth.", "ending_type": "good", "rarity": "uncommon", "conditions": ["Expose the magistrate"], "ending_number": 1}],
+        }),
     ])
     service = RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
@@ -149,6 +183,16 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         episode_repository=CamelBridgeEpisodeRepository(db_path),
         prologue_repository=CamelBridgePrologueRepository(db_path),
         epilogue_repository=CamelBridgeEpilogueRepository(db_path),
+        storyline_repository=CamelBridgeStorylineRepository(db_path),
+        plot_branch_repository=CamelBridgePlotBranchRepository(db_path),
+        branch_point_repository=CamelBridgeBranchPointRepository(db_path),
+        choice_repository=CamelBridgeChoiceRepository(db_path),
+        consequence_repository=CamelBridgeConsequenceRepository(db_path),
+        moral_choice_repository=CamelBridgeMoralChoiceRepository(db_path),
+        alternate_reality_repository=CamelBridgeAlternateRealityRepository(db_path),
+        flashback_repository=CamelBridgeFlashbackRepository(db_path),
+        flash_forward_repository=CamelBridgeFlashForwardRepository(db_path),
+        ending_repository=CamelBridgeEndingRepository(db_path),
     )
 
     result = service.generate_story_chain(
@@ -172,6 +216,16 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     assert len(result.acts) == 2
     assert len(result.chapters) == 2
     assert len(result.episodes) == 2
+    assert len(result.storylines) == 1
+    assert len(result.plot_branches) == 2
+    assert len(result.branch_points) == 1
+    assert len(result.choices) == 1
+    assert len(result.consequences) == 1
+    assert len(result.moral_choices) == 1
+    assert len(result.alternate_realities) == 1
+    assert len(result.flashbacks) == 1
+    assert len(result.flash_forwards) == 1
+    assert len(result.endings) == 1
 
     conn = sqlite3.connect(db_path)
     try:
@@ -182,8 +236,87 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM episodes").fetchone()[0] == 2
         assert conn.execute("SELECT COUNT(*) FROM prologues").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM epilogues").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM plot_branches").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM branch_points").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM choices").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM consequences").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM moral_choices").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM alternate_realities").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM flashbacks").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM flash_forwards").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM endings").fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+
+    raw = json.dumps({
+        "campaign": "Harbor of Shadows",
+        "story": "A story about a harbor city where fear of an eclipse and blue lanterns turns everyday dockside suspicion into unrest.",
+        "storylines": [{"name": "Shadow Tide", "description": "A main thread of escalating panic.", "events": ["Blue Lantern Raid"]}],
+        "plot_branches": [
+            {"name": "Torch the Ledger", "description": "The crowd burns the proof.", "story_content": "Truth dies in smoke.", "branch_type": "major"},
+            {"name": "Guard the Ledger", "description": "The crowd protects the evidence.", "story_content": "Truth survives the night.", "branch_type": "minor"},
+        ],
+        "branch_points": [{"description": "The warning splits the quay.", "choice_prompt": "Who should carry the warning?", "branch_names": ["Torch the Ledger", "Guard the Ledger"]}],
+        "choices": [{"prompt": "Who should carry the warning?", "options": [{"label": "Trust Mara", "consequence": "The docks prepare.", "next_story": "Harbor of Shadows"}, {"label": "Trust Iven", "consequence": "Authority takes over."}]}],
+        "consequences": [{"description": "The wardens tighten control over the harbor.", "consequence_type": "story", "severity": "major", "trigger_choice_prompt": "Who should carry the warning?"}],
+        "moral_choices": [{"prompt": "Reveal the truth or preserve calm?", "options": [{"label": "Reveal", "alignment": "good"}, {"label": "Conceal", "alignment": "lawful"}], "consequence_descriptions": ["The wardens tighten control over the harbor."]}],
+        "alternate_realities": [{"name": "Eclipsed Harbor", "description": "A possible harbor trapped in perpetual dusk.", "reality_type": "alternate_possibility", "access_method": "choice"}],
+        "flashbacks": [{"name": "The Omen Returns", "description": "A memory of the first bell.", "trigger_event": "Blue Lantern Raid", "characters": ["Mara Voss"], "filter_effect": "sepia"}],
+        "prologue": "At dusk the quay glows faintly while citizens whisper that blue lanterns will mark the beginning of the next disaster.",
+        "acts": [
+            {"act_number": 1, "title": "Whispers in the Quay"},
+            {"act_number": 2, "title": "Denial and Preparation"},
+            {"act_number": 3, "title": "Unrest Unfolds"},
+        ],
+        "chapters": [
+            {"chapter_number": 1, "title": "Rumor Spreads"},
+            {"chapter_number": 2, "title": "Magistrate's Denial"},
+            {"chapter_number": 3, "title": "Dockworkers Mobilize"},
+            {"chapter_number": 4, "title": "Defense Plans"},
+            {"chapter_number": 5, "title": "Eclipse Begins"},
+            {"chapter_number": 6, "title": "Unrest Breaks Out"},
+        ],
+        "episodes": [
+            {"episode_number": 1, "chapter_number": 1, "title": "First Whisper"},
+            {"episode_number": 2, "chapter_number": 1, "title": "Spread to the Quay"},
+            {"episode_number": 3, "chapter_number": 2, "title": "Magistrate Speaks"},
+        ],
+        "epilogue": "After the eclipse the city remains watchful, the blue lanterns vanish, and the quay remembers the night unrest became memory.",
+        "flash_forwards": [{"name": "Harbor After Fire", "description": "A vivid prophecy of tomorrow's smoke.", "hinted_event": "Blue Lantern Raid", "clarity_level": "vivid"}],
+        "endings": [{"title": "Watchers at Dawn", "description": "The harbor survives at a cost.", "ending_type": "neutral", "rarity": "rare", "ending_number": 2}],
+    })
+
+    draft = service._parse_narrative_structure(raw)
+
+    assert draft.campaign.title == "Harbor of Shadows"
+    assert draft.story.name == "Harbor of Shadows"
+    assert "harbor city" in draft.story.content.lower()
+    assert draft.prologue is not None
+    assert draft.prologue.title == "Before the First Whisper"
+    assert "blue lanterns" in draft.prologue.content.lower()
+    assert [act.title for act in draft.acts] == ["Whispers in the Quay", "Denial and Preparation", "Unrest Unfolds"]
+    assert [chapter.sequence_number for chapter in draft.chapters] == [1, 2, 3, 4, 5, 6]
+    assert [chapter.title for chapter in draft.chapters[:2]] == ["Rumor Spreads", "Magistrate's Denial"]
+    assert [episode.sequence_number for episode in draft.episodes] == [1, 2, 3]
+    assert [episode.chapter_number for episode in draft.episodes] == [1, 1, 2]
+    assert [storyline.name for storyline in draft.storylines] == ["Shadow Tide"]
+    assert [plot_branch.name for plot_branch in draft.plot_branches] == ["Torch the Ledger", "Guard the Ledger"]
+    assert [branch_point.description for branch_point in draft.branch_points] == ["The warning splits the quay."]
+    assert [choice.prompt for choice in draft.choices] == ["Who should carry the warning?"]
+    assert [consequence.description for consequence in draft.consequences] == ["The wardens tighten control over the harbor."]
+    assert [moral_choice.prompt for moral_choice in draft.moral_choices] == ["Reveal the truth or preserve calm?"]
+    assert [reality.name for reality in draft.alternate_realities] == ["Eclipsed Harbor"]
+    assert [flashback.name for flashback in draft.flashbacks] == ["The Omen Returns"]
+    assert draft.epilogue is not None
+    assert draft.epilogue.title == "After the Uprising"
+    assert "watchful" in draft.epilogue.content.lower()
+    assert [flash_forward.name for flash_forward in draft.flash_forwards] == ["Harbor After Fire"]
+    assert [ending.title for ending in draft.endings] == ["Watchers at Dawn"]
 
 
 def test_load_env_file_populates_model_settings(tmp_path, monkeypatch):
