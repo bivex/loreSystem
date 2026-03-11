@@ -76,11 +76,11 @@ Roadmap для **предпочтительного current-generation path** в
 - optional semantic recall from Qdrant
 - prompt-time memory injection for rumor / event / relationship / narrative generation
 - post-persist world snapshot reindexing
+- ✅ widened SQLite/Qdrant memory coverage for closed encounter/world/reward bridge tables
 
 ### Near-term bridge infra follow-ups
 
 - live smoke against a real Qdrant instance
-- widen memory indexing coverage beyond the initial bridge/world slices
 - tighten connection/resource cleanup around SQLite memory reads
 - refine memory document shaping for better semantic recall quality
 

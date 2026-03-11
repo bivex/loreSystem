@@ -51,6 +51,14 @@ class StubMemoryService:
         return 4
 
 
+class RecordingIndex:
+    def __init__(self):
+        self.upsert_calls = []
+
+    def upsert(self, documents) -> None:
+        self.upsert_calls.append(list(documents))
+
+
 def _build_chain_service(db_path: str, backend, memory_service=None) -> RumorBridgeService:
     return RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
@@ -59,6 +67,19 @@ def _build_chain_service(db_path: str, backend, memory_service=None) -> RumorBri
         event_repository=CamelBridgeEventRepository(db_path),
         relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
         memory_service=memory_service,
+    )
+
+
+def _create_generic_bridge_table(conn: sqlite3.Connection, table_name: str) -> None:
+    conn.execute(
+        f"CREATE TABLE {table_name} (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, world_id INTEGER, label TEXT, payload_json TEXT NOT NULL, created_at TEXT, updated_at TEXT, version INTEGER)",
+    )
+
+
+def _insert_generic_bridge_row(conn: sqlite3.Connection, table_name: str, label: str, payload: dict) -> None:
+    conn.execute(
+        f"INSERT INTO {table_name} (tenant_id, world_id, label, payload_json, created_at, updated_at, version) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (1, 1, label, json.dumps(payload), "2026-03-10T00:00:00+00:00", "2026-03-10T00:00:00+00:00", 1),
     )
 
 
@@ -139,6 +160,65 @@ def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id
     )
 
     assert "Trait for Mara Voss: Harbor Instinct" in context
+
+
+def test_sqlite_memory_reader_includes_encounter_and_reward_bridge_tables_in_context(tmp_path):
+    db_path = str(tmp_path / "memory_bridge_tables.db")
+    _seed_world(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        _create_generic_bridge_table(conn, "arenas")
+        _create_generic_bridge_table(conn, "cursed_items")
+        _create_generic_bridge_table(conn, "relic_collections")
+        _insert_generic_bridge_row(conn, "arenas", "Bellglass Pit", {"name": "Bellglass Pit", "description": "A flooded combat bowl under the old bell tower.", "arena_type": "ritual"})
+        _insert_generic_bridge_row(conn, "cursed_items", "Bell-Touched Coin", {"name": "Bell-Touched Coin", "description": "A silver coin that whispers before every betrayal.", "character_name": "Mara Voss", "item_type": "trinket", "curse_type": "whispers", "rarity": "cursed", "risk_level": "high"})
+        _insert_generic_bridge_row(conn, "relic_collections", "Nine Ashen Seals", {"name": "Nine Ashen Seals", "description": "A scattered seal-set tied to the harbor catacombs.", "collection_type": "ancient", "rarity": "legendary", "total_relics": 9})
+        conn.commit()
+    finally:
+        conn.close()
+
+    context = LoreMemoryService(
+        SQLiteLoreMemoryReader(db_path),
+        exact_limit=10,
+        indexed_types=("arena", "cursed_item", "relic_collection"),
+    ).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss",),
+    )
+
+    assert "Arena for world state: Bellglass Pit" in context
+    assert "Cursed Item for Mara Voss: Bell-Touched Coin" in context
+    assert "Relic Collection for world state: Nine Ashen Seals" in context
+
+
+def test_memory_index_world_snapshot_includes_new_bridge_tables(tmp_path):
+    db_path = str(tmp_path / "memory_index_snapshot.db")
+    _seed_world(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        _create_generic_bridge_table(conn, "arenas")
+        _create_generic_bridge_table(conn, "cursed_items")
+        _insert_generic_bridge_row(conn, "arenas", "Bellglass Pit", {"name": "Bellglass Pit", "description": "A flooded combat bowl under the old bell tower.", "arena_type": "ritual"})
+        _insert_generic_bridge_row(conn, "cursed_items", "Bell-Touched Coin", {"name": "Bell-Touched Coin", "description": "A silver coin that whispers before every betrayal.", "character_name": "Mara Voss", "item_type": "trinket", "curse_type": "whispers", "rarity": "cursed", "risk_level": "high"})
+        conn.commit()
+    finally:
+        conn.close()
+
+    index = RecordingIndex()
+    service = LoreMemoryService(
+        SQLiteLoreMemoryReader(db_path),
+        qdrant_index=index,
+        indexed_types=("arena", "cursed_item"),
+    )
+
+    count = service.index_world_snapshot(tenant_id=1, world_id=1)
+
+    assert count == 2
+    assert len(index.upsert_calls) == 1
+    assert {doc.entity_type for doc in index.upsert_calls[0]} == {"arena", "cursed_item"}
 
 
 def test_qdrant_memory_index_upsert_and_search_use_expected_http_contract(monkeypatch):

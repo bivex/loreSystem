@@ -53,6 +53,7 @@
   - semantic recall from Qdrant
   - prompt injection for rumor / event / relationship / narrative generation
   - post-persist reindex of the current world snapshot
+  - widened SQLite/index coverage for closed encounter/world/reward bridge tables
 
 ## Genre priorities for next bridge slices
 
@@ -77,6 +78,18 @@
 Следующий рекомендуемый фокус внутри этого priority-pack:
 
 - memory v1 live stabilization (`real Qdrant smoke`, indexing coverage, cleanup/shaping)
+
+Из этого хвоста уже закрыт первый safe sub-slice:
+
+- widened indexing/recall coverage for `Dungeon`, `Raid`, `WorldEvent`, `Arena`, `Instance`, `OpenWorldZone`
+- widened indexing/recall coverage for `SeasonalEvent`, `Invasion`, `War`
+- widened indexing/recall coverage for `LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`
+
+Текущий remaining focus внутри memory v1:
+
+- real Qdrant smoke
+- memory document shaping / recall quality cleanup
+- live-path cleanup around resource handling
 
 Фокус на сущности:
 

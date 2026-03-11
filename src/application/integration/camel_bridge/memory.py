@@ -39,6 +39,59 @@ def _normalize_name_list(values: Sequence[str] | None) -> tuple[str, ...]:
 
 
 @dataclass(frozen=True)
+class BridgeMemoryTableSpec:
+    table_name: str
+    entity_type: str
+    extra_fields: tuple[str, ...] = ()
+
+
+GENERIC_BRIDGE_MEMORY_TABLE_SPECS: tuple[BridgeMemoryTableSpec, ...] = (
+    BridgeMemoryTableSpec("dungeons", "dungeon", ("boss_names",)),
+    BridgeMemoryTableSpec("raids", "raid", ("boss_names",)),
+    BridgeMemoryTableSpec("world_events", "world_event", ("event_type",)),
+    BridgeMemoryTableSpec("arenas", "arena", ("arena_type",)),
+    BridgeMemoryTableSpec("instances", "instance", ("instance_type",)),
+    BridgeMemoryTableSpec("open_world_zones", "open_world_zone", ("zone_type",)),
+    BridgeMemoryTableSpec("seasonal_events", "seasonal_event", ("season",)),
+    BridgeMemoryTableSpec("invasions", "invasion", ("invasion_type", "invader_name", "target_name")),
+    BridgeMemoryTableSpec("wars", "war", ("war_type", "aggressor_name", "defender_name")),
+    BridgeMemoryTableSpec("legendary_weapons", "legendary_weapon", ("weapon_type", "rarity", "special_ability")),
+    BridgeMemoryTableSpec("mythical_armors", "mythical_armor", ("armor_type", "rarity", "special_protection")),
+    BridgeMemoryTableSpec("divine_items", "divine_item", ("item_type", "rarity", "deity_name", "domain")),
+    BridgeMemoryTableSpec("cursed_items", "cursed_item", ("item_type", "curse_type", "rarity", "risk_level")),
+    BridgeMemoryTableSpec("artifact_sets", "artifact_set", ("set_type", "rarity", "total_pieces")),
+    BridgeMemoryTableSpec("relic_collections", "relic_collection", ("collection_type", "rarity", "total_relics")),
+)
+
+
+DEFAULT_INDEXED_MEMORY_TYPES: tuple[str, ...] = (
+    "character",
+    "rumor",
+    "event",
+    "relationship",
+    "quest",
+    "trait",
+    "perk",
+    "progression_event",
+    "dungeon",
+    "raid",
+    "world_event",
+    "arena",
+    "instance",
+    "open_world_zone",
+    "seasonal_event",
+    "invasion",
+    "war",
+    "legendary_weapon",
+    "mythical_armor",
+    "divine_item",
+    "cursed_item",
+    "artifact_set",
+    "relic_collection",
+)
+
+
+@dataclass(frozen=True)
 class MemoryDocument:
     point_id: str
     tenant_id: int
@@ -288,15 +341,29 @@ class SQLiteLoreMemoryReader:
 
     def load_recent_documents(self, tenant_id: int, world_id: int, *, character_names: Sequence[str] = (), limit_per_type: int = 3) -> list[MemoryDocument]:
         with closing(self._connection()) as conn:
+            names = _normalize_name_list(character_names)
             docs: list[MemoryDocument] = []
-            docs.extend(self._character_docs(conn, tenant_id, world_id, character_names, limit_per_type))
+            docs.extend(self._character_docs(conn, tenant_id, world_id, names, limit_per_type))
             docs.extend(self._simple_docs(conn, tenant_id, world_id, "rumors", "rumor", limit_per_type, "name", "description", extra_fields=("truth_level", "spread_speed")))
             docs.extend(self._simple_docs(conn, tenant_id, world_id, "events", "event", limit_per_type, "name", "description", extra_fields=("outcome",)))
             docs.extend(self._relationship_docs(conn, tenant_id, world_id, limit_per_type))
             docs.extend(self._simple_docs(conn, tenant_id, world_id, "quests", "quest", limit_per_type, "name", "description", extra_fields=("status",)))
-            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "traits", "trait", limit_per_type, character_names, extra_fields=("category", "nature")))
-            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "perks", "perk", limit_per_type, character_names, extra_fields=("perk_type", "source")))
-            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "progression_events", "progression_event", limit_per_type, character_names, extra_fields=("event_type",)))
+            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "traits", "trait", limit_per_type, names, extra_fields=("category", "nature")))
+            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "perks", "perk", limit_per_type, names, extra_fields=("perk_type", "source")))
+            docs.extend(self._character_bound_docs(conn, tenant_id, world_id, "progression_events", "progression_event", limit_per_type, names, extra_fields=("event_type",)))
+            for spec in GENERIC_BRIDGE_MEMORY_TABLE_SPECS:
+                docs.extend(
+                    self._generic_bridge_docs(
+                        conn,
+                        tenant_id,
+                        world_id,
+                        spec.table_name,
+                        spec.entity_type,
+                        limit_per_type,
+                        names,
+                        extra_fields=spec.extra_fields,
+                    )
+                )
             return docs
 
     def load_index_documents(self, tenant_id: int, world_id: int) -> list[MemoryDocument]:
@@ -441,10 +508,15 @@ class SQLiteLoreMemoryReader:
         return docs
 
     def _generic_bridge_docs(self, conn: sqlite3.Connection, tenant_id: int, world_id: int, table_name: str, entity_type: str, limit: int, character_names: tuple[str, ...], *, extra_fields: Sequence[str] = ()) -> list[MemoryDocument]:
-        rows = conn.execute(
-            f"SELECT * FROM {table_name} WHERE tenant_id = ? AND world_id = ? ORDER BY id DESC LIMIT ?",
-            (tenant_id, world_id, limit),
-        ).fetchall()
+        try:
+            rows = conn.execute(
+                f"SELECT * FROM {table_name} WHERE tenant_id = ? AND world_id = ? ORDER BY id DESC LIMIT ?",
+                (tenant_id, world_id, limit),
+            ).fetchall()
+        except sqlite3.OperationalError as exc:
+            if "no such table" in str(exc).lower():
+                return []
+            raise
         requested = {name.lower() for name in character_names}
         docs: list[MemoryDocument] = []
         for row in rows:
@@ -485,7 +557,7 @@ class LoreMemoryService:
     qdrant_index: QdrantMemoryIndex | None = None
     exact_limit: int = 6
     semantic_limit: int = 4
-    indexed_types: tuple[str, ...] = field(default_factory=lambda: ("character", "rumor", "event", "relationship", "quest", "trait", "perk", "progression_event"))
+    indexed_types: tuple[str, ...] = field(default_factory=lambda: DEFAULT_INDEXED_MEMORY_TYPES)
 
     def build_prompt_context(self, *, tenant_id: int, world_id: int, theme: str, context: str = "", character_names: Sequence[str] = ()) -> str:
         exact_docs = self.sqlite_reader.load_recent_documents(tenant_id, world_id, character_names=character_names)
