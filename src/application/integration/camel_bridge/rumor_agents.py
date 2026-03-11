@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Protocol, Sequence
 
 from src.domain.entities.character import Character
@@ -71,6 +73,31 @@ class RumorChainResult:
     relationships: list[CharacterRelationship]
 
 
+def load_env_file(env_path: str | None = None, override: bool = False) -> str | None:
+    candidates = [Path(env_path)] if env_path else [Path.cwd() / ".env", Path(__file__).resolve().parents[4] / ".env"]
+    for candidate in candidates:
+        if not candidate.exists() or not candidate.is_file():
+            continue
+        for raw_line in candidate.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and (override or key not in os.environ):
+                os.environ[key] = value
+        return str(candidate)
+    return None
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 class AgentTextBackend(Protocol):
     def generate(self, system_message: str, user_message: str) -> str: ...
 
@@ -91,26 +118,61 @@ class RelationshipStore(Protocol):
 class CamelChatBackend:
     """Lazy CAMEL backend that only imports CAMEL at runtime."""
 
-    def __init__(self, model_platform: str = "OPENAI", model_type: str = "GPT_4O_MINI", model_config: dict | None = None):
-        self.model_platform = model_platform
-        self.model_type = model_type
-        self.model_config = model_config or {"temperature": 0.8}
+    def __init__(self, model_platform: str | None = None, model_type: str | None = None, model_config: dict | None = None):
+        self.model_platform = (model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI").upper()
+        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "GPT_4O_MINI"
+        self.model_url = os.getenv("CAMEL_MODEL_BASE_URL") or os.getenv("OPENAI_BASE_URL")
+        self.model_config = model_config or self._build_model_config()
 
     def generate(self, system_message: str, user_message: str) -> str:
         from camel.agents import ChatAgent
         from camel.models import ModelFactory
         from camel.types import ModelPlatformType, ModelType
 
+        self._validate_environment()
         model = ModelFactory.create(
-            model_platform=getattr(ModelPlatformType, self.model_platform),
-            model_type=getattr(ModelType, self.model_type),
+            model_platform=getattr(ModelPlatformType, self.model_platform, self.model_platform),
+            model_type=getattr(ModelType, self.model_type, self.model_type),
             model_config_dict=self.model_config,
+            api_key=self._get_api_key(),
+            url=self.model_url,
         )
         agent = ChatAgent(model=model)
         response = agent.step(f"System instruction:\n{system_message}\n\nUser request:\n{user_message}")
         if hasattr(response, "msgs") and response.msgs:
             return response.msgs[-1].content
         return str(response)
+
+    def _build_model_config(self) -> dict:
+        config = {"temperature": float(os.getenv("CAMEL_MODEL_TEMPERATURE", "0.8"))}
+        if os.getenv("CAMEL_MODEL_MAX_TOKENS"):
+            config["max_tokens"] = int(os.getenv("CAMEL_MODEL_MAX_TOKENS", "0"))
+        return config
+
+    def _validate_environment(self) -> None:
+        required_key = {
+            "OPENAI": "OPENAI_API_KEY",
+            "ANTHROPIC": "ANTHROPIC_API_KEY",
+            "GEMINI": "GOOGLE_API_KEY",
+            "GOOGLE": "GOOGLE_API_KEY",
+            "GROQ": "GROQ_API_KEY",
+            "MISTRAL": "MISTRAL_API_KEY",
+            "OPENROUTER": "OPENROUTER_API_KEY",
+        }.get(self.model_platform)
+        if required_key and not os.getenv(required_key):
+            raise RuntimeError(f"Missing required environment variable for CAMEL bridge: {required_key}")
+
+    def _get_api_key(self) -> str | None:
+        required_key = {
+            "OPENAI": "OPENAI_API_KEY",
+            "ANTHROPIC": "ANTHROPIC_API_KEY",
+            "GEMINI": "GOOGLE_API_KEY",
+            "GOOGLE": "GOOGLE_API_KEY",
+            "GROQ": "GROQ_API_KEY",
+            "MISTRAL": "MISTRAL_API_KEY",
+            "OPENROUTER": "OPENROUTER_API_KEY",
+        }.get(self.model_platform)
+        return os.getenv(required_key) if required_key else None
 
 
 class DeterministicRumorBackend:
@@ -171,12 +233,14 @@ class RumorBridgeService:
         character_repository: CharacterStore | None = None,
         event_repository: EventStore | None = None,
         relationship_repository: RelationshipStore | None = None,
+        allow_fallback: bool = True,
     ):
         self.repository = repository
         self.backend = backend or CamelChatBackend()
         self.character_repository = character_repository
         self.event_repository = event_repository
         self.relationship_repository = relationship_repository
+        self.allow_fallback = allow_fallback
 
     def generate_and_persist(self, request: RumorGenerationRequest) -> list[Rumor]:
         drafts: list[RumorDraft] = []
@@ -185,7 +249,11 @@ class RumorBridgeService:
                 raw = self.backend.generate(system_message, self._build_rumor_prompt(request, agent_name))
                 drafts.extend(self._parse_rumor_drafts(raw))
             except Exception:
+                if not self.allow_fallback:
+                    raise
                 drafts.append(self._fallback_rumor_draft(request, index, agent_name))
+        if not drafts and not self.allow_fallback:
+            raise RuntimeError("CAMEL bridge did not produce any rumor drafts")
         return [self.repository.save(self._rumor_to_entity(request, draft)) for draft in self._dedupe_rumors(request, drafts, request.count)]
 
     def generate_story_chain(self, request: RumorGenerationRequest) -> RumorChainResult:
@@ -238,9 +306,9 @@ class RumorBridgeService:
                 name=str(item.get("name") or "Unnamed Rumor")[:255],
                 description=str(item.get("description") or "An unverified tale is moving through the crowd."),
                 source_name=item.get("source_name"),
-                truth_level=str(item.get("truth_level") or "Unverified"),
-                spread_speed=str(item.get("spread_speed") or "Moderate"),
-                credibility_score=item.get("credibility_score"),
+                truth_level=self._coerce_truth_level(item.get("truth_level")),
+                spread_speed=self._coerce_spread_speed(item.get("spread_speed")),
+                credibility_score=self._coerce_credibility_score(item.get("credibility_score")),
             ))
         return drafts
 
@@ -264,8 +332,8 @@ class RumorBridgeService:
                 character_to_name=str(item.get("character_to_name") or "Witness Two"),
                 description=str(item.get("description") or "Their shared secrets bind them uneasily."),
                 relationship_type=str(item.get("relationship_type") or "complicated").lower(),
-                relationship_level=int(item.get("relationship_level") or 10),
-                is_mutual=bool(item.get("is_mutual", False)),
+                relationship_level=self._coerce_relationship_level(item.get("relationship_level")),
+                is_mutual=self._coerce_bool(item.get("is_mutual", False)),
             ))
         return drafts
 
@@ -281,9 +349,13 @@ class RumorBridgeService:
             raw = self.backend.generate(DEFAULT_EVENT_AGENT_PROMPT[1], self._build_event_prompt(request, rumors))
             drafts = self._parse_event_drafts(raw)
         except Exception:
+            if not self.allow_fallback:
+                raise
             drafts = []
         if drafts:
             return drafts[: max(1, min(request.count, len(drafts)))]
+        if not self.allow_fallback:
+            raise RuntimeError("CAMEL bridge did not produce any event drafts")
         participants = request.character_names or ("Mara Voss", "Iven Hale")
         return [EventDraft(
             name=f"{request.theme.strip().title() or 'Rumor'} Flashpoint",
@@ -297,9 +369,13 @@ class RumorBridgeService:
             raw = self.backend.generate(DEFAULT_RELATIONSHIP_AGENT_PROMPT[1], self._build_relationship_prompt(request, rumors, events, character_names))
             drafts = self._parse_relationship_drafts(raw)
         except Exception:
+            if not self.allow_fallback:
+                raise
             drafts = []
         if drafts:
             return drafts[:1]
+        if not self.allow_fallback:
+            raise RuntimeError("CAMEL bridge did not produce any relationship drafts")
         left, right = (character_names + ("Mara Voss", "Iven Hale"))[:2]
         return [CharacterRelationshipDraft(
             character_from_name=left,
@@ -433,3 +509,119 @@ class RumorBridgeService:
             return RelationshipType(value.lower())
         except Exception:
             return RelationshipType.COMPLICATED
+
+    def _coerce_optional_int(self, value: object) -> int | None:
+        if value is None or value == "":
+            return None
+        try:
+            return int(value)
+        except Exception:
+            return None
+
+    def _coerce_optional_float(self, value: object) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    def _coerce_truth_level(self, value: object) -> str:
+        if value is None or value == "":
+            return "Unverified"
+        normalized = str(value).strip().lower()
+        aliases = {
+            "false": "False",
+            "fake": "False",
+            "debunked": "False",
+            "unverified": "Unverified",
+            "unknown": "Unverified",
+            "rumor": "Unverified",
+            "partially true": "Partially True",
+            "partial": "Partially True",
+            "mixed": "Partially True",
+            "mostly true": "Partially True",
+            "true": "True",
+            "confirmed": "True",
+            "verified": "True",
+        }
+        if normalized in aliases:
+            return aliases[normalized]
+        numeric = self._coerce_optional_float(value)
+        if numeric is None:
+            return "Unverified"
+        score = numeric / 10 if numeric > 1 else numeric
+        if score <= 0.15:
+            return "False"
+        if score <= 0.6:
+            return "Unverified"
+        if score <= 0.85:
+            return "Partially True"
+        return "True"
+
+    def _coerce_spread_speed(self, value: object) -> str:
+        if value is None or value == "":
+            return "Moderate"
+        normalized = str(value).strip().lower()
+        aliases = {
+            "slow": "Slow",
+            "low": "Slow",
+            "moderate": "Moderate",
+            "medium": "Moderate",
+            "steady": "Moderate",
+            "rapid": "Rapid",
+            "fast": "Rapid",
+            "high": "Rapid",
+            "viral": "Explosive",
+            "explosive": "Explosive",
+        }
+        if normalized in aliases:
+            return aliases[normalized]
+        numeric = self._coerce_optional_float(value)
+        if numeric is None:
+            return "Moderate"
+        score = numeric / 10 if numeric > 1 else numeric
+        if score <= 0.2:
+            return "Slow"
+        if score <= 0.55:
+            return "Moderate"
+        if score <= 0.8:
+            return "Rapid"
+        return "Explosive"
+
+    def _coerce_credibility_score(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None:
+            return None
+        return max(1, min(10, parsed))
+
+    def _coerce_relationship_level(self, value: object) -> int:
+        if value is None or value == "":
+            return 10
+        try:
+            return int(value)
+        except Exception:
+            pass
+        normalized = str(value).strip().lower()
+        mapping = {
+            "hostile": -40,
+            "enemy": -35,
+            "rival": -20,
+            "strained": -10,
+            "neutral": 0,
+            "tentative": 10,
+            "ally": 20,
+            "friendly": 25,
+            "strong": 35,
+            "close": 40,
+            "devoted": 50,
+        }
+        return mapping.get(normalized, 10)
+
+    def _coerce_bool(self, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        normalized = str(value).strip().lower()
+        return normalized in {"true", "1", "yes", "y", "on", "mutual"}
