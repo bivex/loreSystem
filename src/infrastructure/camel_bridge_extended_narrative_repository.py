@@ -53,18 +53,32 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
         columns = self._table_columns(self.table_name)
         usable = {key: value for key, value in payload.items() if key in columns}
         with self._connection() as conn:
-            if getattr(entity, "id", None) is None:
+            storage_id = self._storage_id_for(entity)
+            if storage_id is None or not self._has_row(conn, storage_id, payload["tenant_id"]):
                 cursor = conn.execute(
                     f"INSERT INTO {self.table_name} ({', '.join(usable)}) VALUES ({', '.join('?' for _ in usable)})",
                     tuple(usable.values()),
                 )
-                object.__setattr__(entity, "id", EntityId(cursor.lastrowid))
+                if getattr(entity, "id", None) is None:
+                    object.__setattr__(entity, "id", EntityId(cursor.lastrowid))
             else:
                 assignments = ", ".join(f"{key} = ?" for key in usable if key != "created_at")
                 values = [value for key, value in usable.items() if key != "created_at"]
-                values.extend([entity.id.value, payload["tenant_id"]])
+                values.extend([storage_id, payload["tenant_id"]])
                 conn.execute(f"UPDATE {self.table_name} SET {assignments} WHERE id = ? AND tenant_id = ?", values)
         return entity
+
+    def _storage_id_for(self, entity) -> int | None:
+        raw_id = getattr(entity, "id", None)
+        primitive = _to_primitive(raw_id)
+        return primitive if isinstance(primitive, int) else None
+
+    def _has_row(self, conn, entity_id: int, tenant_id: object) -> bool:
+        row = conn.execute(
+            f"SELECT 1 FROM {self.table_name} WHERE id = ? AND tenant_id = ? LIMIT 1",
+            (entity_id, tenant_id),
+        ).fetchone()
+        return row is not None
 
     def _ensure_schema(self) -> None:
         with self._connection() as conn:
@@ -98,6 +112,66 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
 
 class CamelBridgeStorylineRepository(_GenericBridgeRepository):
     table_name = "storylines"
+
+
+class CamelBridgeCharacterEvolutionRepository(_GenericBridgeRepository):
+    table_name = "character_evolutions"
+
+
+class CamelBridgeCharacterVariantRepository(_GenericBridgeRepository):
+    table_name = "character_variants"
+
+
+class CamelBridgeCharacterProfileEntryRepository(_GenericBridgeRepository):
+    table_name = "character_profile_entries"
+
+
+class CamelBridgeMotionCaptureRepository(_GenericBridgeRepository):
+    table_name = "motion_captures"
+
+
+class CamelBridgeVoiceActorRepository(_GenericBridgeRepository):
+    table_name = "voice_actors"
+
+
+class CamelBridgeAffinityRepository(_GenericBridgeRepository):
+    table_name = "affinities"
+
+
+class CamelBridgeDispositionRepository(_GenericBridgeRepository):
+    table_name = "dispositions"
+
+
+class CamelBridgeQuestRepository(_GenericBridgeRepository):
+    table_name = "quests"
+
+
+class CamelBridgeQuestChainRepository(_GenericBridgeRepository):
+    table_name = "quest_chains"
+
+
+class CamelBridgeQuestGiverRepository(_GenericBridgeRepository):
+    table_name = "quest_givers"
+
+
+class CamelBridgeQuestNodeRepository(_GenericBridgeRepository):
+    table_name = "quest_nodes"
+
+
+class CamelBridgeQuestObjectiveRepository(_GenericBridgeRepository):
+    table_name = "quest_objectives"
+
+
+class CamelBridgeQuestPrerequisiteRepository(_GenericBridgeRepository):
+    table_name = "quest_prerequisites"
+
+
+class CamelBridgeQuestRewardTierRepository(_GenericBridgeRepository):
+    table_name = "quest_reward_tiers"
+
+
+class CamelBridgeQuestTrackerRepository(_GenericBridgeRepository):
+    table_name = "quest_trackers"
 
 
 class CamelBridgePlotBranchRepository(_GenericBridgeRepository):

@@ -1,7 +1,7 @@
 """Disposition entity - General attitude toward entities."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Optional, Self
 
@@ -12,8 +12,8 @@ class Disposition:
 
     id: str = field(default_factory=lambda: str(uuid4()))
     tenant_id: str = ""
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Domain fields
     entity_id: str = ""  # Character/NPC with this disposition
@@ -64,12 +64,12 @@ class Disposition:
         if new_attitude not in valid_attitudes:
             raise ValueError(f"attitude must be one of {valid_attitudes}")
         self.attitude = new_attitude
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def set_intensity(self, intensity: int) -> None:
         """Set the intensity of disposition."""
         self.intensity = max(0, min(100, intensity))
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def is_hostile(self) -> bool:
         """Check if disposition is hostile."""

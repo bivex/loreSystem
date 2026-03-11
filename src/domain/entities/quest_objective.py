@@ -98,7 +98,7 @@ class QuestObjective:
             target_id=target_id,
             target_quantity=target_quantity,
             current_progress=0,
-            status=ObjectiveStatus.INCOMPLETE,
+            status=ObjectiveStatus.NOT_STARTED,
             is_optional=is_optional,
             is_hidden=is_hidden,
             order_index=order_index,
@@ -128,8 +128,10 @@ class QuestObjective:
         
         # Check if objective is complete
         if self.current_progress >= self.target_quantity:
-            if self.status == ObjectiveStatus.INCOMPLETE:
+            if self.status != ObjectiveStatus.COMPLETED:
                 object.__setattr__(self, 'status', ObjectiveStatus.COMPLETED)
+        elif self.current_progress > 0 and self.status == ObjectiveStatus.NOT_STARTED:
+            object.__setattr__(self, 'status', ObjectiveStatus.IN_PROGRESS)
     
     def complete(self) -> 'QuestObjective':
         """Mark this objective as completed."""
@@ -167,7 +169,7 @@ class QuestObjective:
             target_id=self.target_id,
             target_quantity=self.target_quantity,
             current_progress=0,
-            status=ObjectiveStatus.INCOMPLETE,
+            status=ObjectiveStatus.NOT_STARTED,
             is_optional=self.is_optional,
             is_hidden=self.is_hidden,
             order_index=self.order_index,

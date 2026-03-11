@@ -1,7 +1,7 @@
 """Affinity entity - Personal affinity relationships."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Optional, Self
 
@@ -12,8 +12,8 @@ class Affinity:
 
     id: str = field(default_factory=lambda: str(uuid4()))
     tenant_id: str = ""
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Domain fields
     source_id: str = ""  # Character who has the affinity
@@ -54,7 +54,7 @@ class Affinity:
     def modify(self, delta: float) -> None:
         """Modify affinity value."""
         self.value = max(-1.0, min(1.0, self.value + delta))
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def is_maxed(self) -> bool:
         """Check if affinity is at maximum."""
@@ -68,10 +68,10 @@ class Affinity:
         """Add a flag to the affinity."""
         if flag not in self.flags:
             self.flags.append(flag)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(timezone.utc)
 
     def remove_flag(self, flag: str) -> None:
         """Remove a flag from the affinity."""
         if flag in self.flags:
             self.flags.remove(flag)
-            self.updated_at = datetime.utcnow()
+            self.updated_at = datetime.now(timezone.utc)

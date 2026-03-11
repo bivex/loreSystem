@@ -11,14 +11,19 @@ from pathlib import Path
 from typing import Protocol, Sequence
 
 from src.domain.entities.act import Act, ActStructure, ActType
+from src.domain.entities.affinity import Affinity
 from src.domain.entities.alternate_reality import AlternateReality, RealityAccess, RealityType
 from src.domain.entities.branch_point import BranchPoint, BranchPointType
 from src.domain.entities.campaign import Campaign, CampaignType
 from src.domain.entities.chapter import Chapter, ChapterType
 from src.domain.entities.character import Character
+from src.domain.entities.character_evolution import CharacterEvolution, EvolutionStage, EvolutionType
+from src.domain.entities.character_profile_entry import CharacterProfileEntry
 from src.domain.entities.character_relationship import CharacterRelationship, RelationshipType
+from src.domain.entities.character_variant import CharacterVariant, VariantRarity, VariantType
 from src.domain.entities.choice import Choice
 from src.domain.entities.consequence import Consequence, ConsequenceSeverity, ConsequenceType
+from src.domain.entities.disposition import Disposition
 from src.domain.entities.ending import Ending, EndingRarity, EndingType
 from src.domain.entities.episode import Episode, EpisodeType
 from src.domain.entities.epilogue import Epilogue, EpilogueCondition, EpilogueType
@@ -26,20 +31,35 @@ from src.domain.entities.event import Event
 from src.domain.entities.flash_forward import FlashForward
 from src.domain.entities.flashback import Flashback
 from src.domain.entities.moral_choice import ChoiceUrgency, MoralAlignment, MoralChoice
+from src.domain.entities.motion_capture import AnimationType, CaptureStatus, MotionCapture
 from src.domain.entities.plot_branch import BranchStatus, BranchType, PlotBranch
 from src.domain.entities.prologue import Prologue, PrologueType
+from src.domain.entities.quest import Quest
+from src.domain.entities.quest_chain import QuestChain
+from src.domain.entities.quest_giver import QuestGiver
+from src.domain.entities.quest_node import QuestNode
+from src.domain.entities.quest_objective import QuestObjective
+from src.domain.entities.quest_prerequisite import QuestPrerequisite
+from src.domain.entities.quest_reward_tier import QuestRewardTier
+from src.domain.entities.quest_tracker import QuestTracker
 from src.domain.entities.rumor import Rumor
 from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
+from src.domain.entities.voice_actor import VoiceActor, VoiceActorStatus
 from src.domain.repositories.rumor_repository import IRumorRepository
 from src.domain.value_objects.common import (
     Backstory,
     CharacterName,
+    ChainStatus,
     ChoiceType,
     Content,
     Description,
+    EntityStatus,
     EntityId,
     EventOutcome,
+    ObjectiveType,
+    QuestStatus,
+    PrerequisiteType,
     StoryName,
     StorylineType,
     StoryType,
@@ -219,6 +239,195 @@ class FlashForwardDraft:
 
 
 @dataclass(frozen=True)
+class CharacterEvolutionDraft:
+    character_name: str
+    current_stage: str
+    evolution_type: str = "level_up"
+    previous_stage: str | None = None
+    requirements: tuple[str, ...] = ()
+    rewards: dict[str, str] = field(default_factory=dict)
+    variant_names: tuple[str, ...] = ()
+    new_abilities: tuple[str, ...] = ()
+    stat_increases: dict[str, int] = field(default_factory=dict)
+    is_permanent: bool = True
+    can_revert: bool = False
+
+
+@dataclass(frozen=True)
+class CharacterVariantDraft:
+    character_name: str
+    name: str
+    description: str | None = None
+    variant_type: str = "costume"
+    rarity: str = "common"
+    is_unlockable: bool = False
+    unlock_condition: str | None = None
+    model_path: str | None = None
+    texture_paths: tuple[str, ...] = ()
+    animation_overrides: tuple[str, ...] = ()
+    stat_modifiers: dict[str, object] = field(default_factory=dict)
+    ability_changes: tuple[str, ...] = ()
+    is_seasonal: bool = False
+
+
+@dataclass(frozen=True)
+class CharacterProfileEntryDraft:
+    character_name: str
+    field_name: str
+    field_value: str
+    is_public: bool = False
+
+
+@dataclass(frozen=True)
+class MotionCaptureDraft:
+    name: str
+    file_path: str
+    character_name: str | None = None
+    actor_name: str | None = None
+    description: str | None = None
+    animation_type: str = "custom"
+    status: str = "pending"
+    duration_seconds: float | None = None
+    frame_count: int | None = None
+    is_looping: bool = False
+    transition_from: str | None = None
+    transition_to: str | None = None
+
+
+@dataclass(frozen=True)
+class VoiceActorDraft:
+    name: str
+    language: str = "Common"
+    character_names: tuple[str, ...] = ()
+    description: str | None = None
+    status: str = "active"
+    voice_samples: tuple[str, ...] = ()
+    agency: str | None = None
+    contact_info: str | None = None
+    hourly_rate: float | None = None
+
+
+@dataclass(frozen=True)
+class AffinityDraft:
+    source_name: str
+    target_name: str
+    category: str
+    value: float = 0.0
+    flags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class DispositionDraft:
+    entity_name: str
+    target_type: str
+    target_value: str
+    attitude: str = "neutral"
+    intensity: int = 0
+
+
+@dataclass(frozen=True)
+class QuestDraft:
+    name: str
+    description: str
+    objectives: tuple[str, ...] = ()
+    participant_names: tuple[str, ...] = ()
+    reward_tier_names: tuple[str, ...] = ()
+    status: str = "active"
+
+
+@dataclass(frozen=True)
+class QuestChainDraft:
+    name: str
+    description: str
+    node_names: tuple[str, ...] = ()
+    required_level: int | None = None
+    is_repeatable: bool = False
+    cooldown_hours: int | None = None
+
+
+@dataclass(frozen=True)
+class QuestPrerequisiteDraft:
+    description: str
+    prerequisite_type: str = "quest"
+    required_quest_names: tuple[str, ...] = ()
+    required_level: int | None = None
+    required_item_ids: tuple[int, ...] = ()
+    required_skill_ids: tuple[int, ...] = ()
+    required_attribute_values: dict[str, int] = field(default_factory=dict)
+    is_flexible: bool = False
+
+
+@dataclass(frozen=True)
+class QuestObjectiveDraft:
+    quest_node_name: str
+    description: str
+    objective_type: str = "interact"
+    target_type: str | None = None
+    target_name: str | None = None
+    target_quantity: int = 1
+    is_optional: bool = False
+    is_hidden: bool = False
+    order_index: int = 0
+
+
+@dataclass(frozen=True)
+class QuestRewardTierDraft:
+    quest_node_name: str
+    name: str
+    description: str
+    tier_level: int = 1
+    min_rating: int | None = None
+    max_rating: int | None = None
+    currency_rewards: dict[str, int] = field(default_factory=dict)
+    experience_reward: int = 0
+    reputation_rewards: dict[str, int] = field(default_factory=dict)
+    skill_experience: dict[str, int] = field(default_factory=dict)
+    is_guaranteed: bool = True
+    is_selectable: bool = False
+    selection_count: int = 1
+
+
+@dataclass(frozen=True)
+class QuestNodeDraft:
+    quest_chain_name: str
+    name: str
+    description: str
+    objective_descriptions: tuple[str, ...] = ()
+    prerequisite_descriptions: tuple[str, ...] = ()
+    reward_tier_names: tuple[str, ...] = ()
+    is_optional: bool = False
+    auto_complete: bool = False
+    position: int = 0
+
+
+@dataclass(frozen=True)
+class QuestGiverDraft:
+    name: str
+    description: str
+    character_name: str | None = None
+    location_id: int | None = None
+    quest_chain_names: tuple[str, ...] = ()
+    quest_node_names: tuple[str, ...] = ()
+    has_daily_quests: bool = False
+    daily_reset_hour: int | None = None
+    required_reputation: int | None = None
+    greeting_message: str | None = None
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
+class QuestTrackerDraft:
+    player_character_name: str | None = None
+    active_chain_names: tuple[str, ...] = ()
+    completed_chain_names: tuple[str, ...] = ()
+    active_node_names: tuple[str, ...] = ()
+    completed_node_names: tuple[str, ...] = ()
+    failed_node_names: tuple[str, ...] = ()
+    objective_progress: dict[str, int] = field(default_factory=dict)
+    quest_chain_completions: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class PrologueDraft:
     title: str
     description: str
@@ -281,6 +490,21 @@ class NarrativeStructureDraft:
     chapters: tuple[ChapterDraft, ...]
     episodes: tuple[EpisodeDraft, ...]
     storylines: tuple[StorylineDraft, ...] = field(default_factory=tuple)
+    character_evolutions: tuple[CharacterEvolutionDraft, ...] = field(default_factory=tuple)
+    character_variants: tuple[CharacterVariantDraft, ...] = field(default_factory=tuple)
+    character_profile_entries: tuple[CharacterProfileEntryDraft, ...] = field(default_factory=tuple)
+    motion_captures: tuple[MotionCaptureDraft, ...] = field(default_factory=tuple)
+    voice_actors: tuple[VoiceActorDraft, ...] = field(default_factory=tuple)
+    affinities: tuple[AffinityDraft, ...] = field(default_factory=tuple)
+    dispositions: tuple[DispositionDraft, ...] = field(default_factory=tuple)
+    quests: tuple[QuestDraft, ...] = field(default_factory=tuple)
+    quest_chains: tuple[QuestChainDraft, ...] = field(default_factory=tuple)
+    quest_givers: tuple[QuestGiverDraft, ...] = field(default_factory=tuple)
+    quest_nodes: tuple[QuestNodeDraft, ...] = field(default_factory=tuple)
+    quest_objectives: tuple[QuestObjectiveDraft, ...] = field(default_factory=tuple)
+    quest_prerequisites: tuple[QuestPrerequisiteDraft, ...] = field(default_factory=tuple)
+    quest_reward_tiers: tuple[QuestRewardTierDraft, ...] = field(default_factory=tuple)
+    quest_trackers: tuple[QuestTrackerDraft, ...] = field(default_factory=tuple)
     plot_branches: tuple[PlotBranchDraft, ...] = field(default_factory=tuple)
     branch_points: tuple[BranchPointDraft, ...] = field(default_factory=tuple)
     choices: tuple[ChoiceDraft, ...] = field(default_factory=tuple)
@@ -311,6 +535,21 @@ class RumorChainResult:
     characters: list[Character]
     events: list[Event]
     relationships: list[CharacterRelationship]
+    character_evolutions: list[CharacterEvolution] = field(default_factory=list)
+    character_variants: list[CharacterVariant] = field(default_factory=list)
+    character_profile_entries: list[CharacterProfileEntry] = field(default_factory=list)
+    motion_captures: list[MotionCapture] = field(default_factory=list)
+    voice_actors: list[VoiceActor] = field(default_factory=list)
+    affinities: list[Affinity] = field(default_factory=list)
+    dispositions: list[Disposition] = field(default_factory=list)
+    quests: list[Quest] = field(default_factory=list)
+    quest_chains: list[QuestChain] = field(default_factory=list)
+    quest_givers: list[QuestGiver] = field(default_factory=list)
+    quest_nodes: list[QuestNode] = field(default_factory=list)
+    quest_objectives: list[QuestObjective] = field(default_factory=list)
+    quest_prerequisites: list[QuestPrerequisite] = field(default_factory=list)
+    quest_reward_tiers: list[QuestRewardTier] = field(default_factory=list)
+    quest_trackers: list[QuestTracker] = field(default_factory=list)
     campaign: Campaign | None = None
     story: Story | None = None
     acts: list[Act] = field(default_factory=list)
@@ -440,6 +679,66 @@ class FlashForwardStore(Protocol):
     def save(self, entity: FlashForward) -> FlashForward: ...
 
 
+class CharacterEvolutionStore(Protocol):
+    def save(self, entity: CharacterEvolution) -> CharacterEvolution: ...
+
+
+class CharacterVariantStore(Protocol):
+    def save(self, entity: CharacterVariant) -> CharacterVariant: ...
+
+
+class CharacterProfileEntryStore(Protocol):
+    def save(self, entity: CharacterProfileEntry) -> CharacterProfileEntry: ...
+
+
+class MotionCaptureStore(Protocol):
+    def save(self, entity: MotionCapture) -> MotionCapture: ...
+
+
+class VoiceActorStore(Protocol):
+    def save(self, entity: VoiceActor) -> VoiceActor: ...
+
+
+class AffinityStore(Protocol):
+    def save(self, entity: Affinity) -> Affinity: ...
+
+
+class DispositionStore(Protocol):
+    def save(self, entity: Disposition) -> Disposition: ...
+
+
+class QuestStore(Protocol):
+    def save(self, entity: Quest) -> Quest: ...
+
+
+class QuestChainStore(Protocol):
+    def save(self, entity: QuestChain) -> QuestChain: ...
+
+
+class QuestGiverStore(Protocol):
+    def save(self, entity: QuestGiver) -> QuestGiver: ...
+
+
+class QuestNodeStore(Protocol):
+    def save(self, entity: QuestNode) -> QuestNode: ...
+
+
+class QuestObjectiveStore(Protocol):
+    def save(self, entity: QuestObjective) -> QuestObjective: ...
+
+
+class QuestPrerequisiteStore(Protocol):
+    def save(self, entity: QuestPrerequisite) -> QuestPrerequisite: ...
+
+
+class QuestRewardTierStore(Protocol):
+    def save(self, entity: QuestRewardTier) -> QuestRewardTier: ...
+
+
+class QuestTrackerStore(Protocol):
+    def save(self, entity: QuestTracker) -> QuestTracker: ...
+
+
 class CamelChatBackend:
     """Lazy CAMEL backend that only imports CAMEL at runtime."""
 
@@ -532,6 +831,136 @@ class DeterministicRumorBackend:
                         "description": "Tracks how harbor whispers become public raids.",
                         "storyline_type": "main",
                         "events": ["Blue Lantern Raid"],
+                    }
+                ],
+                "character_variants": [
+                    {
+                        "character_name": "Mara Voss",
+                        "name": "Bellwarden Disguise",
+                        "description": "A covert disguise for moving through curfew lines.",
+                        "variant_type": "costume",
+                        "rarity": "uncommon",
+                    }
+                ],
+                "character_evolutions": [
+                    {
+                        "character_name": "Mara Voss",
+                        "current_stage": "advanced",
+                        "previous_stage": "intermediate",
+                        "evolution_type": "story_unlocked",
+                        "variant_names": ["Bellwarden Disguise"],
+                    }
+                ],
+                "character_profile_entries": [
+                    {
+                        "character_name": "Mara Voss",
+                        "field_name": "fear",
+                        "field_value": "The harbor bells ringing in an empty street.",
+                    }
+                ],
+                "motion_captures": [
+                    {
+                        "name": "Harbor Warning Gesture",
+                        "file_path": "captures/harbor_warning.fbx",
+                        "character_name": "Mara Voss",
+                        "actor_name": "Talan Reed",
+                        "animation_type": "social",
+                        "status": "completed",
+                    }
+                ],
+                "voice_actors": [
+                    {
+                        "name": "Talan Reed",
+                        "language": "Common",
+                        "character_names": ["Mara Voss"],
+                        "status": "active",
+                    }
+                ],
+                "affinities": [
+                    {
+                        "source_name": "Mara Voss",
+                        "target_name": "Iven Hale",
+                        "category": "trust",
+                        "value": 0.8,
+                    }
+                ],
+                "dispositions": [
+                    {
+                        "entity_name": "Mara Voss",
+                        "target_type": "faction",
+                        "target_value": "Harbor Guard",
+                        "attitude": "unfriendly",
+                        "intensity": 6,
+                    }
+                ],
+                "quests": [
+                    {
+                        "name": "Silence Before the Bell",
+                        "description": "Carry the final warning through the harbor before panic erupts.",
+                        "objectives": ["Speak to the dockworkers", "Light the signal pyre"],
+                        "participant_names": ["Mara Voss", "Iven Hale"],
+                        "reward_tier_names": ["Bellkeeper's Reward"],
+                    }
+                ],
+                "quest_chains": [
+                    {
+                        "name": "Harbor Reckoning",
+                        "description": "A civic mission chain that decides whether the harbor revolts or submits.",
+                        "node_names": ["Warn the Docks"],
+                        "required_level": 3,
+                    }
+                ],
+                "quest_givers": [
+                    {
+                        "name": "Dockmaster Elra",
+                        "description": "A veteran dockmaster who turns rumor into action.",
+                        "character_name": "Mara Voss",
+                        "quest_chain_names": ["Harbor Reckoning"],
+                        "quest_node_names": ["Warn the Docks"],
+                    }
+                ],
+                "quest_nodes": [
+                    {
+                        "quest_chain_name": "Harbor Reckoning",
+                        "name": "Warn the Docks",
+                        "description": "Warn every district before curfew locks the gates.",
+                        "objective_descriptions": ["Speak to the dockworkers"],
+                        "prerequisite_descriptions": ["Complete Silence Before the Bell"],
+                        "reward_tier_names": ["Bellkeeper's Reward"],
+                    }
+                ],
+                "quest_objectives": [
+                    {
+                        "quest_node_name": "Warn the Docks",
+                        "description": "Speak to the dockworkers",
+                        "objective_type": "talk",
+                        "target_name": "Iven Hale",
+                    }
+                ],
+                "quest_prerequisites": [
+                    {
+                        "description": "Complete Silence Before the Bell",
+                        "prerequisite_type": "quest",
+                        "required_quest_names": ["Silence Before the Bell"],
+                        "required_level": 3,
+                    }
+                ],
+                "quest_reward_tiers": [
+                    {
+                        "quest_node_name": "Warn the Docks",
+                        "name": "Bellkeeper's Reward",
+                        "description": "A practical reward for warning the harbor in time.",
+                        "tier_level": 1,
+                        "currency_rewards": {"silver": 25},
+                        "experience_reward": 120,
+                    }
+                ],
+                "quest_trackers": [
+                    {
+                        "player_character_name": "Mara Voss",
+                        "active_chain_names": ["Harbor Reckoning"],
+                        "active_node_names": ["Warn the Docks"],
+                        "objective_progress": {"Speak to the dockworkers": 1},
                     }
                 ],
                 "plot_branches": [
@@ -704,7 +1133,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings.",
 )
 
 
@@ -724,6 +1153,21 @@ class RumorBridgeService:
         prologue_repository: PrologueStore | None = None,
         epilogue_repository: EpilogueStore | None = None,
         storyline_repository: StorylineStore | None = None,
+        character_evolution_repository: CharacterEvolutionStore | None = None,
+        character_variant_repository: CharacterVariantStore | None = None,
+        character_profile_entry_repository: CharacterProfileEntryStore | None = None,
+        motion_capture_repository: MotionCaptureStore | None = None,
+        voice_actor_repository: VoiceActorStore | None = None,
+        affinity_repository: AffinityStore | None = None,
+        disposition_repository: DispositionStore | None = None,
+        quest_repository: QuestStore | None = None,
+        quest_chain_repository: QuestChainStore | None = None,
+        quest_giver_repository: QuestGiverStore | None = None,
+        quest_node_repository: QuestNodeStore | None = None,
+        quest_objective_repository: QuestObjectiveStore | None = None,
+        quest_prerequisite_repository: QuestPrerequisiteStore | None = None,
+        quest_reward_tier_repository: QuestRewardTierStore | None = None,
+        quest_tracker_repository: QuestTrackerStore | None = None,
         plot_branch_repository: PlotBranchStore | None = None,
         branch_point_repository: BranchPointStore | None = None,
         choice_repository: ChoiceStore | None = None,
@@ -748,6 +1192,21 @@ class RumorBridgeService:
         self.prologue_repository = prologue_repository
         self.epilogue_repository = epilogue_repository
         self.storyline_repository = storyline_repository
+        self.character_evolution_repository = character_evolution_repository
+        self.character_variant_repository = character_variant_repository
+        self.character_profile_entry_repository = character_profile_entry_repository
+        self.motion_capture_repository = motion_capture_repository
+        self.voice_actor_repository = voice_actor_repository
+        self.affinity_repository = affinity_repository
+        self.disposition_repository = disposition_repository
+        self.quest_repository = quest_repository
+        self.quest_chain_repository = quest_chain_repository
+        self.quest_giver_repository = quest_giver_repository
+        self.quest_node_repository = quest_node_repository
+        self.quest_objective_repository = quest_objective_repository
+        self.quest_prerequisite_repository = quest_prerequisite_repository
+        self.quest_reward_tier_repository = quest_reward_tier_repository
+        self.quest_tracker_repository = quest_tracker_repository
         self.plot_branch_repository = plot_branch_repository
         self.branch_point_repository = branch_point_repository
         self.choice_repository = choice_repository
@@ -804,6 +1263,21 @@ class RumorBridgeService:
                 characters=result.characters,
                 events=result.events,
                 relationships=result.relationships,
+                character_evolutions=narrative.character_evolutions,
+                character_variants=narrative.character_variants,
+                character_profile_entries=narrative.character_profile_entries,
+                motion_captures=narrative.motion_captures,
+                voice_actors=narrative.voice_actors,
+                affinities=narrative.affinities,
+                dispositions=narrative.dispositions,
+                quests=narrative.quests,
+                quest_chains=narrative.quest_chains,
+                quest_givers=narrative.quest_givers,
+                quest_nodes=narrative.quest_nodes,
+                quest_objectives=narrative.quest_objectives,
+                quest_prerequisites=narrative.quest_prerequisites,
+                quest_reward_tiers=narrative.quest_reward_tiers,
+                quest_trackers=narrative.quest_trackers,
                 campaign=narrative.campaign,
                 story=narrative.story,
                 acts=narrative.acts,
@@ -861,8 +1335,11 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
-            "For storylines include events/event_names. For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
+            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
+            "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
+            "For quests include name, description, objectives, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, and optional target_name. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. "
+            "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
@@ -930,6 +1407,21 @@ class RumorBridgeService:
         chapters_payload = self._coerce_narrative_items(payload.get("chapters"))
         episodes_payload = self._coerce_narrative_items(payload.get("episodes"))
         storylines_payload = self._coerce_narrative_items(payload.get("storylines"))
+        character_evolutions_payload = self._coerce_narrative_items(payload.get("character_evolutions"))
+        character_variants_payload = self._coerce_narrative_items(payload.get("character_variants"))
+        character_profile_entries_payload = self._coerce_narrative_items(payload.get("character_profile_entries") or payload.get("character_profiles"))
+        motion_captures_payload = self._coerce_narrative_items(payload.get("motion_captures"))
+        voice_actors_payload = self._coerce_narrative_items(payload.get("voice_actors"))
+        affinities_payload = self._coerce_narrative_items(payload.get("affinities"))
+        dispositions_payload = self._coerce_narrative_items(payload.get("dispositions"))
+        quests_payload = self._coerce_narrative_items(payload.get("quests"))
+        quest_chains_payload = self._coerce_narrative_items(payload.get("quest_chains"))
+        quest_givers_payload = self._coerce_narrative_items(payload.get("quest_givers"))
+        quest_nodes_payload = self._coerce_narrative_items(payload.get("quest_nodes"))
+        quest_objectives_payload = self._coerce_narrative_items(payload.get("quest_objectives"))
+        quest_prerequisites_payload = self._coerce_narrative_items(payload.get("quest_prerequisites"))
+        quest_reward_tiers_payload = self._coerce_narrative_items(payload.get("quest_reward_tiers"))
+        quest_trackers_payload = self._coerce_narrative_items(payload.get("quest_trackers"))
         plot_branches_payload = self._coerce_narrative_items(payload.get("plot_branches") or payload.get("branches"))
         branch_points_payload = self._coerce_narrative_items(payload.get("branch_points"))
         choices_payload = self._coerce_narrative_items(payload.get("choices"))
@@ -993,6 +1485,66 @@ class RumorBridgeService:
             storylines=tuple(
                 self._build_storyline_draft(item, index)
                 for index, item in enumerate(storylines_payload, start=1)
+            ),
+            character_evolutions=tuple(
+                self._build_character_evolution_draft(item, index)
+                for index, item in enumerate(character_evolutions_payload, start=1)
+            ),
+            character_variants=tuple(
+                self._build_character_variant_draft(item, index)
+                for index, item in enumerate(character_variants_payload, start=1)
+            ),
+            character_profile_entries=tuple(
+                self._build_character_profile_entry_draft(item, index)
+                for index, item in enumerate(character_profile_entries_payload, start=1)
+            ),
+            motion_captures=tuple(
+                self._build_motion_capture_draft(item, index)
+                for index, item in enumerate(motion_captures_payload, start=1)
+            ),
+            voice_actors=tuple(
+                self._build_voice_actor_draft(item, index)
+                for index, item in enumerate(voice_actors_payload, start=1)
+            ),
+            affinities=tuple(
+                self._build_affinity_draft(item, index)
+                for index, item in enumerate(affinities_payload, start=1)
+            ),
+            dispositions=tuple(
+                self._build_disposition_draft(item, index)
+                for index, item in enumerate(dispositions_payload, start=1)
+            ),
+            quests=tuple(
+                self._build_quest_draft(item, index)
+                for index, item in enumerate(quests_payload, start=1)
+            ),
+            quest_chains=tuple(
+                self._build_quest_chain_draft(item, index)
+                for index, item in enumerate(quest_chains_payload, start=1)
+            ),
+            quest_givers=tuple(
+                self._build_quest_giver_draft(item, index)
+                for index, item in enumerate(quest_givers_payload, start=1)
+            ),
+            quest_nodes=tuple(
+                self._build_quest_node_draft(item, index)
+                for index, item in enumerate(quest_nodes_payload, start=1)
+            ),
+            quest_objectives=tuple(
+                self._build_quest_objective_draft(item, index)
+                for index, item in enumerate(quest_objectives_payload, start=1)
+            ),
+            quest_prerequisites=tuple(
+                self._build_quest_prerequisite_draft(item, index)
+                for index, item in enumerate(quest_prerequisites_payload, start=1)
+            ),
+            quest_reward_tiers=tuple(
+                self._build_quest_reward_tier_draft(item, index)
+                for index, item in enumerate(quest_reward_tiers_payload, start=1)
+            ),
+            quest_trackers=tuple(
+                self._build_quest_tracker_draft(item, index)
+                for index, item in enumerate(quest_trackers_payload, start=1)
             ),
             plot_branches=tuple(
                 self._build_plot_branch_draft(item, index)
@@ -1153,6 +1705,220 @@ class RumorBridgeService:
             ),
             storyline_type=str(payload.get("storyline_type") or "main"),
             event_names=self._coerce_text_tuple(payload.get("event_names") or payload.get("events")),
+        )
+
+    def _build_character_evolution_draft(self, item: object, index: int) -> CharacterEvolutionDraft:
+        payload = item if isinstance(item, dict) else {}
+        return CharacterEvolutionDraft(
+            character_name=self._first_non_empty_text(payload.get("character_name"), payload.get("character"), f"Character {index}"),
+            current_stage=self._first_non_empty_text(payload.get("current_stage"), payload.get("stage"), "awakened"),
+            evolution_type=str(payload.get("evolution_type") or "level_up"),
+            previous_stage=self._coerce_optional_text(payload.get("previous_stage")),
+            requirements=self._coerce_text_tuple(payload.get("requirements")),
+            rewards=self._coerce_text_dict(payload.get("rewards")),
+            variant_names=self._coerce_text_tuple(payload.get("variant_names") or payload.get("variants")),
+            new_abilities=self._coerce_text_tuple(payload.get("new_abilities") or payload.get("abilities")),
+            stat_increases=self._coerce_int_dict(payload.get("stat_increases")),
+            is_permanent=self._coerce_bool(payload.get("is_permanent", True)),
+            can_revert=self._coerce_bool(payload.get("can_revert", False)),
+        )
+
+    def _build_character_variant_draft(self, item: object, index: int) -> CharacterVariantDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return CharacterVariantDraft(
+            character_name=self._first_non_empty_text(payload.get("character_name"), payload.get("character"), f"Character {index}"),
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Variant {index}"),
+            description=self._coerce_optional_text(payload.get("description")),
+            variant_type=str(payload.get("variant_type") or "costume"),
+            rarity=str(payload.get("rarity") or "common"),
+            is_unlockable=self._coerce_bool(payload.get("is_unlockable", False)),
+            unlock_condition=self._coerce_optional_text(payload.get("unlock_condition")),
+            model_path=self._coerce_optional_text(payload.get("model_path")),
+            texture_paths=self._coerce_text_tuple(payload.get("texture_paths")),
+            animation_overrides=self._coerce_text_tuple(payload.get("animation_overrides")),
+            stat_modifiers=self._coerce_object_dict(payload.get("stat_modifiers")),
+            ability_changes=self._coerce_text_tuple(payload.get("ability_changes")),
+            is_seasonal=self._coerce_bool(payload.get("is_seasonal", False)),
+        )
+
+    def _build_character_profile_entry_draft(self, item: object, index: int) -> CharacterProfileEntryDraft:
+        payload = item if isinstance(item, dict) else {}
+        return CharacterProfileEntryDraft(
+            character_name=self._first_non_empty_text(payload.get("character_name"), payload.get("character"), f"Character {index}"),
+            field_name=self._first_non_empty_text(payload.get("field_name"), payload.get("key"), f"profile_field_{index}"),
+            field_value=self._first_non_empty_text(payload.get("field_value"), payload.get("value"), "Unknown"),
+            is_public=self._coerce_bool(payload.get("is_public", False)),
+        )
+
+    def _build_motion_capture_draft(self, item: object, index: int) -> MotionCaptureDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return MotionCaptureDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Motion Capture {index}"),
+            file_path=self._first_non_empty_text(payload.get("file_path"), payload.get("path"), f"capture_{index}.fbx"),
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            actor_name=self._coerce_optional_text(payload.get("actor_name") or payload.get("voice_actor_name") or payload.get("actor")),
+            description=self._coerce_optional_text(payload.get("description")),
+            animation_type=str(payload.get("animation_type") or "custom"),
+            status=str(payload.get("status") or "pending"),
+            duration_seconds=self._coerce_optional_float(payload.get("duration_seconds") or payload.get("duration")),
+            frame_count=self._coerce_optional_int(payload.get("frame_count")),
+            is_looping=self._coerce_bool(payload.get("is_looping", False)),
+            transition_from=self._coerce_optional_text(payload.get("transition_from")),
+            transition_to=self._coerce_optional_text(payload.get("transition_to")),
+        )
+
+    def _build_voice_actor_draft(self, item: object, index: int) -> VoiceActorDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return VoiceActorDraft(
+            name=self._compact_title(payload.get("name") or payload.get("actor_name") or scalar_text, fallback=f"Voice Actor {index}"),
+            language=self._first_non_empty_text(payload.get("language"), "Common"),
+            character_names=self._coerce_text_tuple(payload.get("character_names") or payload.get("characters")),
+            description=self._coerce_optional_text(payload.get("description")),
+            status=str(payload.get("status") or "active"),
+            voice_samples=self._coerce_text_tuple(payload.get("voice_samples")),
+            agency=self._coerce_optional_text(payload.get("agency")),
+            contact_info=self._coerce_optional_text(payload.get("contact_info")),
+            hourly_rate=self._coerce_optional_float(payload.get("hourly_rate")),
+        )
+
+    def _build_affinity_draft(self, item: object, index: int) -> AffinityDraft:
+        payload = item if isinstance(item, dict) else {}
+        return AffinityDraft(
+            source_name=self._first_non_empty_text(payload.get("source_name"), payload.get("source"), f"Character {index}"),
+            target_name=self._first_non_empty_text(payload.get("target_name"), payload.get("target"), f"Target {index}"),
+            category=self._first_non_empty_text(payload.get("category"), "bond"),
+            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            flags=self._coerce_text_tuple(payload.get("flags")),
+        )
+
+    def _build_disposition_draft(self, item: object, index: int) -> DispositionDraft:
+        payload = item if isinstance(item, dict) else {}
+        return DispositionDraft(
+            entity_name=self._first_non_empty_text(payload.get("entity_name"), payload.get("source_name"), f"Character {index}"),
+            target_type=self._first_non_empty_text(payload.get("target_type"), "topic"),
+            target_value=self._first_non_empty_text(payload.get("target_value"), payload.get("target"), f"Target {index}"),
+            attitude=self._coerce_disposition_attitude(self._first_non_empty_text(payload.get("attitude"), "neutral")),
+            intensity=self._coerce_optional_int(payload.get("intensity")) or 0,
+        )
+
+    def _build_quest_draft(self, item: object, index: int) -> QuestDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Quest {index}"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, "A quest born from rumor and consequence."),
+            objectives=self._coerce_text_tuple(payload.get("objectives")),
+            participant_names=self._coerce_text_tuple(payload.get("participant_names") or payload.get("participants")),
+            reward_tier_names=self._coerce_text_tuple(payload.get("reward_tier_names") or payload.get("rewards")),
+            status=str(payload.get("status") or "active"),
+        )
+
+    def _build_quest_chain_draft(self, item: object, index: int) -> QuestChainDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestChainDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Quest Chain {index}"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, "A quest chain that extends the main conflict."),
+            node_names=self._coerce_text_tuple(payload.get("node_names") or payload.get("nodes")),
+            required_level=self._coerce_optional_int(payload.get("required_level")),
+            is_repeatable=self._coerce_bool(payload.get("is_repeatable", False)),
+            cooldown_hours=self._coerce_optional_int(payload.get("cooldown_hours")),
+        )
+
+    def _build_quest_prerequisite_draft(self, item: object, index: int) -> QuestPrerequisiteDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestPrerequisiteDraft(
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, f"Prerequisite {index}"),
+            prerequisite_type=str(payload.get("prerequisite_type") or "quest"),
+            required_quest_names=self._coerce_text_tuple(payload.get("required_quest_names") or payload.get("required_quests")),
+            required_level=self._coerce_optional_int(payload.get("required_level")),
+            required_item_ids=self._coerce_positive_int_tuple(payload.get("required_item_ids")),
+            required_skill_ids=self._coerce_positive_int_tuple(payload.get("required_skill_ids")),
+            required_attribute_values=self._coerce_int_dict(payload.get("required_attribute_values")),
+            is_flexible=self._coerce_bool(payload.get("is_flexible", False)),
+        )
+
+    def _build_quest_objective_draft(self, item: object, index: int) -> QuestObjectiveDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestObjectiveDraft(
+            quest_node_name=self._first_non_empty_text(payload.get("quest_node_name"), payload.get("node_name"), "Quest Node 1"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, f"Objective {index}"),
+            objective_type=str(payload.get("objective_type") or "interact"),
+            target_type=self._coerce_optional_text(payload.get("target_type")),
+            target_name=self._coerce_optional_text(payload.get("target_name") or payload.get("target")),
+            target_quantity=self._coerce_positive_int(payload.get("target_quantity"), 1),
+            is_optional=self._coerce_bool(payload.get("is_optional", False)),
+            is_hidden=self._coerce_bool(payload.get("is_hidden", False)),
+            order_index=self._coerce_optional_int(payload.get("order_index")) or max(index - 1, 0),
+        )
+
+    def _build_quest_reward_tier_draft(self, item: object, index: int) -> QuestRewardTierDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestRewardTierDraft(
+            quest_node_name=self._first_non_empty_text(payload.get("quest_node_name"), payload.get("node_name"), "Quest Node 1"),
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Reward Tier {index}"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, "A reward tier for finishing the quest node."),
+            tier_level=self._coerce_positive_int(payload.get("tier_level"), 1),
+            min_rating=self._coerce_optional_int(payload.get("min_rating")),
+            max_rating=self._coerce_optional_int(payload.get("max_rating")),
+            currency_rewards=self._coerce_int_dict(payload.get("currency_rewards")),
+            experience_reward=self._coerce_optional_int(payload.get("experience_reward")) or 0,
+            reputation_rewards=self._coerce_int_dict(payload.get("reputation_rewards")),
+            skill_experience=self._coerce_int_dict(payload.get("skill_experience")),
+            is_guaranteed=self._coerce_bool(payload.get("is_guaranteed", True)),
+            is_selectable=self._coerce_bool(payload.get("is_selectable", False)),
+            selection_count=self._coerce_positive_int(payload.get("selection_count"), 1),
+        )
+
+    def _build_quest_node_draft(self, item: object, index: int) -> QuestNodeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestNodeDraft(
+            quest_chain_name=self._first_non_empty_text(payload.get("quest_chain_name"), payload.get("chain_name"), "Quest Chain 1"),
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Quest Node {index}"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, "A quest step that advances the rumor-born plot."),
+            objective_descriptions=self._coerce_text_tuple(payload.get("objective_descriptions") or payload.get("objectives")),
+            prerequisite_descriptions=self._coerce_text_tuple(payload.get("prerequisite_descriptions") or payload.get("prerequisites")),
+            reward_tier_names=self._coerce_text_tuple(payload.get("reward_tier_names") or payload.get("reward_tiers")),
+            is_optional=self._coerce_bool(payload.get("is_optional", False)),
+            auto_complete=self._coerce_bool(payload.get("auto_complete", False)),
+            position=self._coerce_optional_int(payload.get("position")) or index,
+        )
+
+    def _build_quest_giver_draft(self, item: object, index: int) -> QuestGiverDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return QuestGiverDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Quest Giver {index}"),
+            description=self._first_non_empty_text(payload.get("description"), scalar_text, "A quest giver who translates rumor into action."),
+            character_name=self._coerce_optional_text(payload.get("character_name") or payload.get("character")),
+            location_id=self._coerce_optional_int(payload.get("location_id")),
+            quest_chain_names=self._coerce_text_tuple(payload.get("quest_chain_names") or payload.get("chains")),
+            quest_node_names=self._coerce_text_tuple(payload.get("quest_node_names") or payload.get("nodes")),
+            has_daily_quests=self._coerce_bool(payload.get("has_daily_quests", False)),
+            daily_reset_hour=self._coerce_optional_int(payload.get("daily_reset_hour")),
+            required_reputation=self._coerce_optional_int(payload.get("required_reputation")),
+            greeting_message=self._coerce_optional_text(payload.get("greeting_message")),
+            is_active=self._coerce_bool(payload.get("is_active", True)),
+        )
+
+    def _build_quest_tracker_draft(self, item: object, index: int) -> QuestTrackerDraft:
+        payload = item if isinstance(item, dict) else {}
+        return QuestTrackerDraft(
+            player_character_name=self._coerce_optional_text(payload.get("player_character_name") or payload.get("character_name") or payload.get("player")),
+            active_chain_names=self._coerce_text_tuple(payload.get("active_chain_names") or payload.get("active_chains")),
+            completed_chain_names=self._coerce_text_tuple(payload.get("completed_chain_names") or payload.get("completed_chains")),
+            active_node_names=self._coerce_text_tuple(payload.get("active_node_names") or payload.get("active_nodes")),
+            completed_node_names=self._coerce_text_tuple(payload.get("completed_node_names") or payload.get("completed_nodes")),
+            failed_node_names=self._coerce_text_tuple(payload.get("failed_node_names") or payload.get("failed_nodes")),
+            objective_progress=self._coerce_int_dict(payload.get("objective_progress")),
+            quest_chain_completions=self._coerce_int_dict(payload.get("quest_chain_completions") or payload.get("chain_completions")),
         )
 
     def _build_plot_branch_draft(self, item: object, index: int) -> PlotBranchDraft:
@@ -1431,6 +2197,38 @@ class RumorBridgeService:
         parsed = self._coerce_optional_int(value)
         return (parsed,) if parsed and parsed > 0 else ()
 
+    def _coerce_text_dict(self, value: object) -> dict[str, str]:
+        if not isinstance(value, dict):
+            return {}
+        result: dict[str, str] = {}
+        for key, raw_value in value.items():
+            normalized_key = self._coerce_optional_text(key)
+            normalized_value = self._coerce_optional_text(raw_value)
+            if normalized_key and normalized_value:
+                result[normalized_key] = normalized_value
+        return result
+
+    def _coerce_int_dict(self, value: object) -> dict[str, int]:
+        if not isinstance(value, dict):
+            return {}
+        result: dict[str, int] = {}
+        for key, raw_value in value.items():
+            normalized_key = self._coerce_optional_text(key)
+            normalized_value = self._coerce_optional_int(raw_value)
+            if normalized_key and normalized_value is not None:
+                result[normalized_key] = normalized_value
+        return result
+
+    def _coerce_object_dict(self, value: object) -> dict[str, object]:
+        if not isinstance(value, dict):
+            return {}
+        result: dict[str, object] = {}
+        for key, raw_value in value.items():
+            normalized_key = self._coerce_optional_text(key)
+            if normalized_key:
+                result[normalized_key] = raw_value
+        return result
+
     def _first_non_empty_text(self, *values: object) -> str:
         for value in values:
             text = self._coerce_optional_text(value)
@@ -1461,7 +2259,17 @@ class RumorBridgeService:
     def _persist_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
+        characters_by_name = {
+            self._normalize_lookup_key(character.name.value): character
+            for character in chain_result.characters
+        }
         connected_ids = [character.id for character in chain_result.characters if character.id is not None]
+
+        def ensure_character_id(name: str | None) -> EntityId | None:
+            if not name:
+                return None
+            character = self._ensure_character(request, name, characters_by_name)
+            return character.id
 
         campaign = self.campaign_repository.save(Campaign.create(
             tenant_id=tenant_id,
@@ -1610,6 +2418,459 @@ class RumorBridgeService:
                     updated_at=now,
                     version=Version(1),
                 )))
+
+        voice_actors: list[VoiceActor] = []
+        voice_actor_ids_by_name: dict[str, EntityId] = {}
+        if self.voice_actor_repository:
+            for voice_actor_draft in draft.voice_actors:
+                character_ids = [
+                    character_id
+                    for character_name in voice_actor_draft.character_names
+                    if (character_id := ensure_character_id(character_name)) is not None
+                ]
+                voice_actor = self.voice_actor_repository.save(VoiceActor.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    name=voice_actor_draft.name,
+                    language=voice_actor_draft.language,
+                    description=Description(voice_actor_draft.description) if voice_actor_draft.description else None,
+                    status=self._coerce_voice_actor_status(voice_actor_draft.status),
+                    character_ids=character_ids,
+                    voice_samples=list(voice_actor_draft.voice_samples),
+                    agency=voice_actor_draft.agency,
+                    contact_info=voice_actor_draft.contact_info,
+                    hourly_rate=voice_actor_draft.hourly_rate,
+                ))
+                voice_actors.append(voice_actor)
+                if voice_actor.id is not None:
+                    voice_actor_ids_by_name[self._normalize_lookup_key(voice_actor.name)] = voice_actor.id
+
+        character_variants: list[CharacterVariant] = []
+        variant_ids_by_name: dict[str, EntityId] = {}
+        if self.character_variant_repository:
+            for variant_draft in draft.character_variants:
+                base_character_id = ensure_character_id(variant_draft.character_name)
+                if base_character_id is None:
+                    continue
+                variant = self.character_variant_repository.save(CharacterVariant.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    base_character_id=base_character_id,
+                    name=variant_draft.name,
+                    variant_type=self._coerce_variant_type(variant_draft.variant_type),
+                    rarity=self._coerce_variant_rarity(variant_draft.rarity),
+                    description=Description(variant_draft.description) if variant_draft.description else None,
+                    is_unlockable=variant_draft.is_unlockable,
+                    unlock_condition=variant_draft.unlock_condition,
+                    model_path=variant_draft.model_path,
+                    texture_paths=list(variant_draft.texture_paths),
+                    animation_overrides=list(variant_draft.animation_overrides),
+                    stat_modifiers=dict(variant_draft.stat_modifiers),
+                    ability_changes=list(variant_draft.ability_changes),
+                    is_seasonal=variant_draft.is_seasonal,
+                ))
+                character_variants.append(variant)
+                if variant.id is not None:
+                    variant_ids_by_name[self._normalize_lookup_key(variant.name)] = variant.id
+
+        character_profile_entries: list[CharacterProfileEntry] = []
+        if self.character_profile_entry_repository:
+            for profile_draft in draft.character_profile_entries:
+                character_id = ensure_character_id(profile_draft.character_name)
+                if character_id is None:
+                    continue
+                character_profile_entries.append(self.character_profile_entry_repository.save(CharacterProfileEntry.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    character_id=character_id,
+                    field_name=profile_draft.field_name,
+                    field_value=profile_draft.field_value,
+                    is_public=profile_draft.is_public,
+                )))
+
+        motion_captures: list[MotionCapture] = []
+        if self.motion_capture_repository:
+            for motion_capture_draft in draft.motion_captures:
+                character_id = ensure_character_id(motion_capture_draft.character_name)
+                actor_id = voice_actor_ids_by_name.get(self._normalize_lookup_key(motion_capture_draft.actor_name or ""))
+                motion_captures.append(self.motion_capture_repository.save(MotionCapture.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    name=motion_capture_draft.name,
+                    file_path=motion_capture_draft.file_path,
+                    animation_type=self._coerce_animation_type(motion_capture_draft.animation_type),
+                    description=Description(motion_capture_draft.description) if motion_capture_draft.description else None,
+                    status=self._coerce_capture_status(motion_capture_draft.status),
+                    character_id=character_id,
+                    actor_id=actor_id,
+                    duration_seconds=motion_capture_draft.duration_seconds,
+                    frame_count=motion_capture_draft.frame_count,
+                    is_looping=motion_capture_draft.is_looping,
+                    transition_from=motion_capture_draft.transition_from,
+                    transition_to=motion_capture_draft.transition_to,
+                )))
+
+        character_evolutions: list[CharacterEvolution] = []
+        if self.character_evolution_repository:
+            for evolution_draft in draft.character_evolutions:
+                character_id = ensure_character_id(evolution_draft.character_name)
+                if character_id is None:
+                    continue
+                variant_ids = [
+                    variant_ids_by_name[key]
+                    for key in (self._normalize_lookup_key(name) for name in evolution_draft.variant_names)
+                    if key in variant_ids_by_name
+                ]
+                character_evolutions.append(self.character_evolution_repository.save(CharacterEvolution.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    character_id=character_id,
+                    current_stage=self._coerce_evolution_stage(evolution_draft.current_stage),
+                    evolution_type=self._coerce_evolution_type(evolution_draft.evolution_type),
+                    previous_stage=self._coerce_optional_evolution_stage(evolution_draft.previous_stage),
+                    requirements=list(evolution_draft.requirements),
+                    rewards=dict(evolution_draft.rewards),
+                    variant_ids=variant_ids,
+                    new_abilities=list(evolution_draft.new_abilities),
+                    stat_increases=dict(evolution_draft.stat_increases),
+                    is_permanent=evolution_draft.is_permanent,
+                    can_revert=evolution_draft.can_revert,
+                )))
+
+        def resolve_named_string_id(name: str | None) -> str | None:
+            character_id = ensure_character_id(name)
+            if character_id is not None:
+                return str(character_id.value)
+            voice_actor_id = voice_actor_ids_by_name.get(self._normalize_lookup_key(name or ""))
+            if voice_actor_id is not None:
+                return str(voice_actor_id.value)
+            return None
+
+        affinities: list[Affinity] = []
+        if self.affinity_repository:
+            for affinity_draft in draft.affinities:
+                source_id = resolve_named_string_id(affinity_draft.source_name)
+                target_id = resolve_named_string_id(affinity_draft.target_name)
+                if source_id is None or target_id is None:
+                    continue
+                affinities.append(self.affinity_repository.save(Affinity.create(
+                    tenant_id=str(request.tenant_id),
+                    source_id=source_id,
+                    target_id=target_id,
+                    category=affinity_draft.category,
+                    value=affinity_draft.value,
+                )))
+
+        dispositions: list[Disposition] = []
+        if self.disposition_repository:
+            for disposition_draft in draft.dispositions:
+                entity_id = resolve_named_string_id(disposition_draft.entity_name)
+                if entity_id is None:
+                    continue
+                dispositions.append(self.disposition_repository.save(Disposition.create(
+                    tenant_id=str(request.tenant_id),
+                    entity_id=entity_id,
+                    target_type=disposition_draft.target_type,
+                    target_value=disposition_draft.target_value,
+                    attitude=disposition_draft.attitude,
+                    intensity=disposition_draft.intensity,
+                )))
+
+        derived_node_names_by_chain: dict[str, list[str]] = {}
+        for quest_node_draft in draft.quest_nodes:
+            derived_node_names_by_chain.setdefault(self._normalize_lookup_key(quest_node_draft.quest_chain_name), []).append(quest_node_draft.name)
+
+        derived_objective_descriptions_by_node: dict[str, list[str]] = {}
+        for objective_draft in draft.quest_objectives:
+            derived_objective_descriptions_by_node.setdefault(self._normalize_lookup_key(objective_draft.quest_node_name), []).append(objective_draft.description)
+
+        quest_chains: list[QuestChain] = []
+        quest_chains_by_name: dict[str, QuestChain] = {}
+        if self.quest_chain_repository:
+            for chain_index, quest_chain_draft in enumerate(draft.quest_chains, start=1):
+                node_names = list(quest_chain_draft.node_names) or derived_node_names_by_chain.get(self._normalize_lookup_key(quest_chain_draft.name), [])
+                if not node_names:
+                    continue
+                quest_chain = self.quest_chain_repository.save(QuestChain.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    name=quest_chain_draft.name,
+                    description=Description(quest_chain_draft.description),
+                    quest_node_ids=[EntityId(100000 + chain_index * 100 + node_index) for node_index, _ in enumerate(node_names, start=1)],
+                    required_level=quest_chain_draft.required_level,
+                    is_repeatable=quest_chain_draft.is_repeatable,
+                    cooldown_hours=quest_chain_draft.cooldown_hours,
+                ))
+                quest_chains.append(quest_chain)
+                quest_chains_by_name[self._normalize_lookup_key(quest_chain.name)] = quest_chain
+
+        quests: list[Quest] = []
+        quests_by_name: dict[str, Quest] = {}
+        if self.quest_repository:
+            for quest_draft in draft.quests:
+                now = Timestamp.now()
+                participant_ids = [
+                    participant_id
+                    for participant_name in quest_draft.participant_names
+                    if (participant_id := ensure_character_id(participant_name)) is not None
+                ]
+                quest = self.quest_repository.save(Quest(
+                    id=None,
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    name=quest_draft.name,
+                    description=Description(quest_draft.description),
+                    objectives=list(quest_draft.objectives),
+                    status=self._coerce_quest_status(quest_draft.status),
+                    participant_ids=participant_ids,
+                    reward_ids=[],
+                    created_at=now,
+                    updated_at=now,
+                    version=Version(1),
+                ))
+                quests.append(quest)
+                quests_by_name[self._normalize_lookup_key(quest.name)] = quest
+
+        quest_prerequisites: list[QuestPrerequisite] = []
+        quest_prerequisites_by_description: dict[str, QuestPrerequisite] = {}
+        if self.quest_prerequisite_repository:
+            for prerequisite_draft in draft.quest_prerequisites:
+                prerequisite = self.quest_prerequisite_repository.save(QuestPrerequisite.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    prerequisite_type=self._coerce_prerequisite_type(prerequisite_draft.prerequisite_type),
+                    description=Description(prerequisite_draft.description),
+                    required_quest_ids=[
+                        quest.id
+                        for quest_name in prerequisite_draft.required_quest_names
+                        if (quest := quests_by_name.get(self._normalize_lookup_key(quest_name))) is not None and quest.id is not None
+                    ],
+                    required_level=prerequisite_draft.required_level,
+                    required_item_ids=[EntityId(item_id) for item_id in prerequisite_draft.required_item_ids],
+                    required_skill_ids=[EntityId(skill_id) for skill_id in prerequisite_draft.required_skill_ids],
+                    required_attribute_values=dict(prerequisite_draft.required_attribute_values),
+                    is_flexible=prerequisite_draft.is_flexible,
+                ))
+                quest_prerequisites.append(prerequisite)
+                quest_prerequisites_by_description[self._normalize_lookup_key(str(prerequisite.description))] = prerequisite
+
+        quest_nodes: list[QuestNode] = []
+        quest_nodes_by_name: dict[str, QuestNode] = {}
+        if self.quest_node_repository and quest_chains_by_name:
+            fallback_chain = next(iter(quest_chains_by_name.values()), None)
+            for node_index, quest_node_draft in enumerate(draft.quest_nodes, start=1):
+                quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_node_draft.quest_chain_name)) or fallback_chain
+                if quest_chain is None or quest_chain.id is None:
+                    continue
+                objective_descriptions = list(quest_node_draft.objective_descriptions) or derived_objective_descriptions_by_node.get(self._normalize_lookup_key(quest_node_draft.name), [])
+                if not objective_descriptions:
+                    continue
+                quest_node = self.quest_node_repository.save(QuestNode.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    quest_chain_id=quest_chain.id,
+                    name=quest_node_draft.name,
+                    description=Description(quest_node_draft.description),
+                    objective_ids=[EntityId(200000 + node_index * 100 + objective_index) for objective_index, _ in enumerate(objective_descriptions, start=1)],
+                    prerequisite_ids=[],
+                    reward_tier_ids=[],
+                    is_optional=quest_node_draft.is_optional,
+                    auto_complete=quest_node_draft.auto_complete,
+                    position=quest_node_draft.position,
+                ))
+                quest_nodes.append(quest_node)
+                quest_nodes_by_name[self._normalize_lookup_key(quest_node.name)] = quest_node
+
+        quest_objectives: list[QuestObjective] = []
+        quest_objectives_by_description: dict[str, QuestObjective] = {}
+        if self.quest_objective_repository and quest_nodes_by_name:
+            fallback_node = next(iter(quest_nodes_by_name.values()), None)
+            for objective_draft in draft.quest_objectives:
+                quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(objective_draft.quest_node_name)) or fallback_node
+                if quest_node is None or quest_node.id is None:
+                    continue
+                target_id = ensure_character_id(objective_draft.target_name)
+                if target_id is None:
+                    parsed_target_id = self._coerce_optional_int(objective_draft.target_name)
+                    target_id = EntityId(parsed_target_id) if parsed_target_id else None
+                objective = self.quest_objective_repository.save(QuestObjective.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    quest_node_id=quest_node.id,
+                    objective_type=self._coerce_objective_type(objective_draft.objective_type),
+                    description=Description(objective_draft.description),
+                    target_type=objective_draft.target_type,
+                    target_id=target_id,
+                    target_quantity=objective_draft.target_quantity,
+                    is_optional=objective_draft.is_optional,
+                    is_hidden=objective_draft.is_hidden,
+                    order_index=objective_draft.order_index,
+                ))
+                quest_objectives.append(objective)
+                quest_objectives_by_description[self._normalize_lookup_key(str(objective.description))] = objective
+
+        quest_reward_tiers: list[QuestRewardTier] = []
+        quest_reward_tiers_by_name: dict[str, QuestRewardTier] = {}
+        if self.quest_reward_tier_repository and quest_nodes_by_name:
+            fallback_node = next(iter(quest_nodes_by_name.values()), None)
+            for reward_tier_draft in draft.quest_reward_tiers:
+                quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(reward_tier_draft.quest_node_name)) or fallback_node
+                if quest_node is None or quest_node.id is None:
+                    continue
+                reward_tier = self.quest_reward_tier_repository.save(QuestRewardTier.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    quest_node_id=quest_node.id,
+                    name=reward_tier_draft.name,
+                    description=Description(reward_tier_draft.description),
+                    tier_level=reward_tier_draft.tier_level,
+                    min_rating=reward_tier_draft.min_rating,
+                    max_rating=reward_tier_draft.max_rating,
+                    item_ids=[],
+                    currency_rewards=dict(reward_tier_draft.currency_rewards),
+                    experience_reward=reward_tier_draft.experience_reward,
+                    reputation_rewards=dict(reward_tier_draft.reputation_rewards),
+                    skill_experience=dict(reward_tier_draft.skill_experience),
+                    is_guaranteed=reward_tier_draft.is_guaranteed,
+                    is_selectable=reward_tier_draft.is_selectable,
+                    selection_count=reward_tier_draft.selection_count,
+                ))
+                quest_reward_tiers.append(reward_tier)
+                quest_reward_tiers_by_name[self._normalize_lookup_key(reward_tier.name)] = reward_tier
+
+        if self.quest_node_repository:
+            for quest_node_draft in draft.quest_nodes:
+                quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(quest_node_draft.name))
+                if quest_node is None:
+                    continue
+                objective_ids = [
+                    objective.id
+                    for objective_description in quest_node_draft.objective_descriptions
+                    if (objective := quest_objectives_by_description.get(self._normalize_lookup_key(objective_description))) is not None and objective.id is not None
+                ]
+                prerequisite_ids = [
+                    prerequisite.id
+                    for prerequisite_description in quest_node_draft.prerequisite_descriptions
+                    if (prerequisite := quest_prerequisites_by_description.get(self._normalize_lookup_key(prerequisite_description))) is not None and prerequisite.id is not None
+                ]
+                reward_tier_ids = [
+                    reward_tier.id
+                    for reward_tier_name in quest_node_draft.reward_tier_names
+                    if (reward_tier := quest_reward_tiers_by_name.get(self._normalize_lookup_key(reward_tier_name))) is not None and reward_tier.id is not None
+                ]
+                if objective_ids:
+                    object.__setattr__(quest_node, "objective_ids", objective_ids)
+                object.__setattr__(quest_node, "prerequisite_ids", prerequisite_ids)
+                object.__setattr__(quest_node, "reward_tier_ids", reward_tier_ids)
+                object.__setattr__(quest_node, "updated_at", Timestamp.now())
+                object.__setattr__(quest_node, "version", quest_node.version.increment())
+                quest_nodes_by_name[self._normalize_lookup_key(quest_node.name)] = self.quest_node_repository.save(quest_node)
+
+        if self.quest_chain_repository:
+            for quest_chain_draft in draft.quest_chains:
+                quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_draft.name))
+                if quest_chain is None:
+                    continue
+                node_names = list(quest_chain_draft.node_names) or derived_node_names_by_chain.get(self._normalize_lookup_key(quest_chain_draft.name), [])
+                node_ids = [
+                    quest_node.id
+                    for node_name in node_names
+                    if (quest_node := quest_nodes_by_name.get(self._normalize_lookup_key(node_name))) is not None and quest_node.id is not None
+                ]
+                if node_ids:
+                    object.__setattr__(quest_chain, "quest_node_ids", node_ids)
+                    object.__setattr__(quest_chain, "updated_at", Timestamp.now())
+                    object.__setattr__(quest_chain, "version", quest_chain.version.increment())
+                    quest_chains_by_name[self._normalize_lookup_key(quest_chain.name)] = self.quest_chain_repository.save(quest_chain)
+
+        if self.quest_repository:
+            for quest_draft in draft.quests:
+                quest = quests_by_name.get(self._normalize_lookup_key(quest_draft.name))
+                if quest is None:
+                    continue
+                reward_ids = [
+                    reward_tier.id
+                    for reward_tier_name in quest_draft.reward_tier_names
+                    if (reward_tier := quest_reward_tiers_by_name.get(self._normalize_lookup_key(reward_tier_name))) is not None and reward_tier.id is not None
+                ]
+                if reward_ids:
+                    object.__setattr__(quest, "reward_ids", reward_ids)
+                    object.__setattr__(quest, "updated_at", Timestamp.now())
+                    object.__setattr__(quest, "version", quest.version.increment())
+                    quests_by_name[self._normalize_lookup_key(quest.name)] = self.quest_repository.save(quest)
+
+        quest_givers: list[QuestGiver] = []
+        if self.quest_giver_repository:
+            fallback_location_id = EntityId(request.location_id) if request.location_id else world_id
+            for quest_giver_draft in draft.quest_givers:
+                location_id = EntityId(quest_giver_draft.location_id) if quest_giver_draft.location_id else fallback_location_id
+                character_id = ensure_character_id(quest_giver_draft.character_name)
+                quest_giver = self.quest_giver_repository.save(QuestGiver.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    name=quest_giver_draft.name,
+                    description=Description(quest_giver_draft.description),
+                    location_id=location_id,
+                    character_id=character_id,
+                    has_daily_quests=quest_giver_draft.has_daily_quests,
+                    daily_reset_hour=quest_giver_draft.daily_reset_hour,
+                    required_reputation=quest_giver_draft.required_reputation,
+                    greeting_message=quest_giver_draft.greeting_message,
+                ))
+                for quest_chain_name in quest_giver_draft.quest_chain_names:
+                    quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_name))
+                    if quest_chain is not None and quest_chain.id is not None:
+                        quest_giver.add_quest_chain(quest_chain.id)
+                for quest_node_name in quest_giver_draft.quest_node_names:
+                    quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(quest_node_name))
+                    if quest_node is not None and quest_node.id is not None:
+                        quest_giver.add_quest(quest_node.id)
+                if not quest_giver_draft.is_active:
+                    quest_giver = quest_giver.deactivate()
+                quest_givers.append(self.quest_giver_repository.save(quest_giver))
+
+        quest_trackers: list[QuestTracker] = []
+        if self.quest_tracker_repository:
+            fallback_player_profile_id = next((character.id for character in characters_by_name.values() if character.id is not None), world_id)
+            for quest_tracker_draft in draft.quest_trackers:
+                player_profile_id = ensure_character_id(quest_tracker_draft.player_character_name) or fallback_player_profile_id
+                quest_tracker = QuestTracker.create(
+                    tenant_id=tenant_id,
+                    world_id=world_id,
+                    player_profile_id=player_profile_id,
+                )
+                for quest_chain_name in quest_tracker_draft.active_chain_names:
+                    quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_name))
+                    if quest_chain is not None and quest_chain.id is not None:
+                        quest_tracker.start_quest_chain(quest_chain.id)
+                for quest_node_name in quest_tracker_draft.active_node_names:
+                    quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(quest_node_name))
+                    if quest_node is not None and quest_node.id is not None:
+                        quest_tracker.start_quest(quest_node.id)
+                for quest_node_name in quest_tracker_draft.completed_node_names:
+                    quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(quest_node_name))
+                    if quest_node is not None and quest_node.id is not None:
+                        quest_tracker.start_quest(quest_node.id)
+                        quest_tracker.complete_quest(quest_node.id)
+                for quest_node_name in quest_tracker_draft.failed_node_names:
+                    quest_node = quest_nodes_by_name.get(self._normalize_lookup_key(quest_node_name))
+                    if quest_node is not None and quest_node.id is not None:
+                        quest_tracker.start_quest(quest_node.id)
+                        quest_tracker.fail_quest(quest_node.id)
+                for quest_chain_name in quest_tracker_draft.completed_chain_names:
+                    quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_name))
+                    if quest_chain is not None and quest_chain.id is not None:
+                        quest_tracker.start_quest_chain(quest_chain.id)
+                        quest_tracker.complete_quest_chain(quest_chain.id)
+                for objective_description, progress in quest_tracker_draft.objective_progress.items():
+                    objective = quest_objectives_by_description.get(self._normalize_lookup_key(objective_description))
+                    if objective is not None and objective.id is not None:
+                        quest_tracker.update_objective_progress(objective.id, progress)
+                for quest_chain_name, count in quest_tracker_draft.quest_chain_completions.items():
+                    quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_name))
+                    if quest_chain is not None and quest_chain.id is not None:
+                        quest_tracker.quest_chain_completions[quest_chain.id] = count
+                quest_trackers.append(self.quest_tracker_repository.save(quest_tracker))
 
         choices: list[Choice] = []
         choices_by_prompt: dict[str, Choice] = {}
@@ -1864,9 +3125,24 @@ class RumorBridgeService:
 
         return RumorChainResult(
             rumors=chain_result.rumors,
-            characters=chain_result.characters,
+            characters=list(characters_by_name.values()),
             events=chain_result.events,
             relationships=chain_result.relationships,
+            character_evolutions=character_evolutions,
+            character_variants=character_variants,
+            character_profile_entries=character_profile_entries,
+            motion_captures=motion_captures,
+            voice_actors=voice_actors,
+            affinities=affinities,
+            dispositions=dispositions,
+            quests=list(quests_by_name.values()),
+            quest_chains=list(quest_chains_by_name.values()),
+            quest_givers=quest_givers,
+            quest_nodes=list(quest_nodes_by_name.values()),
+            quest_objectives=quest_objectives,
+            quest_prerequisites=quest_prerequisites,
+            quest_reward_tiers=quest_reward_tiers,
+            quest_trackers=quest_trackers,
             campaign=campaign,
             story=story,
             acts=list(acts_by_number.values()),
@@ -1909,6 +3185,142 @@ class RumorBridgeService:
             ),
             storylines=(
                 StorylineDraft(name=f"{theme} Main Line", description=f"A storyline following how {request.theme} reshapes public order.", storyline_type="main"),
+            ),
+            character_variants=(
+                CharacterVariantDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    name="Bellwarden Disguise",
+                    description="A covert look used to move through the harbor without drawing notice.",
+                    variant_type="costume",
+                    rarity="uncommon",
+                ),
+            ),
+            character_evolutions=(
+                CharacterEvolutionDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    current_stage="advanced",
+                    evolution_type="story_unlocked",
+                    previous_stage="intermediate",
+                    requirements=("Survive the bell riots",),
+                    variant_names=("Bellwarden Disguise",),
+                    new_abilities=("Rally the harbor",),
+                    stat_increases={"resolve": 2},
+                ),
+            ),
+            character_profile_entries=(
+                CharacterProfileEntryDraft(
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    field_name="fear",
+                    field_value="Hears the harbor bells in every silence.",
+                    is_public=False,
+                ),
+            ),
+            motion_captures=(
+                MotionCaptureDraft(
+                    name="Harbor Warning Gesture",
+                    file_path="captures/harbor_warning.fbx",
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    actor_name="Talan Reed",
+                    animation_type="social",
+                    status="completed",
+                ),
+            ),
+            voice_actors=(
+                VoiceActorDraft(
+                    name="Talan Reed",
+                    language="Common",
+                    character_names=((chain_result.characters[0].name.value,) if chain_result.characters else ("Mara Voss",)),
+                    status="active",
+                ),
+            ),
+            affinities=(
+                AffinityDraft(
+                    source_name=(chain_result.characters[0].name.value if len(chain_result.characters) > 0 else "Mara Voss"),
+                    target_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                    category="trust",
+                    value=0.8,
+                ),
+            ),
+            dispositions=(
+                DispositionDraft(
+                    entity_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    target_type="faction",
+                    target_value="Harbor Guard",
+                    attitude="unfriendly",
+                    intensity=6,
+                ),
+            ),
+            quests=(
+                QuestDraft(
+                    name="Silence Before the Bell",
+                    description="Carry the final warning through the harbor before the bells trigger panic.",
+                    objectives=("Speak to the dockworkers", "Light the signal pyre"),
+                    participant_names=tuple(character.name.value for character in chain_result.characters[:2]),
+                    reward_tier_names=("Bellkeeper's Reward",),
+                ),
+            ),
+            quest_chains=(
+                QuestChainDraft(
+                    name="Harbor Reckoning",
+                    description="A chain of civic missions that decide whether the harbor revolts or submits.",
+                    node_names=("Warn the Docks",),
+                    required_level=3,
+                ),
+            ),
+            quest_givers=(
+                QuestGiverDraft(
+                    name="Dockmaster Elra",
+                    description="A veteran dockmaster who turns rumor into urgent errands.",
+                    character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    quest_chain_names=("Harbor Reckoning",),
+                    quest_node_names=("Warn the Docks",),
+                    greeting_message="If the bells ring again, we lose the night.",
+                ),
+            ),
+            quest_nodes=(
+                QuestNodeDraft(
+                    quest_chain_name="Harbor Reckoning",
+                    name="Warn the Docks",
+                    description="Move along the waterfront and warn every district before curfew locks the gates.",
+                    objective_descriptions=("Speak to the dockworkers",),
+                    prerequisite_descriptions=("Complete Silence Before the Bell",),
+                    reward_tier_names=("Bellkeeper's Reward",),
+                    position=1,
+                ),
+            ),
+            quest_objectives=(
+                QuestObjectiveDraft(
+                    quest_node_name="Warn the Docks",
+                    description="Speak to the dockworkers",
+                    objective_type="talk",
+                    target_name=(chain_result.characters[1].name.value if len(chain_result.characters) > 1 else "Iven Hale"),
+                ),
+            ),
+            quest_prerequisites=(
+                QuestPrerequisiteDraft(
+                    description="Complete Silence Before the Bell",
+                    prerequisite_type="quest",
+                    required_quest_names=("Silence Before the Bell",),
+                    required_level=3,
+                ),
+            ),
+            quest_reward_tiers=(
+                QuestRewardTierDraft(
+                    quest_node_name="Warn the Docks",
+                    name="Bellkeeper's Reward",
+                    description="A practical reward for warning the harbor in time.",
+                    tier_level=1,
+                    currency_rewards={"silver": 25},
+                    experience_reward=120,
+                ),
+            ),
+            quest_trackers=(
+                QuestTrackerDraft(
+                    player_character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    active_chain_names=("Harbor Reckoning",),
+                    active_node_names=("Warn the Docks",),
+                    objective_progress={"Speak to the dockworkers": 1},
+                ),
             ),
             plot_branches=(
                 PlotBranchDraft(
@@ -2183,6 +3595,63 @@ class RumorBridgeService:
 
     def _coerce_storyline_type(self, value: str) -> StorylineType:
         return self._coerce_enum(value, StorylineType, StorylineType.MAIN)
+
+    def _coerce_evolution_type(self, value: str) -> EvolutionType:
+        aliases = {"level": "level_up", "quest": "quest_completed", "story": "story_unlocked"}
+        return self._coerce_enum(value, EvolutionType, EvolutionType.LEVEL_UP, aliases)
+
+    def _coerce_evolution_stage(self, value: str) -> EvolutionStage:
+        aliases = {"starter": "basic", "expert": "advanced", "ultimate": "legendary"}
+        return self._coerce_enum(value, EvolutionStage, EvolutionStage.BASIC, aliases)
+
+    def _coerce_optional_evolution_stage(self, value: str | None) -> EvolutionStage | None:
+        if not value:
+            return None
+        return self._coerce_evolution_stage(value)
+
+    def _coerce_variant_type(self, value: str) -> VariantType:
+        aliases = {"alt": "alternate", "seasonal": "event", "skin": "costume"}
+        return self._coerce_enum(value, VariantType, VariantType.COSTUME, aliases)
+
+    def _coerce_variant_rarity(self, value: str) -> VariantRarity:
+        return self._coerce_enum(value, VariantRarity, VariantRarity.COMMON)
+
+    def _coerce_animation_type(self, value: str) -> AnimationType:
+        aliases = {"spell": "cast", "conversation": "social", "custom_loop": "custom"}
+        return self._coerce_enum(value, AnimationType, AnimationType.CUSTOM, aliases)
+
+    def _coerce_capture_status(self, value: str) -> CaptureStatus:
+        aliases = {"done": "completed", "reviewed": "approved"}
+        return self._coerce_enum(value, CaptureStatus, CaptureStatus.PENDING, aliases)
+
+    def _coerce_voice_actor_status(self, value: str) -> VoiceActorStatus:
+        aliases = {"busy": "unavailable"}
+        return self._coerce_enum(value, VoiceActorStatus, VoiceActorStatus.ACTIVE, aliases)
+
+    def _coerce_quest_status(self, value: str) -> QuestStatus:
+        aliases = {"in_progress": "active", "open": "active"}
+        return self._coerce_enum(value, QuestStatus, QuestStatus.ACTIVE, aliases)
+
+    def _coerce_objective_type(self, value: str) -> ObjectiveType:
+        aliases = {"speak": "talk", "meet": "talk", "discover": "explore"}
+        return self._coerce_enum(value, ObjectiveType, ObjectiveType.INTERACT, aliases)
+
+    def _coerce_prerequisite_type(self, value: str) -> PrerequisiteType:
+        aliases = {"mission": "quest", "rank": "reputation"}
+        return self._coerce_enum(value, PrerequisiteType, PrerequisiteType.QUEST, aliases)
+
+    def _coerce_disposition_attitude(self, value: str) -> str:
+        normalized = str(value or "neutral").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "suspicious": "unfriendly",
+            "wary": "unfriendly",
+            "distrustful": "unfriendly",
+            "supportive": "friendly",
+            "loyal": "friendly",
+            "antagonistic": "hostile",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"hostile", "unfriendly", "neutral", "friendly", "helpful"} else "neutral"
 
     def _coerce_choice_type(self, value: str) -> ChoiceType:
         return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)

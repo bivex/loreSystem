@@ -8,16 +8,31 @@ from src.application.integration.camel_bridge import DeterministicRumorBackend, 
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend
 from src.domain.value_objects.common import EntityId, TenantId
 from src.infrastructure.camel_bridge_extended_narrative_repository import (
+    CamelBridgeAffinityRepository,
     CamelBridgeAlternateRealityRepository,
     CamelBridgeBranchPointRepository,
+    CamelBridgeCharacterEvolutionRepository,
+    CamelBridgeCharacterProfileEntryRepository,
+    CamelBridgeCharacterVariantRepository,
     CamelBridgeChoiceRepository,
     CamelBridgeConsequenceRepository,
+    CamelBridgeDispositionRepository,
     CamelBridgeEndingRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
     CamelBridgePlotBranchRepository,
+    CamelBridgeQuestChainRepository,
+    CamelBridgeQuestGiverRepository,
+    CamelBridgeQuestNodeRepository,
+    CamelBridgeQuestObjectiveRepository,
+    CamelBridgeQuestPrerequisiteRepository,
+    CamelBridgeQuestRepository,
+    CamelBridgeQuestRewardTierRepository,
+    CamelBridgeQuestTrackerRepository,
     CamelBridgeStorylineRepository,
+    CamelBridgeVoiceActorRepository,
 )
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
@@ -151,6 +166,21 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
             "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
             "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
             "storylines": [{"name": "Lantern Line", "description": "Tracks how harbor whispers become raids.", "storyline_type": "main", "events": ["Blue Lantern Raid"]}],
+            "character_variants": [{"character_name": "Mara Voss", "name": "Bellwarden Disguise", "description": "A covert look for curfew patrols.", "variant_type": "costume", "rarity": "uncommon"}],
+            "character_evolutions": [{"character_name": "Mara Voss", "current_stage": "advanced", "previous_stage": "intermediate", "evolution_type": "story_unlocked", "variant_names": ["Bellwarden Disguise"], "new_abilities": ["Rally the Harbor"]}],
+            "character_profile_entries": [{"character_name": "Mara Voss", "field_name": "fear", "field_value": "The harbor bells at low tide."}],
+            "motion_captures": [{"name": "Harbor Warning Gesture", "file_path": "captures/harbor_warning.fbx", "character_name": "Mara Voss", "actor_name": "Talan Reed", "animation_type": "social", "status": "completed"}],
+            "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
+            "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
+            "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
+            "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active"}],
+            "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
+            "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "location_id": 99, "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
+            "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"], "position": 1}],
+            "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "target_quantity": 1}],
+            "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
+            "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Practical aid for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
+            "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
             "plot_branches": [
                 {"name": "Revolt at Dawn", "description": "The harbor rises openly.", "story_content": "The ledger becomes a banner for rebellion.", "branch_type": "major", "consequence_descriptions": ["The wardens tighten control over the harbor."]},
                 {"name": "Silence Before Ash", "description": "The truth is buried to preserve order.", "story_content": "The city survives under harsher law.", "branch_type": "temporary", "consequence_descriptions": ["The wardens tighten control over the harbor."], "is_reversible": True},
@@ -184,6 +214,21 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         prologue_repository=CamelBridgePrologueRepository(db_path),
         epilogue_repository=CamelBridgeEpilogueRepository(db_path),
         storyline_repository=CamelBridgeStorylineRepository(db_path),
+        character_evolution_repository=CamelBridgeCharacterEvolutionRepository(db_path),
+        character_variant_repository=CamelBridgeCharacterVariantRepository(db_path),
+        character_profile_entry_repository=CamelBridgeCharacterProfileEntryRepository(db_path),
+        motion_capture_repository=CamelBridgeMotionCaptureRepository(db_path),
+        voice_actor_repository=CamelBridgeVoiceActorRepository(db_path),
+        affinity_repository=CamelBridgeAffinityRepository(db_path),
+        disposition_repository=CamelBridgeDispositionRepository(db_path),
+        quest_repository=CamelBridgeQuestRepository(db_path),
+        quest_chain_repository=CamelBridgeQuestChainRepository(db_path),
+        quest_giver_repository=CamelBridgeQuestGiverRepository(db_path),
+        quest_node_repository=CamelBridgeQuestNodeRepository(db_path),
+        quest_objective_repository=CamelBridgeQuestObjectiveRepository(db_path),
+        quest_prerequisite_repository=CamelBridgeQuestPrerequisiteRepository(db_path),
+        quest_reward_tier_repository=CamelBridgeQuestRewardTierRepository(db_path),
+        quest_tracker_repository=CamelBridgeQuestTrackerRepository(db_path),
         plot_branch_repository=CamelBridgePlotBranchRepository(db_path),
         branch_point_repository=CamelBridgeBranchPointRepository(db_path),
         choice_repository=CamelBridgeChoiceRepository(db_path),
@@ -202,6 +247,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
             theme="harbor panic",
             context="Citizens fear the next eclipse.",
             count=2,
+            location_id=99,
             character_names=("Mara Voss", "Iven Hale"),
         ),
         include_narrative_structure=True,
@@ -217,6 +263,21 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     assert len(result.chapters) == 2
     assert len(result.episodes) == 2
     assert len(result.storylines) == 1
+    assert len(result.character_evolutions) == 1
+    assert len(result.character_variants) == 1
+    assert len(result.character_profile_entries) == 1
+    assert len(result.motion_captures) == 1
+    assert len(result.voice_actors) == 1
+    assert len(result.affinities) == 1
+    assert len(result.dispositions) == 1
+    assert len(result.quests) == 1
+    assert len(result.quest_chains) == 1
+    assert len(result.quest_givers) == 1
+    assert len(result.quest_nodes) == 1
+    assert len(result.quest_objectives) == 1
+    assert len(result.quest_prerequisites) == 1
+    assert len(result.quest_reward_tiers) == 1
+    assert len(result.quest_trackers) == 1
     assert len(result.plot_branches) == 2
     assert len(result.branch_points) == 1
     assert len(result.choices) == 1
@@ -237,6 +298,21 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM prologues").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM epilogues").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM character_evolutions").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM character_variants").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM character_profile_entries").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM motion_captures").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM voice_actors").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM affinities").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM dispositions").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quests").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_chains").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_givers").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_nodes").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_objectives").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_prerequisites").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_reward_tiers").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_trackers").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM plot_branches").fetchone()[0] == 2
         assert conn.execute("SELECT COUNT(*) FROM branch_points").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM choices").fetchone()[0] == 1
@@ -257,6 +333,21 @@ def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
         "campaign": "Harbor of Shadows",
         "story": "A story about a harbor city where fear of an eclipse and blue lanterns turns everyday dockside suspicion into unrest.",
         "storylines": [{"name": "Shadow Tide", "description": "A main thread of escalating panic.", "events": ["Blue Lantern Raid"]}],
+        "character_variants": [{"character_name": "Mara Voss", "name": "Bellwarden Disguise", "variant_type": "costume", "rarity": "uncommon"}],
+        "character_evolutions": [{"character_name": "Mara Voss", "current_stage": "advanced", "evolution_type": "story_unlocked", "variant_names": ["Bellwarden Disguise"]}],
+        "character_profile_entries": [{"character_name": "Mara Voss", "field_name": "fear", "field_value": "Empty piers at dusk."}],
+        "motion_captures": [{"name": "Harbor Warning Gesture", "file_path": "captures/harbor_warning.fbx", "character_name": "Mara Voss", "actor_name": "Talan Reed", "animation_type": "social", "status": "completed"}],
+        "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
+        "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
+        "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
+        "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers"], "participant_names": ["Mara Voss"], "reward_tier_names": ["Bellkeeper's Reward"]}],
+        "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
+        "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
+        "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"]}],
+        "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale"}],
+        "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
+        "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Reward for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
+        "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
         "plot_branches": [
             {"name": "Torch the Ledger", "description": "The crowd burns the proof.", "story_content": "Truth dies in smoke.", "branch_type": "major"},
             {"name": "Guard the Ledger", "description": "The crowd protects the evidence.", "story_content": "Truth survives the night.", "branch_type": "minor"},
@@ -305,6 +396,21 @@ def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
     assert [episode.sequence_number for episode in draft.episodes] == [1, 2, 3]
     assert [episode.chapter_number for episode in draft.episodes] == [1, 1, 2]
     assert [storyline.name for storyline in draft.storylines] == ["Shadow Tide"]
+    assert [variant.name for variant in draft.character_variants] == ["Bellwarden Disguise"]
+    assert [evolution.character_name for evolution in draft.character_evolutions] == ["Mara Voss"]
+    assert [entry.field_name for entry in draft.character_profile_entries] == ["fear"]
+    assert [capture.name for capture in draft.motion_captures] == ["Harbor Warning Gesture"]
+    assert [actor.name for actor in draft.voice_actors] == ["Talan Reed"]
+    assert [affinity.category for affinity in draft.affinities] == ["trust"]
+    assert [disposition.attitude for disposition in draft.dispositions] == ["unfriendly"]
+    assert [quest.name for quest in draft.quests] == ["Silence Before the Bell"]
+    assert [chain.name for chain in draft.quest_chains] == ["Harbor Reckoning"]
+    assert [giver.name for giver in draft.quest_givers] == ["Dockmaster Elra"]
+    assert [node.name for node in draft.quest_nodes] == ["Warn the Docks"]
+    assert [objective.description for objective in draft.quest_objectives] == ["Speak to the dockworkers"]
+    assert [prerequisite.description for prerequisite in draft.quest_prerequisites] == ["Complete Silence Before the Bell"]
+    assert [reward_tier.name for reward_tier in draft.quest_reward_tiers] == ["Bellkeeper's Reward"]
+    assert [tracker.player_character_name for tracker in draft.quest_trackers] == ["Mara Voss"]
     assert [plot_branch.name for plot_branch in draft.plot_branches] == ["Torch the Ledger", "Guard the Ledger"]
     assert [branch_point.description for branch_point in draft.branch_points] == ["The warning splits the quay."]
     assert [choice.prompt for choice in draft.choices] == ["Who should carry the warning?"]
