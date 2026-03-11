@@ -12,6 +12,15 @@ from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeEventRepository,
     CamelBridgeRumorRepository,
 )
+from src.infrastructure.camel_bridge_story_repository import (
+    CamelBridgeActRepository,
+    CamelBridgeCampaignRepository,
+    CamelBridgeChapterRepository,
+    CamelBridgeEpisodeRepository,
+    CamelBridgeEpilogueRepository,
+    CamelBridgePrologueRepository,
+    CamelBridgeStoryRepository,
+)
 
 
 def _seed_world(db_path) -> None:
@@ -115,6 +124,66 @@ def test_camel_bridge_story_chain_has_fallbacks(tmp_path):
     assert len(result.events) == 1
     assert len(result.relationships) == 1
     assert {character.name.value for character in result.characters} >= {"Sel", "Orin"}
+
+
+def test_camel_bridge_generates_campaign_story_structure(tmp_path):
+    db_path = str(tmp_path / "campaign_story.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        '{"campaign":{"title":"Campaign of Blue Lanterns","description":"A harbor campaign built around civil unrest.","campaign_type":"main_story","recommended_level":6,"estimated_hours":10},"story":{"name":"Blue Lantern Chronicle","description":"The campaign\'s central storyline.","content":"A chain of rumors leads to rebellion.","story_type":"linear"},"prologue":{"title":"Before the Raid","description":"How fear first took hold.","content":"The city learned to fear the bells before the raid.","prologue_type":"backstory","estimated_minutes":9},"acts":[{"title":"Act I - The Whisper Network","description":"The rumor web expands.","act_number":1,"act_type":"setup","structure":"three_act","key_events":["Dockside Murmurs"]},{"title":"Act II - Blue Fire","description":"The raid reaches its peak.","act_number":2,"act_type":"rising_action","structure":"three_act","key_events":["Blue Lantern Raid"]}],"chapters":[{"title":"Chapter 1 - Hushed Piers","description":"The first warnings spread.","sequence_number":1,"act_numbers":[1],"chapter_type":"introduction"},{"title":"Chapter 2 - The Magistrate Moves","description":"Power answers panic.","sequence_number":2,"act_numbers":[2],"chapter_type":"climax"}],"episodes":[{"title":"Episode 1 - Bellkeeper","description":"The bellkeeper reveals the omen.","sequence_number":1,"chapter_number":1,"episode_type":"narrative"},{"title":"Episode 2 - Ash on Water","description":"The harbor answers with fire.","sequence_number":2,"chapter_number":2,"episode_type":"narrative"}],"epilogue":{"title":"Harbor Reckoning","description":"What remains after the crackdown.","content":"The harbor never forgets the names whispered that night.","epilogue_type":"aftermath","trigger_condition":"always","estimated_minutes":8}}',
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        campaign_repository=CamelBridgeCampaignRepository(db_path),
+        story_repository=CamelBridgeStoryRepository(db_path),
+        act_repository=CamelBridgeActRepository(db_path),
+        chapter_repository=CamelBridgeChapterRepository(db_path),
+        episode_repository=CamelBridgeEpisodeRepository(db_path),
+        prologue_repository=CamelBridgePrologueRepository(db_path),
+        epilogue_repository=CamelBridgeEpilogueRepository(db_path),
+    )
+
+    result = service.generate_story_chain(
+        RumorGenerationRequest(
+            tenant_id=1,
+            world_id=1,
+            theme="harbor panic",
+            context="Citizens fear the next eclipse.",
+            count=2,
+            character_names=("Mara Voss", "Iven Hale"),
+        ),
+        include_narrative_structure=True,
+    )
+
+    assert result.campaign is not None
+    assert result.campaign.title == "Campaign of Blue Lanterns"
+    assert result.story is not None
+    assert str(result.story.name) == "Blue Lantern Chronicle"
+    assert result.prologue is not None
+    assert result.epilogue is not None
+    assert len(result.acts) == 2
+    assert len(result.chapters) == 2
+    assert len(result.episodes) == 2
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM acts").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM chapters").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM episodes").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM prologues").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM epilogues").fetchone()[0] == 1
+    finally:
+        conn.close()
 
 
 def test_load_env_file_populates_model_settings(tmp_path, monkeypatch):
@@ -228,3 +297,41 @@ def test_strict_mode_disables_chain_fallbacks(tmp_path):
             theme="ember court",
             character_names=("Tarin", "Mira"),
         ))
+
+
+def test_strict_mode_disables_narrative_structure_fallbacks(tmp_path):
+    db_path = str(tmp_path / "strict_narrative.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([
+            '[{"name":"Ember Court Whisper","description":"A whisper spreads through the court.","source_name":"Whisper Broker"}]',
+            '[{"name":"Ashen Proclamation","description":"A crier amplifies the rumor.","source_name":"Town Crier"}]',
+            '[{"name":"Cinder Procession","description":"The court erupts into motion.","participant_names":["Tarin","Mira"],"outcome":"mixed"}]',
+            '[{"character_from_name":"Tarin","character_to_name":"Mira","description":"They survive the court\'s purge together.","relationship_type":"ally","relationship_level":20,"is_mutual":true}]',
+            'bad narrative json',
+        ]),
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        campaign_repository=CamelBridgeCampaignRepository(db_path),
+        story_repository=CamelBridgeStoryRepository(db_path),
+        act_repository=CamelBridgeActRepository(db_path),
+        chapter_repository=CamelBridgeChapterRepository(db_path),
+        episode_repository=CamelBridgeEpisodeRepository(db_path),
+        prologue_repository=CamelBridgePrologueRepository(db_path),
+        epilogue_repository=CamelBridgeEpilogueRepository(db_path),
+        allow_fallback=False,
+    )
+
+    with pytest.raises(Exception):
+        service.generate_story_chain(
+            RumorGenerationRequest(
+                tenant_id=1,
+                world_id=1,
+                theme="ember court",
+                count=2,
+                character_names=("Tarin", "Mira"),
+            ),
+            include_narrative_structure=True,
+        )
