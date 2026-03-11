@@ -390,6 +390,43 @@ def test_camel_bridge_story_chain_has_fallbacks(tmp_path):
     assert {character.name.value for character in result.characters} >= {"Sel", "Orin"}
 
 
+def test_camel_bridge_story_chain_core_persist_rolls_back_on_error(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "chain_core_rollback.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+    )
+
+    def failing_save(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(service.relationship_repository, "save", failing_save)
+
+    with pytest.raises(RuntimeError, match="boom"):
+        service.generate_story_chain(RumorGenerationRequest(
+            tenant_id=1,
+            world_id=1,
+            theme="harbor panic",
+            context="Citizens fear the next eclipse.",
+            character_names=("Mara Voss", "Iven Hale"),
+        ))
+
+    assert CamelBridgeRumorRepository(db_path).list_by_world(TenantId(1), EntityId(1)) == []
+    assert CamelBridgeCharacterRepository(db_path).list_by_world(TenantId(1), EntityId(1)) == []
+    assert CamelBridgeEventRepository(db_path).list_by_world(TenantId(1), EntityId(1)) == []
+    assert CamelBridgeCharacterRelationshipRepository(db_path).list_by_world(TenantId(1), EntityId(1)) == []
+
+
 def test_camel_bridge_story_chain_merges_duplicate_relationships_across_runs(tmp_path):
     db_path = str(tmp_path / "chain_relationship_merge.db")
     _seed_world(db_path)

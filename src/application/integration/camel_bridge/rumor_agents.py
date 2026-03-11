@@ -3315,24 +3315,30 @@ class RumorBridgeService:
             raise ValueError("Character, event, and relationship repositories are required for story chain generation")
 
         memory_context = self._memory_context_for(request)
-        rumors = self.generate_and_persist(request, memory_context=memory_context, reindex_memory=False)
-        characters_by_name = self._ensure_seed_characters(request)
-        event_drafts = self._generate_event_drafts(request, rumors, memory_context)
-        events: list[Event] = []
-        for draft in event_drafts:
-            participants = self._ensure_participants(request, draft.participant_names, characters_by_name)
-            event = self._save_or_merge_event(self._event_to_entity(request, draft, participants), request)
-            events.append(event)
+        with self._bridge_transaction_scope(
+            self.repository,
+            self.character_repository,
+            self.event_repository,
+            self.relationship_repository,
+        ):
+            rumors = self.generate_and_persist(request, memory_context=memory_context, reindex_memory=False)
+            characters_by_name = self._ensure_seed_characters(request)
+            event_drafts = self._generate_event_drafts(request, rumors, memory_context)
+            events: list[Event] = []
+            for draft in event_drafts:
+                participants = self._ensure_participants(request, draft.participant_names, characters_by_name)
+                event = self._save_or_merge_event(self._event_to_entity(request, draft, participants), request)
+                events.append(event)
 
-        relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
-        relationships: list[CharacterRelationship] = []
-        for draft in relationship_drafts:
-            left = self._ensure_character(request, draft.character_from_name, characters_by_name)
-            right = self._ensure_character(request, draft.character_to_name, characters_by_name)
-            if left.id == right.id:
-                continue
-            relation = self._relationship_to_entity(request, draft, left.id, right.id, events[0].id if events else None)
-            relationships.append(self._save_or_merge_relationship(relation, EntityId(request.world_id)))
+            relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
+            relationships: list[CharacterRelationship] = []
+            for draft in relationship_drafts:
+                left = self._ensure_character(request, draft.character_from_name, characters_by_name)
+                right = self._ensure_character(request, draft.character_to_name, characters_by_name)
+                if left.id == right.id:
+                    continue
+                relation = self._relationship_to_entity(request, draft, left.id, right.id, events[0].id if events else None)
+                relationships.append(self._save_or_merge_relationship(relation, EntityId(request.world_id)))
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
         if include_narrative_structure or include_systems_slice:

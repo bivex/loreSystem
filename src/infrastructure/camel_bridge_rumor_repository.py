@@ -87,15 +87,19 @@ class _BridgeSQLiteRepository:
                     if active.depth == 0:
                         final_state = self._transaction_states.pop(key)
             if final_state is not None:
+                rolled_back = final_state.rollback_only
                 try:
                     if final_state.rollback_only:
                         final_state.conn.rollback()
                     else:
                         final_state.conn.commit()
                 except Exception:
+                    rolled_back = True
                     final_state.conn.rollback()
                     raise
                 finally:
+                    if rolled_back:
+                        self._invalidate_shared_cache_namespace(key[1])
                     final_state.conn.close()
 
     @contextmanager
@@ -129,6 +133,16 @@ class _BridgeSQLiteRepository:
         except FileNotFoundError:
             return None
         return (stat.st_dev, stat.st_ino)
+
+    @classmethod
+    def _invalidate_shared_cache_namespace(cls, namespace: str) -> None:
+        if namespace == ":memory:":
+            return
+        with cls._cache_lock:
+            schema_keys = [key for key in cls._schema_cache if key[0] == namespace]
+            for key in schema_keys:
+                cls._schema_cache.pop(key, None)
+                cls._table_columns_cache.pop(key, None)
 
     def _ensure_schema_cached(self, table_name: str, ensure_schema: Callable[[], None]) -> None:
         if not self._can_use_shared_cache():
