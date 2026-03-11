@@ -58,6 +58,13 @@ Roadmap для **предпочтительного current-generation path** в
   - `reward_summary`
   - `objective_hint`
 
+### Systems already implemented in bridge
+
+- `Item`, `Component`, `Socket`
+- `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
+- `TalentTree`, `Achievement`, `LevelUp`, `Experience`
+- `ProgressionState`, `ProgressionEvent`
+
 ## Priority roadmap by genre
 
 ## P0 — Idle RPG / Raid-first systems
@@ -72,26 +79,29 @@ Roadmap для **предпочтительного current-generation path** в
 
 #### Skills & Progression
 
-- `Skill`
-- `Perk`
-- `Trait`
-- `Attribute`
-- `Experience`
-- `LevelUp`
-- `TalentTree`
-- `Mastery`
+- ✅ `Skill`
+- ✅ `Perk`
+- ✅ `Trait`
+- ✅ `Attribute`
+- ✅ `Experience`
+- ✅ `LevelUp`
+- ✅ `TalentTree`
+- ✅ `Mastery`
+- ✅ `ProgressionState`
+- ✅ `ProgressionEvent`
 
 #### Inventory & Crafting
 
 - `Inventory`
 - `CraftingRecipe`
 - `Material`
-- `Component`
+- ✅ `Component`
 - `Blueprint`
 - `Enchantment`
-- `Socket`
+- ✅ `Socket`
 - `Rune`
 - `Glyph`
+- ✅ `Item`
 
 #### Raid / encounter / reward loop
 
@@ -113,7 +123,7 @@ Roadmap для **предпочтительного current-generation path** в
 
 #### Live-ops / balance / reward tuning
 
-- `Achievement`
+- ✅ `Achievement`
 - `Trophy`
 - `Badge`
 - `Title`
@@ -197,10 +207,10 @@ Hyper-casual пригодится как analytics/live-ops extension, но не
 
 ## Implementation order
 
-1. **Skills & Progression slice**
-2. **Inventory & Crafting slice**
-3. **Raid / Dungeon / Legendary Items slice**
-4. **Achievements + Analytics / Balance slice**
+1. **Finish Inventory & Crafting remainder** (`Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`)
+2. **Finish reward / profile remainder** (`Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`)
+3. **Add analytics / balance slice** (`PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`)
+4. **Raid / Dungeon / Legendary Items slice**
 5. **Gacha domain-gap review**
 6. **Hyper-casual domain-gap review**
 

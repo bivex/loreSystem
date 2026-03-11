@@ -29,12 +29,30 @@
   - `Quest`, `QuestChain`, `QuestGiver`, `QuestNode`, `QuestObjective`
   - `QuestPrerequisite`, `QuestRewardTier`, `QuestTracker`
   - user-facing quest UX fields like `player_briefing`, `journal_summary`, `acceptance_text`, `completion_text`, `failure_text`, `reward_summary`, `objective_hint`
+- Systems slice (`--with-systems`):
+  - `Item`, `Component`, `Socket`
+  - `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
+  - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
+  - `ProgressionState`, `ProgressionEvent`
 
 ## Genre priorities for next bridge slices
 
 ### Priority 1 — Idle RPG / Raid systems
 
 Это следующий предпочтительный слой для `CAMEL.Bridge`, потому что он лучше всего ложится на уже существующий domain model и даст максимальную production-пользу.
+
+Уже закрыто в текущем bridge:
+
+- `Item`, `Component`, `Socket`
+- `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
+- `TalentTree`, `Achievement`, `LevelUp`, `Experience`
+- `ProgressionState`, `ProgressionEvent`
+
+Следующий рекомендуемый фокус внутри этого priority-pack:
+
+- `Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`
+- `Title`, `Rank`, `Leaderboard`, `PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`
+- затем `Dungeon`, `Raid`, `Arena`, `Instance`, `OpenWorldZone` и legendary/relic item pack
 
 Фокус на сущности:
 
