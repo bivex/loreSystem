@@ -7,7 +7,13 @@ import pytest
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend
 from src.domain.entities.attribute import AttributeScale, AttributeType
+from src.domain.entities.blueprint import BlueprintType
+from src.domain.entities.crafting_recipe import RecipeDifficulty
+from src.domain.entities.enchantment import EnchantmentEffect, EnchantmentType
 from src.domain.entities.experience import ExperienceSource
+from src.domain.entities.glyph import GlyphCategory, GlyphSchool, GlyphTier
+from src.domain.entities.material import MaterialType
+from src.domain.entities.rune import RuneRank, RuneType
 from src.domain.entities.trait import TraitCategory, TraitNature
 from src.domain.value_objects.common import EntityId, TenantId
 from src.domain.value_objects.progression import CharacterClass, StatType
@@ -20,17 +26,28 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeCharacterVariantRepository,
     CamelBridgeChoiceRepository,
     CamelBridgeConsequenceRepository,
+    CamelBridgeBadgeRepository,
+    CamelBridgeBlueprintRepository,
+    CamelBridgeCraftingRecipeRepository,
+    CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
+    CamelBridgeDropRateRepository,
+    CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
     CamelBridgeExperienceRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeInventoryRepository,
     CamelBridgeItemRepository,
+    CamelBridgeLeaderboardRepository,
     CamelBridgeLevelUpRepository,
     CamelBridgeMasteryRepository,
+    CamelBridgeMaterialRepository,
+    CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
     CamelBridgePlotBranchRepository,
+    CamelBridgePlayerMetricRepository,
     CamelBridgeProgressionEventRepository,
     CamelBridgeProgressionStateRepository,
     CamelBridgeComponentRepository,
@@ -45,12 +62,17 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAchievementRepository,
     CamelBridgeAttributeRepository,
     CamelBridgePerkRepository,
+    CamelBridgeRankRepository,
+    CamelBridgeRuneRepository,
     CamelBridgeSkillRepository,
     CamelBridgeSocketRepository,
     CamelBridgeStorylineRepository,
     CamelBridgeTalentTreeRepository,
+    CamelBridgeTitleRepository,
     CamelBridgeTraitRepository,
+    CamelBridgeTrophyRepository,
     CamelBridgeVoiceActorRepository,
+    CamelBridgeLootTableWeightRepository,
 )
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
@@ -786,8 +808,18 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
         json.dumps({
             "items": [{"name": "Bellglass Reliquary", "description": "A relic that stores harbor omens.", "item_type": "relic", "rarity": "unique", "level": 12, "enhancement": 2, "max_enhancement": 6, "base_def": 14, "special_stat": "ward_strength", "special_stat_value": 0.25}],
+            "inventories": [{"owner_name": "Mara Voss", "capacity": 20, "gold": 275, "slots": [{"item_name": "Bellglass Reliquary", "quantity": 1, "slot_index": 0}, {"item_name": "Lantern Glass Shard", "quantity": 6, "slot_index": 1}]}],
+            "materials": [{"name": "Lantern Glass Shard", "description": "A charged shard collected after the bell raid.", "material_type": "shard", "rarity": "rare", "stack_size": 40, "base_value": 22, "conductivity": 88, "hardness": 41, "magic_affinity": "eclipse"}],
             "components": [{"name": "Reliquary Socket Ring", "description": "A mounting ring for omen stones.", "category": "gem_socket", "rarity": "uncommon", "quality": 72, "durability": 90, "max_durability": 120, "weight": 0.8, "size": "small", "is_craftable": True, "required_skill_level": 4}],
             "sockets": [{"item_name": "Bellglass Reliquary", "socket_type": "any", "socket_shape": "hexagon", "slot_index": 1, "rarity": "uncommon", "is_unlocked": True, "required_gold": 15, "stat_bonus_multiplier": 1.2, "effect_duration_modifier": 1.15}],
+            "crafting_recipes": [{"name": "Seal the Reliquary", "description": "Bind the shard into the reliquary before the next raid.", "result_item_name": "Bellglass Reliquary", "result_quantity": 1, "ingredients": [{"item_name": "Lantern Glass Shard", "quantity": 3, "is_consumed": True}, {"item_name": "Reliquary Socket Ring", "quantity": 1, "is_consumed": True}], "crafting_time_seconds": 180, "success_rate": 92, "difficulty": "hard", "gold_cost": 140}],
+            "blueprints": [{"name": "Reliquary Schematic", "description": "A harbor schematic for rebuilding the reliquary.", "blueprint_type": "weapon", "rarity": "epic", "complexity": 7, "estimated_crafting_time": 480, "requirements": [{"requirement_type": "level", "value": "8"}, {"requirement_type": "reputation", "value": "Harbor Watch", "quantity": 1}], "required_level": 8, "required_skill_name": "Belltower Lunge", "required_skill_level": 4, "result_item_name": "Bellglass Reliquary", "result_quantity": 1, "upgrade_tier": 2, "max_upgrade_tier": 5, "is_discoverable": True, "discovery_chance": 0.4, "is_tradable": False, "base_value": 260}],
+            "enchantments": [{"name": "Bellglass Ward", "description": "An omen ward etched into the reliquary glass.", "enchantment_type": "weapon", "rarity": "rare", "effects": [{"effect": "protection", "value": 15, "is_percentage": True}], "required_item_level": 10, "required_item_rarity": "rare", "required_material_names": ["Lantern Glass Shard"], "required_gold": 180, "required_skill_name": "Belltower Lunge", "required_skill_level": 5, "glow_color": "#66ccff", "is_cursed": False, "is_permanent": True, "power_level": 4, "max_stacks": 1}],
+            "runes": [{"name": "Eclipse Sigil Rune", "description": "A rune cut to stabilize the reliquary during eclipses.", "rune_type": "mystical", "rank": "epic", "bonuses": [{"stat_name": "ward_strength", "value": 12, "is_percentage": True}], "effects": [{"effect_name": "on_guard_flash", "effect_value": 8, "trigger_chance": 0.35, "cooldown_seconds": 12}], "level": 3, "experience": 40, "max_experience": 120, "required_socket_type": "rune", "can_level_up": True, "max_level": 6, "can_combine": True, "combine_quantity": 3, "combine_result_rank": "legendary", "glow_color": "#4455ff", "base_value": 190}],
+            "glyphs": [{"name": "Harbor Oath Glyph", "description": "A glyph that turns the bellwatch oath into a warning pulse.", "glyph_school": "celestial", "tier": "advanced", "category": "triggered", "modifiers": [{"stat_name": "spell_power", "value": 9, "operation": "add", "is_percentage": False}], "abilities": [{"ability_name": "Lantern Pulse", "description": "Releases a warning pulse across the dockline.", "mana_cost": 12, "cooldown_seconds": 18, "duration_seconds": 6, "power": 1.8, "requires_target": False, "max_charges": 2}], "tier_level": 2, "proficiency": 54, "required_socket_type": "glyph", "can_upgrade_tier": True, "max_tier_level": 5, "synergizes_with_schools": ["divine", "arcane"], "synergy_bonus": 0.3, "current_charges": 1, "max_charges": 2, "charge_regen_time": 45, "symbol": "✦", "color": "#88ddff", "base_value": 210}],
+            "titles": [{"name": "Harbor Bellwarden", "description": "An honorific worn by those who held the line through the eclipse raid."}],
+            "ranks": [{"name": "Watch Captain", "description": "A prestige rank granted to the harbor's most reliable defenders.", "rank_type": "prestige", "tier": 3, "required_level": 10, "required_xp": 1800, "perks": ["Harbor Authority", "Nightwatch Stipend"], "is_permanent": True, "icon": "rank_watch_captain"}],
+            "leaderboards": [{"name": "Blue Lantern Ledger", "description": "Tracks who answers the harbor bells fastest.", "board_type": "event", "sort_criterion": "wins", "size_limit": 25}],
             "masteries": [{"character_name": "Mara Voss", "name": "Harbor Counterstroke", "description": "Mara turns panic into timing.", "category": "battle", "level": 18, "max_level": 60, "progress": 58, "total_experience": 3600, "bonuses": [{"level": 5, "bonus_type": "crit", "value": 0.18, "description": "Lantern sight."}], "unlocked_bonuses": ["crit"], "tags": ["harbor", "omen"]}],
             "skills": [{"character_name": "Iven Hale", "name": "Belltower Lunge", "description": "Iven turns the bellrope into a combat opener.", "skill_type": "ability", "category": "battle", "rarity": "rare", "level": 5, "max_level": 12, "experience": 240, "experience_to_next": 360, "power": 1.4, "mastery": 61, "cooldown_seconds": 9, "mana_cost": 14, "minimum_level": 3, "tags": ["bell", "counterattack"]}],
             "perks": [{"character_name": "Iven Hale", "name": "Dockside Discount", "description": "Harbor merchants shave their prices for the bell-watch.", "perk_type": "discount", "source": "quest", "rarity": "rare", "stacking_limit": 2, "is_active": True, "is_hidden": False, "tags": ["harbor", "trade"]}],
@@ -795,10 +827,16 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
             "attributes": [{"character_name": "Mara Voss", "name": "Harbor Focus", "description": "Mara sharpens her judgment with each bell.", "attribute_type": "mind", "scale_type": "static", "base_value": 14, "current_value": 16, "maximum_value": 20, "flat_bonus": 1, "percentage_bonus": 7.5, "temporary_bonus": 0.5, "minimum_value": 0, "display_name": "Harbor Focus", "tags": ["harbor", "discipline"]}],
             "talent_trees": [{"character_name": "Mara Voss", "name": "Harbor Bell Doctrine", "description": "Mara maps the bell-watch into a specialization tree.", "talent_tree_type": "spec", "total_points": 12, "required_level": 4, "tags": ["harbor", "doctrine"], "nodes": [{"id": "watch-step", "name": "Watch Step", "description": "A disciplined opener.", "node_type": "skill", "tier": 1, "column": 1, "point_cost": 1, "is_unlocked": True}, {"id": "eclipse-call", "name": "Eclipse Call", "description": "A capstone bell signal.", "node_type": "capstone", "tier": 2, "column": 2, "point_cost": 2, "prerequisite_node_ids": ["watch-step"], "is_unlocked": False}]}],
             "achievements": [{"name": "Harbor Nightwatch", "description": "Keep the harbor standing through the bell panic.", "achievement_type": "secret", "difficulty": "nightmare", "is_hidden": True, "is_repeatable": False, "icon": "achievement_nightwatch"}],
+            "trophies": [{"name": "Lantern Sentinel Cup", "description": "Awarded to the wardens who turned back the raid.", "trophy_type": "event_winner", "rarity": "epic", "icon": "trophy_lantern_sentinel", "achievement_names": ["Harbor Nightwatch"]}],
+            "badges": [{"name": "Harbor Seal", "description": "A badge worn by the harbor's eclipse survivors.", "badge_type": "event", "rarity": "rare", "icon": "badge_harbor_seal", "achievement_names": ["Harbor Nightwatch"]}],
             "level_ups": [{"character_name": "Mara Voss", "level_up_type": "transform", "old_level": 9, "new_level": 10, "stat_increases": {"attack": 2, "defense": 1}, "skill_points_gained": 3, "choices_made": ["Kept the harbor sigil"], "selected_rewards": ["Bell Ward"], "health_increase": 12, "mana_increase": 4, "notes": "Mara hardens into a new eclipse doctrine."}],
             "experiences": [{"character_name": "Mara Voss", "experience_type": "quest", "total_experience": 1840, "current_level": 10, "current_xp": 140, "xp_to_next_level": 320, "xp_multiplier": 1.15, "total_gains": 6, "largest_gain": 450, "source_breakdown": {"questing": 900, "story": 490, "achievement": 450}, "tags": ["harbor", "eclipse"]}],
             "progression_states": [{"time_point": 1, "character_states": [{"character_name": "Mara Voss", "level": 10, "character_class": "knight", "experience": 1840, "stats": {"attack": 18, "defense": 16, "agility": 12}}, {"character_name": "Iven Hale", "level": 8, "character_class": "assassin", "experience": 1320, "stats": {"strength": 11, "dexterity": 17, "willpower": 9}}]}],
             "progression_events": [{"character_name": "Mara Voss", "event_type": "quest", "from_time": 1, "to_time": 2, "description": "Mara cashes in the bellwatch pact.", "reasons": [{"rule_id": "harbor_contract", "description": "The pact rewards harbor defense."}], "effects": {"quest_complete": "bellwatch_reward_applied"}}],
+            "player_metrics": [{"player_name": "Mara Voss", "metric_type": "combat_kills", "value": 27, "unit": "count", "session_name": "harbor_panic_raid", "is_aggregated": False, "description": "Tracks how many raiders Mara stopped."}],
+            "drop_rates": [{"name": "Bellglass Artifact Drops", "category": "artifact", "drop_rate": 0.18, "conditions": ["complete harbor defense", "ring all warning bells"], "affected_item_names": ["Bellglass Reliquary"], "player_level_scaling": {"10": 1.2, "15": 1.35}, "is_event_boosted": True, "boost_multiplier": 1.5, "description": "Event boosted artifact profile for the harbor raid."}],
+            "loot_table_weights": [{"name": "Harbor Cache Rare Slot", "description": "Biases the cache toward rare reliquary rewards.", "loot_table_name": "Harbor Cache", "item_type": "artifact", "rarity": "epic", "weight": 0.22, "min_level": 8, "is_unique": True, "conditions": ["night encounter"]}],
+            "difficulty_curves": [{"name": "Harbor Panic Curve", "description": "Difficulty pacing for the bellwatch raid.", "curve_type": "sigmoid", "base_level": 1, "max_level": 5, "level_xp_requirement": [100, 220, 380, 610, 900], "scaling_factor": 1.3, "level_time_minutes": [25, 35, 45, 60, 80], "player_count_tiers": {"1": 1, "3": 2, "5": 4}, "is_adaptive": True}],
         }),
     ])
     service = RumorBridgeService(
@@ -808,8 +846,20 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         event_repository=CamelBridgeEventRepository(db_path),
         relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
         item_repository=CamelBridgeItemRepository(db_path),
+        inventory_repository=CamelBridgeInventoryRepository(db_path),
+        material_repository=CamelBridgeMaterialRepository(db_path),
         component_repository=CamelBridgeComponentRepository(db_path),
         socket_repository=CamelBridgeSocketRepository(db_path),
+        crafting_recipe_repository=CamelBridgeCraftingRecipeRepository(db_path),
+        blueprint_repository=CamelBridgeBlueprintRepository(db_path),
+        enchantment_repository=CamelBridgeEnchantmentRepository(db_path),
+        rune_repository=CamelBridgeRuneRepository(db_path),
+        glyph_repository=CamelBridgeGlyphRepository(db_path),
+        title_repository=CamelBridgeTitleRepository(db_path),
+        rank_repository=CamelBridgeRankRepository(db_path),
+        leaderboard_repository=CamelBridgeLeaderboardRepository(db_path),
+        trophy_repository=CamelBridgeTrophyRepository(db_path),
+        badge_repository=CamelBridgeBadgeRepository(db_path),
         mastery_repository=CamelBridgeMasteryRepository(db_path),
         skill_repository=CamelBridgeSkillRepository(db_path),
         perk_repository=CamelBridgePerkRepository(db_path),
@@ -821,6 +871,10 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         experience_repository=CamelBridgeExperienceRepository(db_path),
         progression_state_repository=CamelBridgeProgressionStateRepository(db_path),
         progression_event_repository=CamelBridgeProgressionEventRepository(db_path),
+        player_metric_repository=CamelBridgePlayerMetricRepository(db_path),
+        drop_rate_repository=CamelBridgeDropRateRepository(db_path),
+        loot_table_weight_repository=CamelBridgeLootTableWeightRepository(db_path),
+        difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(db_path),
     )
 
     result = service.generate_story_chain(
@@ -839,12 +893,63 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     assert len(result.items) == 1
     assert result.items[0].item_type.value == "artifact"
     assert result.items[0].rarity.value == "legendary"
+    assert len(result.inventories) == 1
+    assert result.inventories[0].owner_id in {character.id for character in result.characters}
+    assert result.inventories[0].gold == 275
+    assert len(result.inventories[0].slots) == 2
+    assert len(result.materials) == 1
+    assert result.materials[0].material_type == MaterialType.SHARD
+    assert result.materials[0].stack_size == 40
+    assert result.materials[0].conductivity == 88
     assert len(result.components) == 1
     assert result.components[0].category.value == "socket"
     assert len(result.sockets) == 1
     assert result.sockets[0].socket_type.value == "universal"
     assert result.sockets[0].socket_shape.value == "hexagonal"
     assert result.sockets[0].item_id == result.items[0].id
+    assert len(result.crafting_recipes) == 1
+    assert result.crafting_recipes[0].difficulty == RecipeDifficulty.HARD
+    assert result.crafting_recipes[0].result_item_id == result.items[0].id
+    assert len(result.crafting_recipes[0].ingredients) == 2
+    assert result.crafting_recipes[0].gold_cost == 140
+    assert len(result.blueprints) == 1
+    assert result.blueprints[0].blueprint_type == BlueprintType.WEAPON
+    assert result.blueprints[0].result_item_id == result.items[0].id
+    assert result.blueprints[0].required_skill_id == result.skills[0].id
+    assert len(result.blueprints[0].requirements) == 2
+    assert result.blueprints[0].is_tradable is False
+    assert len(result.enchantments) == 1
+    assert result.enchantments[0].enchantment_type == EnchantmentType.WEAPON
+    assert result.enchantments[0].effects[0].effect == EnchantmentEffect.PROTECTION
+    assert result.enchantments[0].required_material_ids == [result.materials[0].id]
+    assert result.enchantments[0].required_skill_id == result.skills[0].id
+    assert result.enchantments[0].required_gold == 180
+    assert len(result.runes) == 1
+    assert result.runes[0].rune_type == RuneType.MYSTICAL
+    assert result.runes[0].rank == RuneRank.EPIC
+    assert result.runes[0].required_socket_type == "rune"
+    assert result.runes[0].combine_result_rank == RuneRank.LEGENDARY
+    assert result.runes[0].bonuses[0].is_percentage is True
+    assert result.runes[0].effects[0].trigger_chance == pytest.approx(0.35)
+    assert len(result.glyphs) == 1
+    assert result.glyphs[0].glyph_school == GlyphSchool.CELESTIAL
+    assert result.glyphs[0].tier == GlyphTier.ADVANCED
+    assert result.glyphs[0].category == GlyphCategory.TRIGGERED
+    assert result.glyphs[0].required_socket_type == "glyph"
+    assert result.glyphs[0].synergizes_with_schools == [GlyphSchool.DIVINE, GlyphSchool.ARCANE]
+    assert result.glyphs[0].current_charges == 1
+    assert result.glyphs[0].abilities[0].ability_name == "Lantern Pulse"
+    assert len(result.titles) == 1
+    assert result.titles[0].name == "Harbor Bellwarden"
+    assert result.titles[0].world_id == EntityId(1)
+    assert len(result.ranks) == 1
+    assert result.ranks[0].tier == 3
+    assert result.ranks[0].required_level == 10
+    assert result.ranks[0].perks == ["Harbor Authority", "Nightwatch Stipend"]
+    assert len(result.leaderboards) == 1
+    assert result.leaderboards[0].board_type == "event"
+    assert result.leaderboards[0].sort_criterion == "wins"
+    assert result.leaderboards[0].size_limit == 25
     assert len(result.masteries) == 1
     assert result.masteries[0].category.value == "combat"
     assert result.masteries[0].bonuses[0].bonus_type.value == "crit_rate"
@@ -883,6 +988,14 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     assert result.achievements[0].achievement_type == "hidden"
     assert result.achievements[0].difficulty == "insane"
     assert result.achievements[0].is_hidden is True
+    assert len(result.trophies) == 1
+    assert result.trophies[0].trophy_type == "event_winner"
+    assert result.trophies[0].rarity == "epic"
+    assert result.trophies[0].achievement_ids == [result.achievements[0].id]
+    assert len(result.badges) == 1
+    assert result.badges[0].badge_type == "event"
+    assert result.badges[0].rarity == "rare"
+    assert result.badges[0].achievement_ids == [result.achievements[0].id]
     assert len(result.level_ups) == 1
     assert result.level_ups[0].level_up_type.value == "evolution"
     assert result.level_ups[0].old_level == 9
@@ -914,12 +1027,37 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     assert result.progression_events[0].reasons[0].rule_id == "harbor_contract"
     assert result.progression_events[0].effects["quest_complete"] == "bellwatch_reward_applied"
     assert result.progression_events[0].character_id == mara.id
+    assert len(result.player_metrics) == 1
+    assert result.player_metrics[0].metric_type == "combat_kills"
+    assert result.player_metrics[0].value == pytest.approx(27)
+    assert result.player_metrics[0].player_id == mara.id
+    assert len(result.drop_rates) == 1
+    assert result.drop_rates[0].drop_rate == pytest.approx(0.18)
+    assert result.drop_rates[0].affected_item_ids == [result.items[0].id]
+    assert result.drop_rates[0].is_event_boosted is True
+    assert len(result.loot_table_weights) == 1
+    assert result.loot_table_weights[0].weight == pytest.approx(0.22)
+    assert result.loot_table_weights[0].rarity == "epic"
+    assert len(result.difficulty_curves) == 1
+    assert result.difficulty_curves[0].curve_type == "sigmoid"
+    assert result.difficulty_curves[0].max_level == 5
+    assert result.difficulty_curves[0].is_adaptive is True
 
     conn = sqlite3.connect(db_path)
     try:
         assert conn.execute("SELECT COUNT(*) FROM items").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM inventories").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM materials").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM components").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM sockets").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM crafting_recipes").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM blueprints").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM enchantments").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM runes").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM glyphs").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM titles").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM ranks").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM leaderboards").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM masterys").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM skills").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM perks").fetchone()[0] == 1
@@ -927,10 +1065,16 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM attributes").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM talent_trees").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM achievements").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM trophys").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM badges").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM level_ups").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM experiences").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM progression_states").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM progression_events").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM player_metrics").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM drop_rates").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM loot_table_weights").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM difficulty_curves").fetchone()[0] == 1
     finally:
         conn.close()
 
@@ -951,8 +1095,20 @@ def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
         event_repository=CamelBridgeEventRepository(db_path),
         relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
         item_repository=CamelBridgeItemRepository(db_path),
+        inventory_repository=CamelBridgeInventoryRepository(db_path),
+        material_repository=CamelBridgeMaterialRepository(db_path),
         component_repository=CamelBridgeComponentRepository(db_path),
         socket_repository=CamelBridgeSocketRepository(db_path),
+        crafting_recipe_repository=CamelBridgeCraftingRecipeRepository(db_path),
+        blueprint_repository=CamelBridgeBlueprintRepository(db_path),
+        enchantment_repository=CamelBridgeEnchantmentRepository(db_path),
+        rune_repository=CamelBridgeRuneRepository(db_path),
+        glyph_repository=CamelBridgeGlyphRepository(db_path),
+        title_repository=CamelBridgeTitleRepository(db_path),
+        rank_repository=CamelBridgeRankRepository(db_path),
+        leaderboard_repository=CamelBridgeLeaderboardRepository(db_path),
+        trophy_repository=CamelBridgeTrophyRepository(db_path),
+        badge_repository=CamelBridgeBadgeRepository(db_path),
         mastery_repository=CamelBridgeMasteryRepository(db_path),
         skill_repository=CamelBridgeSkillRepository(db_path),
         perk_repository=CamelBridgePerkRepository(db_path),
@@ -964,6 +1120,10 @@ def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
         experience_repository=CamelBridgeExperienceRepository(db_path),
         progression_state_repository=CamelBridgeProgressionStateRepository(db_path),
         progression_event_repository=CamelBridgeProgressionEventRepository(db_path),
+        player_metric_repository=CamelBridgePlayerMetricRepository(db_path),
+        drop_rate_repository=CamelBridgeDropRateRepository(db_path),
+        loot_table_weight_repository=CamelBridgeLootTableWeightRepository(db_path),
+        difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(db_path),
         allow_fallback=False,
     )
 

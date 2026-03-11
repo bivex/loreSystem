@@ -27,16 +27,27 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeCharacterVariantRepository,
     CamelBridgeChoiceRepository,
     CamelBridgeConsequenceRepository,
+    CamelBridgeBlueprintRepository,
+    CamelBridgeCraftingRecipeRepository,
+    CamelBridgeBadgeRepository,
+    CamelBridgeDifficultyCurveRepository,
     CamelBridgeDispositionRepository,
+    CamelBridgeDropRateRepository,
+    CamelBridgeEnchantmentRepository,
     CamelBridgeEndingRepository,
     CamelBridgeExperienceRepository,
     CamelBridgeFlashForwardRepository,
     CamelBridgeFlashbackRepository,
+    CamelBridgeInventoryRepository,
+    CamelBridgeLeaderboardRepository,
     CamelBridgeLevelUpRepository,
     CamelBridgeMasteryRepository,
+    CamelBridgeMaterialRepository,
+    CamelBridgeGlyphRepository,
     CamelBridgeMotionCaptureRepository,
     CamelBridgeMoralChoiceRepository,
     CamelBridgePlotBranchRepository,
+    CamelBridgePlayerMetricRepository,
     CamelBridgeProgressionEventRepository,
     CamelBridgeProgressionStateRepository,
     CamelBridgeQuestChainRepository,
@@ -50,9 +61,14 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAchievementRepository,
     CamelBridgeAttributeRepository,
     CamelBridgePerkRepository,
+    CamelBridgeRankRepository,
+    CamelBridgeRuneRepository,
     CamelBridgeSkillRepository,
     CamelBridgeTalentTreeRepository,
+    CamelBridgeTitleRepository,
     CamelBridgeTraitRepository,
+    CamelBridgeTrophyRepository,
+    CamelBridgeLootTableWeightRepository,
     CamelBridgeItemRepository,
     CamelBridgeComponentRepository,
     CamelBridgeSocketRepository,
@@ -83,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
-    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Component, Socket, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, and ProgressionEvent entities")
+    parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, and DifficultyCurve entities")
     parser.add_argument("--with-memory", action="store_true", help="Enable SQLite + Qdrant continuity memory using CAMEL_MEMORY_QDRANT_* env settings")
     return parser
 
@@ -124,8 +140,20 @@ def main() -> int:
         quest_reward_tier_repository=CamelBridgeQuestRewardTierRepository(args.db_path),
         quest_tracker_repository=CamelBridgeQuestTrackerRepository(args.db_path),
         item_repository=CamelBridgeItemRepository(args.db_path),
+        inventory_repository=CamelBridgeInventoryRepository(args.db_path),
+        material_repository=CamelBridgeMaterialRepository(args.db_path),
         component_repository=CamelBridgeComponentRepository(args.db_path),
         socket_repository=CamelBridgeSocketRepository(args.db_path),
+        crafting_recipe_repository=CamelBridgeCraftingRecipeRepository(args.db_path),
+        blueprint_repository=CamelBridgeBlueprintRepository(args.db_path),
+        enchantment_repository=CamelBridgeEnchantmentRepository(args.db_path),
+        rune_repository=CamelBridgeRuneRepository(args.db_path),
+        glyph_repository=CamelBridgeGlyphRepository(args.db_path),
+        title_repository=CamelBridgeTitleRepository(args.db_path),
+        rank_repository=CamelBridgeRankRepository(args.db_path),
+        leaderboard_repository=CamelBridgeLeaderboardRepository(args.db_path),
+        trophy_repository=CamelBridgeTrophyRepository(args.db_path),
+        badge_repository=CamelBridgeBadgeRepository(args.db_path),
         mastery_repository=CamelBridgeMasteryRepository(args.db_path),
         skill_repository=CamelBridgeSkillRepository(args.db_path),
         perk_repository=CamelBridgePerkRepository(args.db_path),
@@ -137,6 +165,10 @@ def main() -> int:
         experience_repository=CamelBridgeExperienceRepository(args.db_path),
         progression_state_repository=CamelBridgeProgressionStateRepository(args.db_path),
         progression_event_repository=CamelBridgeProgressionEventRepository(args.db_path),
+        player_metric_repository=CamelBridgePlayerMetricRepository(args.db_path),
+        drop_rate_repository=CamelBridgeDropRateRepository(args.db_path),
+        loot_table_weight_repository=CamelBridgeLootTableWeightRepository(args.db_path),
+        difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(args.db_path),
         plot_branch_repository=CamelBridgePlotBranchRepository(args.db_path),
         branch_point_repository=CamelBridgeBranchPointRepository(args.db_path),
         choice_repository=CamelBridgeChoiceRepository(args.db_path),
@@ -243,10 +275,34 @@ def main() -> int:
     if args.with_systems:
         for item in result.items:
             print(f"item[{item.id.value}] {item.name}")
+        for inventory in result.inventories:
+            print(f"inventory[{inventory.id.value}] owner={inventory.owner_id.value} slots={len(inventory.slots)} gold={inventory.gold}")
+        for material in result.materials:
+            print(f"material[{material.id.value}] {material.name} type={material.material_type.value}")
         for component in result.components:
             print(f"component[{component.id.value}] {component.name}")
         for socket in result.sockets:
             print(f"socket[{socket.id.value}] {socket.socket_type.value} item={socket.item_id.value}")
+        for recipe in result.crafting_recipes:
+            print(f"crafting_recipe[{recipe.id.value}] {recipe.name} result={recipe.result_item_id.value}")
+        for blueprint in result.blueprints:
+            print(f"blueprint[{blueprint.id.value}] {blueprint.name} result={blueprint.result_item_id.value}")
+        for enchantment in result.enchantments:
+            print(f"enchantment[{enchantment.id.value}] {enchantment.name} type={enchantment.enchantment_type.value}")
+        for rune in result.runes:
+            print(f"rune[{rune.id.value}] {rune.name} type={rune.rune_type.value} socket={rune.required_socket_type or 'any'}")
+        for glyph in result.glyphs:
+            print(f"glyph[{glyph.id.value}] {glyph.name} school={glyph.glyph_school.value} socket={glyph.required_socket_type or 'any'}")
+        for title in result.titles:
+            print(f"title[{title.id.value}] {title.name}")
+        for rank in result.ranks:
+            print(f"rank[{rank.id.value}] {rank.name} tier={rank.tier} type={rank.rank_type}")
+        for leaderboard in result.leaderboards:
+            print(f"leaderboard[{leaderboard.id.value}] {leaderboard.name} criterion={leaderboard.sort_criterion} limit={leaderboard.size_limit}")
+        for trophy in result.trophies:
+            print(f"trophy[{trophy.id.value}] {trophy.name} rarity={trophy.rarity}")
+        for badge in result.badges:
+            print(f"badge[{badge.id.value}] {badge.name} rarity={badge.rarity}")
         for mastery in result.masteries:
             print(f"mastery[{mastery.id.value}] {mastery.name} character={mastery.character_id.value}")
         for skill in result.skills:
@@ -271,6 +327,14 @@ def main() -> int:
             print(f"progression_state[{progression_state.id.value}] {progression_state.time_point} characters={len(progression_state.character_states)}")
         for progression_event in result.progression_events:
             print(f"progression_event[{progression_event.id}] {progression_event.event_type.value} {progression_event.from_time}->{progression_event.to_time} character={progression_event.character_id.value}")
+        for player_metric in result.player_metrics:
+            print(f"player_metric[{player_metric.id.value}] {player_metric.metric_type}={player_metric.value} player={player_metric.player_id.value}")
+        for drop_rate in result.drop_rates:
+            print(f"drop_rate[{drop_rate.id.value}] {drop_rate.name} rate={drop_rate.drop_rate}")
+        for loot_table_weight in result.loot_table_weights:
+            print(f"loot_table_weight[{loot_table_weight.id.value}] {loot_table_weight.name} weight={loot_table_weight.weight}")
+        for difficulty_curve in result.difficulty_curves:
+            print(f"difficulty_curve[{difficulty_curve.id.value}] {difficulty_curve.name} type={difficulty_curve.curve_type} levels={difficulty_curve.max_level}")
     return 0
 
 

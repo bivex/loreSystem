@@ -18,6 +18,7 @@ from src.domain.entities.affinity import Affinity
 from src.domain.entities.alternate_reality import AlternateReality, RealityAccess, RealityType
 from src.domain.entities.attribute import Attribute, AttributeScale, AttributeType
 from src.domain.entities.branch_point import BranchPoint, BranchPointType
+from src.domain.entities.blueprint import Blueprint, BlueprintRequirement, BlueprintType
 from src.domain.entities.campaign import Campaign, CampaignType
 from src.domain.entities.chapter import Chapter, ChapterType
 from src.domain.entities.character import Character
@@ -28,7 +29,9 @@ from src.domain.entities.character_variant import CharacterVariant, VariantRarit
 from src.domain.entities.choice import Choice
 from src.domain.entities.component import Component, ComponentCategory
 from src.domain.entities.consequence import Consequence, ConsequenceSeverity, ConsequenceType
+from src.domain.entities.crafting_recipe import CraftingRecipe, RecipeDifficulty, RecipeIngredient
 from src.domain.entities.disposition import Disposition
+from src.domain.entities.enchantment import Enchantment, EnchantmentEffect, EnchantmentEffectValue, EnchantmentType
 from src.domain.entities.ending import Ending, EndingRarity, EndingType
 from src.domain.entities.episode import Episode, EpisodeType
 from src.domain.entities.epilogue import Epilogue, EpilogueCondition, EpilogueType
@@ -36,9 +39,12 @@ from src.domain.entities.event import Event
 from src.domain.entities.flash_forward import FlashForward
 from src.domain.entities.flashback import Flashback
 from src.domain.entities.experience import Experience, ExperienceSource, ExperienceType
+from src.domain.entities.glyph import Glyph, GlyphAbility, GlyphCategory, GlyphModifier, GlyphSchool, GlyphTier
+from src.domain.entities.inventory import Inventory, InventorySlot
 from src.domain.entities.item import Item
 from src.domain.entities.level_up import LevelUp, LevelUpType
 from src.domain.entities.mastery import Mastery, MasteryBonus, MasteryBonusType, MasteryCategory
+from src.domain.entities.material import Material, MaterialType
 from src.domain.entities.moral_choice import ChoiceUrgency, MoralAlignment, MoralChoice
 from src.domain.entities.perk import Perk, PerkSource, PerkType
 from src.domain.entities.motion_capture import AnimationType, CaptureStatus, MotionCapture
@@ -54,13 +60,19 @@ from src.domain.entities.quest_objective import QuestObjective
 from src.domain.entities.quest_prerequisite import QuestPrerequisite
 from src.domain.entities.quest_reward_tier import QuestRewardTier
 from src.domain.entities.quest_tracker import QuestTracker
+from src.domain.entities.rank import Rank
+from src.domain.entities.leaderboard import Leaderboard
+from src.domain.entities.badge import Badge
+from src.domain.entities.rune import Rune, RuneBonus, RuneEffect, RuneRank, RuneType
 from src.domain.entities.rumor import Rumor
 from src.domain.entities.skill import Skill, SkillCategory, SkillType
 from src.domain.entities.socket import Socket, SocketShape, SocketType
 from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
 from src.domain.entities.talent_tree import TalentNode, TalentNodeType, TalentTree, TalentTreeType
+from src.domain.entities.title import Title
 from src.domain.entities.trait import Trait, TraitCategory, TraitNature
+from src.domain.entities.trophy import Trophy
 from src.domain.entities.voice_actor import VoiceActor, VoiceActorStatus
 from src.domain.repositories.rumor_repository import IRumorRepository
 from src.domain.value_objects.common import (
@@ -86,6 +98,79 @@ from src.domain.value_objects.common import (
     Version,
 )
 from src.domain.value_objects.progression import CharacterClass, CharacterLevel, EventType, ExperiencePoints, RuleReference, StatType, StatValue, TimePoint
+
+
+@dataclass(frozen=True)
+class PlayerMetricRecord:
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    description: str
+    player_id: EntityId
+    metric_type: str
+    value: float
+    unit: str | None = None
+    session_id: EntityId | None = None
+    is_aggregated: bool = False
+    aggregation_period: str | None = None
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
+
+
+@dataclass(frozen=True)
+class DropRateRecord:
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    description: str
+    category: str
+    drop_rate: float
+    conditions: list[str] = field(default_factory=list)
+    affected_item_ids: list[EntityId] = field(default_factory=list)
+    player_level_scaling: dict[str, float] = field(default_factory=dict)
+    is_event_boosted: bool = False
+    boost_multiplier: float = 1.0
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
+
+
+@dataclass(frozen=True)
+class LootTableWeightRecord:
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    description: str
+    loot_table_id: EntityId
+    item_type: str
+    rarity: str
+    weight: float
+    min_level: int = 1
+    is_unique: bool = False
+    conditions: list[str] = field(default_factory=list)
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
+
+
+@dataclass(frozen=True)
+class DifficultyCurveRecord:
+    tenant_id: TenantId
+    world_id: EntityId
+    name: str
+    description: str
+    curve_type: str
+    base_level: int = 1
+    max_level: int = 100
+    level_xp_requirement: list[int] = field(default_factory=list)
+    scaling_factor: float = 1.0
+    level_time_minutes: list[int] = field(default_factory=list)
+    player_count_tiers: dict[str, int] = field(default_factory=dict)
+    is_adaptive: bool = False
+    created_at: Timestamp = field(default_factory=Timestamp.now)
+    updated_at: Timestamp = field(default_factory=Timestamp.now)
+    id: EntityId | None = None
 
 
 @dataclass(frozen=True)
@@ -505,6 +590,253 @@ class SocketDraft:
 
 
 @dataclass(frozen=True)
+class InventorySlotDraft:
+    item_name: str | None = None
+    quantity: int = 1
+    slot_index: int = 0
+
+
+@dataclass(frozen=True)
+class InventoryDraft:
+    owner_name: str | None = None
+    capacity: int = 20
+    gold: int = 0
+    slots: tuple[InventorySlotDraft, ...] = ()
+
+
+@dataclass(frozen=True)
+class MaterialDraft:
+    name: str = "Harbor Shard"
+    description: str = "A crafting material shaped by the rumor chain."
+    material_type: str = "other"
+    rarity: str | None = "common"
+    stack_size: int = 99
+    base_value: int = 0
+    is_tradeable: bool = True
+    is_sellable: bool = True
+    durability: int | None = None
+    conductivity: int | None = None
+    hardness: int | None = None
+    magic_affinity: str | None = None
+
+
+@dataclass(frozen=True)
+class RecipeIngredientDraft:
+    item_name: str | None = None
+    quantity: int = 1
+    is_consumed: bool = True
+
+
+@dataclass(frozen=True)
+class CraftingRecipeDraft:
+    name: str = "Harbor Recipe"
+    description: str = "A crafting recipe shaped by the rumor chain."
+    result_item_name: str | None = None
+    result_quantity: int = 1
+    ingredients: tuple[RecipeIngredientDraft, ...] = ()
+    crafting_time_seconds: int = 0
+    success_rate: int | None = None
+    difficulty: str = "normal"
+    skill_name: str | None = None
+    skill_level_requirement: int | None = None
+    required_workstation_id: int | None = None
+    is_discoverable: bool = True
+    is_locked: bool = False
+    gold_cost: int = 0
+
+
+@dataclass(frozen=True)
+class BlueprintRequirementDraft:
+    requirement_type: str = "level"
+    value: str = "1"
+    quantity: int | None = None
+
+
+@dataclass(frozen=True)
+class BlueprintDraft:
+    name: str = "Harbor Blueprint"
+    description: str = "A crafting blueprint shaped by the rumor chain."
+    blueprint_type: str = "other"
+    rarity: str = "common"
+    complexity: int = 1
+    estimated_crafting_time: int = 60
+    requirements: tuple[BlueprintRequirementDraft, ...] = ()
+    required_level: int | None = None
+    required_skill_name: str | None = None
+    required_skill_level: int | None = None
+    result_item_name: str | None = None
+    result_quantity: int = 1
+    variant_of_name: str | None = None
+    upgrade_tier: int = 1
+    max_upgrade_tier: int = 1
+    is_discoverable: bool = True
+    discovery_chance: float = 0.0
+    is_tradable: bool = True
+    base_value: int = 0
+
+
+@dataclass(frozen=True)
+class EnchantmentEffectDraft:
+    effect: str = "protection"
+    value: float = 0.0
+    is_percentage: bool = False
+
+
+@dataclass(frozen=True)
+class EnchantmentDraft:
+    name: str = "Harbor Enchantment"
+    description: str = "An enchantment shaped by the rumor chain."
+    enchantment_type: str = "general"
+    rarity: str = "common"
+    effects: tuple[EnchantmentEffectDraft, ...] = ()
+    required_item_level: int | None = None
+    required_item_rarity: str | None = None
+    mutually_exclusive_names: tuple[str, ...] = ()
+    required_material_names: tuple[str, ...] = ()
+    required_gold: int = 0
+    required_skill_name: str | None = None
+    required_skill_level: int | None = None
+    glow_color: str | None = None
+    is_cursed: bool = False
+    is_permanent: bool = True
+    duration_seconds: int | None = None
+    power_level: int = 1
+    max_stacks: int = 1
+
+
+@dataclass(frozen=True)
+class RuneBonusDraft:
+    stat_name: str = "attack_power"
+    value: float = 5.0
+    is_percentage: bool = False
+
+
+@dataclass(frozen=True)
+class RuneEffectDraft:
+    effect_name: str = "arc_burst"
+    effect_value: float = 10.0
+    trigger_chance: float | None = None
+    cooldown_seconds: int | None = None
+
+
+@dataclass(frozen=True)
+class RuneDraft:
+    name: str = "Harbor Rune"
+    description: str = "A rune shaped by the rumor chain."
+    rune_type: str = "mystical"
+    rank: str = "common"
+    bonuses: tuple[RuneBonusDraft, ...] = ()
+    effects: tuple[RuneEffectDraft, ...] = ()
+    level: int = 1
+    experience: int = 0
+    max_experience: int = 100
+    required_socket_type: str | None = None
+    can_level_up: bool = True
+    max_level: int = 10
+    can_combine: bool = True
+    combine_quantity: int = 3
+    combine_result_rank: str | None = None
+    glow_color: str | None = None
+    is_tradeable: bool = True
+    is_sellable: bool = True
+    base_value: int = 0
+
+
+@dataclass(frozen=True)
+class GlyphModifierDraft:
+    stat_name: str = "spell_power"
+    value: float = 5.0
+    operation: str = "add"
+    is_percentage: bool = False
+
+
+@dataclass(frozen=True)
+class GlyphAbilityDraft:
+    ability_name: str = "lantern_pulse"
+    description: str = "A glyph ability shaped by the rumor chain."
+    mana_cost: int | None = None
+    cooldown_seconds: int = 0
+    duration_seconds: int | None = None
+    power: float = 1.0
+    requires_target: bool = False
+    max_charges: int | None = None
+
+
+@dataclass(frozen=True)
+class GlyphDraft:
+    name: str = "Harbor Glyph"
+    description: str = "A glyph shaped by the rumor chain."
+    glyph_school: str = "arcane"
+    tier: str = "basic"
+    category: str = "passive"
+    modifiers: tuple[GlyphModifierDraft, ...] = ()
+    abilities: tuple[GlyphAbilityDraft, ...] = ()
+    tier_level: int = 1
+    proficiency: int = 0
+    required_socket_type: str | None = None
+    can_upgrade_tier: bool = True
+    max_tier_level: int = 10
+    synergizes_with_schools: tuple[str, ...] = ()
+    synergy_bonus: float = 0.25
+    current_charges: int = 0
+    max_charges: int = 0
+    charge_regen_time: int = 60
+    symbol: str = "✦"
+    color: str = "#FFFFFF"
+    is_tradeable: bool = True
+    is_sellable: bool = True
+    base_value: int = 0
+
+
+@dataclass(frozen=True)
+class TitleDraft:
+    name: str = "Harbor Warden"
+    description: str = "A title shaped by the rumor chain."
+
+
+@dataclass(frozen=True)
+class RankDraft:
+    name: str = "Harbor Rank"
+    description: str = "A rank shaped by the rumor chain."
+    rank_type: str = "prestige"
+    tier: int = 1
+    required_level: int = 1
+    required_xp: int = 0
+    perks: tuple[str, ...] = ()
+    is_permanent: bool = False
+    icon: str | None = None
+
+
+@dataclass(frozen=True)
+class LeaderboardDraft:
+    name: str = "Harbor Ledger"
+    description: str = "A leaderboard shaped by the rumor chain."
+    board_type: str = "global"
+    sort_criterion: str = "score"
+    size_limit: int = 100
+
+
+@dataclass(frozen=True)
+class TrophyDraft:
+    name: str = "Harbor Trophy"
+    description: str = "A trophy shaped by the rumor chain."
+    trophy_type: str = "event_winner"
+    rarity: str = "rare"
+    icon: str | None = None
+    achievement_names: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class BadgeDraft:
+    name: str = "Harbor Badge"
+    description: str = "A badge shaped by the rumor chain."
+    badge_type: str = "progression"
+    rarity: str = "common"
+    icon: str | None = None
+    achievement_names: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class MasteryBonusDraft:
     level: int = 1
     bonus_type: str = "damage"
@@ -714,6 +1046,58 @@ class ProgressionEventDraft:
 
 
 @dataclass(frozen=True)
+class PlayerMetricDraft:
+    player_name: str | None = None
+    metric_type: str = "session_duration"
+    value: float = 0.0
+    unit: str | None = None
+    session_name: str | None = None
+    is_aggregated: bool = False
+    aggregation_period: str | None = None
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class DropRateDraft:
+    name: str
+    category: str = "material"
+    drop_rate: float = 0.1
+    conditions: tuple[str, ...] = field(default_factory=tuple)
+    affected_item_names: tuple[str, ...] = field(default_factory=tuple)
+    player_level_scaling: dict[str, float] = field(default_factory=dict)
+    is_event_boosted: bool = False
+    boost_multiplier: float = 1.0
+    description: str | None = None
+
+
+@dataclass(frozen=True)
+class LootTableWeightDraft:
+    name: str
+    description: str
+    loot_table_name: str | None = None
+    item_type: str = "material"
+    rarity: str = "common"
+    weight: float = 0.1
+    min_level: int = 1
+    is_unique: bool = False
+    conditions: tuple[str, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class DifficultyCurveDraft:
+    name: str
+    description: str
+    curve_type: str = "linear"
+    base_level: int = 1
+    max_level: int = 10
+    level_xp_requirement: tuple[int, ...] = field(default_factory=tuple)
+    scaling_factor: float = 1.0
+    level_time_minutes: tuple[int, ...] = field(default_factory=tuple)
+    player_count_tiers: dict[str, int] = field(default_factory=dict)
+    is_adaptive: bool = False
+
+
+@dataclass(frozen=True)
 class PrologueDraft:
     title: str
     description: str
@@ -792,8 +1176,20 @@ class NarrativeStructureDraft:
     quest_reward_tiers: tuple[QuestRewardTierDraft, ...] = field(default_factory=tuple)
     quest_trackers: tuple[QuestTrackerDraft, ...] = field(default_factory=tuple)
     items: tuple[ItemDraft, ...] = field(default_factory=tuple)
+    inventories: tuple[InventoryDraft, ...] = field(default_factory=tuple)
+    materials: tuple[MaterialDraft, ...] = field(default_factory=tuple)
     components: tuple[ComponentDraft, ...] = field(default_factory=tuple)
     sockets: tuple[SocketDraft, ...] = field(default_factory=tuple)
+    crafting_recipes: tuple[CraftingRecipeDraft, ...] = field(default_factory=tuple)
+    blueprints: tuple[BlueprintDraft, ...] = field(default_factory=tuple)
+    enchantments: tuple[EnchantmentDraft, ...] = field(default_factory=tuple)
+    runes: tuple[RuneDraft, ...] = field(default_factory=tuple)
+    glyphs: tuple[GlyphDraft, ...] = field(default_factory=tuple)
+    titles: tuple[TitleDraft, ...] = field(default_factory=tuple)
+    ranks: tuple[RankDraft, ...] = field(default_factory=tuple)
+    leaderboards: tuple[LeaderboardDraft, ...] = field(default_factory=tuple)
+    trophies: tuple[TrophyDraft, ...] = field(default_factory=tuple)
+    badges: tuple[BadgeDraft, ...] = field(default_factory=tuple)
     masteries: tuple[MasteryDraft, ...] = field(default_factory=tuple)
     skills: tuple[SkillDraft, ...] = field(default_factory=tuple)
     perks: tuple[PerkDraft, ...] = field(default_factory=tuple)
@@ -805,6 +1201,10 @@ class NarrativeStructureDraft:
     experiences: tuple[ExperienceDraft, ...] = field(default_factory=tuple)
     progression_states: tuple[ProgressionStateDraft, ...] = field(default_factory=tuple)
     progression_events: tuple[ProgressionEventDraft, ...] = field(default_factory=tuple)
+    player_metrics: tuple[PlayerMetricDraft, ...] = field(default_factory=tuple)
+    drop_rates: tuple[DropRateDraft, ...] = field(default_factory=tuple)
+    loot_table_weights: tuple[LootTableWeightDraft, ...] = field(default_factory=tuple)
+    difficulty_curves: tuple[DifficultyCurveDraft, ...] = field(default_factory=tuple)
     plot_branches: tuple[PlotBranchDraft, ...] = field(default_factory=tuple)
     branch_points: tuple[BranchPointDraft, ...] = field(default_factory=tuple)
     choices: tuple[ChoiceDraft, ...] = field(default_factory=tuple)
@@ -851,8 +1251,20 @@ class RumorChainResult:
     quest_reward_tiers: list[QuestRewardTier] = field(default_factory=list)
     quest_trackers: list[QuestTracker] = field(default_factory=list)
     items: list[Item] = field(default_factory=list)
+    inventories: list[Inventory] = field(default_factory=list)
+    materials: list[Material] = field(default_factory=list)
     components: list[Component] = field(default_factory=list)
     sockets: list[Socket] = field(default_factory=list)
+    crafting_recipes: list[CraftingRecipe] = field(default_factory=list)
+    blueprints: list[Blueprint] = field(default_factory=list)
+    enchantments: list[Enchantment] = field(default_factory=list)
+    runes: list[Rune] = field(default_factory=list)
+    glyphs: list[Glyph] = field(default_factory=list)
+    titles: list[Title] = field(default_factory=list)
+    ranks: list[Rank] = field(default_factory=list)
+    leaderboards: list[Leaderboard] = field(default_factory=list)
+    trophies: list[Trophy] = field(default_factory=list)
+    badges: list[Badge] = field(default_factory=list)
     masteries: list[Mastery] = field(default_factory=list)
     skills: list[Skill] = field(default_factory=list)
     perks: list[Perk] = field(default_factory=list)
@@ -864,6 +1276,10 @@ class RumorChainResult:
     experiences: list[Experience] = field(default_factory=list)
     progression_states: list[WorldState] = field(default_factory=list)
     progression_events: list[ProgressionEvent] = field(default_factory=list)
+    player_metrics: list[PlayerMetricRecord] = field(default_factory=list)
+    drop_rates: list[DropRateRecord] = field(default_factory=list)
+    loot_table_weights: list[LootTableWeightRecord] = field(default_factory=list)
+    difficulty_curves: list[DifficultyCurveRecord] = field(default_factory=list)
     campaign: Campaign | None = None
     story: Story | None = None
     acts: list[Act] = field(default_factory=list)
@@ -1373,12 +1789,60 @@ class ItemStore(Protocol):
     def save(self, entity: Item) -> Item: ...
 
 
+class InventoryStore(Protocol):
+    def save(self, entity: Inventory) -> Inventory: ...
+
+
+class MaterialStore(Protocol):
+    def save(self, entity: Material) -> Material: ...
+
+
 class ComponentStore(Protocol):
     def save(self, entity: Component) -> Component: ...
 
 
 class SocketStore(Protocol):
     def save(self, entity: Socket) -> Socket: ...
+
+
+class CraftingRecipeStore(Protocol):
+    def save(self, entity: CraftingRecipe) -> CraftingRecipe: ...
+
+
+class BlueprintStore(Protocol):
+    def save(self, entity: Blueprint) -> Blueprint: ...
+
+
+class EnchantmentStore(Protocol):
+    def save(self, entity: Enchantment) -> Enchantment: ...
+
+
+class RuneStore(Protocol):
+    def save(self, entity: Rune) -> Rune: ...
+
+
+class GlyphStore(Protocol):
+    def save(self, entity: Glyph) -> Glyph: ...
+
+
+class TitleStore(Protocol):
+    def save(self, entity: Title) -> Title: ...
+
+
+class RankStore(Protocol):
+    def save(self, entity: Rank) -> Rank: ...
+
+
+class LeaderboardStore(Protocol):
+    def save(self, entity: Leaderboard) -> Leaderboard: ...
+
+
+class TrophyStore(Protocol):
+    def save(self, entity: Trophy) -> Trophy: ...
+
+
+class BadgeStore(Protocol):
+    def save(self, entity: Badge) -> Badge: ...
 
 
 class MasteryStore(Protocol):
@@ -1423,6 +1887,22 @@ class ProgressionStateStore(Protocol):
 
 class ProgressionEventStore(Protocol):
     def save(self, entity: ProgressionEvent) -> ProgressionEvent: ...
+
+
+class PlayerMetricStore(Protocol):
+    def save(self, entity: PlayerMetricRecord) -> PlayerMetricRecord: ...
+
+
+class DropRateStore(Protocol):
+    def save(self, entity: DropRateRecord) -> DropRateRecord: ...
+
+
+class LootTableWeightStore(Protocol):
+    def save(self, entity: LootTableWeightRecord) -> LootTableWeightRecord: ...
+
+
+class DifficultyCurveStore(Protocol):
+    def save(self, entity: DifficultyCurveRecord) -> DifficultyCurveRecord: ...
 
 
 class CamelChatBackend:
@@ -1667,6 +2147,56 @@ class DeterministicRumorBackend:
                         "max_enhancement": 5,
                         "special_stat": "crit_rate",
                         "special_stat_value": 0.08,
+                    }
+                ],
+                "blueprints": [
+                    {
+                        "name": f"{theme.title()} Relic Schematic",
+                        "description": f"A schematic for rebuilding the {theme} relic.",
+                        "blueprint_type": "weapon",
+                        "rarity": "rare",
+                        "complexity": 6,
+                        "estimated_crafting_time": 420,
+                        "requirements": [{"requirement_type": "level", "value": "5"}],
+                        "required_level": 5,
+                        "result_item_name": f"{theme.title()} Relic",
+                        "result_quantity": 1,
+                    }
+                ],
+                "enchantments": [
+                    {
+                        "name": f"{theme.title()} Ward",
+                        "description": f"A ward that protects gear from the pressure of {theme}.",
+                        "enchantment_type": "general",
+                        "rarity": "rare",
+                        "effects": [{"effect": "protection", "value": 10, "is_percentage": True}],
+                        "required_gold": 75,
+                    }
+                ],
+                "runes": [
+                    {
+                        "name": f"{theme.title()} Sigil Rune",
+                        "description": f"A rune carved to survive the pressure of {theme}.",
+                        "rune_type": "mystical",
+                        "rank": "rare",
+                        "bonuses": [{"stat_name": "attack_power", "value": 8, "is_percentage": False}],
+                        "effects": [{"effect_name": "arc_burst", "effect_value": 12, "trigger_chance": 0.25, "cooldown_seconds": 8}],
+                        "required_socket_type": "rune",
+                        "base_value": 95,
+                    }
+                ],
+                "glyphs": [
+                    {
+                        "name": f"{theme.title()} Harbor Glyph",
+                        "description": f"A glyph that channels the omen-patterns of {theme}.",
+                        "glyph_school": "arcane",
+                        "tier": "advanced",
+                        "category": "triggered",
+                        "modifiers": [{"stat_name": "spell_power", "value": 6, "operation": "add", "is_percentage": False}],
+                        "abilities": [{"ability_name": "lantern_pulse", "description": "Pulse a warning light.", "mana_cost": 8, "cooldown_seconds": 14, "duration_seconds": 4, "power": 1.4, "requires_target": False}],
+                        "required_socket_type": "glyph",
+                        "synergizes_with_schools": ["divine"],
+                        "base_value": 110,
                     }
                 ],
                 "components": [
@@ -2061,7 +2591,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 DEFAULT_NARRATIVE_AGENT_PROMPT = (
     "Saga Architect",
-    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, components, sockets, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
+    "Convert the rumor/event/relationship chain into one compact JSON object with keys campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
 
@@ -2097,8 +2627,20 @@ class RumorBridgeService:
         quest_reward_tier_repository: QuestRewardTierStore | None = None,
         quest_tracker_repository: QuestTrackerStore | None = None,
         item_repository: ItemStore | None = None,
+        inventory_repository: InventoryStore | None = None,
+        material_repository: MaterialStore | None = None,
         component_repository: ComponentStore | None = None,
         socket_repository: SocketStore | None = None,
+        crafting_recipe_repository: CraftingRecipeStore | None = None,
+        blueprint_repository: BlueprintStore | None = None,
+        enchantment_repository: EnchantmentStore | None = None,
+        rune_repository: RuneStore | None = None,
+        glyph_repository: GlyphStore | None = None,
+        title_repository: TitleStore | None = None,
+        rank_repository: RankStore | None = None,
+        leaderboard_repository: LeaderboardStore | None = None,
+        trophy_repository: TrophyStore | None = None,
+        badge_repository: BadgeStore | None = None,
         mastery_repository: MasteryStore | None = None,
         skill_repository: SkillStore | None = None,
         perk_repository: PerkStore | None = None,
@@ -2110,6 +2652,10 @@ class RumorBridgeService:
         experience_repository: ExperienceStore | None = None,
         progression_state_repository: ProgressionStateStore | None = None,
         progression_event_repository: ProgressionEventStore | None = None,
+        player_metric_repository: PlayerMetricStore | None = None,
+        drop_rate_repository: DropRateStore | None = None,
+        loot_table_weight_repository: LootTableWeightStore | None = None,
+        difficulty_curve_repository: DifficultyCurveStore | None = None,
         plot_branch_repository: PlotBranchStore | None = None,
         branch_point_repository: BranchPointStore | None = None,
         choice_repository: ChoiceStore | None = None,
@@ -2151,8 +2697,20 @@ class RumorBridgeService:
         self.quest_reward_tier_repository = quest_reward_tier_repository
         self.quest_tracker_repository = quest_tracker_repository
         self.item_repository = item_repository
+        self.inventory_repository = inventory_repository
+        self.material_repository = material_repository
         self.component_repository = component_repository
         self.socket_repository = socket_repository
+        self.crafting_recipe_repository = crafting_recipe_repository
+        self.blueprint_repository = blueprint_repository
+        self.enchantment_repository = enchantment_repository
+        self.rune_repository = rune_repository
+        self.glyph_repository = glyph_repository
+        self.title_repository = title_repository
+        self.rank_repository = rank_repository
+        self.leaderboard_repository = leaderboard_repository
+        self.trophy_repository = trophy_repository
+        self.badge_repository = badge_repository
         self.mastery_repository = mastery_repository
         self.skill_repository = skill_repository
         self.perk_repository = perk_repository
@@ -2164,6 +2722,10 @@ class RumorBridgeService:
         self.experience_repository = experience_repository
         self.progression_state_repository = progression_state_repository
         self.progression_event_repository = progression_event_repository
+        self.player_metric_repository = player_metric_repository
+        self.drop_rate_repository = drop_rate_repository
+        self.loot_table_weight_repository = loot_table_weight_repository
+        self.difficulty_curve_repository = difficulty_curve_repository
         self.plot_branch_repository = plot_branch_repository
         self.branch_point_repository = branch_point_repository
         self.choice_repository = choice_repository
@@ -2283,11 +2845,11 @@ class RumorBridgeService:
             f"Rumors: {'; '.join(str(r.name) for r in chain_result.rumors)}\n"
             f"Events: {'; '.join(str(e.name) for e in chain_result.events)}\n"
             f"Relationships: {'; '.join(str(r.description) for r in chain_result.relationships) or 'None'}\n"
-            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, components, sockets, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
+            "Return one JSON object with campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, quest_reward_tiers, quest_trackers, items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, plot_branches, branch_points, choices, consequences, moral_choices, alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
-            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. "
+            "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. "
             "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
@@ -2403,8 +2965,20 @@ class RumorBridgeService:
         quest_reward_tiers_payload = self._coerce_narrative_items(payload.get("quest_reward_tiers"))
         quest_trackers_payload = self._coerce_narrative_items(payload.get("quest_trackers"))
         items_payload = self._coerce_narrative_items(payload.get("items"))
+        inventories_payload = self._coerce_narrative_items(payload.get("inventories") or payload.get("inventory"))
+        materials_payload = self._coerce_narrative_items(payload.get("materials") or payload.get("material"))
         components_payload = self._coerce_narrative_items(payload.get("components"))
         sockets_payload = self._coerce_narrative_items(payload.get("sockets"))
+        crafting_recipes_payload = self._coerce_narrative_items(payload.get("crafting_recipes") or payload.get("crafting_recipe") or payload.get("recipes"))
+        blueprints_payload = self._coerce_narrative_items(payload.get("blueprints") or payload.get("blueprint"))
+        enchantments_payload = self._coerce_narrative_items(payload.get("enchantments") or payload.get("enchantment"))
+        runes_payload = self._coerce_narrative_items(payload.get("runes") or payload.get("rune"))
+        glyphs_payload = self._coerce_narrative_items(payload.get("glyphs") or payload.get("glyph"))
+        titles_payload = self._coerce_narrative_items(payload.get("titles") or payload.get("title"))
+        ranks_payload = self._coerce_narrative_items(payload.get("ranks") or payload.get("rank"))
+        leaderboards_payload = self._coerce_narrative_items(payload.get("leaderboards") or payload.get("leaderboard"))
+        trophies_payload = self._coerce_narrative_items(payload.get("trophies") or payload.get("trophy"))
+        badges_payload = self._coerce_narrative_items(payload.get("badges") or payload.get("badge"))
         masteries_payload = self._coerce_narrative_items(payload.get("masteries") or payload.get("mastery"))
         skills_payload = self._coerce_narrative_items(payload.get("skills") or payload.get("skill"))
         perks_payload = self._coerce_narrative_items(payload.get("perks") or payload.get("perk"))
@@ -2544,6 +3118,14 @@ class RumorBridgeService:
                 self._build_item_draft(item, index)
                 for index, item in enumerate(items_payload, start=1)
             ),
+            inventories=tuple(
+                self._build_inventory_draft(item, index)
+                for index, item in enumerate(inventories_payload, start=1)
+            ),
+            materials=tuple(
+                self._build_material_draft(item, index)
+                for index, item in enumerate(materials_payload, start=1)
+            ),
             components=tuple(
                 self._build_component_draft(item, index)
                 for index, item in enumerate(components_payload, start=1)
@@ -2551,6 +3133,46 @@ class RumorBridgeService:
             sockets=tuple(
                 self._build_socket_draft(item, index)
                 for index, item in enumerate(sockets_payload, start=1)
+            ),
+            crafting_recipes=tuple(
+                self._build_crafting_recipe_draft(item, index)
+                for index, item in enumerate(crafting_recipes_payload, start=1)
+            ),
+            blueprints=tuple(
+                self._build_blueprint_draft(item, index)
+                for index, item in enumerate(blueprints_payload, start=1)
+            ),
+            enchantments=tuple(
+                self._build_enchantment_draft(item, index)
+                for index, item in enumerate(enchantments_payload, start=1)
+            ),
+            runes=tuple(
+                self._build_rune_draft(item, index)
+                for index, item in enumerate(runes_payload, start=1)
+            ),
+            glyphs=tuple(
+                self._build_glyph_draft(item, index)
+                for index, item in enumerate(glyphs_payload, start=1)
+            ),
+            titles=tuple(
+                self._build_title_draft(item, index)
+                for index, item in enumerate(titles_payload, start=1)
+            ),
+            ranks=tuple(
+                self._build_rank_draft(item, index)
+                for index, item in enumerate(ranks_payload, start=1)
+            ),
+            leaderboards=tuple(
+                self._build_leaderboard_draft(item, index)
+                for index, item in enumerate(leaderboards_payload, start=1)
+            ),
+            trophies=tuple(
+                self._build_trophy_draft(item, index)
+                for index, item in enumerate(trophies_payload, start=1)
+            ),
+            badges=tuple(
+                self._build_badge_draft(item, index)
+                for index, item in enumerate(badges_payload, start=1)
             ),
             masteries=tuple(
                 self._build_mastery_draft(item, index)
@@ -2595,6 +3217,22 @@ class RumorBridgeService:
             progression_events=tuple(
                 self._build_progression_event_draft(item, index)
                 for index, item in enumerate(progression_events_payload, start=1)
+            ),
+            player_metrics=tuple(
+                self._build_player_metric_draft(item, index)
+                for index, item in enumerate(payload.get("player_metrics") or [], start=1)
+            ),
+            drop_rates=tuple(
+                self._build_drop_rate_draft(item, index)
+                for index, item in enumerate(payload.get("drop_rates") or [], start=1)
+            ),
+            loot_table_weights=tuple(
+                self._build_loot_table_weight_draft(item, index)
+                for index, item in enumerate(payload.get("loot_table_weights") or [], start=1)
+            ),
+            difficulty_curves=tuple(
+                self._build_difficulty_curve_draft(item, index)
+                for index, item in enumerate(payload.get("difficulty_curves") or [], start=1)
             ),
             plot_branches=tuple(
                 self._build_plot_branch_draft(item, index)
@@ -3042,6 +3680,388 @@ class RumorBridgeService:
             effect_duration_modifier=max(0.0, self._coerce_optional_float(payload.get("effect_duration_modifier")) or 1.0),
         )
 
+    def _build_inventory_slot_draft(self, item: object, index: int) -> InventorySlotDraft:
+        payload = item if isinstance(item, dict) else {}
+        return InventorySlotDraft(
+            item_name=self._coerce_optional_text(
+                payload.get("item_name")
+                or payload.get("item")
+                or payload.get("material_name")
+                or payload.get("resource")
+                or payload.get("name")
+            ),
+            quantity=max(1, self._coerce_positive_int(payload.get("quantity"), 1)),
+            slot_index=max(0, self._coerce_optional_int(payload.get("slot_index")) or max(index - 1, 0)),
+        )
+
+    def _build_inventory_draft(self, item: object, index: int) -> InventoryDraft:
+        payload = item if isinstance(item, dict) else {}
+        slots_payload = self._coerce_narrative_items(payload.get("slots") or payload.get("items"))
+        return InventoryDraft(
+            owner_name=self._coerce_optional_text(payload.get("owner_name") or payload.get("owner") or payload.get("character_name")),
+            capacity=max(0, self._coerce_non_negative_optional_int(payload.get("capacity")) or 20),
+            gold=max(0, self._coerce_non_negative_optional_int(payload.get("gold")) or 0),
+            slots=tuple(
+                self._build_inventory_slot_draft(slot, slot_index)
+                for slot_index, slot in enumerate(slots_payload, start=1)
+            ),
+        )
+
+    def _build_material_draft(self, item: object, index: int) -> MaterialDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return MaterialDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Material {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A material shaped by the current rumor chain.",
+            ),
+            material_type=str(payload.get("material_type") or payload.get("type") or "other"),
+            rarity=self._coerce_optional_text(payload.get("rarity")) or "common",
+            stack_size=max(1, self._coerce_positive_int(payload.get("stack_size"), 99)),
+            base_value=max(0, self._coerce_non_negative_optional_int(payload.get("base_value")) or 0),
+            is_tradeable=self._coerce_bool(payload.get("is_tradeable", True)),
+            is_sellable=self._coerce_bool(payload.get("is_sellable", True)),
+            durability=self._coerce_non_negative_optional_int(payload.get("durability")),
+            conductivity=self._coerce_non_negative_optional_int(payload.get("conductivity")),
+            hardness=self._coerce_non_negative_optional_int(payload.get("hardness")),
+            magic_affinity=self._coerce_optional_text(payload.get("magic_affinity") or payload.get("affinity")),
+        )
+
+    def _build_recipe_ingredient_draft(self, item: object, index: int) -> RecipeIngredientDraft:
+        payload = item if isinstance(item, dict) else {}
+        return RecipeIngredientDraft(
+            item_name=self._coerce_optional_text(
+                payload.get("item_name")
+                or payload.get("item")
+                or payload.get("material_name")
+                or payload.get("component_name")
+                or payload.get("ingredient")
+                or payload.get("name")
+            ),
+            quantity=max(1, self._coerce_positive_int(payload.get("quantity"), 1)),
+            is_consumed=self._coerce_bool(payload.get("is_consumed", True)),
+        )
+
+    def _build_crafting_recipe_draft(self, item: object, index: int) -> CraftingRecipeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        ingredients_payload = self._coerce_narrative_items(payload.get("ingredients") or payload.get("materials") or payload.get("items"))
+        return CraftingRecipeDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Recipe {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A recipe shaped by the current rumor chain.",
+            ),
+            result_item_name=self._coerce_optional_text(payload.get("result_item_name") or payload.get("result_item") or payload.get("result") or payload.get("item_name")),
+            result_quantity=max(1, self._coerce_positive_int(payload.get("result_quantity"), 1)),
+            ingredients=tuple(
+                self._build_recipe_ingredient_draft(ingredient, ingredient_index)
+                for ingredient_index, ingredient in enumerate(ingredients_payload, start=1)
+            ),
+            crafting_time_seconds=max(0, self._coerce_non_negative_optional_int(payload.get("crafting_time_seconds") or payload.get("craft_time_seconds") or payload.get("crafting_time")) or 0),
+            success_rate=self._coerce_non_negative_optional_int(payload.get("success_rate")),
+            difficulty=str(payload.get("difficulty") or "normal"),
+            skill_name=self._coerce_optional_text(payload.get("skill_name") or payload.get("skill") or payload.get("required_skill")),
+            skill_level_requirement=self._coerce_positive_optional_int(payload.get("skill_level_requirement") or payload.get("minimum_skill_level")),
+            required_workstation_id=self._coerce_optional_int(payload.get("required_workstation_id") or payload.get("workstation_id")),
+            is_discoverable=self._coerce_bool(payload.get("is_discoverable", True)),
+            is_locked=self._coerce_bool(payload.get("is_locked", False)),
+            gold_cost=max(0, self._coerce_non_negative_optional_int(payload.get("gold_cost")) or 0),
+        )
+
+    def _build_blueprint_requirement_draft(self, item: object, index: int) -> BlueprintRequirementDraft:
+        payload = item if isinstance(item, dict) else {}
+        return BlueprintRequirementDraft(
+            requirement_type=self._coerce_optional_text(payload.get("requirement_type") or payload.get("type")) or "level",
+            value=self._coerce_optional_text(payload.get("value") or payload.get("requirement") or payload.get("name")) or str(index),
+            quantity=self._coerce_positive_optional_int(payload.get("quantity")),
+        )
+
+    def _build_blueprint_draft(self, item: object, index: int) -> BlueprintDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        requirements_payload = self._coerce_narrative_items(payload.get("requirements") or payload.get("prerequisites"))
+        return BlueprintDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Blueprint {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A blueprint shaped by the current rumor chain.",
+            ),
+            blueprint_type=str(payload.get("blueprint_type") or payload.get("type") or "other"),
+            rarity=self._coerce_optional_text(payload.get("rarity")) or "common",
+            complexity=max(1, min(10, self._coerce_positive_int(payload.get("complexity"), 1))),
+            estimated_crafting_time=max(0, self._coerce_non_negative_optional_int(payload.get("estimated_crafting_time") or payload.get("crafting_time_seconds") or payload.get("crafting_time")) or 60),
+            requirements=tuple(
+                self._build_blueprint_requirement_draft(requirement, requirement_index)
+                for requirement_index, requirement in enumerate(requirements_payload, start=1)
+            ),
+            required_level=self._coerce_positive_optional_int(payload.get("required_level")),
+            required_skill_name=self._coerce_optional_text(payload.get("required_skill_name") or payload.get("skill_name") or payload.get("required_skill")),
+            required_skill_level=self._coerce_positive_optional_int(payload.get("required_skill_level")),
+            result_item_name=self._coerce_optional_text(payload.get("result_item_name") or payload.get("result_item") or payload.get("item_name") or payload.get("result")),
+            result_quantity=max(1, self._coerce_positive_int(payload.get("result_quantity"), 1)),
+            variant_of_name=self._coerce_optional_text(payload.get("variant_of_name") or payload.get("variant_of") or payload.get("parent_blueprint_name")),
+            upgrade_tier=max(1, self._coerce_positive_int(payload.get("upgrade_tier"), 1)),
+            max_upgrade_tier=max(1, self._coerce_positive_int(payload.get("max_upgrade_tier"), max(1, self._coerce_positive_int(payload.get("upgrade_tier"), 1)))),
+            is_discoverable=self._coerce_bool(payload.get("is_discoverable", True)),
+            discovery_chance=max(0.0, min(1.0, self._coerce_optional_float(payload.get("discovery_chance")) or 0.0)),
+            is_tradable=self._coerce_bool(payload.get("is_tradable", payload.get("is_tradeable", True))),
+            base_value=max(0, self._coerce_non_negative_optional_int(payload.get("base_value")) or 0),
+        )
+
+    def _build_enchantment_effect_draft(self, item: object, index: int) -> EnchantmentEffectDraft:
+        payload = item if isinstance(item, dict) else {}
+        return EnchantmentEffectDraft(
+            effect=self._coerce_optional_text(payload.get("effect") or payload.get("type") or payload.get("name")) or "protection",
+            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            is_percentage=self._coerce_bool(payload.get("is_percentage", False)),
+        )
+
+    def _build_enchantment_draft(self, item: object, index: int) -> EnchantmentDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        effects_payload = self._coerce_narrative_items(payload.get("effects") or payload.get("effect_values") or payload.get("bonuses"))
+        return EnchantmentDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Enchantment {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "An enchantment shaped by the current rumor chain.",
+            ),
+            enchantment_type=str(payload.get("enchantment_type") or payload.get("type") or "general"),
+            rarity=self._coerce_optional_text(payload.get("rarity")) or "common",
+            effects=tuple(
+                self._build_enchantment_effect_draft(effect, effect_index)
+                for effect_index, effect in enumerate(effects_payload, start=1)
+            ),
+            required_item_level=self._coerce_positive_optional_int(payload.get("required_item_level")),
+            required_item_rarity=self._coerce_optional_text(payload.get("required_item_rarity")),
+            mutually_exclusive_names=self._coerce_text_tuple(payload.get("mutually_exclusive_names") or payload.get("mutually_exclusive") or payload.get("exclusive_with")),
+            required_material_names=self._coerce_text_tuple(payload.get("required_material_names") or payload.get("required_materials") or payload.get("materials")),
+            required_gold=max(0, self._coerce_non_negative_optional_int(payload.get("required_gold")) or 0),
+            required_skill_name=self._coerce_optional_text(payload.get("required_skill_name") or payload.get("skill_name") or payload.get("required_skill")),
+            required_skill_level=self._coerce_positive_optional_int(payload.get("required_skill_level")),
+            glow_color=self._coerce_optional_text(payload.get("glow_color")),
+            is_cursed=self._coerce_bool(payload.get("is_cursed", False)),
+            is_permanent=self._coerce_bool(payload.get("is_permanent", True)),
+            duration_seconds=self._coerce_non_negative_optional_int(payload.get("duration_seconds")),
+            power_level=max(1, self._coerce_positive_int(payload.get("power_level"), 1)),
+            max_stacks=max(1, self._coerce_positive_int(payload.get("max_stacks"), 1)),
+        )
+
+    def _build_rune_bonus_draft(self, item: object, index: int) -> RuneBonusDraft:
+        payload = item if isinstance(item, dict) else {}
+        return RuneBonusDraft(
+            stat_name=self._coerce_optional_text(payload.get("stat_name") or payload.get("stat") or payload.get("name")) or f"bonus_{index}",
+            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            is_percentage=self._coerce_bool(payload.get("is_percentage", False)),
+        )
+
+    def _build_rune_effect_draft(self, item: object, index: int) -> RuneEffectDraft:
+        payload = item if isinstance(item, dict) else {}
+        return RuneEffectDraft(
+            effect_name=self._coerce_optional_text(payload.get("effect_name") or payload.get("effect") or payload.get("name")) or f"effect_{index}",
+            effect_value=self._coerce_optional_float(payload.get("effect_value") or payload.get("value")) or 0.0,
+            trigger_chance=self._coerce_optional_float(payload.get("trigger_chance")),
+            cooldown_seconds=self._coerce_non_negative_optional_int(payload.get("cooldown_seconds")),
+        )
+
+    def _build_rune_draft(self, item: object, index: int) -> RuneDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        bonuses_payload = self._coerce_narrative_items(payload.get("bonuses") or payload.get("stats") or payload.get("modifiers"))
+        effects_payload = self._coerce_narrative_items(payload.get("effects") or payload.get("abilities") or payload.get("procs"))
+        bonuses = tuple(
+            self._build_rune_bonus_draft(bonus, bonus_index)
+            for bonus_index, bonus in enumerate(bonuses_payload, start=1)
+        )
+        effects = tuple(
+            self._build_rune_effect_draft(effect, effect_index)
+            for effect_index, effect in enumerate(effects_payload, start=1)
+        )
+        if not bonuses and not effects:
+            bonuses = (RuneBonusDraft(stat_name="attack_power", value=5.0, is_percentage=False),)
+        max_level = max(1, self._coerce_positive_int(payload.get("max_level"), 10))
+        return RuneDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Rune {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A rune shaped by the current rumor chain.",
+            ),
+            rune_type=str(payload.get("rune_type") or payload.get("type") or "mystical"),
+            rank=self._coerce_optional_text(payload.get("rank") or payload.get("rarity")) or "common",
+            bonuses=bonuses,
+            effects=effects,
+            level=max(1, self._coerce_positive_int(payload.get("level"), 1)),
+            experience=max(0, self._coerce_non_negative_optional_int(payload.get("experience")) or 0),
+            max_experience=max(1, self._coerce_positive_int(payload.get("max_experience"), 100)),
+            required_socket_type=self._coerce_optional_text(payload.get("required_socket_type") or payload.get("socket_type")),
+            can_level_up=self._coerce_bool(payload.get("can_level_up", True)),
+            max_level=max_level,
+            can_combine=self._coerce_bool(payload.get("can_combine", True)),
+            combine_quantity=max(1, self._coerce_positive_int(payload.get("combine_quantity"), 3)),
+            combine_result_rank=self._coerce_optional_text(payload.get("combine_result_rank")),
+            glow_color=self._coerce_optional_text(payload.get("glow_color")),
+            is_tradeable=self._coerce_bool(payload.get("is_tradeable", True)),
+            is_sellable=self._coerce_bool(payload.get("is_sellable", True)),
+            base_value=max(0, self._coerce_non_negative_optional_int(payload.get("base_value")) or 0),
+        )
+
+    def _build_glyph_modifier_draft(self, item: object, index: int) -> GlyphModifierDraft:
+        payload = item if isinstance(item, dict) else {}
+        return GlyphModifierDraft(
+            stat_name=self._coerce_optional_text(payload.get("stat_name") or payload.get("stat") or payload.get("name")) or f"modifier_{index}",
+            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            operation=(self._coerce_optional_text(payload.get("operation")) or "add").lower(),
+            is_percentage=self._coerce_bool(payload.get("is_percentage", False)),
+        )
+
+    def _build_glyph_ability_draft(self, item: object, index: int) -> GlyphAbilityDraft:
+        payload = item if isinstance(item, dict) else {}
+        return GlyphAbilityDraft(
+            ability_name=self._coerce_optional_text(payload.get("ability_name") or payload.get("name") or payload.get("ability")) or f"glyph_ability_{index}",
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                payload.get("ability_name") or payload.get("name"),
+                "A glyph ability shaped by the current rumor chain.",
+            ),
+            mana_cost=self._coerce_non_negative_optional_int(payload.get("mana_cost")),
+            cooldown_seconds=max(0, self._coerce_non_negative_optional_int(payload.get("cooldown_seconds")) or 0),
+            duration_seconds=self._coerce_non_negative_optional_int(payload.get("duration_seconds")),
+            power=max(0.0, self._coerce_optional_float(payload.get("power")) or 1.0),
+            requires_target=self._coerce_bool(payload.get("requires_target", False)),
+            max_charges=self._coerce_positive_optional_int(payload.get("max_charges")),
+        )
+
+    def _build_glyph_draft(self, item: object, index: int) -> GlyphDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        modifiers_payload = self._coerce_narrative_items(payload.get("modifiers") or payload.get("stats") or payload.get("bonuses"))
+        abilities_payload = self._coerce_narrative_items(payload.get("abilities") or payload.get("effects") or payload.get("spells"))
+        modifiers = tuple(
+            self._build_glyph_modifier_draft(modifier, modifier_index)
+            for modifier_index, modifier in enumerate(modifiers_payload, start=1)
+        )
+        abilities = tuple(
+            self._build_glyph_ability_draft(ability, ability_index)
+            for ability_index, ability in enumerate(abilities_payload, start=1)
+        )
+        if not modifiers and not abilities:
+            modifiers = (GlyphModifierDraft(stat_name="spell_power", value=5.0, operation="add", is_percentage=False),)
+        max_tier_level = max(1, self._coerce_positive_int(payload.get("max_tier_level"), 10))
+        max_charges = max(0, self._coerce_non_negative_optional_int(payload.get("max_charges")) or 0)
+        return GlyphDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Glyph {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A glyph shaped by the current rumor chain.",
+            ),
+            glyph_school=str(payload.get("glyph_school") or payload.get("school") or "arcane"),
+            tier=str(payload.get("tier") or payload.get("glyph_tier") or "basic"),
+            category=str(payload.get("category") or payload.get("glyph_category") or "passive"),
+            modifiers=modifiers,
+            abilities=abilities,
+            tier_level=max(1, self._coerce_positive_int(payload.get("tier_level"), 1)),
+            proficiency=max(0, min(100, self._coerce_non_negative_optional_int(payload.get("proficiency")) or 0)),
+            required_socket_type=self._coerce_optional_text(payload.get("required_socket_type") or payload.get("socket_type")),
+            can_upgrade_tier=self._coerce_bool(payload.get("can_upgrade_tier", True)),
+            max_tier_level=max_tier_level,
+            synergizes_with_schools=self._coerce_text_tuple(payload.get("synergizes_with_schools") or payload.get("synergy_schools") or payload.get("synergy_with")),
+            synergy_bonus=max(0.0, min(1.0, self._coerce_optional_float(payload.get("synergy_bonus")) or 0.25)),
+            current_charges=max(0, self._coerce_non_negative_optional_int(payload.get("current_charges")) or 0),
+            max_charges=max_charges,
+            charge_regen_time=max(0, self._coerce_non_negative_optional_int(payload.get("charge_regen_time")) or 60),
+            symbol=self._coerce_optional_text(payload.get("symbol")) or "✦",
+            color=self._coerce_optional_text(payload.get("color")) or "#FFFFFF",
+            is_tradeable=self._coerce_bool(payload.get("is_tradeable", True)),
+            is_sellable=self._coerce_bool(payload.get("is_sellable", True)),
+            base_value=max(0, self._coerce_non_negative_optional_int(payload.get("base_value")) or 0),
+        )
+
+    def _build_title_draft(self, item: object, index: int) -> TitleDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return TitleDraft(
+            name=self._compact_title(payload.get("name") or payload.get("title") or scalar_text, fallback=f"Title {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A title shaped by the current rumor chain.",
+            ),
+        )
+
+    def _build_rank_draft(self, item: object, index: int) -> RankDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return RankDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Rank {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A rank shaped by the current rumor chain.",
+            ),
+            rank_type=(self._coerce_optional_text(payload.get("rank_type") or payload.get("type")) or "prestige").lower(),
+            tier=max(1, self._coerce_positive_int(payload.get("tier"), 1)),
+            required_level=max(0, self._coerce_non_negative_optional_int(payload.get("required_level")) or 1),
+            required_xp=max(0, self._coerce_non_negative_optional_int(payload.get("required_xp")) or 0),
+            perks=self._coerce_text_tuple(payload.get("perks") or payload.get("unlocks")),
+            is_permanent=self._coerce_bool(payload.get("is_permanent", False)),
+            icon=self._coerce_optional_text(payload.get("icon")),
+        )
+
+    def _build_leaderboard_draft(self, item: object, index: int) -> LeaderboardDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return LeaderboardDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Leaderboard {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A leaderboard shaped by the current rumor chain.",
+            ),
+            board_type=(self._coerce_optional_text(payload.get("board_type") or payload.get("type")) or "global").lower(),
+            sort_criterion=(self._coerce_optional_text(payload.get("sort_criterion") or payload.get("sort_by")) or "score").lower(),
+            size_limit=max(1, self._coerce_positive_int(payload.get("size_limit") or payload.get("limit"), 100)),
+        )
+
+    def _build_trophy_draft(self, item: object, index: int) -> TrophyDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return TrophyDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Trophy {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A trophy shaped by the current rumor chain.",
+            ),
+            trophy_type=(self._coerce_optional_text(payload.get("trophy_type") or payload.get("type")) or "event_winner").lower(),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "rare").lower(),
+            icon=self._coerce_optional_text(payload.get("icon")),
+            achievement_names=self._coerce_text_tuple(payload.get("achievement_names") or payload.get("achievements")),
+        )
+
+    def _build_badge_draft(self, item: object, index: int) -> BadgeDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return BadgeDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Badge {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                "A badge shaped by the current rumor chain.",
+            ),
+            badge_type=(self._coerce_optional_text(payload.get("badge_type") or payload.get("type")) or "progression").lower(),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "common").lower(),
+            icon=self._coerce_optional_text(payload.get("icon")),
+            achievement_names=self._coerce_text_tuple(payload.get("achievement_names") or payload.get("achievements")),
+        )
+
     def _build_mastery_bonus_draft(self, item: object, index: int) -> MasteryBonusDraft:
         payload = item if isinstance(item, dict) else {}
         return MasteryBonusDraft(
@@ -3385,6 +4405,97 @@ class RumorBridgeService:
             ),
             reasons=tuple(reasons),
             effects=effects,
+        )
+
+    def _build_player_metric_draft(self, item: object, index: int) -> PlayerMetricDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return PlayerMetricDraft(
+            player_name=self._coerce_optional_text(payload.get("player_name") or payload.get("character_name") or payload.get("player")),
+            metric_type=(self._coerce_optional_text(payload.get("metric_type") or payload.get("type")) or "session_duration").lower(),
+            value=max(0.0, self._coerce_optional_float(payload.get("value")) or 0.0),
+            unit=self._coerce_optional_text(payload.get("unit")),
+            session_name=self._coerce_optional_text(payload.get("session_name") or payload.get("session")),
+            is_aggregated=self._coerce_bool(payload.get("is_aggregated")),
+            aggregation_period=self._coerce_optional_text(payload.get("aggregation_period")),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Metric {index} extracted from the rumor chain.",
+            ),
+        )
+
+    def _build_drop_rate_draft(self, item: object, index: int) -> DropRateDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        scaling = {
+            str(key): max(0.0, self._coerce_optional_float(value) or 0.0)
+            for key, value in self._coerce_object_dict(payload.get("player_level_scaling") or payload.get("level_scaling")).items()
+        }
+        return DropRateDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Drop Rate {index}"),
+            category=(self._coerce_optional_text(payload.get("category")) or "material").lower(),
+            drop_rate=max(0.0, min(1.0, self._coerce_optional_float(payload.get("drop_rate") or payload.get("rate")) or 0.1)),
+            conditions=self._coerce_text_tuple(payload.get("conditions")),
+            affected_item_names=self._coerce_text_tuple(payload.get("affected_item_names") or payload.get("items") or payload.get("affected_items")),
+            player_level_scaling=scaling,
+            is_event_boosted=self._coerce_bool(payload.get("is_event_boosted")),
+            boost_multiplier=max(0.1, self._coerce_optional_float(payload.get("boost_multiplier")) or 1.0),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Drop rate profile {index} extracted from the rumor chain.",
+            ),
+        )
+
+    def _build_loot_table_weight_draft(self, item: object, index: int) -> LootTableWeightDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return LootTableWeightDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Loot Weight {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Loot table weight {index} extracted from the rumor chain.",
+            ),
+            loot_table_name=self._coerce_optional_text(payload.get("loot_table_name") or payload.get("table_name") or payload.get("loot_table")),
+            item_type=(self._coerce_optional_text(payload.get("item_type") or payload.get("category")) or "material").lower(),
+            rarity=(self._coerce_optional_text(payload.get("rarity")) or "common").lower(),
+            weight=max(0.0, min(1.0, self._coerce_optional_float(payload.get("weight")) or 0.1)),
+            min_level=max(1, self._coerce_positive_int(payload.get("min_level"), 1)),
+            is_unique=self._coerce_bool(payload.get("is_unique")),
+            conditions=self._coerce_text_tuple(payload.get("conditions")),
+        )
+
+    def _build_difficulty_curve_draft(self, item: object, index: int) -> DifficultyCurveDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        level_xp_requirement = self._coerce_positive_int_tuple(payload.get("level_xp_requirement") or payload.get("xp_requirements"))
+        level_time_minutes = self._coerce_positive_int_tuple(payload.get("level_time_minutes") or payload.get("time_requirements"))
+        player_count_tiers = {
+            str(key): max(0, self._coerce_optional_int(value) or 0)
+            for key, value in self._coerce_object_dict(payload.get("player_count_tiers") or payload.get("player_tiers")).items()
+        }
+        return DifficultyCurveDraft(
+            name=self._compact_title(payload.get("name") or scalar_text, fallback=f"Difficulty Curve {index}"),
+            description=self._first_non_empty_text(
+                payload.get("description"),
+                scalar_text,
+                f"Difficulty curve {index} extracted from the rumor chain.",
+            ),
+            curve_type=(self._coerce_optional_text(payload.get("curve_type") or payload.get("type")) or "linear").lower(),
+            base_level=max(1, self._coerce_positive_int(payload.get("base_level"), 1)),
+            max_level=max(
+                1,
+                self._coerce_positive_int(payload.get("max_level"), 10),
+                len(level_xp_requirement),
+                len(level_time_minutes),
+            ),
+            level_xp_requirement=level_xp_requirement,
+            scaling_factor=max(0.1, self._coerce_optional_float(payload.get("scaling_factor")) or 1.0),
+            level_time_minutes=level_time_minutes,
+            player_count_tiers=player_count_tiers,
+            is_adaptive=self._coerce_bool(payload.get("is_adaptive")),
         )
 
     def _build_plot_branch_draft(self, item: object, index: int) -> PlotBranchDraft:
@@ -4617,8 +5728,20 @@ class RumorBridgeService:
             quest_reward_tiers=quest_reward_tiers,
             quest_trackers=quest_trackers,
             items=chain_result.items,
+            inventories=chain_result.inventories,
+            materials=chain_result.materials,
+            crafting_recipes=chain_result.crafting_recipes,
             components=chain_result.components,
             sockets=chain_result.sockets,
+            blueprints=chain_result.blueprints,
+            enchantments=chain_result.enchantments,
+            runes=chain_result.runes,
+            glyphs=chain_result.glyphs,
+            titles=chain_result.titles,
+            ranks=chain_result.ranks,
+            leaderboards=chain_result.leaderboards,
+            trophies=chain_result.trophies,
+            badges=chain_result.badges,
             masteries=chain_result.masteries,
             skills=chain_result.skills,
             perks=chain_result.perks,
@@ -4630,6 +5753,10 @@ class RumorBridgeService:
             experiences=chain_result.experiences,
             progression_states=chain_result.progression_states,
             progression_events=chain_result.progression_events,
+            player_metrics=chain_result.player_metrics,
+            drop_rates=chain_result.drop_rates,
+            loot_table_weights=chain_result.loot_table_weights,
+            difficulty_curves=chain_result.difficulty_curves,
             campaign=campaign,
             story=story,
             acts=list(acts_by_number.values()),
@@ -4650,8 +5777,8 @@ class RumorBridgeService:
         )
 
     def _persist_systems_slice(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
-        if not all([self.item_repository, self.component_repository, self.socket_repository, self.mastery_repository, self.skill_repository, self.perk_repository, self.trait_repository, self.attribute_repository, self.talent_tree_repository, self.achievement_repository, self.level_up_repository, self.experience_repository, self.progression_state_repository, self.progression_event_repository]):
-            raise ValueError("Item, component, socket, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, and progression event repositories are required for systems slice generation")
+        if not all([self.item_repository, self.inventory_repository, self.material_repository, self.component_repository, self.socket_repository, self.crafting_recipe_repository, self.blueprint_repository, self.enchantment_repository, self.rune_repository, self.glyph_repository, self.title_repository, self.rank_repository, self.leaderboard_repository, self.trophy_repository, self.badge_repository, self.mastery_repository, self.skill_repository, self.perk_repository, self.trait_repository, self.attribute_repository, self.talent_tree_repository, self.achievement_repository, self.level_up_repository, self.experience_repository, self.progression_state_repository, self.progression_event_repository, self.player_metric_repository, self.drop_rate_repository, self.loot_table_weight_repository, self.difficulty_curve_repository]):
+            raise ValueError("Item, inventory, material, component, socket, crafting recipe, blueprint, enchantment, rune, glyph, title, rank, leaderboard, trophy, badge, mastery, skill, perk, trait, attribute, talent tree, achievement, level-up, experience, progression state, progression event, player metric, drop rate, loot table weight, and difficulty curve repositories are required for systems slice generation")
 
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
@@ -4679,7 +5806,30 @@ class RumorBridgeService:
             items.append(item)
             items_by_name[self._normalize_lookup_key(item.name)] = item
 
+        materials: list[Material] = []
+        materials_by_name: dict[str, Material] = {}
+        for material_draft in draft.materials:
+            material = self.material_repository.save(Material.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=material_draft.name,
+                description=Description(material_draft.description),
+                material_type=self._coerce_material_type(material_draft.material_type),
+                rarity=self._coerce_rarity(material_draft.rarity),
+                stack_size=max(1, material_draft.stack_size),
+                base_value=max(0, material_draft.base_value),
+                is_tradeable=material_draft.is_tradeable,
+                is_sellable=material_draft.is_sellable,
+                durability=self._coerce_non_negative_optional_int(material_draft.durability),
+                conductivity=self._coerce_percent_optional_int(material_draft.conductivity),
+                hardness=self._coerce_percent_optional_int(material_draft.hardness),
+                magic_affinity=material_draft.magic_affinity,
+            ))
+            materials.append(material)
+            materials_by_name[self._normalize_lookup_key(material.name)] = material
+
         components: list[Component] = []
+        components_by_name: dict[str, Component] = {}
         for component_draft in draft.components:
             durability = max(0, component_draft.durability)
             max_durability = max(1, component_draft.max_durability)
@@ -4701,6 +5851,27 @@ class RumorBridgeService:
                 required_skill_level=self._coerce_positive_optional_int(component_draft.required_skill_level),
                 material_ids=[EntityId(item_id) for item_id in component_draft.material_ids],
             )))
+            components_by_name[self._normalize_lookup_key(components[-1].name)] = components[-1]
+
+        craftable_ids_by_name: dict[str, EntityId] = {
+            key: entity.id
+            for key, entity in items_by_name.items()
+            if getattr(entity, "id", None) is not None
+        }
+        craftable_ids_by_name.update(
+            {
+                key: entity.id
+                for key, entity in materials_by_name.items()
+                if getattr(entity, "id", None) is not None
+            }
+        )
+        craftable_ids_by_name.update(
+            {
+                key: entity.id
+                for key, entity in components_by_name.items()
+                if getattr(entity, "id", None) is not None
+            }
+        )
 
         sockets: list[Socket] = []
         fallback_item = items[0] if items else None
@@ -4733,6 +5904,33 @@ class RumorBridgeService:
             if getattr(character, "id", None) is not None
         }
         fallback_character = next((character for character in chain_result.characters if getattr(character, "id", None) is not None), None)
+        inventories: list[Inventory] = []
+        for inventory_draft in draft.inventories:
+            character = characters_by_name.get(self._normalize_lookup_key(inventory_draft.owner_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            inventory = Inventory.create(
+                tenant_id=tenant_id,
+                owner_id=character.id,
+                capacity=max(0, inventory_draft.capacity),
+                gold=max(0, inventory_draft.gold),
+            )
+            used_slot_indices: set[int] = set()
+            slots: dict[int, InventorySlot] = {}
+            for slot_draft in inventory_draft.slots:
+                item_id = craftable_ids_by_name.get(self._normalize_lookup_key(slot_draft.item_name or ""))
+                if item_id is None:
+                    continue
+                slot_index = max(0, slot_draft.slot_index)
+                while slot_index in used_slot_indices:
+                    slot_index += 1
+                if inventory.capacity > 0 and slot_index >= inventory.capacity:
+                    continue
+                used_slot_indices.add(slot_index)
+                slots[slot_index] = InventorySlot(item_id=item_id, quantity=max(1, slot_draft.quantity), slot_index=slot_index)
+            inventory.slots = slots
+            inventories.append(self.inventory_repository.save(inventory))
+
         for mastery_draft in draft.masteries:
             character = characters_by_name.get(self._normalize_lookup_key(mastery_draft.character_name or "")) or fallback_character
             if character is None or character.id is None:
@@ -4788,6 +5986,267 @@ class RumorBridgeService:
             for skill in skills
             if getattr(skill, "id", None) is not None
         }
+
+        crafting_recipes: list[CraftingRecipe] = []
+        for recipe_draft in draft.crafting_recipes:
+            result_item = items_by_name.get(self._normalize_lookup_key(recipe_draft.result_item_name or "")) or fallback_item
+            if result_item is None or result_item.id is None:
+                continue
+            ingredients = [
+                RecipeIngredient(
+                    item_id=ingredient_id,
+                    quantity=max(1, ingredient_draft.quantity),
+                    is_consumed=ingredient_draft.is_consumed,
+                )
+                for ingredient_draft in recipe_draft.ingredients
+                if (ingredient_id := craftable_ids_by_name.get(self._normalize_lookup_key(ingredient_draft.item_name or ""))) is not None
+            ]
+            if not ingredients:
+                continue
+            required_skill = skills_by_name.get(self._normalize_lookup_key(recipe_draft.skill_name or ""))
+            crafting_recipes.append(self.crafting_recipe_repository.save(CraftingRecipe.create(
+                tenant_id=tenant_id,
+                name=recipe_draft.name,
+                description=recipe_draft.description,
+                ingredients=ingredients,
+                result_item_id=result_item.id,
+                result_quantity=max(1, recipe_draft.result_quantity),
+                crafting_time_seconds=max(0, recipe_draft.crafting_time_seconds),
+                success_rate=self._coerce_percent_optional_int(recipe_draft.success_rate),
+                difficulty=self._coerce_recipe_difficulty(recipe_draft.difficulty),
+                skill_requirement=required_skill.id if required_skill is not None else None,
+                skill_level_requirement=self._coerce_positive_optional_int(recipe_draft.skill_level_requirement),
+                required_workstation_id=EntityId(recipe_draft.required_workstation_id) if recipe_draft.required_workstation_id else None,
+                is_discoverable=recipe_draft.is_discoverable,
+                is_locked=recipe_draft.is_locked,
+                gold_cost=max(0, recipe_draft.gold_cost),
+            )))
+
+        blueprints: list[Blueprint] = []
+        blueprints_by_name: dict[str, Blueprint] = {}
+        for blueprint_draft in draft.blueprints:
+            result_item = items_by_name.get(self._normalize_lookup_key(blueprint_draft.result_item_name or "")) or fallback_item
+            if result_item is None or result_item.id is None:
+                continue
+            required_skill = skills_by_name.get(self._normalize_lookup_key(blueprint_draft.required_skill_name or ""))
+            variant_of = blueprints_by_name.get(self._normalize_lookup_key(blueprint_draft.variant_of_name or ""))
+            blueprint = self.blueprint_repository.save(Blueprint.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=blueprint_draft.name,
+                description=Description(blueprint_draft.description),
+                blueprint_type=self._coerce_blueprint_type(blueprint_draft.blueprint_type),
+                rarity=self._coerce_rarity(blueprint_draft.rarity),
+                complexity=max(1, min(10, blueprint_draft.complexity)),
+                estimated_crafting_time=max(0, blueprint_draft.estimated_crafting_time),
+                requirements=[
+                    BlueprintRequirement(
+                        requirement_type=requirement.requirement_type,
+                        value=requirement.value,
+                        quantity=self._coerce_positive_optional_int(requirement.quantity),
+                    )
+                    for requirement in blueprint_draft.requirements
+                ],
+                required_level=self._coerce_positive_optional_int(blueprint_draft.required_level),
+                required_skill_id=required_skill.id if required_skill is not None else None,
+                required_skill_level=self._coerce_positive_optional_int(blueprint_draft.required_skill_level),
+                result_item_id=result_item.id,
+                result_quantity=max(1, blueprint_draft.result_quantity),
+                variant_of_id=variant_of.id if variant_of is not None else None,
+                upgrade_tier=max(1, blueprint_draft.upgrade_tier),
+                max_upgrade_tier=max(1, blueprint_draft.max_upgrade_tier),
+                is_discoverable=blueprint_draft.is_discoverable,
+                discovery_chance=max(0.0, min(1.0, blueprint_draft.discovery_chance)),
+                discovery_source_ids=[],
+                is_tradable=blueprint_draft.is_tradable,
+                base_value=max(0, blueprint_draft.base_value),
+            ))
+            blueprints.append(blueprint)
+            blueprints_by_name[self._normalize_lookup_key(blueprint.name)] = blueprint
+
+        enchantments: list[Enchantment] = []
+        enchantments_by_name: dict[str, Enchantment] = {}
+        for enchantment_draft in draft.enchantments:
+            required_skill = skills_by_name.get(self._normalize_lookup_key(enchantment_draft.required_skill_name or ""))
+            required_material_ids = [
+                material.id
+                for material_name in enchantment_draft.required_material_names
+                if (material := materials_by_name.get(self._normalize_lookup_key(material_name))) is not None and material.id is not None
+            ]
+            mutually_exclusive_ids = [
+                enchantment.id
+                for enchantment_name in enchantment_draft.mutually_exclusive_names
+                if (enchantment := enchantments_by_name.get(self._normalize_lookup_key(enchantment_name))) is not None and enchantment.id is not None
+            ]
+            enchantment = self.enchantment_repository.save(Enchantment.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=enchantment_draft.name,
+                description=Description(enchantment_draft.description),
+                enchantment_type=self._coerce_enchantment_type(enchantment_draft.enchantment_type),
+                rarity=self._coerce_rarity(enchantment_draft.rarity),
+                effects=[
+                    EnchantmentEffectValue(
+                        effect=self._coerce_enchantment_effect(effect.effect),
+                        value=max(-100.0, min(100.0, effect.value)) if effect.is_percentage else effect.value,
+                        is_percentage=effect.is_percentage,
+                    )
+                    for effect in enchantment_draft.effects
+                ],
+                required_item_level=self._coerce_positive_optional_int(enchantment_draft.required_item_level),
+                required_item_rarity=self._coerce_optional_rarity(enchantment_draft.required_item_rarity),
+                mutually_exclusive_ids=mutually_exclusive_ids,
+                required_material_ids=required_material_ids,
+                required_gold=max(0, enchantment_draft.required_gold),
+                required_skill_id=required_skill.id if required_skill is not None else None,
+                required_skill_level=self._coerce_positive_optional_int(enchantment_draft.required_skill_level),
+                glow_color=enchantment_draft.glow_color,
+                particle_effect_id=None,
+                is_cursed=enchantment_draft.is_cursed,
+                is_permanent=enchantment_draft.is_permanent,
+                duration_seconds=self._coerce_non_negative_optional_int(enchantment_draft.duration_seconds),
+                power_level=max(1, enchantment_draft.power_level),
+                max_stacks=max(1, enchantment_draft.max_stacks),
+            ))
+            enchantments.append(enchantment)
+            enchantments_by_name[self._normalize_lookup_key(enchantment.name)] = enchantment
+
+        runes: list[Rune] = []
+        for rune_draft in draft.runes:
+            max_level = max(1, rune_draft.max_level)
+            bonuses = [
+                RuneBonus(
+                    stat_name=bonus.stat_name,
+                    value=max(-100.0, min(100.0, bonus.value)) if bonus.is_percentage else bonus.value,
+                    is_percentage=bonus.is_percentage,
+                )
+                for bonus in rune_draft.bonuses
+            ]
+            effects = [
+                RuneEffect(
+                    effect_name=effect.effect_name,
+                    effect_value=effect.effect_value,
+                    trigger_chance=(max(0.0, min(1.0, effect.trigger_chance)) if effect.trigger_chance is not None else None),
+                    cooldown_seconds=self._coerce_non_negative_optional_int(effect.cooldown_seconds),
+                )
+                for effect in rune_draft.effects
+            ]
+            if not bonuses and not effects:
+                bonuses = [RuneBonus(stat_name="attack_power", value=5.0, is_percentage=False)]
+            runes.append(self.rune_repository.save(Rune.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=rune_draft.name,
+                description=Description(rune_draft.description),
+                rune_type=self._coerce_rune_type(rune_draft.rune_type),
+                rank=self._coerce_rune_rank(rune_draft.rank),
+                bonuses=bonuses,
+                effects=effects,
+                level=max(1, min(rune_draft.level, max_level)),
+                experience=max(0, rune_draft.experience),
+                max_experience=max(1, rune_draft.max_experience),
+                required_socket_type=(self._coerce_socket_type(rune_draft.required_socket_type).value if rune_draft.required_socket_type else None),
+                can_level_up=rune_draft.can_level_up,
+                max_level=max_level,
+                can_combine=rune_draft.can_combine,
+                combine_quantity=max(1, rune_draft.combine_quantity),
+                combine_result_rank=(self._coerce_rune_rank(rune_draft.combine_result_rank) if rune_draft.combine_result_rank else None),
+                glow_color=rune_draft.glow_color,
+                is_tradeable=rune_draft.is_tradeable,
+                is_sellable=rune_draft.is_sellable,
+                base_value=max(0, rune_draft.base_value),
+            )))
+
+        glyphs: list[Glyph] = []
+        for glyph_draft in draft.glyphs:
+            max_tier_level = max(1, glyph_draft.max_tier_level)
+            modifiers = [
+                GlyphModifier(
+                    stat_name=modifier.stat_name,
+                    value=(max(-100.0, min(100.0, modifier.value)) if modifier.is_percentage and modifier.operation == "add" else modifier.value),
+                    operation=(modifier.operation if modifier.operation in {"add", "multiply", "set"} else "add"),
+                    is_percentage=modifier.is_percentage,
+                )
+                for modifier in glyph_draft.modifiers
+            ]
+            abilities = [
+                GlyphAbility(
+                    ability_name=ability.ability_name,
+                    description=ability.description,
+                    mana_cost=self._coerce_non_negative_optional_int(ability.mana_cost),
+                    cooldown_seconds=max(0, ability.cooldown_seconds),
+                    duration_seconds=self._coerce_non_negative_optional_int(ability.duration_seconds),
+                    power=max(0.0, ability.power),
+                    requires_target=ability.requires_target,
+                    max_charges=self._coerce_positive_optional_int(ability.max_charges),
+                )
+                for ability in glyph_draft.abilities
+            ]
+            if not modifiers and not abilities:
+                modifiers = [GlyphModifier(stat_name="spell_power", value=5.0, operation="add", is_percentage=False)]
+            max_charges = max(0, glyph_draft.max_charges)
+            glyphs.append(self.glyph_repository.save(Glyph.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=glyph_draft.name,
+                description=Description(glyph_draft.description),
+                glyph_school=self._coerce_glyph_school(glyph_draft.glyph_school),
+                tier=self._coerce_glyph_tier(glyph_draft.tier),
+                category=self._coerce_glyph_category(glyph_draft.category),
+                modifiers=modifiers,
+                abilities=abilities,
+                tier_level=max(1, min(glyph_draft.tier_level, max_tier_level)),
+                proficiency=max(0, min(100, glyph_draft.proficiency)),
+                required_socket_type=(self._coerce_socket_type(glyph_draft.required_socket_type).value if glyph_draft.required_socket_type else None),
+                can_upgrade_tier=glyph_draft.can_upgrade_tier,
+                max_tier_level=max_tier_level,
+                synergizes_with_schools=[self._coerce_glyph_school(school) for school in glyph_draft.synergizes_with_schools],
+                synergy_bonus=max(0.0, min(1.0, glyph_draft.synergy_bonus)),
+                current_charges=max(0, min(glyph_draft.current_charges, max_charges)),
+                max_charges=max_charges,
+                charge_regen_time=max(0, glyph_draft.charge_regen_time),
+                symbol=glyph_draft.symbol or "✦",
+                color=glyph_draft.color or "#FFFFFF",
+                is_tradeable=glyph_draft.is_tradeable,
+                is_sellable=glyph_draft.is_sellable,
+                base_value=max(0, glyph_draft.base_value),
+            )))
+
+        titles: list[Title] = []
+        for title_draft in draft.titles:
+            titles.append(self.title_repository.save(Title.create(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=title_draft.name,
+                description=title_draft.description,
+            )))
+
+        ranks: list[Rank] = []
+        for rank_draft in draft.ranks:
+            ranks.append(self.rank_repository.save(Rank.create(
+                tenant_id=tenant_id,
+                name=rank_draft.name,
+                description=rank_draft.description,
+                rank_type=rank_draft.rank_type,
+                tier=max(1, rank_draft.tier),
+                required_level=max(0, rank_draft.required_level),
+                required_xp=max(0, rank_draft.required_xp),
+                perks=list(rank_draft.perks) or None,
+                is_permanent=rank_draft.is_permanent,
+                icon=rank_draft.icon,
+            )))
+
+        leaderboards: list[Leaderboard] = []
+        for leaderboard_draft in draft.leaderboards:
+            sort_criterion = leaderboard_draft.sort_criterion if leaderboard_draft.sort_criterion in {"score", "level", "wins", "time"} else "score"
+            leaderboards.append(self.leaderboard_repository.save(Leaderboard.create(
+                tenant_id=tenant_id,
+                name=leaderboard_draft.name,
+                description=leaderboard_draft.description,
+                board_type=leaderboard_draft.board_type,
+                sort_criterion=sort_criterion,
+                size_limit=max(1, leaderboard_draft.size_limit),
+            )))
 
         perks: list[Perk] = []
         for perk_draft in draft.perks:
@@ -4935,6 +6394,50 @@ class RumorBridgeService:
                 icon=achievement_draft.icon,
             )))
 
+        achievements_by_name = {
+            self._normalize_lookup_key(achievement.name): achievement
+            for achievement in achievements
+            if getattr(achievement, "id", None) is not None
+        }
+
+        trophies: list[Trophy] = []
+        for trophy_draft in draft.trophies:
+            trophy_type = trophy_draft.trophy_type if trophy_draft.trophy_type in {"world_first", "pvp_champion", "event_winner"} else "event_winner"
+            rarity = trophy_draft.rarity if trophy_draft.rarity in {"common", "rare", "epic", "legendary"} else "rare"
+            achievement_ids = [
+                achievement.id
+                for achievement_name in trophy_draft.achievement_names
+                if (achievement := achievements_by_name.get(self._normalize_lookup_key(achievement_name))) is not None and achievement.id is not None
+            ]
+            trophies.append(self.trophy_repository.save(Trophy.create(
+                tenant_id=tenant_id,
+                name=trophy_draft.name,
+                description=trophy_draft.description,
+                trophy_type=trophy_type,
+                rarity=rarity,
+                icon=trophy_draft.icon,
+                achievement_ids=achievement_ids or None,
+            )))
+
+        badges: list[Badge] = []
+        for badge_draft in draft.badges:
+            badge_type = badge_draft.badge_type if badge_draft.badge_type in {"progression", "event", "collection"} else "progression"
+            rarity = badge_draft.rarity if badge_draft.rarity in {"common", "uncommon", "rare"} else "common"
+            achievement_ids = [
+                achievement.id
+                for achievement_name in badge_draft.achievement_names
+                if (achievement := achievements_by_name.get(self._normalize_lookup_key(achievement_name))) is not None and achievement.id is not None
+            ]
+            badges.append(self.badge_repository.save(Badge.create(
+                tenant_id=tenant_id,
+                name=badge_draft.name,
+                description=badge_draft.description,
+                badge_type=badge_type,
+                rarity=rarity,
+                icon=badge_draft.icon,
+                achievement_ids=achievement_ids or None,
+            )))
+
         level_ups: list[LevelUp] = []
         for level_up_draft in draft.level_ups:
             character = characters_by_name.get(self._normalize_lookup_key(level_up_draft.character_name or "")) or fallback_character
@@ -5046,6 +6549,101 @@ class RumorBridgeService:
                 effects=effects,
             )))
 
+        player_metrics: list[PlayerMetricRecord] = []
+        for player_metric_draft in draft.player_metrics:
+            character = characters_by_name.get(self._normalize_lookup_key(player_metric_draft.player_name or "")) or fallback_character
+            if character is None or character.id is None:
+                continue
+            now = Timestamp.now()
+            player_metrics.append(self.player_metric_repository.save(PlayerMetricRecord(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=self._compact_title(
+                    f"{character.name.value} {player_metric_draft.metric_type.replace('_', ' ').title()}",
+                    fallback="Player Metric",
+                ),
+                description=player_metric_draft.description or f"Analytics metric for {character.name.value}.",
+                player_id=character.id,
+                metric_type=player_metric_draft.metric_type,
+                value=max(0.0, player_metric_draft.value),
+                unit=player_metric_draft.unit,
+                session_id=None,
+                is_aggregated=player_metric_draft.is_aggregated,
+                aggregation_period=player_metric_draft.aggregation_period,
+                created_at=now,
+                updated_at=now,
+            )))
+
+        drop_rates: list[DropRateRecord] = []
+        for drop_rate_draft in draft.drop_rates:
+            now = Timestamp.now()
+            affected_item_ids = [
+                item.id
+                for item_name in drop_rate_draft.affected_item_names
+                if (item := items_by_name.get(self._normalize_lookup_key(item_name))) is not None and item.id is not None
+            ]
+            drop_rates.append(self.drop_rate_repository.save(DropRateRecord(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=drop_rate_draft.name,
+                description=drop_rate_draft.description or f"Drop rate profile for {drop_rate_draft.category} rewards.",
+                category=drop_rate_draft.category,
+                drop_rate=max(0.0, min(1.0, drop_rate_draft.drop_rate)),
+                conditions=list(drop_rate_draft.conditions),
+                affected_item_ids=affected_item_ids,
+                player_level_scaling=dict(drop_rate_draft.player_level_scaling),
+                is_event_boosted=drop_rate_draft.is_event_boosted,
+                boost_multiplier=max(0.1, drop_rate_draft.boost_multiplier),
+                created_at=now,
+                updated_at=now,
+            )))
+
+        loot_table_weights: list[LootTableWeightRecord] = []
+        for index, loot_table_weight_draft in enumerate(draft.loot_table_weights, start=1):
+            now = Timestamp.now()
+            loot_table_weights.append(self.loot_table_weight_repository.save(LootTableWeightRecord(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=loot_table_weight_draft.name,
+                description=loot_table_weight_draft.description,
+                loot_table_id=EntityId(index),
+                item_type=loot_table_weight_draft.item_type,
+                rarity=loot_table_weight_draft.rarity,
+                weight=max(0.0, min(1.0, loot_table_weight_draft.weight)),
+                min_level=max(1, loot_table_weight_draft.min_level),
+                is_unique=loot_table_weight_draft.is_unique,
+                conditions=list(loot_table_weight_draft.conditions),
+                created_at=now,
+                updated_at=now,
+            )))
+
+        difficulty_curves: list[DifficultyCurveRecord] = []
+        for difficulty_curve_draft in draft.difficulty_curves:
+            now = Timestamp.now()
+            max_level = max(1, difficulty_curve_draft.max_level)
+            xp_requirements = list(difficulty_curve_draft.level_xp_requirement)
+            if len(xp_requirements) < max_level:
+                xp_requirements.extend([xp_requirements[-1] if xp_requirements else 100] * (max_level - len(xp_requirements)))
+            time_requirements = list(difficulty_curve_draft.level_time_minutes)
+            if len(time_requirements) < max_level:
+                time_requirements.extend([time_requirements[-1] if time_requirements else 30] * (max_level - len(time_requirements)))
+            difficulty_curves.append(self.difficulty_curve_repository.save(DifficultyCurveRecord(
+                tenant_id=tenant_id,
+                world_id=world_id,
+                name=difficulty_curve_draft.name,
+                description=difficulty_curve_draft.description,
+                curve_type=difficulty_curve_draft.curve_type,
+                base_level=max(1, difficulty_curve_draft.base_level),
+                max_level=max_level,
+                level_xp_requirement=xp_requirements,
+                scaling_factor=max(0.1, difficulty_curve_draft.scaling_factor),
+                level_time_minutes=time_requirements,
+                player_count_tiers=dict(difficulty_curve_draft.player_count_tiers),
+                is_adaptive=difficulty_curve_draft.is_adaptive,
+                created_at=now,
+                updated_at=now,
+            )))
+
         return RumorChainResult(
             rumors=chain_result.rumors,
             characters=chain_result.characters,
@@ -5067,8 +6665,20 @@ class RumorBridgeService:
             quest_reward_tiers=chain_result.quest_reward_tiers,
             quest_trackers=chain_result.quest_trackers,
             items=items,
+            inventories=inventories,
+            materials=materials,
             components=components,
             sockets=sockets,
+            crafting_recipes=crafting_recipes,
+            blueprints=blueprints,
+            enchantments=enchantments,
+            runes=runes,
+            glyphs=glyphs,
+            titles=titles,
+            ranks=ranks,
+            leaderboards=leaderboards,
+            trophies=trophies,
+            badges=badges,
             masteries=masteries,
             skills=skills,
             perks=perks,
@@ -5080,6 +6690,10 @@ class RumorBridgeService:
             experiences=experiences,
             progression_states=progression_states,
             progression_events=progression_events,
+            player_metrics=player_metrics,
+            drop_rates=drop_rates,
+            loot_table_weights=loot_table_weights,
+            difficulty_curves=difficulty_curves,
             campaign=chain_result.campaign,
             story=chain_result.story,
             acts=chain_result.acts,
@@ -5280,6 +6894,31 @@ class RumorBridgeService:
                     special_stat_value=0.08,
                 ),
             ),
+            inventories=(
+                InventoryDraft(
+                    owner_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    capacity=24,
+                    gold=180,
+                    slots=(
+                        InventorySlotDraft(item_name=f"{theme} Relic", quantity=1, slot_index=0),
+                    ),
+                ),
+            ),
+            materials=(
+                MaterialDraft(
+                    name=f"{theme} Shard",
+                    description=f"A volatile shard collected while surviving the {request.theme} unrest.",
+                    material_type="shard",
+                    rarity="rare",
+                    stack_size=50,
+                    base_value=35,
+                    is_tradeable=True,
+                    is_sellable=True,
+                    conductivity=72,
+                    hardness=48,
+                    magic_affinity="eclipse",
+                ),
+            ),
             components=(
                 ComponentDraft(
                     name=f"{theme} Core",
@@ -5303,6 +6942,144 @@ class RumorBridgeService:
                     rarity="uncommon",
                     is_unlocked=True,
                     stat_bonus_multiplier=1.1,
+                ),
+            ),
+            crafting_recipes=(
+                CraftingRecipeDraft(
+                    name=f"Forge {theme} Relic",
+                    description=f"Refine the {theme.lower()} panic into a relic fit for the watch.",
+                    result_item_name=f"{theme} Relic",
+                    result_quantity=1,
+                    ingredients=(
+                        RecipeIngredientDraft(item_name=f"{theme} Shard", quantity=3, is_consumed=True),
+                        RecipeIngredientDraft(item_name=f"{theme} Core", quantity=1, is_consumed=True),
+                    ),
+                    crafting_time_seconds=240,
+                    success_rate=88,
+                    difficulty="hard",
+                    gold_cost=120,
+                ),
+            ),
+            blueprints=(
+                BlueprintDraft(
+                    name=f"{theme} Relic Schematic",
+                    description=f"A workshop blueprint for forging the {theme.lower()} relic.",
+                    blueprint_type="weapon",
+                    rarity="rare",
+                    complexity=7,
+                    estimated_crafting_time=600,
+                    requirements=(
+                        BlueprintRequirementDraft(requirement_type="level", value="6", quantity=None),
+                    ),
+                    required_level=6,
+                    required_skill_name=f"{theme} Feint",
+                    required_skill_level=2,
+                    result_item_name=f"{theme} Relic",
+                    result_quantity=1,
+                    upgrade_tier=1,
+                    max_upgrade_tier=3,
+                    is_discoverable=True,
+                    discovery_chance=0.35,
+                    is_tradable=True,
+                    base_value=180,
+                ),
+            ),
+            enchantments=(
+                EnchantmentDraft(
+                    name=f"{theme} Ward",
+                    description=f"A defensive enchantment tuned to the pressure of {request.theme}.",
+                    enchantment_type="general",
+                    rarity="rare",
+                    effects=(
+                        EnchantmentEffectDraft(effect="protection", value=12.0, is_percentage=True),
+                    ),
+                    required_item_level=5,
+                    required_item_rarity="uncommon",
+                    required_material_names=(f"{theme} Shard",),
+                    required_gold=90,
+                    required_skill_name=f"{theme} Feint",
+                    required_skill_level=2,
+                    glow_color="#88ccff",
+                    power_level=3,
+                    max_stacks=1,
+                ),
+            ),
+            runes=(
+                RuneDraft(
+                    name=f"{theme} Sigil Rune",
+                    description=f"A rune carved to amplify the survival instincts born from {request.theme}.",
+                    rune_type="mystical",
+                    rank="rare",
+                    bonuses=(
+                        RuneBonusDraft(stat_name="attack_power", value=8.0, is_percentage=False),
+                    ),
+                    effects=(
+                        RuneEffectDraft(effect_name="arc_burst", effect_value=12.0, trigger_chance=0.25, cooldown_seconds=8),
+                    ),
+                    required_socket_type="rune",
+                    combine_result_rank="epic",
+                    glow_color="#6a5cff",
+                    base_value=120,
+                ),
+            ),
+            glyphs=(
+                GlyphDraft(
+                    name=f"{theme} Harbor Glyph",
+                    description=f"A glyph that channels the omen-signals heard during {request.theme}.",
+                    glyph_school="arcane",
+                    tier="advanced",
+                    category="triggered",
+                    modifiers=(
+                        GlyphModifierDraft(stat_name="spell_power", value=6.0, operation="add", is_percentage=False),
+                    ),
+                    abilities=(
+                        GlyphAbilityDraft(
+                            ability_name="lantern_pulse",
+                            description="Projects a warning pulse over nearby allies.",
+                            mana_cost=8,
+                            cooldown_seconds=14,
+                            duration_seconds=4,
+                            power=1.4,
+                            requires_target=False,
+                            max_charges=2,
+                        ),
+                    ),
+                    required_socket_type="glyph",
+                    synergizes_with_schools=("divine",),
+                    synergy_bonus=0.3,
+                    current_charges=1,
+                    max_charges=2,
+                    charge_regen_time=45,
+                    color="#88ccff",
+                    base_value=135,
+                ),
+            ),
+            titles=(
+                TitleDraft(
+                    name=f"{theme} Bellwarden",
+                    description=f"An honorific granted to those who keep order during {request.theme}.",
+                ),
+            ),
+            ranks=(
+                RankDraft(
+                    name=f"{theme} Watch Captain",
+                    description=f"A prestige rank earned by mastering the chaos of {request.theme}.",
+                    rank_type="prestige",
+                    tier=3,
+                    required_level=10,
+                    required_xp=1800,
+                    perks=("Harbor Authority", "Nightwatch Stipend"),
+                    is_permanent=True,
+                    icon="rank_watch_captain",
+                ),
+            ),
+            leaderboards=(
+                LeaderboardDraft(
+                    name=f"{theme} Response Ledger",
+                    description=f"Tracks the defenders who perform best during {request.theme}.",
+                    board_type="event",
+                    sort_criterion="wins",
+                    size_limit=25,
                 ),
             ),
             masteries=(
@@ -5440,6 +7217,26 @@ class RumorBridgeService:
                     icon="achievement_harbor_survivor",
                 ),
             ),
+            trophies=(
+                TrophyDraft(
+                    name=f"{theme} Sentinel Cup",
+                    description=f"Awarded to the standout defender of {request.theme}.",
+                    trophy_type="event_winner",
+                    rarity="epic",
+                    icon="trophy_sentinel_cup",
+                    achievement_names=(f"{theme} Survivor",),
+                ),
+            ),
+            badges=(
+                BadgeDraft(
+                    name=f"{theme} Harbor Seal",
+                    description=f"A badge worn by those who endured {request.theme}.",
+                    badge_type="event",
+                    rarity="rare",
+                    icon="badge_harbor_seal",
+                    achievement_names=(f"{theme} Survivor",),
+                ),
+            ),
             level_ups=(
                 LevelUpDraft(
                     character_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
@@ -5504,6 +7301,56 @@ class RumorBridgeService:
                         ),
                     ),
                     effects={"quest_complete": "bellwatch_reward_applied"},
+                ),
+            ),
+            player_metrics=(
+                PlayerMetricDraft(
+                    player_name=(chain_result.characters[0].name.value if chain_result.characters else "Mara Voss"),
+                    metric_type="combat_kills",
+                    value=27,
+                    unit="count",
+                    session_name=f"{theme.lower()}_raid",
+                    description=f"Tracks how many enemies were defeated during {request.theme}.",
+                ),
+            ),
+            drop_rates=(
+                DropRateDraft(
+                    name=f"{theme} Relic Chance",
+                    category="artifact",
+                    drop_rate=0.18,
+                    conditions=("complete harbor defense", "ring all warning bells"),
+                    affected_item_names=(f"{theme} Bell",),
+                    player_level_scaling={"10": 1.2, "15": 1.35},
+                    is_event_boosted=True,
+                    boost_multiplier=1.5,
+                    description=f"Boosted artifact drop profile tied to {request.theme}.",
+                ),
+            ),
+            loot_table_weights=(
+                LootTableWeightDraft(
+                    name=f"{theme} Rare Cache",
+                    description=f"Controls rare cache payouts during {request.theme}.",
+                    loot_table_name="Harbor Cache",
+                    item_type="artifact",
+                    rarity="epic",
+                    weight=0.22,
+                    min_level=8,
+                    is_unique=True,
+                    conditions=("night encounter",),
+                ),
+            ),
+            difficulty_curves=(
+                DifficultyCurveDraft(
+                    name=f"{theme} Pressure Curve",
+                    description=f"Difficulty pacing model for {request.theme}.",
+                    curve_type="sigmoid",
+                    base_level=1,
+                    max_level=5,
+                    level_xp_requirement=(100, 220, 380, 610, 900),
+                    scaling_factor=1.3,
+                    level_time_minutes=(25, 35, 45, 60, 80),
+                    player_count_tiers={"1": 1, "3": 2, "5": 4},
+                    is_adaptive=True,
                 ),
             ),
             plot_branches=(
@@ -5980,6 +7827,109 @@ class RumorBridgeService:
         aliases = {"triangle": "triangular", "hexagon": "hexagonal", "diamond": "diamond_shaped", "star": "star_shaped"}
         return self._coerce_enum(value, SocketShape, SocketShape.ROUND, aliases)
 
+    def _coerce_material_type(self, value: str) -> MaterialType:
+        aliases = {
+            "metal": "ore",
+            "ore_chunk": "ore",
+            "gemstone": "gem",
+            "plant": "herb",
+            "timber": "wood",
+            "hide": "leather",
+            "fabric": "cloth",
+            "mana": "essence",
+            "crystalized": "crystal",
+            "powder": "dust",
+            "piece": "fragment",
+        }
+        return self._coerce_enum(value, MaterialType, MaterialType.OTHER, aliases)
+
+    def _coerce_recipe_difficulty(self, value: str) -> RecipeDifficulty:
+        aliases = {
+            "simple": "easy",
+            "standard": "normal",
+            "challenging": "hard",
+            "elite": "expert",
+            "legendary": "master",
+        }
+        return self._coerce_enum(value, RecipeDifficulty, RecipeDifficulty.NORMAL, aliases)
+
+    def _coerce_blueprint_type(self, value: str) -> BlueprintType:
+        aliases = {
+            "armor_piece": "armor",
+            "weapon_part": "weapon",
+            "accessory": "jewelry",
+            "general": "other",
+        }
+        return self._coerce_enum(value, BlueprintType, BlueprintType.OTHER, aliases)
+
+    def _coerce_enchantment_type(self, value: str) -> EnchantmentType:
+        aliases = {
+            "armor_only": "armor",
+            "weapon_only": "weapon",
+            "temporary": "general",
+            "universal": "general",
+        }
+        return self._coerce_enum(value, EnchantmentType, EnchantmentType.GENERAL, aliases)
+
+    def _coerce_enchantment_effect(self, value: str) -> EnchantmentEffect:
+        aliases = {
+            "armor": "protection",
+            "crit": "critical_rate",
+            "crit_chance": "critical_rate",
+            "crit_damage": "critical_damage",
+            "move_speed": "movement_speed",
+            "hp": "health",
+        }
+        return self._coerce_enum(value, EnchantmentEffect, EnchantmentEffect.PROTECTION, aliases)
+
+    def _coerce_rune_type(self, value: str) -> RuneType:
+        aliases = {
+            "defensive": "protective",
+            "support": "utility",
+            "magic": "mystical",
+            "holy": "divine",
+            "void": "abyssal",
+        }
+        return self._coerce_enum(value, RuneType, RuneType.MYSTICAL, aliases)
+
+    def _coerce_rune_rank(self, value: str) -> RuneRank:
+        aliases = {
+            "legend": "legendary",
+            "mythical": "mythic",
+            "ultimate": "prime",
+        }
+        return self._coerce_enum(value, RuneRank, RuneRank.COMMON, aliases)
+
+    def _coerce_glyph_school(self, value: str) -> GlyphSchool:
+        aliases = {
+            "light": "celestial",
+            "dark": "shadow",
+            "holy": "divine",
+            "spirit": "soul",
+            "void": "space",
+        }
+        return self._coerce_enum(value, GlyphSchool, GlyphSchool.ARCANE, aliases)
+
+    def _coerce_glyph_tier(self, value: str) -> GlyphTier:
+        aliases = {
+            "novice": "basic",
+            "journeyman": "intermediate",
+            "adept": "advanced",
+            "elite": "expert",
+            "legendary": "master",
+            "mythic": "grandmaster",
+        }
+        return self._coerce_enum(value, GlyphTier, GlyphTier.BASIC, aliases)
+
+    def _coerce_glyph_category(self, value: str) -> GlyphCategory:
+        aliases = {
+            "activated": "active",
+            "proc": "triggered",
+            "debuff": "curse",
+            "buff": "blessing",
+        }
+        return self._coerce_enum(value, GlyphCategory, GlyphCategory.PASSIVE, aliases)
+
     def _coerce_mastery_category(self, value: str) -> MasteryCategory:
         aliases = {
             "weapon_skill": "weapon",
@@ -6270,6 +8220,12 @@ class RumorBridgeService:
     def _coerce_non_negative_optional_int(self, value: object) -> int | None:
         parsed = self._coerce_optional_int(value)
         return parsed if parsed is not None and parsed >= 0 else None
+
+    def _coerce_percent_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None:
+            return None
+        return max(0, min(parsed, 100))
 
     def _coerce_item_level(self, value: object) -> int | None:
         parsed = self._coerce_optional_int(value)

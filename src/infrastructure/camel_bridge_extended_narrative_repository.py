@@ -178,12 +178,60 @@ class CamelBridgeItemRepository(_GenericBridgeRepository):
     table_name = "items"
 
 
+class CamelBridgeInventoryRepository(_GenericBridgeRepository):
+    table_name = "inventories"
+
+
+class CamelBridgeMaterialRepository(_GenericBridgeRepository):
+    table_name = "materials"
+
+
 class CamelBridgeComponentRepository(_GenericBridgeRepository):
     table_name = "components"
 
 
 class CamelBridgeSocketRepository(_GenericBridgeRepository):
     table_name = "sockets"
+
+
+class CamelBridgeCraftingRecipeRepository(_GenericBridgeRepository):
+    table_name = "crafting_recipes"
+
+
+class CamelBridgeBlueprintRepository(_GenericBridgeRepository):
+    table_name = "blueprints"
+
+
+class CamelBridgeEnchantmentRepository(_GenericBridgeRepository):
+    table_name = "enchantments"
+
+
+class CamelBridgeRuneRepository(_GenericBridgeRepository):
+    table_name = "runes"
+
+
+class CamelBridgeGlyphRepository(_GenericBridgeRepository):
+    table_name = "glyphs"
+
+
+class CamelBridgeTitleRepository(_GenericBridgeRepository):
+    table_name = "titles"
+
+
+class CamelBridgeRankRepository(_GenericBridgeRepository):
+    table_name = "ranks"
+
+
+class CamelBridgeLeaderboardRepository(_GenericBridgeRepository):
+    table_name = "leaderboards"
+
+
+class CamelBridgeTrophyRepository(_GenericBridgeRepository):
+    table_name = "trophys"
+
+
+class CamelBridgeBadgeRepository(_GenericBridgeRepository):
+    table_name = "badges"
 
 
 class CamelBridgeMasteryRepository(_GenericBridgeRepository):
@@ -228,6 +276,22 @@ class CamelBridgeProgressionStateRepository(_GenericBridgeRepository):
 
 class CamelBridgeProgressionEventRepository(_GenericBridgeRepository):
     table_name = "progression_events"
+
+
+class CamelBridgePlayerMetricRepository(_GenericBridgeRepository):
+    table_name = "player_metrics"
+
+
+class CamelBridgeDropRateRepository(_GenericBridgeRepository):
+    table_name = "drop_rates"
+
+
+class CamelBridgeLootTableWeightRepository(_GenericBridgeRepository):
+    table_name = "loot_table_weights"
+
+
+class CamelBridgeDifficultyCurveRepository(_GenericBridgeRepository):
+    table_name = "difficulty_curves"
 
 
 class CamelBridgePlotBranchRepository(_GenericBridgeRepository):
