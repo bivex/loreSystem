@@ -81,8 +81,8 @@ Roadmap для **предпочтительного current-generation path** в
 
 ### Near-term bridge infra follow-ups
 
-- tighten connection/resource cleanup around SQLite memory reads
-- refine memory document shaping for better semantic recall quality
+- ✅ tighten connection/resource cleanup around SQLite memory reads
+- ✅ refine memory document shaping for better semantic recall quality
 
 ## Priority roadmap by genre
 
@@ -232,7 +232,7 @@ Hyper-casual пригодится как analytics/live-ops extension, но не
 2. ✅ **Finish reward / profile remainder** (`Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`)
 3. ✅ **Add analytics / balance slice** (`PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`)
 4. ✅ **Add starter encounter slice** (`Dungeon`, `Raid`, `WorldEvent`)
-5. **Stabilize memory v1 live path** (shaping cleanup, resource cleanup)
+5. ✅ **Stabilize memory v1 live path** (shaping cleanup, resource cleanup)
 6. ✅ **Finish encounter/world remainder** (`SeasonalEvent`, `Invasion`, `War`)
 7. ✅ **Legendary / relic reward loop slice** (`LegendaryWeapon`, `MythicalArmor`, `DivineItem`, `CursedItem`, `ArtifactSet`, `RelicCollection`)
 8. **Gacha domain-gap review**
