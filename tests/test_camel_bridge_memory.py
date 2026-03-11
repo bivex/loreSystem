@@ -233,6 +233,50 @@ def test_memory_service_budgets_and_dedupes_prompt_context():
     assert "…" in context
 
 
+def test_memory_service_ranks_prompt_docs_before_exact_limit():
+    class StubReader:
+        def load_recent_documents(self, tenant_id, world_id, *, character_names=(), limit_per_type=3):
+            return [
+                MemoryDocument("t1", tenant_id, world_id, "trait", "1", "Trait for Mara Voss: Harbor Instinct — She notices small lies before the bells ring.", ("Mara Voss",)),
+                MemoryDocument("c1", tenant_id, world_id, "character", "2", "Character: Mara Voss — role=scout; backstory: She tracks the bells.", ("Mara Voss",)),
+                MemoryDocument("e1", tenant_id, world_id, "event", "3", "Event: Blue Lantern Raid — Wardens sweep the harbor after the bells ring."),
+                MemoryDocument("r1", tenant_id, world_id, "relationship", "4", "Relationship: Mara Voss → Iven Hale — Trust forged under eclipse pressure.", ("Mara Voss", "Iven Hale")),
+            ]
+
+    context = LoreMemoryService(StubReader(), exact_limit=2).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+
+    assert "Relationship: Mara Voss → Iven Hale" in context
+    assert "Event: Blue Lantern Raid" in context
+    assert "Trait for Mara Voss: Harbor Instinct" not in context
+    assert "Character: Mara Voss" not in context
+
+
+def test_memory_service_prefers_theme_matching_docs_within_same_priority():
+    class StubReader:
+        def load_recent_documents(self, tenant_id, world_id, *, character_names=(), limit_per_type=3):
+            return [
+                MemoryDocument("e1", tenant_id, world_id, "event", "1", "Event: Market Jubilee — A bright harvest parade fills the upper wards."),
+                MemoryDocument("e2", tenant_id, world_id, "event", "2", "Event: Blue Lantern Raid — Wardens sweep the harbor after the eclipse bells ring."),
+            ]
+
+    context = LoreMemoryService(StubReader(), exact_limit=1).build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss",),
+    )
+
+    assert "Event: Blue Lantern Raid" in context
+    assert "Event: Market Jubilee" not in context
+
+
 def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id(tmp_path):
     db_path = str(tmp_path / "memory_generic.db")
     _seed_world(db_path)

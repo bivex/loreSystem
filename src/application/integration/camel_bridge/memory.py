@@ -133,6 +133,19 @@ DEFAULT_INDEXED_MEMORY_TYPES: tuple[str, ...] = (
 )
 
 
+PROMPT_ENTITY_PRIORITY: dict[str, int] = {
+    "relationship": 60,
+    "event": 55,
+    "quest": 50,
+    "rumor": 45,
+    "world_event": 40,
+    "progression_event": 38,
+    "character": 35,
+    "trait": 24,
+    "perk": 22,
+}
+
+
 @dataclass(frozen=True)
 class MemoryDocument:
     point_id: str
@@ -174,6 +187,10 @@ class TextEmbedder(Protocol):
 
 def _tokenize_embedding_text(text: str) -> list[str]:
     return [token for token in re.findall(r"[^\W_]+", text.casefold()) if token]
+
+
+def _prompt_terms(text: str, *, min_length: int = 4) -> set[str]:
+    return {token for token in _tokenize_embedding_text(text) if len(token) >= min_length}
 
 
 def _add_hashed_feature(vector: list[float], feature: str, weight: float = 1.0) -> None:
@@ -624,18 +641,29 @@ class LoreMemoryService:
 
     def build_prompt_context(self, *, tenant_id: int, world_id: int, theme: str, context: str = "", character_names: Sequence[str] = ()) -> str:
         focus_names = _normalize_name_list(character_names)
-        exact_docs = self.sqlite_reader.load_recent_documents(tenant_id, world_id, character_names=character_names)
-        exact_docs = self._dedupe_prompt_docs(
-            doc for doc in exact_docs
-            if doc.entity_type in self.indexed_types
+        theme_terms = _prompt_terms(theme)
+        context_terms = _prompt_terms(context)
+        exact_docs = self._rank_prompt_docs(
+            self._dedupe_prompt_docs(
+                doc for doc in self.sqlite_reader.load_recent_documents(tenant_id, world_id, character_names=character_names)
+                if doc.entity_type in self.indexed_types
+            ),
+            theme_terms=theme_terms,
+            context_terms=context_terms,
+            focus_names=focus_names,
         )[: self.exact_limit]
         semantic_docs: list[MemoryDocument] = []
         if self.qdrant_index:
             query_text = f"Theme: {theme}\nContext: {context}\nCharacters: {', '.join(focus_names)}"
             seen = {(doc.entity_type, doc.entity_id) for doc in exact_docs}
-            semantic_docs = self._dedupe_prompt_docs(
-                doc for doc in self.qdrant_index.search(query_text, tenant_id=tenant_id, world_id=world_id, limit=self.semantic_limit * 2)
-                if (doc.entity_type, doc.entity_id) not in seen
+            semantic_docs = self._rank_prompt_docs(
+                self._dedupe_prompt_docs(
+                    doc for doc in self.qdrant_index.search(query_text, tenant_id=tenant_id, world_id=world_id, limit=self.semantic_limit * 2)
+                    if (doc.entity_type, doc.entity_id) not in seen
+                ),
+                theme_terms=theme_terms,
+                context_terms=context_terms,
+                focus_names=focus_names,
             )[: self.semantic_limit]
         if not exact_docs and not semantic_docs:
             return ""
@@ -669,6 +697,65 @@ class LoreMemoryService:
             else:
                 world_state.append(doc)
         return character_linked, world_state
+
+    def _rank_prompt_docs(
+        self,
+        docs: Sequence[MemoryDocument],
+        *,
+        theme_terms: set[str],
+        context_terms: set[str],
+        focus_names: Sequence[str],
+    ) -> list[MemoryDocument]:
+        focus_lookup = {name.casefold() for name in _normalize_name_list(focus_names)}
+        focus_terms = {
+            token
+            for name in focus_names
+            for token in _prompt_terms(name, min_length=3)
+        }
+        return sorted(
+            docs,
+            key=lambda doc: self._prompt_doc_sort_key(
+                doc,
+                theme_terms=theme_terms,
+                context_terms=context_terms,
+                focus_lookup=focus_lookup,
+                focus_terms=focus_terms,
+            ),
+        )
+
+    def _prompt_doc_sort_key(
+        self,
+        doc: MemoryDocument,
+        *,
+        theme_terms: set[str],
+        context_terms: set[str],
+        focus_lookup: set[str],
+        focus_terms: set[str],
+    ) -> tuple[object, ...]:
+        summary_terms = _prompt_terms(doc.summary_text, min_length=3)
+        entity_priority = PROMPT_ENTITY_PRIORITY.get(doc.entity_type, 16)
+        focus_hits = len({name.casefold() for name in doc.character_names} & focus_lookup)
+        focus_term_hits = len(summary_terms & focus_terms)
+        theme_hits = len(summary_terms & theme_terms)
+        context_hits = len(summary_terms & context_terms)
+        total_score = (
+            entity_priority * 10
+            + focus_hits * 8
+            + focus_term_hits * 4
+            + theme_hits * 3
+            + context_hits * 2
+        )
+        return (
+            -total_score,
+            -entity_priority,
+            -focus_hits,
+            -focus_term_hits,
+            -theme_hits,
+            -context_hits,
+            doc.entity_type,
+            doc.entity_id,
+            doc.summary_text.casefold(),
+        )
 
     def _extend_prompt_section(
         self,
