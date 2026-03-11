@@ -112,6 +112,79 @@ def test_camel_bridge_falls_back_when_agent_output_is_unparseable(tmp_path):
     assert all("Silver Plague" in rumor.name for rumor in rumors)
 
 
+def test_camel_bridge_merges_duplicate_rumors_across_runs(tmp_path):
+    db_path = str(tmp_path / "rumor_gate.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Dockside Murmurs","description":"Sailors now insist the harbor bells ring before disappearances and wardens vanish after the echoes.","source_name":"Whisper Broker","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":8}]',
+        '[{"name":"Lantern Decree","description":"A crier repeats that blue lanterns will be banned before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+    ])
+    service = RumorBridgeService(CamelBridgeRumorRepository(db_path), backend=backend)
+
+    first = service.generate_and_persist(RumorGenerationRequest(tenant_id=1, world_id=1, theme="harbor panic", context="Citizens fear the next eclipse."))
+    second = service.generate_and_persist(RumorGenerationRequest(tenant_id=1, world_id=1, theme="harbor panic aftermath", context="The same whispers return with sharper detail."))
+
+    stored = CamelBridgeRumorRepository(db_path).list_by_world(TenantId(1), EntityId(1))
+
+    assert len(first) == 2
+    assert len(second) == 2
+    assert len(stored) == 2
+    assert second[0].id == first[0].id
+    assert second[1].id == first[1].id
+    assert stored[0].credibility_score == 8
+    assert stored[0].truth_level == "Partially True"
+    assert stored[0].spread_speed == "Explosive"
+    assert "wardens vanish after the echoes" in str(stored[0].description)
+
+
+def test_camel_bridge_story_chain_merges_duplicate_events_across_runs(tmp_path):
+    db_path = str(tmp_path / "event_gate.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"ongoing"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        '[{"name":"Aftershock Whispers","description":"Survivors insist the harbor panic is not over.","source_name":"Night Ferryman","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":5}]',
+        '[{"name":"Curfew Sparks","description":"Dockworkers prepare for reprisals after the first flashpoint.","source_name":"Signal Runner","truth_level":"Partially True","spread_speed":"Steady","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring while Mara and Iven rally the docks.","participant_names":["Mara Voss","Iven Hale"],"outcome":"success"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They coordinate openly after the reprisals begin.","relationship_type":"ally","relationship_level":55,"is_mutual":true}]',
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+    )
+
+    first = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+    second = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic aftermath",
+        context="The same raid is retold with an updated outcome.",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+
+    stored_events = CamelBridgeEventRepository(db_path).list_by_world(TenantId(1), EntityId(1))
+
+    assert len(first.events) == 1
+    assert len(second.events) == 1
+    assert second.events[0].id == first.events[0].id
+    assert len(stored_events) == 1
+    assert stored_events[0].outcome.value == "success"
+    assert "rally the docks" in str(stored_events[0].description)
+
+
 def test_camel_bridge_generates_story_chain(tmp_path):
     db_path = str(tmp_path / "chain.db")
     _seed_world(db_path)

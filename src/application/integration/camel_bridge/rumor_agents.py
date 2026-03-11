@@ -883,6 +883,12 @@ class RumorChainResult:
     epilogue: Epilogue | None = None
 
 
+@dataclass(frozen=True)
+class NoveltyDecision:
+    action: str
+    reason: str = ""
+
+
 def load_env_file(env_path: str | None = None, override: bool = False) -> str | None:
     candidates = [Path(env_path)] if env_path else [Path.cwd() / ".env", Path(__file__).resolve().parents[4] / ".env"]
     for candidate in candidates:
@@ -918,6 +924,8 @@ class CharacterStore(Protocol):
 
 
 class EventStore(Protocol):
+    def list_by_world(self, tenant_id: TenantId, world_id: EntityId): ...
+
     def save(self, entity: Event) -> Event: ...
 
 
@@ -1888,7 +1896,11 @@ class RumorBridgeService:
                 drafts.append(self._fallback_rumor_draft(request, index, agent_name))
         if not drafts and not self.allow_fallback:
             raise RuntimeError("CAMEL bridge did not produce any rumor drafts")
-        rumors = [self.repository.save(self._rumor_to_entity(request, draft)) for draft in self._dedupe_rumors(request, drafts, request.count)]
+        rumors: list[Rumor] = []
+        for draft in self._dedupe_rumors(request, drafts, request.count):
+            saved = self._save_or_merge_rumor(self._rumor_to_entity(request, draft), request)
+            if saved is not None:
+                rumors.append(saved)
         if reindex_memory:
             self._reindex_memory(request)
         return rumors
@@ -1909,7 +1921,7 @@ class RumorBridgeService:
         events: list[Event] = []
         for draft in event_drafts:
             participants = self._ensure_participants(request, draft.participant_names, characters_by_name)
-            event = self.event_repository.save(self._event_to_entity(request, draft, participants))
+            event = self._save_or_merge_event(self._event_to_entity(request, draft, participants), request)
             events.append(event)
 
         relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
@@ -5437,6 +5449,146 @@ class RumorBridgeService:
             location_id=EntityId(request.location_id) if request.location_id else None,
         )
 
+    def _save_or_merge_rumor(self, rumor: Rumor, request: RumorGenerationRequest) -> Rumor | None:
+        existing = self._find_existing_rumor(rumor, request)
+        if existing is None:
+            return self.repository.save(rumor)
+        decision = self._decide_rumor_novelty(existing, rumor)
+        if decision.action == "skip_duplicate":
+            return existing
+        merged = self._merge_rumor(existing, rumor)
+        return self.repository.save(merged)
+
+    def _save_or_merge_event(self, event: Event, request: RumorGenerationRequest) -> Event:
+        existing = self._find_existing_event(event, request)
+        if existing is None:
+            return self.event_repository.save(event)
+        decision = self._decide_event_novelty(existing, event)
+        if decision.action == "skip_duplicate":
+            return existing
+        merged = self._merge_event(existing, event)
+        return self.event_repository.save(merged)
+
+    def _find_existing_rumor(self, rumor: Rumor, request: RumorGenerationRequest) -> Rumor | None:
+        tenant_id = TenantId(request.tenant_id)
+        world_id = EntityId(request.world_id)
+        semantic_ids = self._semantic_candidate_ids(
+            entity_type="rumor",
+            query_text=f"Rumor: {rumor.name}\nDescription: {rumor.description}\nSource: {rumor.source_name or ''}\nTheme: {request.theme}\nContext: {request.context}",
+            request=request,
+        )
+        best_match: Rumor | None = None
+        best_score = 0.0
+        for existing in self.repository.list_by_world(tenant_id, world_id, limit=200):
+            score = self._rumor_match_score(existing, rumor)
+            if existing.id and existing.id.value in semantic_ids:
+                score += 0.2
+            if score > best_score:
+                best_score = score
+                best_match = existing
+        if best_match and best_score >= 0.8:
+            return best_match
+        return None
+
+    def _find_existing_event(self, event: Event, request: RumorGenerationRequest) -> Event | None:
+        tenant_id = TenantId(request.tenant_id)
+        world_id = EntityId(request.world_id)
+        semantic_ids = self._semantic_candidate_ids(
+            entity_type="event",
+            query_text=f"Event: {event.name}\nDescription: {event.description}\nParticipants: {', '.join(str(pid.value) for pid in event.participant_ids)}\nTheme: {request.theme}\nContext: {request.context}",
+            request=request,
+        )
+        best_match: Event | None = None
+        best_score = 0.0
+        for existing in self.event_repository.list_by_world(tenant_id, world_id):
+            score = self._event_match_score(existing, event)
+            if existing.id and existing.id.value in semantic_ids:
+                score += 0.2
+            if score > best_score:
+                best_score = score
+                best_match = existing
+        if best_match and best_score >= 0.78:
+            return best_match
+        return None
+
+    def _decide_rumor_novelty(self, existing: Rumor, candidate: Rumor) -> NoveltyDecision:
+        if self._normalize_free_text(existing.name) == self._normalize_free_text(candidate.name) and self._normalize_free_text(existing.description) == self._normalize_free_text(candidate.description):
+            return NoveltyDecision(action="skip_duplicate", reason="same_name_and_description")
+        return NoveltyDecision(action="merge_existing", reason="matched_existing_rumor")
+
+    def _decide_event_novelty(self, existing: Event, candidate: Event) -> NoveltyDecision:
+        if (
+            self._normalize_free_text(existing.name) == self._normalize_free_text(candidate.name)
+            and self._normalize_free_text(existing.description) == self._normalize_free_text(candidate.description)
+            and {item.value for item in existing.participant_ids} == {item.value for item in candidate.participant_ids}
+            and existing.outcome == candidate.outcome
+        ):
+            return NoveltyDecision(action="skip_duplicate", reason="same_event_signature")
+        return NoveltyDecision(action="merge_existing", reason="matched_existing_event")
+
+    def _merge_rumor(self, existing: Rumor, candidate: Rumor) -> Rumor:
+        changed = False
+        if len(str(candidate.description)) > len(str(existing.description)):
+            object.__setattr__(existing, "description", candidate.description)
+            changed = True
+        if not existing.source_name and candidate.source_name:
+            object.__setattr__(existing, "source_name", candidate.source_name)
+            changed = True
+        if existing.truth_level == "Unverified" and candidate.truth_level != "Unverified":
+            object.__setattr__(existing, "truth_level", candidate.truth_level)
+            changed = True
+        if self._spread_speed_rank(candidate.spread_speed) > self._spread_speed_rank(existing.spread_speed):
+            object.__setattr__(existing, "spread_speed", candidate.spread_speed)
+            changed = True
+        candidate_cred = candidate.credibility_score or 0
+        existing_cred = existing.credibility_score or 0
+        if candidate_cred > existing_cred:
+            object.__setattr__(existing, "credibility_score", candidate.credibility_score)
+            changed = True
+        if candidate.location_id and not existing.location_id:
+            object.__setattr__(existing, "location_id", candidate.location_id)
+            changed = True
+        if candidate.origin_date and not existing.origin_date:
+            object.__setattr__(existing, "origin_date", candidate.origin_date)
+            changed = True
+        if not existing.is_active and candidate.is_active:
+            object.__setattr__(existing, "is_active", True)
+            changed = True
+        if changed:
+            object.__setattr__(existing, "updated_at", Timestamp.now())
+            object.__setattr__(existing, "version", existing.version.increment())
+        return existing
+
+    def _merge_event(self, existing: Event, candidate: Event) -> Event:
+        changed = False
+        if len(str(candidate.description)) > len(str(existing.description)):
+            object.__setattr__(existing, "description", candidate.description)
+            changed = True
+        existing_participants = list(existing.participant_ids)
+        known_ids = {item.value for item in existing_participants}
+        for participant_id in candidate.participant_ids:
+            if participant_id.value not in known_ids:
+                existing_participants.append(participant_id)
+                known_ids.add(participant_id.value)
+                changed = True
+        if len(existing_participants) != len(existing.participant_ids):
+            object.__setattr__(existing, "participant_ids", existing_participants)
+        if self._event_outcome_value(existing.outcome) == EventOutcome.ONGOING.value and self._event_outcome_value(candidate.outcome) != EventOutcome.ONGOING.value:
+            object.__setattr__(existing, "outcome", candidate.outcome)
+            changed = True
+        if existing.location_id is None and candidate.location_id is not None:
+            object.__setattr__(existing, "location_id", candidate.location_id)
+            changed = True
+        existing_end = existing.date_range.end_date
+        candidate_end = candidate.date_range.end_date
+        if existing_end is None and candidate_end is not None:
+            object.__setattr__(existing, "date_range", DateRange(existing.date_range.start_date, candidate_end))
+            changed = True
+        if changed:
+            object.__setattr__(existing, "updated_at", Timestamp.now())
+            object.__setattr__(existing, "version", existing.version.increment())
+        return existing
+
     def _relationship_to_entity(self, request: RumorGenerationRequest, draft: CharacterRelationshipDraft, from_id: EntityId, to_id: EntityId, first_event_id: EntityId | None) -> CharacterRelationship:
         return CharacterRelationship.create(
             tenant_id=TenantId(request.tenant_id),
@@ -5485,6 +5637,77 @@ class RumorBridgeService:
         object.__setattr__(existing, "updated_at", Timestamp.now())
         object.__setattr__(existing, "version", existing.version.increment())
         return existing
+
+    def _semantic_candidate_ids(self, *, entity_type: str, query_text: str, request: RumorGenerationRequest) -> set[int]:
+        qdrant_index = getattr(self.memory_service, "qdrant_index", None) if self.memory_service is not None else None
+        if qdrant_index is None:
+            return set()
+        try:
+            docs = qdrant_index.search(
+                query_text,
+                tenant_id=request.tenant_id,
+                world_id=request.world_id,
+                limit=6,
+            )
+        except Exception:
+            return set()
+        ids: set[int] = set()
+        for doc in docs:
+            if doc.entity_type != entity_type:
+                continue
+            try:
+                ids.add(int(doc.entity_id))
+            except Exception:
+                continue
+        return ids
+
+    def _rumor_match_score(self, existing: Rumor, candidate: Rumor) -> float:
+        existing_name = self._normalize_free_text(existing.name)
+        candidate_name = self._normalize_free_text(candidate.name)
+        existing_desc = self._normalize_free_text(existing.description)
+        candidate_desc = self._normalize_free_text(candidate.description)
+        name_score = 1.0 if existing_name == candidate_name else self._text_similarity(existing_name, candidate_name)
+        desc_score = 1.0 if existing_desc == candidate_desc else self._text_similarity(existing_desc, candidate_desc)
+        source_score = 0.0
+        if existing.source_name and candidate.source_name:
+            source_score = 1.0 if self._normalize_free_text(existing.source_name) == self._normalize_free_text(candidate.source_name) else 0.0
+        return (name_score * 0.55) + (desc_score * 0.35) + (source_score * 0.10)
+
+    def _event_match_score(self, existing: Event, candidate: Event) -> float:
+        existing_name = self._normalize_free_text(existing.name)
+        candidate_name = self._normalize_free_text(candidate.name)
+        existing_desc = self._normalize_free_text(existing.description)
+        candidate_desc = self._normalize_free_text(candidate.description)
+        name_score = 1.0 if existing_name == candidate_name else self._text_similarity(existing_name, candidate_name)
+        desc_score = 1.0 if existing_desc == candidate_desc else self._text_similarity(existing_desc, candidate_desc)
+        existing_participants = {item.value for item in existing.participant_ids}
+        candidate_participants = {item.value for item in candidate.participant_ids}
+        participant_score = 1.0 if existing_participants == candidate_participants else self._set_similarity(existing_participants, candidate_participants)
+        return (name_score * 0.45) + (desc_score * 0.20) + (participant_score * 0.35)
+
+    def _normalize_free_text(self, value: object) -> str:
+        text = self._coerce_optional_text(value) or ""
+        text = text.lower().strip()
+        text = re.sub(r"[^a-z0-9]+", " ", text)
+        return re.sub(r"\s+", " ", text).strip()
+
+    def _text_similarity(self, left: str, right: str) -> float:
+        return self._set_similarity(set(left.split()), set(right.split()))
+
+    def _set_similarity(self, left: set[int] | set[str], right: set[int] | set[str]) -> float:
+        if not left or not right:
+            return 0.0
+        intersection = len(left & right)
+        union = len(left | right)
+        if union == 0:
+            return 0.0
+        return intersection / union
+
+    def _spread_speed_rank(self, value: str) -> int:
+        return {"Slow": 0, "Moderate": 1, "Rapid": 2, "Explosive": 3}.get(value, 0)
+
+    def _event_outcome_value(self, value: EventOutcome | str) -> str:
+        return value.value if hasattr(value, "value") else str(value)
 
     def _coerce_event_outcome(self, value: str) -> EventOutcome:
         try:
