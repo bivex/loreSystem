@@ -354,7 +354,7 @@
         "triggers_events": [7],
         "reputation_changes": {
           "200": -1000,
-          "201": +500
+          "201": 500
         },
         "character_impacts": {
           "3": "Lost family, swore vengeance",
@@ -413,7 +413,7 @@
         ],
         "experience_rewards": 10000,
         "reputation_changes": {
-          "200": +500,
+          "200": 500,
           "201": -500
         }
       },
