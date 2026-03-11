@@ -69,6 +69,22 @@ class TextEmbedder(Protocol):
     def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
+def _tokenize_embedding_text(text: str) -> list[str]:
+    return [token for token in re.findall(r"[^\W_]+", text.casefold()) if token]
+
+
+def _add_hashed_feature(vector: list[float], feature: str, weight: float = 1.0) -> None:
+    digest = hashlib.sha256(feature.encode("utf-8")).digest()
+    slot = int.from_bytes(digest[:4], "big") % len(vector)
+    sign = 1.0 if digest[4] % 2 == 0 else -1.0
+    vector[slot] += weight * sign
+
+
+def _normalize_embedding_vector(vector: list[float]) -> list[float]:
+    norm = math.sqrt(sum(value * value for value in vector)) or 1.0
+    return [value / norm for value in vector]
+
+
 class HashingTextEmbedder:
     """Dependency-free fallback embedder with deterministic token hashing."""
 
@@ -80,13 +96,46 @@ class HashingTextEmbedder:
 
     def _embed_one(self, text: str) -> list[float]:
         vector = [0.0] * self.dimension
-        for token in re.findall(r"[A-Za-z0-9_]+", text.lower()):
-            digest = hashlib.sha256(token.encode("utf-8")).digest()
-            slot = int.from_bytes(digest[:4], "big") % self.dimension
-            sign = 1.0 if digest[4] % 2 == 0 else -1.0
-            vector[slot] += sign
-        norm = math.sqrt(sum(value * value for value in vector)) or 1.0
-        return [value / norm for value in vector]
+        for token in _tokenize_embedding_text(text):
+            _add_hashed_feature(vector, f"tok:{token}")
+        return _normalize_embedding_vector(vector)
+
+
+class LocalNgramTextEmbedder:
+    """Dependency-free local embedder using token, bigram, and char-ngram features."""
+
+    def __init__(self, dimension: int = 384):
+        self.dimension = dimension
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        return [self._embed_one(text) for text in texts]
+
+    def _embed_one(self, text: str) -> list[float]:
+        vector = [0.0] * self.dimension
+        tokens = _tokenize_embedding_text(text)
+        for token in tokens:
+            _add_hashed_feature(vector, f"tok:{token}", 1.0)
+            for ngram in self._char_ngrams(token):
+                _add_hashed_feature(vector, f"chr:{ngram}", 0.35)
+        for left, right in zip(tokens, tokens[1:]):
+            _add_hashed_feature(vector, f"big:{left}|{right}", 1.25)
+        if not tokens:
+            normalized_text = " ".join(text.casefold().split())
+            if normalized_text:
+                _add_hashed_feature(vector, f"txt:{normalized_text}", 1.0)
+        return _normalize_embedding_vector(vector)
+
+    @staticmethod
+    def _char_ngrams(token: str) -> list[str]:
+        if len(token) <= 2:
+            return [token]
+        ngrams: list[str] = []
+        padded = f"^{token}$"
+        for size in (3, 4):
+            if len(padded) < size:
+                continue
+            ngrams.extend(padded[index : index + size] for index in range(len(padded) - size + 1))
+        return ngrams
 
 
 class OpenAICompatibleTextEmbedder:
@@ -150,7 +199,7 @@ class QdrantMemoryIndex:
         self.collection_name = collection_name
         self.api_key = api_key or os.getenv("CAMEL_MEMORY_QDRANT_API_KEY")
         self.timeout_seconds = timeout_seconds
-        self.embedder = embedder or HashingTextEmbedder()
+        self.embedder = embedder or LocalNgramTextEmbedder()
         self._collection_ready = False
 
     def ensure_collection(self) -> None:
@@ -473,11 +522,15 @@ def build_memory_service_from_env(db_path: str) -> LoreMemoryService:
     qdrant_url = os.getenv("CAMEL_MEMORY_QDRANT_URL")
     if not qdrant_url:
         raise ValueError("CAMEL_MEMORY_QDRANT_URL is required to enable CAMEL memory")
-    backend = (os.getenv("CAMEL_MEMORY_EMBED_BACKEND") or "hash").strip().lower()
+    backend = (os.getenv("CAMEL_MEMORY_EMBED_BACKEND") or "local").strip().lower()
     if backend == "openai":
         embedder: TextEmbedder = OpenAICompatibleTextEmbedder()
-    else:
+    elif backend == "hash":
         embedder = HashingTextEmbedder(dimension=int(os.getenv("CAMEL_MEMORY_EMBED_DIMENSION", "96")))
+    elif backend in {"local", "ngram", "hybrid"}:
+        embedder = LocalNgramTextEmbedder(dimension=int(os.getenv("CAMEL_MEMORY_EMBED_DIMENSION", "384")))
+    else:
+        raise ValueError(f"Unsupported CAMEL_MEMORY_EMBED_BACKEND: {backend}")
     return LoreMemoryService(
         sqlite_reader=SQLiteLoreMemoryReader(db_path),
         qdrant_index=QdrantMemoryIndex(

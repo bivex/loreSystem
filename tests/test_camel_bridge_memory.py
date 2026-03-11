@@ -1,8 +1,8 @@
 import sqlite3
 import json
 
-from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest
-from src.application.integration.camel_bridge.memory import HashingTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
+from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest, build_memory_service_from_env
+from src.application.integration.camel_bridge.memory import HashingTextEmbedder, LocalNgramTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
     CamelBridgeCharacterRepository,
@@ -59,6 +59,10 @@ def _build_chain_service(db_path: str, backend, memory_service=None) -> RumorBri
         relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
         memory_service=memory_service,
     )
+
+
+def _cosine_similarity(left, right) -> float:
+    return sum(a * b for a, b in zip(left, right))
 
 
 def test_memory_wiring_injects_prompt_context_and_reindexes(tmp_path):
@@ -177,3 +181,43 @@ def test_qdrant_memory_index_tolerates_collection_already_exists(monkeypatch):
 
     assert calls[0][0:2] == ("PUT", "/collections/lore_memory")
     assert calls[1][0:2] == ("PUT", "/collections/lore_memory/points")
+
+
+def test_local_ngram_embedder_improves_morphology_similarity_over_legacy_hash():
+    local_embedder = LocalNgramTextEmbedder(dimension=512)
+    legacy_embedder = HashingTextEmbedder(dimension=512)
+
+    local_query, local_close, local_far = local_embedder.embed([
+        "vanishing smugglers near the harbor",
+        "harbor smuggler vanishings",
+        "sunlit orchard festival at noon",
+    ])
+    legacy_query, legacy_close = legacy_embedder.embed([
+        "vanishing smugglers near the harbor",
+        "harbor smuggler vanishings",
+    ])
+
+    assert _cosine_similarity(local_query, local_close) > _cosine_similarity(local_query, local_far)
+    assert _cosine_similarity(local_query, local_close) > _cosine_similarity(legacy_query, legacy_close)
+
+
+def test_build_memory_service_from_env_defaults_to_local_backend(monkeypatch, tmp_path):
+    monkeypatch.setenv("CAMEL_MEMORY_QDRANT_URL", "http://qdrant.local")
+    monkeypatch.delenv("CAMEL_MEMORY_EMBED_BACKEND", raising=False)
+    monkeypatch.delenv("CAMEL_MEMORY_EMBED_DIMENSION", raising=False)
+
+    service = build_memory_service_from_env(str(tmp_path / "memory_env_default.db"))
+
+    assert isinstance(service.qdrant_index.embedder, LocalNgramTextEmbedder)
+    assert service.qdrant_index.embedder.dimension == 384
+
+
+def test_build_memory_service_from_env_supports_legacy_hash_backend(monkeypatch, tmp_path):
+    monkeypatch.setenv("CAMEL_MEMORY_QDRANT_URL", "http://qdrant.local")
+    monkeypatch.setenv("CAMEL_MEMORY_EMBED_BACKEND", "hash")
+    monkeypatch.setenv("CAMEL_MEMORY_EMBED_DIMENSION", "64")
+
+    service = build_memory_service_from_env(str(tmp_path / "memory_env_hash.db"))
+
+    assert isinstance(service.qdrant_index.embedder, HashingTextEmbedder)
+    assert service.qdrant_index.embedder.dimension == 64

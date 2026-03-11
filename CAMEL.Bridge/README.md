@@ -112,8 +112,8 @@ Bridge автоматически пытается загрузить `.env` и�
 - `CAMEL_MEMORY_QDRANT_COLLECTION` — optional, по умолчанию `camel_bridge_memory`
 - `CAMEL_MEMORY_QDRANT_API_KEY` — optional
 - `CAMEL_MEMORY_QDRANT_TIMEOUT_SECONDS` — optional
-- `CAMEL_MEMORY_EMBED_BACKEND` — `hash` (default) или `openai`
-- `CAMEL_MEMORY_EMBED_DIMENSION` — размер deterministic hash embeddings, default `96`
+- `CAMEL_MEMORY_EMBED_BACKEND` — `local` (default), `hash` (legacy) или `openai`
+- `CAMEL_MEMORY_EMBED_DIMENSION` — размер embeddings: default `384` для `local`, `96` для legacy `hash`
 - `CAMEL_MEMORY_EMBED_MODEL` — для `openai` backend
 - `CAMEL_MEMORY_EMBED_BASE_URL` — optional OpenAI-compatible embeddings base URL
 - `CAMEL_MEMORY_EMBED_API_KEY` — optional отдельный embeddings key
@@ -129,19 +129,23 @@ CAMEL_BRIDGE_STRICT_MODEL=true
 
 # optional memory v1
 CAMEL_MEMORY_QDRANT_URL=http://localhost:6333
-CAMEL_MEMORY_EMBED_BACKEND=hash
+CAMEL_MEMORY_EMBED_BACKEND=local
 ```
 
 По умолчанию memory path dependency-free:
 
 - SQLite используется как canonical truth,
 - Qdrant вызывается по stdlib HTTP client,
-- embeddings могут быть deterministic hashing fallback без внешнего embed API.
+- embeddings по умолчанию идут через dependency-free local token+ngram embedder без внешнего embed API.
 
 Если нужен semantic recall через внешний embeddings endpoint, переключи:
 
 - `CAMEL_MEMORY_EMBED_BACKEND=openai`
 - и задай `CAMEL_MEMORY_EMBED_API_KEY` + при необходимости `CAMEL_MEMORY_EMBED_BASE_URL`.
+
+Если нужен прежний максимально простой fallback, можно явно оставить:
+
+- `CAMEL_MEMORY_EMBED_BACKEND=hash`
 
 ## Что внутри
 

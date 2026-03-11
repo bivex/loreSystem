@@ -16,6 +16,7 @@ from .rumor_agents import (
 )
 from .memory import (
     HashingTextEmbedder,
+    LocalNgramTextEmbedder,
     LoreMemoryService,
     QdrantMemoryIndex,
     SQLiteLoreMemoryReader,
@@ -31,6 +32,7 @@ __all__ = [
     "DeterministicRumorBackend",
     "EventDraft",
     "HashingTextEmbedder",
+    "LocalNgramTextEmbedder",
     "load_env_file",
     "LoreMemoryService",
     "QdrantMemoryIndex",

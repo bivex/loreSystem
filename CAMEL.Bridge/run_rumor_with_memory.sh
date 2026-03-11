@@ -23,7 +23,7 @@ Usage: CAMEL.Bridge/run_rumor_with_memory.sh --theme "..." [run_rumor_pipeline.p
 Convenience wrapper around CAMEL.Bridge/run_rumor_pipeline.py that:
   - enables --with-memory automatically
   - defaults CAMEL_MEMORY_QDRANT_URL to http://localhost:6333
-  - defaults CAMEL_MEMORY_EMBED_BACKEND to hash
+  - defaults CAMEL_MEMORY_EMBED_BACKEND to local
   - injects default --tenant-id/--world-id/--db-path if omitted
 
 Defaults (override via env or explicit CLI args):
@@ -31,7 +31,7 @@ Defaults (override via env or explicit CLI args):
   CAMEL_BRIDGE_WORLD_ID=1
   CAMEL_BRIDGE_DB_PATH=lore_system.db
   CAMEL_MEMORY_QDRANT_URL=http://localhost:6333
-  CAMEL_MEMORY_EMBED_BACKEND=hash
+  CAMEL_MEMORY_EMBED_BACKEND=local
   CAMEL_MEMORY_QDRANT_COLLECTION=camel_bridge_memory
 
 If .env exists in the repo root and --env-file is not passed, it will be used automatically.
@@ -66,7 +66,7 @@ if has_flag "--help" "$@" || has_flag "-h" "$@"; then
 fi
 
 export CAMEL_MEMORY_QDRANT_URL="${CAMEL_MEMORY_QDRANT_URL:-http://localhost:6333}"
-export CAMEL_MEMORY_EMBED_BACKEND="${CAMEL_MEMORY_EMBED_BACKEND:-hash}"
+export CAMEL_MEMORY_EMBED_BACKEND="${CAMEL_MEMORY_EMBED_BACKEND:-local}"
 
 DEFAULT_TENANT_ID="${CAMEL_BRIDGE_TENANT_ID:-1}"
 DEFAULT_WORLD_ID="${CAMEL_BRIDGE_WORLD_ID:-1}"
