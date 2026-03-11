@@ -17,6 +17,8 @@
 
 This repository is the **canonical lore / world-model layer**. The embedded [`MiroFish/`](MiroFish/) project is a **simulation runtime + interactive report UI**.
 
+> **Current recommendation:** for new lore generation, extraction, and structured entity write-back workflows, prefer **`CAMEL.Bridge/` in this repo** first. Use [`MiroFish/`](MiroFish/) only when you specifically need the simulation runtime, social-agent behavior, or the interactive report UI.
+
 | Aspect | `loreSystem` (this repo) | `MiroFish/` subproject |
 |--------|---------------------------|------------------------|
 | Primary role | Structured lore extraction, validation, storage | Multi-agent social simulation, report generation, graph exploration |
@@ -26,7 +28,7 @@ This repository is the **canonical lore / world-model layer**. The embedded [`Mi
 | Data layer | SQLite / SQLAlchemy / in-memory repositories / Elasticsearch | Zep Cloud + Cognee-style graph memory + runtime action logs |
 | Package/runtime tooling | Poetry/pip-style Python workflow | Mixed `npm` + `uv` + Python backend workflow |
 
-In short: **`loreSystem` compiles the world canon**, while **`MiroFish` simulates how actors behave inside that world**. They are complementary systems, not the same stack in different folders.
+In short: **`loreSystem` compiles the world canon**, while **`MiroFish` simulates how actors behave inside that world**. They are complementary systems, not the same stack in different folders — and right now the **preferred default path is `CAMEL.Bridge/` inside `loreSystem`**, not the `MiroFish/` subproject.
 
 ---
 
@@ -65,6 +67,9 @@ pip install -r requirements.txt
 ```bash
 # Main application
 python main.py
+
+# Preferred current AI bridge path
+python CAMEL.Bridge/run_rumor_pipeline.py --help
 
 # MCP server (standalone)
 python lore_mcp_server/run_server.py
@@ -184,6 +189,9 @@ loreSystem/
 ├── lore_mcp_server/              # Standalone MCP server
 │   ├── mcp_server/server.py      #   22 MCP tools
 │   └── lore_data/                #   Persistent JSON storage
+│
+├── CAMEL.Bridge/                 # Preferred current AI bridge for lore generation/write-back
+│   └── run_rumor_pipeline.py     #   Live rumor -> narrative -> quest bridge CLI
 │
 ├── .claude/
 │   ├── agents/                   # 6 team agent definitions
@@ -485,8 +493,36 @@ python -m pytest tests/ -m e2e           # Full system
 | **Search** | Elasticsearch |
 | **Config** | PyYAML, python-dotenv |
 | **DI** | dependency-injector |
-| **AI** | Claude Code Agent Teams, 33 Skills, MCP Server |
+| **AI** | Claude Code Agent Teams, CAMEL Bridge, 33 Skills, MCP Server |
 | **Testing** | pytest, pytest-cov |
+
+---
+
+## 🧭 Which path should I use right now?
+
+### Prefer `CAMEL.Bridge/` when you want
+
+- structured lore generation directly into SQLite
+- deterministic bridge-owned persistence and smoke testing
+- fast iteration on rumor / event / character / quest / story entity generation
+- the current actively preferred workflow in this repository
+
+### Use `MiroFish/` when you specifically need
+
+- social simulation runs
+- report generation over runtime/simulation evidence
+- the web UI / graph exploration flow
+- experimentation with the simulation subproject itself
+
+### Practical rule of thumb
+
+If you're deciding where to start **today**, start with:
+
+```bash
+python CAMEL.Bridge/run_rumor_pipeline.py --help
+```
+
+Reach for `MiroFish/` only if the task is explicitly about simulation or report UX rather than canonical lore generation.
 
 ---
 
