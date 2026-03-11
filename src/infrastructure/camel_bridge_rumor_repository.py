@@ -406,6 +406,44 @@ class CamelBridgeCharacterRelationshipRepository(_BridgeSQLiteRepository):
             ).fetchall()
         return [self._row_to_entity(row) for row in rows]
 
+    def find_existing(
+        self,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        character_from_id: EntityId,
+        character_to_id: EntityId,
+        relationship_type: RelationshipType,
+        *,
+        is_mutual: bool = False,
+    ) -> CharacterRelationship | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT *
+                FROM character_relationships
+                WHERE tenant_id = ?
+                  AND world_id = ?
+                  AND relationship_type = ?
+                  AND (
+                    (character_from_id = ? AND character_to_id = ?)
+                    OR (character_from_id = ? AND character_to_id = ? AND (is_mutual = 1 OR ? = 1))
+                  )
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (
+                    tenant_id.value,
+                    world_id.value,
+                    relationship_type.value,
+                    character_from_id.value,
+                    character_to_id.value,
+                    character_to_id.value,
+                    character_from_id.value,
+                    1 if is_mutual else 0,
+                ),
+            ).fetchone()
+        return self._row_to_entity(row) if row is not None else None
+
     def _ensure_schema(self) -> None:
         with self._connection() as conn:
             conn.execute(

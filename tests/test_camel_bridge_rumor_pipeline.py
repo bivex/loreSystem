@@ -172,6 +172,96 @@ def test_camel_bridge_story_chain_has_fallbacks(tmp_path):
     assert {character.name.value for character in result.characters} >= {"Sel", "Orin"}
 
 
+def test_camel_bridge_story_chain_merges_duplicate_relationships_across_runs(tmp_path):
+    db_path = str(tmp_path / "chain_relationship_merge.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        '[{"name":"Aftershock Whispers","description":"Survivors insist the harbor panic is not over.","source_name":"Night Ferryman","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":5}]',
+        '[{"name":"Curfew Sparks","description":"Dockworkers prepare for reprisals after the first flashpoint.","source_name":"Signal Runner","truth_level":"Partially True","spread_speed":"Steady","credibility_score":7}]',
+        '[{"name":"Ash Wharf Standoff","description":"Mara and Iven hold the line as reprisals begin.","participant_names":["Mara Voss","Iven Hale"],"outcome":"ongoing"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"After the second flashpoint, they coordinate openly and keep the dockworkers alive during the reprisals.","relationship_type":"ally","relationship_level":55,"is_mutual":true}]',
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+    )
+
+    first = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+    second = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic aftermath",
+        context="The dock district braces for reprisals after the first flashpoint.",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+
+    stored_relationships = CamelBridgeCharacterRelationshipRepository(db_path).list_by_world(TenantId(1), EntityId(1))
+
+    assert len(first.relationships) == 1
+    assert len(second.relationships) == 1
+    assert second.relationships[0].id == first.relationships[0].id
+    assert len(stored_relationships) == 1
+    assert stored_relationships[0].relationship_level == 55
+    assert "keep the dockworkers alive" in str(stored_relationships[0].description)
+    assert len(stored_relationships[0].relationship_changed_events) == 1
+
+
+def test_camel_bridge_story_chain_merges_reversed_mutual_relationships(tmp_path):
+    db_path = str(tmp_path / "chain_relationship_reverse_merge.db")
+    _seed_world(db_path)
+    backend = DeterministicRumorBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        '[{"name":"Bellwake Whisper","description":"The piers brace for a second omen.","source_name":"Night Ferryman","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":5}]',
+        '[{"name":"Bellwake Decree","description":"Magistrates threaten the harbor with curfew.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Steady","credibility_score":6}]',
+        '[{"name":"Ash Wharf Standoff","description":"Iven and Mara face the wardens together.","participant_names":["Iven Hale","Mara Voss"],"outcome":"ongoing"}]',
+        '[{"character_from_name":"Iven Hale","character_to_name":"Mara Voss","description":"Iven now names Mara as his most trusted ally in the harbor.","relationship_type":"ally","relationship_level":48,"is_mutual":true}]',
+    ])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+    )
+
+    first = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+    second = service.generate_story_chain(RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor reprisals",
+        character_names=("Mara Voss", "Iven Hale"),
+    ))
+
+    stored_relationships = CamelBridgeCharacterRelationshipRepository(db_path).list_by_world(TenantId(1), EntityId(1))
+
+    assert len(first.relationships) == 1
+    assert len(second.relationships) == 1
+    assert second.relationships[0].id == first.relationships[0].id
+    assert len(stored_relationships) == 1
+    assert stored_relationships[0].is_mutual is True
+
+
 def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     db_path = str(tmp_path / "campaign_story.db")
     _seed_world(db_path)

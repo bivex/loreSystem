@@ -922,6 +922,17 @@ class EventStore(Protocol):
 
 
 class RelationshipStore(Protocol):
+    def find_existing(
+        self,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        character_from_id: EntityId,
+        character_to_id: EntityId,
+        relationship_type: RelationshipType,
+        *,
+        is_mutual: bool = False,
+    ) -> CharacterRelationship | None: ...
+
     def save(self, entity: CharacterRelationship, world_id: EntityId) -> CharacterRelationship: ...
 
 
@@ -1909,7 +1920,7 @@ class RumorBridgeService:
             if left.id == right.id:
                 continue
             relation = self._relationship_to_entity(request, draft, left.id, right.id, events[0].id if events else None)
-            relationships.append(self.relationship_repository.save(relation, EntityId(request.world_id)))
+            relationships.append(self._save_or_merge_relationship(relation, EntityId(request.world_id)))
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
         if include_narrative_structure or include_systems_slice:
@@ -5437,6 +5448,43 @@ class RumorBridgeService:
             is_mutual=draft.is_mutual,
             first_met_event_id=first_event_id,
         )
+
+    def _save_or_merge_relationship(self, relation: CharacterRelationship, world_id: EntityId) -> CharacterRelationship:
+        existing = self.relationship_repository.find_existing(
+            relation.tenant_id,
+            world_id,
+            relation.character_from_id,
+            relation.character_to_id,
+            relation.relationship_type,
+            is_mutual=relation.is_mutual,
+        )
+        if existing is None:
+            return self.relationship_repository.save(relation, world_id)
+        merged = self._merge_relationship(existing, relation)
+        return self.relationship_repository.save(merged, world_id)
+
+    def _merge_relationship(self, existing: CharacterRelationship, candidate: CharacterRelationship) -> CharacterRelationship:
+        if len(str(candidate.description)) > len(str(existing.description)):
+            object.__setattr__(existing, "description", candidate.description)
+
+        if abs(candidate.relationship_level) >= abs(existing.relationship_level):
+            object.__setattr__(existing, "relationship_level", candidate.relationship_level)
+
+        object.__setattr__(existing, "is_mutual", existing.is_mutual or candidate.is_mutual)
+
+        if existing.first_met_event_id is None and candidate.first_met_event_id is not None:
+            object.__setattr__(existing, "first_met_event_id", candidate.first_met_event_id)
+
+        changed_events = list(existing.relationship_changed_events)
+        if candidate.first_met_event_id is not None:
+            known_ids = {event_id.value for event_id in changed_events if isinstance(event_id, EntityId)}
+            first_met_id = existing.first_met_event_id.value if existing.first_met_event_id is not None else None
+            if candidate.first_met_event_id.value not in known_ids and candidate.first_met_event_id.value != first_met_id:
+                changed_events.append(candidate.first_met_event_id)
+        object.__setattr__(existing, "relationship_changed_events", changed_events)
+        object.__setattr__(existing, "updated_at", Timestamp.now())
+        object.__setattr__(existing, "version", existing.version.increment())
+        return existing
 
     def _coerce_event_outcome(self, value: str) -> EventOutcome:
         try:
