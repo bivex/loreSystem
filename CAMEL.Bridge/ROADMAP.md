@@ -65,6 +65,21 @@ Roadmap для **предпочтительного current-generation path** в
 - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
 - `ProgressionState`, `ProgressionEvent`
 
+### Memory & continuity infrastructure
+
+- ✅ memory v1: `SQLite + Qdrant`
+- exact continuity recall from SQLite world state
+- optional semantic recall from Qdrant
+- prompt-time memory injection for rumor / event / relationship / narrative generation
+- post-persist world snapshot reindexing
+
+### Near-term bridge infra follow-ups
+
+- live smoke against a real Qdrant instance
+- widen memory indexing coverage beyond the initial bridge/world slices
+- tighten connection/resource cleanup around SQLite memory reads
+- refine memory document shaping for better semantic recall quality
+
 ## Priority roadmap by genre
 
 ## P0 — Idle RPG / Raid-first systems
@@ -210,9 +225,10 @@ Hyper-casual пригодится как analytics/live-ops extension, но не
 1. **Finish Inventory & Crafting remainder** (`Inventory`, `CraftingRecipe`, `Material`, `Blueprint`, `Enchantment`, `Rune`, `Glyph`)
 2. **Finish reward / profile remainder** (`Title`, `Rank`, `Leaderboard`, `Trophy`, `Badge`)
 3. **Add analytics / balance slice** (`PlayerMetric`, `DropRate`, `LootTableWeight`, `DifficultyCurve`)
-4. **Raid / Dungeon / Legendary Items slice**
-5. **Gacha domain-gap review**
-6. **Hyper-casual domain-gap review**
+4. **Stabilize memory v1 live path** (real Qdrant smoke, shaping cleanup, resource cleanup)
+5. **Raid / Dungeon / Legendary Items slice**
+6. **Gacha domain-gap review**
+7. **Hyper-casual domain-gap review**
 
 ## Working rule
 

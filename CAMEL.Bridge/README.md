@@ -5,6 +5,7 @@
 Сейчас `CAMEL.Bridge` — это рекомендуемый путь для новых workflow, где нужно:
 
 - генерировать lore напрямую в SQLite,
+- держать continuity context через SQLite + optional Qdrant memory,
 - быстро итерировать bridge-owned сущности,
 - делать smoke/live тесты вокруг persisted entity payloads,
 - развивать canonical generation path без зависимости от `MiroFish/` simulation stack.
@@ -34,6 +35,11 @@
   - `Mastery`, `Skill`, `Perk`, `Trait`, `Attribute`
   - `TalentTree`, `Achievement`, `LevelUp`, `Experience`
   - `ProgressionState`, `ProgressionEvent`
+- Optional continuity memory (`--with-memory`):
+  - exact recall from SQLite world state
+  - semantic recall from Qdrant
+  - prompt injection for rumor / event / relationship / narrative generation
+  - post-persist reindex of the current world snapshot
 
 ## Genre priorities for next bridge slices
 
@@ -100,6 +106,18 @@ Bridge автоматически пытается загрузить `.env` и�
 - `CAMEL_MODEL_MAX_TOKENS`
 - `CAMEL_BRIDGE_STRICT_MODEL=true` — полностью выключает fallback
 
+Для optional memory v1:
+
+- `CAMEL_MEMORY_QDRANT_URL` — обязателен для `--with-memory`
+- `CAMEL_MEMORY_QDRANT_COLLECTION` — optional, по умолчанию `camel_bridge_memory`
+- `CAMEL_MEMORY_QDRANT_API_KEY` — optional
+- `CAMEL_MEMORY_QDRANT_TIMEOUT_SECONDS` — optional
+- `CAMEL_MEMORY_EMBED_BACKEND` — `hash` (default) или `openai`
+- `CAMEL_MEMORY_EMBED_DIMENSION` — размер deterministic hash embeddings, default `96`
+- `CAMEL_MEMORY_EMBED_MODEL` — для `openai` backend
+- `CAMEL_MEMORY_EMBED_BASE_URL` — optional OpenAI-compatible embeddings base URL
+- `CAMEL_MEMORY_EMBED_API_KEY` — optional отдельный embeddings key
+
 ### Пример `.env`
 
 ```bash
@@ -108,11 +126,27 @@ CAMEL_MODEL_PLATFORM=OPENAI
 CAMEL_MODEL_TYPE=openai/gpt-oss-20b
 CAMEL_MODEL_BASE_URL=https://api.groq.com/openai/v1
 CAMEL_BRIDGE_STRICT_MODEL=true
+
+# optional memory v1
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333
+CAMEL_MEMORY_EMBED_BACKEND=hash
 ```
+
+По умолчанию memory path dependency-free:
+
+- SQLite используется как canonical truth,
+- Qdrant вызывается по stdlib HTTP client,
+- embeddings могут быть deterministic hashing fallback без внешнего embed API.
+
+Если нужен semantic recall через внешний embeddings endpoint, переключи:
+
+- `CAMEL_MEMORY_EMBED_BACKEND=openai`
+- и задай `CAMEL_MEMORY_EMBED_API_KEY` + при необходимости `CAMEL_MEMORY_EMBED_BASE_URL`.
 
 ## Что внутри
 
 - `run_rumor_pipeline.py` — CLI-раннер для полной цепочки
+- `src/application/integration/camel_bridge/memory.py` — SQLite + Qdrant continuity layer
 - `Whisper Broker` и `Town Crier` — агентные персоны для слухов
 - `Chronicle Weaver` — превращает слухи в событие
 - `Bond Archivist` — выводит отношение между персонажами
@@ -128,6 +162,7 @@ python CAMEL.Bridge/run_rumor_pipeline.py \
   --context "The harbor is tense after three disappearances." \
   --character "Mara Voss" \
   --character "Iven Hale" \
+  --with-memory \
   --strict-model
 ```
 
@@ -138,3 +173,5 @@ python CAMEL.Bridge/run_rumor_pipeline.py \
 - модель вернула невалидный JSON.
 
 Без strict-mode мост всё ещё умеет создавать fallback-записи.
+
+Если включён `--with-memory`, bridge перед generation собирает continuity packet из SQLite и optional Qdrant recall, а после persistence переиндексирует текущий world snapshot.
