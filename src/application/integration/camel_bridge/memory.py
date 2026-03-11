@@ -8,9 +8,9 @@ import math
 import os
 import re
 import sqlite3
-from contextlib import closing
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Protocol, Sequence
+from typing import Iterator, Protocol, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from uuid import NAMESPACE_URL, uuid5
@@ -67,6 +67,17 @@ def _build_memory_tags(entity_type: str, *, character_names: Sequence[str] = (),
             continue
         tags.append(f"{_normalize_tag(key)}_{_normalize_tag(value)}")
     return _normalize_tag_list(tags)
+
+
+def _read_json_response(response) -> dict:
+    return json.loads(response.read().decode("utf-8"))
+
+
+def _read_http_error_details(exc: HTTPError) -> str:
+    try:
+        return exc.read().decode("utf-8", errors="replace")
+    finally:
+        exc.close()
 
 
 @dataclass(frozen=True)
@@ -269,9 +280,9 @@ class OpenAICompatibleTextEmbedder:
         )
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
-                return json.loads(response.read().decode("utf-8"))
+                return _read_json_response(response)
         except HTTPError as exc:
-            details = exc.read().decode("utf-8", errors="replace")
+            details = _read_http_error_details(exc)
             raise RuntimeError(f"Embedding request failed with HTTP {exc.code}: {details}") from exc
         except URLError as exc:
             raise RuntimeError(f"Could not reach embedding endpoint: {exc}") from exc
@@ -366,9 +377,9 @@ class QdrantMemoryIndex:
         request = Request(f"{self.base_url}{path}", data=body, headers=headers, method=method)
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
-                return json.loads(response.read().decode("utf-8"))
+                return _read_json_response(response)
         except HTTPError as exc:
-            details = exc.read().decode("utf-8", errors="replace")
+            details = _read_http_error_details(exc)
             raise RuntimeError(f"Qdrant request failed with HTTP {exc.code}: {details}") from exc
         except URLError as exc:
             raise RuntimeError(f"Could not reach Qdrant: {exc}") from exc
@@ -379,7 +390,7 @@ class SQLiteLoreMemoryReader:
         self.db_path = db_path
 
     def load_recent_documents(self, tenant_id: int, world_id: int, *, character_names: Sequence[str] = (), limit_per_type: int = 3) -> list[MemoryDocument]:
-        with closing(self._connection()) as conn:
+        with self._connection() as conn:
             names = _normalize_name_list(character_names)
             docs: list[MemoryDocument] = []
             docs.extend(self._character_docs(conn, tenant_id, world_id, names, limit_per_type))
@@ -408,10 +419,15 @@ class SQLiteLoreMemoryReader:
     def load_index_documents(self, tenant_id: int, world_id: int) -> list[MemoryDocument]:
         return self.load_recent_documents(tenant_id, world_id, limit_per_type=12)
 
-    def _connection(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connection(self) -> Iterator[sqlite3.Connection]:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
-        return conn
+        conn.execute("PRAGMA query_only = ON")
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def _table_exists(self, conn: sqlite3.Connection, table_name: str) -> bool:
         row = conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", (table_name,)).fetchone()

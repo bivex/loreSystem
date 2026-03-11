@@ -1,8 +1,13 @@
+import io
 import sqlite3
 import json
+from urllib.error import HTTPError
 
+import pytest
+
+import src.application.integration.camel_bridge.memory as camel_memory_module
 from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest, build_memory_service_from_env
-from src.application.integration.camel_bridge.memory import HashingTextEmbedder, LocalNgramTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
+from src.application.integration.camel_bridge.memory import HashingTextEmbedder, LocalNgramTextEmbedder, MemoryDocument, OpenAICompatibleTextEmbedder, QdrantMemoryIndex, SQLiteLoreMemoryReader
 from src.application.integration.camel_bridge.memory_benchmark import run_curated_embedding_benchmark
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
@@ -252,6 +257,16 @@ def test_memory_reader_shapes_generic_bridge_tags_for_semantic_recall(tmp_path):
     assert "curse_type_whispers" in cursed_doc.tags
 
 
+def test_sqlite_memory_reader_opens_query_only_connections(tmp_path):
+    db_path = str(tmp_path / "memory_query_only.db")
+    _seed_world(db_path)
+
+    with SQLiteLoreMemoryReader(db_path)._connection() as conn:
+        assert conn.execute("PRAGMA query_only").fetchone()[0] == 1
+        with pytest.raises(sqlite3.OperationalError):
+            conn.execute("CREATE TABLE should_fail (id INTEGER PRIMARY KEY)")
+
+
 def test_qdrant_memory_index_upsert_uses_enriched_embedding_text(monkeypatch):
     calls = []
     embedder = RecordingEmbedder(dimension=4)
@@ -325,6 +340,38 @@ def test_qdrant_memory_index_tolerates_collection_already_exists(monkeypatch):
 
     assert calls[0][0:2] == ("PUT", "/collections/lore_memory")
     assert calls[1][0:2] == ("PUT", "/collections/lore_memory/points")
+
+
+def test_qdrant_memory_index_closes_http_error_body(monkeypatch):
+    body = io.BytesIO(b'{"status":{"error":"boom"}}')
+
+    def fake_urlopen(*args, **kwargs):
+        raise HTTPError("http://qdrant.local/collections", 500, "boom", hdrs=None, fp=body)
+
+    monkeypatch.setattr(camel_memory_module, "urlopen", fake_urlopen)
+
+    index = QdrantMemoryIndex("http://qdrant.local", collection_name="lore_memory", embedder=HashingTextEmbedder(dimension=8))
+
+    with pytest.raises(RuntimeError, match="Qdrant request failed with HTTP 500"):
+        index._request_json("GET", "/collections/lore_memory")
+
+    assert body.closed is True
+
+
+def test_openai_embedder_closes_http_error_body(monkeypatch):
+    body = io.BytesIO(b'{"error":{"message":"embed boom"}}')
+
+    def fake_urlopen(*args, **kwargs):
+        raise HTTPError("http://embed.local/embeddings", 502, "bad gateway", hdrs=None, fp=body)
+
+    monkeypatch.setattr(camel_memory_module, "urlopen", fake_urlopen)
+
+    embedder = OpenAICompatibleTextEmbedder(base_url="http://embed.local", api_key="test-key")
+
+    with pytest.raises(RuntimeError, match="Embedding request failed with HTTP 502"):
+        embedder._request_json("POST", "/embeddings", {"input": ["harbor bells"]})
+
+    assert body.closed is True
 
 
 def test_local_ngram_embedder_improves_morphology_similarity_over_legacy_hash():
