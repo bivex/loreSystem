@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Protocol, Sequence
 from uuid import uuid4
 
+from src.application.integration.camel_bridge.memory import LoreMemoryService
 from src.domain.entities.act import Act, ActStructure, ActType
 from src.domain.entities.achievement import Achievement
 from src.domain.entities.affinity import Affinity
@@ -1802,6 +1803,7 @@ class RumorBridgeService:
         flashback_repository: FlashbackStore | None = None,
         flash_forward_repository: FlashForwardStore | None = None,
         ending_repository: EndingStore | None = None,
+        memory_service: LoreMemoryService | None = None,
         allow_fallback: bool = True,
     ):
         self.repository = repository
@@ -1855,13 +1857,19 @@ class RumorBridgeService:
         self.flashback_repository = flashback_repository
         self.flash_forward_repository = flash_forward_repository
         self.ending_repository = ending_repository
+        self.memory_service = memory_service
         self.allow_fallback = allow_fallback
 
-    def generate_and_persist(self, request: RumorGenerationRequest) -> list[Rumor]:
+    def generate_and_persist(
+        self,
+        request: RumorGenerationRequest,
+        memory_context: str = "",
+        reindex_memory: bool = True,
+    ) -> list[Rumor]:
         drafts: list[RumorDraft] = []
         for index, (agent_name, system_message) in enumerate(DEFAULT_RUMOR_AGENT_PROMPTS, start=1):
             try:
-                raw = self.backend.generate(system_message, self._build_rumor_prompt(request, agent_name))
+                raw = self.backend.generate(system_message, self._build_rumor_prompt(request, agent_name, memory_context))
                 drafts.extend(self._parse_rumor_drafts(raw))
             except Exception:
                 if not self.allow_fallback:
@@ -1869,7 +1877,10 @@ class RumorBridgeService:
                 drafts.append(self._fallback_rumor_draft(request, index, agent_name))
         if not drafts and not self.allow_fallback:
             raise RuntimeError("CAMEL bridge did not produce any rumor drafts")
-        return [self.repository.save(self._rumor_to_entity(request, draft)) for draft in self._dedupe_rumors(request, drafts, request.count)]
+        rumors = [self.repository.save(self._rumor_to_entity(request, draft)) for draft in self._dedupe_rumors(request, drafts, request.count)]
+        if reindex_memory:
+            self._reindex_memory(request)
+        return rumors
 
     def generate_story_chain(
         self,
@@ -1880,16 +1891,17 @@ class RumorBridgeService:
         if not (self.character_repository and self.event_repository and self.relationship_repository):
             raise ValueError("Character, event, and relationship repositories are required for story chain generation")
 
-        rumors = self.generate_and_persist(request)
+        memory_context = self._memory_context_for(request)
+        rumors = self.generate_and_persist(request, memory_context=memory_context, reindex_memory=False)
         characters_by_name = self._ensure_seed_characters(request)
-        event_drafts = self._generate_event_drafts(request, rumors)
+        event_drafts = self._generate_event_drafts(request, rumors, memory_context)
         events: list[Event] = []
         for draft in event_drafts:
             participants = self._ensure_participants(request, draft.participant_names, characters_by_name)
             event = self.event_repository.save(self._event_to_entity(request, draft, participants))
             events.append(event)
 
-        relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name))
+        relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
         relationships: list[CharacterRelationship] = []
         for draft in relationship_drafts:
             left = self._ensure_character(request, draft.character_from_name, characters_by_name)
@@ -1901,11 +1913,12 @@ class RumorBridgeService:
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
         if include_narrative_structure or include_systems_slice:
-            draft = self._generate_enriched_structure_draft(request, result)
+            draft = self._generate_enriched_structure_draft(request, result, memory_context)
             if include_narrative_structure:
                 result = self._persist_narrative_structure(request, result, draft)
             if include_systems_slice:
                 result = self._persist_systems_slice(request, result, draft)
+        self._reindex_memory(request)
         return result
 
     def generate_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> RumorChainResult:
@@ -1919,29 +1932,30 @@ class RumorBridgeService:
             self.epilogue_repository,
         ]):
             raise ValueError("Campaign/story repositories are required for narrative structure generation")
-        draft = self._generate_enriched_structure_draft(request, chain_result)
+        draft = self._generate_enriched_structure_draft(request, chain_result, self._memory_context_for(request))
         return self._persist_narrative_structure(request, chain_result, draft)
 
-    def _generate_enriched_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> NarrativeStructureDraft:
+    def _generate_enriched_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult, memory_context: str = "") -> NarrativeStructureDraft:
         try:
             agent_name, system_message = DEFAULT_NARRATIVE_AGENT_PROMPT
-            raw = self.backend.generate(system_message, self._build_narrative_prompt(request, chain_result, agent_name))
+            raw = self.backend.generate(system_message, self._build_narrative_prompt(request, chain_result, agent_name, memory_context))
             return self._parse_narrative_structure(raw)
         except Exception:
             if not self.allow_fallback:
                 raise
             return self._fallback_narrative_structure_draft(request, chain_result)
 
-    def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str) -> str:
-        return (
+    def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
+        prompt = (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
             f"Need exactly 1 rumor as JSON with name, description, source_name, truth_level, spread_speed, credibility_score.\n"
             f"Speaker persona: {agent_name}"
         )
+        return self._append_memory_context(prompt, memory_context)
 
-    def _build_narrative_prompt(self, request: RumorGenerationRequest, chain_result: RumorChainResult, agent_name: str) -> str:
-        return (
+    def _build_narrative_prompt(self, request: RumorGenerationRequest, chain_result: RumorChainResult, agent_name: str, memory_context: str = "") -> str:
+        prompt = (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
             f"Speaker persona: {agent_name}\n"
@@ -1958,16 +1972,47 @@ class RumorBridgeService:
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
         )
+        return self._append_memory_context(prompt, memory_context)
 
-    def _build_event_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor]) -> str:
+    def _build_event_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], memory_context: str = "") -> str:
         rumor_lines = "\n".join(f"- {rumor.name}: {rumor.description}" for rumor in rumors)
         seed = ", ".join(request.character_names) or "Invent participants if needed"
-        return f"Theme: {request.theme}\nContext: {request.context}\nRumors:\n{rumor_lines}\nPreferred characters: {seed}"
+        prompt = f"Theme: {request.theme}\nContext: {request.context}\nRumors:\n{rumor_lines}\nPreferred characters: {seed}"
+        return self._append_memory_context(prompt, memory_context)
 
-    def _build_relationship_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...]) -> str:
+    def _build_relationship_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...], memory_context: str = "") -> str:
         event_lines = "\n".join(f"- {event.name}: {event.description}" for event in events)
         cast = ", ".join(character_names) or "Invent two names"
-        return f"Theme: {request.theme}\nRumors: {', '.join(r.name for r in rumors)}\nEvents:\n{event_lines}\nCast: {cast}"
+        prompt = f"Theme: {request.theme}\nRumors: {', '.join(r.name for r in rumors)}\nEvents:\n{event_lines}\nCast: {cast}"
+        return self._append_memory_context(prompt, memory_context)
+
+    def _append_memory_context(self, prompt: str, memory_context: str) -> str:
+        memory = memory_context.strip()
+        if not memory:
+            return prompt
+        return f"{prompt}\n\n{memory}"
+
+    def _memory_context_for(self, request: RumorGenerationRequest) -> str:
+        if self.memory_service is None:
+            return ""
+        try:
+            return self.memory_service.build_prompt_context(
+                tenant_id=request.tenant_id,
+                world_id=request.world_id,
+                theme=request.theme,
+                context=request.context,
+                character_names=request.character_names,
+            )
+        except Exception:
+            return ""
+
+    def _reindex_memory(self, request: RumorGenerationRequest) -> None:
+        if self.memory_service is None:
+            return
+        try:
+            self.memory_service.index_world_snapshot(tenant_id=request.tenant_id, world_id=request.world_id)
+        except Exception:
+            return
 
     def _parse_rumor_drafts(self, raw: str) -> list[RumorDraft]:
         drafts = []
@@ -5239,9 +5284,9 @@ class RumorBridgeService:
             ),
         )
 
-    def _generate_event_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor]) -> list[EventDraft]:
+    def _generate_event_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor], memory_context: str = "") -> list[EventDraft]:
         try:
-            raw = self.backend.generate(DEFAULT_EVENT_AGENT_PROMPT[1], self._build_event_prompt(request, rumors))
+            raw = self.backend.generate(DEFAULT_EVENT_AGENT_PROMPT[1], self._build_event_prompt(request, rumors, memory_context))
             drafts = self._parse_event_drafts(raw)
         except Exception:
             if not self.allow_fallback:
@@ -5259,9 +5304,9 @@ class RumorBridgeService:
             outcome="ongoing",
         )]
 
-    def _generate_relationship_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...]) -> list[CharacterRelationshipDraft]:
+    def _generate_relationship_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...], memory_context: str = "") -> list[CharacterRelationshipDraft]:
         try:
-            raw = self.backend.generate(DEFAULT_RELATIONSHIP_AGENT_PROMPT[1], self._build_relationship_prompt(request, rumors, events, character_names))
+            raw = self.backend.generate(DEFAULT_RELATIONSHIP_AGENT_PROMPT[1], self._build_relationship_prompt(request, rumors, events, character_names, memory_context))
             drafts = self._parse_relationship_drafts(raw)
         except Exception:
             if not self.allow_fallback:

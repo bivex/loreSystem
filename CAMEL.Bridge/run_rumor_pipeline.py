@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.application.integration.camel_bridge import CamelChatBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
+from src.application.integration.camel_bridge import CamelChatBackend, RumorBridgeService, RumorGenerationRequest, build_memory_service_from_env, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import _env_flag
 from src.infrastructure.camel_bridge_rumor_repository import (
     CamelBridgeCharacterRelationshipRepository,
@@ -84,6 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
     parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Component, Socket, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, and ProgressionEvent entities")
+    parser.add_argument("--with-memory", action="store_true", help="Enable SQLite + Qdrant continuity memory using CAMEL_MEMORY_QDRANT_* env settings")
     return parser
 
 
@@ -91,6 +92,7 @@ def main() -> int:
     args = build_parser().parse_args()
     loaded_env = load_env_file(args.env_file)
     strict_model = args.strict_model or _env_flag("CAMEL_BRIDGE_STRICT_MODEL", default=False)
+    memory_service = build_memory_service_from_env(args.db_path) if args.with_memory else None
     repository = CamelBridgeRumorRepository(args.db_path)
     service = RumorBridgeService(
         repository=repository,
@@ -144,6 +146,7 @@ def main() -> int:
         flashback_repository=CamelBridgeFlashbackRepository(args.db_path),
         flash_forward_repository=CamelBridgeFlashForwardRepository(args.db_path),
         ending_repository=CamelBridgeEndingRepository(args.db_path),
+        memory_service=memory_service,
         allow_fallback=not strict_model,
     )
     if loaded_env:
@@ -151,7 +154,7 @@ def main() -> int:
     print(
         "Using CAMEL backend "
         f"platform={service.backend.model_platform} model={service.backend.model_type} "
-        f"strict_model={'on' if strict_model else 'off'}"
+        f"strict_model={'on' if strict_model else 'off'} memory={'on' if memory_service else 'off'}"
     )
     result = service.generate_story_chain(
         RumorGenerationRequest(

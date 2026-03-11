@@ -1,0 +1,133 @@
+import sqlite3
+
+from src.application.integration.camel_bridge import LoreMemoryService, RumorBridgeService, RumorGenerationRequest
+from src.application.integration.camel_bridge.memory import HashingTextEmbedder, MemoryDocument, QdrantMemoryIndex, SQLiteLoreMemoryReader
+from src.infrastructure.camel_bridge_rumor_repository import (
+    CamelBridgeCharacterRelationshipRepository,
+    CamelBridgeCharacterRepository,
+    CamelBridgeEventRepository,
+    CamelBridgeRumorRepository,
+)
+
+
+def _seed_world(db_path) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "CREATE TABLE worlds (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, genre TEXT, power_level INTEGER DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+        )
+        conn.execute(
+            "INSERT INTO worlds (tenant_id, name, description, genre, power_level, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (1, "MythWeave", "Seed world", "fantasy", 1, "2026-03-10T00:00:00+00:00", "2026-03-10T00:00:00+00:00"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+class CapturingBackend:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.prompts = []
+
+    def generate(self, system_message: str, user_message: str) -> str:
+        self.prompts.append(user_message)
+        return self.responses.pop(0)
+
+
+class StubMemoryService:
+    def __init__(self):
+        self.prompt_calls = []
+        self.index_calls = []
+
+    def build_prompt_context(self, **kwargs) -> str:
+        self.prompt_calls.append(kwargs)
+        return "Continuity memory:\n- Mara Voss already carries the harbor panic thread."
+
+    def index_world_snapshot(self, **kwargs) -> int:
+        self.index_calls.append(kwargs)
+        return 4
+
+
+def _build_chain_service(db_path: str, backend, memory_service=None) -> RumorBridgeService:
+    return RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        memory_service=memory_service,
+    )
+
+
+def test_memory_wiring_injects_prompt_context_and_reindexes(tmp_path):
+    db_path = str(tmp_path / "memory_wiring.db")
+    _seed_world(db_path)
+    backend = CapturingBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker"}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier"}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+    ])
+    memory_service = StubMemoryService()
+    service = _build_chain_service(db_path, backend, memory_service=memory_service)
+
+    service.generate_story_chain(RumorGenerationRequest(tenant_id=1, world_id=1, theme="harbor panic", context="Citizens fear the eclipse.", character_names=("Mara Voss", "Iven Hale")))
+
+    assert memory_service.prompt_calls == [{"tenant_id": 1, "world_id": 1, "theme": "harbor panic", "context": "Citizens fear the eclipse.", "character_names": ("Mara Voss", "Iven Hale")}]
+    assert memory_service.index_calls == [{"tenant_id": 1, "world_id": 1}]
+    assert all("Continuity memory:" in prompt for prompt in backend.prompts)
+
+
+def test_sqlite_memory_service_builds_exact_context_from_world_state(tmp_path):
+    db_path = str(tmp_path / "memory_exact.db")
+    _seed_world(db_path)
+    backend = CapturingBackend([
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker"}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier"}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+    ])
+    _build_chain_service(db_path, backend).generate_story_chain(
+        RumorGenerationRequest(tenant_id=1, world_id=1, theme="harbor panic", context="Citizens fear the eclipse.", character_names=("Mara Voss", "Iven Hale"))
+    )
+
+    memory_service = LoreMemoryService(SQLiteLoreMemoryReader(db_path))
+    context = memory_service.build_prompt_context(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+
+    assert "Known canon from SQLite:" in context
+    assert "Character: Mara Voss" in context
+    assert "Rumor: Dockside Murmurs" in context or "Rumor: Lantern Decree" in context
+    assert "Event: Blue Lantern Raid" in context
+    assert "Relationship: Mara Voss" in context
+
+
+def test_qdrant_memory_index_upsert_and_search_use_expected_http_contract(monkeypatch):
+    calls = []
+    index = QdrantMemoryIndex("http://qdrant.local", collection_name="lore_memory", embedder=HashingTextEmbedder(dimension=8))
+
+    def fake_request(method: str, path: str, payload=None):
+        calls.append((method, path, payload))
+        if path.endswith("/points/search"):
+            return {"result": [{"id": "abc", "payload": {"tenant_id": 1, "world_id": 7, "entity_type": "rumor", "entity_id": "9", "summary_text": "Rumor: Harbor bells precede riots.", "character_names": ["Mara Voss"]}}]}
+        return {"status": "ok", "result": True}
+
+    monkeypatch.setattr(index, "_request_json", fake_request)
+
+    index.upsert([MemoryDocument(point_id="p1", tenant_id=1, world_id=7, entity_type="rumor", entity_id="9", summary_text="Rumor: Harbor bells precede riots.")])
+    results = index.search("harbor bells", tenant_id=1, world_id=7, limit=3)
+
+    assert calls[0][0:2] == ("PUT", "/collections/lore_memory")
+    assert calls[1][0:2] == ("PUT", "/collections/lore_memory/points")
+    assert calls[2][0:2] == ("POST", "/collections/lore_memory/points/search")
+    assert calls[2][2]["filter"]["must"] == [
+        {"key": "tenant_id", "match": {"value": 1}},
+        {"key": "world_id", "match": {"value": 7}},
+    ]
+    assert results[0].summary_text == "Rumor: Harbor bells precede riots."
