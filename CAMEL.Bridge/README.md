@@ -54,6 +54,7 @@
   - prompt injection for rumor / event / relationship / narrative generation
   - post-persist reindex of the current world snapshot
   - widened SQLite/index coverage for closed encounter/world/reward bridge tables
+  - real Qdrant live smoke verified against a live local collection lifecycle (`create -> upsert -> search -> scroll -> cleanup`)
 
 ## Genre priorities for next bridge slices
 
@@ -77,7 +78,7 @@
 
 Следующий рекомендуемый фокус внутри этого priority-pack:
 
-- memory v1 live stabilization (`real Qdrant smoke`, indexing coverage, cleanup/shaping)
+- memory v1 live stabilization (`shaping cleanup`, resource cleanup)
 
 Из этого хвоста уже закрыт первый safe sub-slice:
 
@@ -87,7 +88,6 @@
 
 Текущий remaining focus внутри memory v1:
 
-- real Qdrant smoke
 - memory document shaping / recall quality cleanup
 - live-path cleanup around resource handling
 

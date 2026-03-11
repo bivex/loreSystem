@@ -38,6 +38,37 @@ def _normalize_name_list(values: Sequence[str] | None) -> tuple[str, ...]:
     return tuple(result)
 
 
+def _normalize_tag(value: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value or "").casefold()).strip("_")
+
+
+def _normalize_tag_list(values: Sequence[str] | None) -> tuple[str, ...]:
+    if not values:
+        return ()
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        item = _normalize_tag(value)
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return tuple(result)
+
+
+def _build_memory_tags(entity_type: str, *, character_names: Sequence[str] = (), descriptors: Sequence[tuple[str, object]] = ()) -> tuple[str, ...]:
+    tags: list[str] = [f"entity_{_normalize_tag(entity_type)}"]
+    tags.extend(f"character_{_normalize_tag(name)}" for name in _normalize_name_list(character_names))
+    for key, value in descriptors:
+        if value in (None, ""):
+            continue
+        if isinstance(value, (list, tuple, set)):
+            tags.extend(f"{_normalize_tag(key)}_{_normalize_tag(item)}" for item in value if _normalize_tag(item))
+            continue
+        tags.append(f"{_normalize_tag(key)}_{_normalize_tag(value)}")
+    return _normalize_tag_list(tags)
+
+
 @dataclass(frozen=True)
 class BridgeMemoryTableSpec:
     table_name: str
@@ -114,6 +145,14 @@ class MemoryDocument:
             "tags": list(self.tags),
             "source": self.source,
         }
+
+    def to_embedding_text(self) -> str:
+        lines = [self.summary_text, f"Entity type: {self.entity_type.replace('_', ' ')}"]
+        if self.character_names:
+            lines.append(f"Characters: {', '.join(self.character_names)}")
+        if self.tags:
+            lines.append(f"Tags: {', '.join(self.tags)}")
+        return "\n".join(lines)
 
 
 class TextEmbedder(Protocol):
@@ -274,7 +313,7 @@ class QdrantMemoryIndex:
         if not documents:
             return
         self.ensure_collection()
-        vectors = self.embedder.embed([document.summary_text for document in documents])
+        vectors = self.embedder.embed([document.to_embedding_text() for document in documents])
         points = [
             {"id": document.point_id, "vector": vector, "payload": document.to_payload()}
             for document, vector in zip(documents, vectors)
@@ -411,6 +450,7 @@ class SQLiteLoreMemoryReader:
                 entity_id=str(row["id"]),
                 summary_text=summary,
                 character_names=(str(row["name"]),),
+                tags=_build_memory_tags("character", character_names=(row["name"],), descriptors=(("role", row["role"] or "unknown"),)),
             ))
         return docs
 
@@ -434,6 +474,7 @@ class SQLiteLoreMemoryReader:
                 entity_type=entity_type,
                 entity_id=str(row["id"]),
                 summary_text=summary,
+                tags=_build_memory_tags(entity_type, descriptors=tuple((field, row[field]) for field in extra_fields if field in row.keys())),
             ))
         return docs
 
@@ -461,6 +502,7 @@ class SQLiteLoreMemoryReader:
                 entity_id=str(row["id"]),
                 summary_text=f"Relationship: {row['from_name'] or row['character_from_id']} → {row['to_name'] or row['character_to_id']} — {_trim(row['description'], 140)} [type={row['relationship_type']}]",
                 character_names=_normalize_name_list((row["from_name"], row["to_name"])),
+                tags=_build_memory_tags("relationship", character_names=(row["from_name"], row["to_name"]), descriptors=(("type", row["relationship_type"]),)),
             )
             for row in rows
         ]
@@ -504,6 +546,7 @@ class SQLiteLoreMemoryReader:
                 entity_id=str(row["id"]),
                 summary_text=summary,
                 character_names=_normalize_name_list((row["character_name"],)),
+                tags=_build_memory_tags(entity_type, character_names=(row["character_name"],), descriptors=tuple((field, row[field]) for field in extra_fields if field in row.keys())),
             ))
         return docs
 
@@ -547,6 +590,7 @@ class SQLiteLoreMemoryReader:
                 entity_id=str(row["id"]),
                 summary_text=summary,
                 character_names=related_names,
+                tags=_build_memory_tags(entity_type, character_names=related_names, descriptors=tuple((field, payload.get(field)) for field in extra_fields)),
             ))
         return docs
 

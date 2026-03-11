@@ -59,6 +59,16 @@ class RecordingIndex:
         self.upsert_calls.append(list(documents))
 
 
+class RecordingEmbedder:
+    def __init__(self, dimension: int = 8):
+        self.dimension = dimension
+        self.calls = []
+
+    def embed(self, texts):
+        self.calls.append(list(texts))
+        return [[0.0] * self.dimension for _ in texts]
+
+
 def _build_chain_service(db_path: str, backend, memory_service=None) -> RumorBridgeService:
     return RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
@@ -219,6 +229,59 @@ def test_memory_index_world_snapshot_includes_new_bridge_tables(tmp_path):
     assert count == 2
     assert len(index.upsert_calls) == 1
     assert {doc.entity_type for doc in index.upsert_calls[0]} == {"arena", "cursed_item"}
+
+
+def test_memory_reader_shapes_generic_bridge_tags_for_semantic_recall(tmp_path):
+    db_path = str(tmp_path / "memory_tags.db")
+    _seed_world(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        _create_generic_bridge_table(conn, "cursed_items")
+        _insert_generic_bridge_row(conn, "cursed_items", "Bell-Touched Coin", {"name": "Bell-Touched Coin", "description": "A silver coin that whispers before every betrayal.", "character_name": "Mara Voss", "item_type": "trinket", "curse_type": "whispers", "rarity": "cursed", "risk_level": "high"})
+        conn.commit()
+    finally:
+        conn.close()
+
+    docs = SQLiteLoreMemoryReader(db_path).load_index_documents(tenant_id=1, world_id=1)
+    cursed_doc = next(doc for doc in docs if doc.entity_type == "cursed_item")
+
+    assert cursed_doc.character_names == ("Mara Voss",)
+    assert "entity_cursed_item" in cursed_doc.tags
+    assert "character_mara_voss" in cursed_doc.tags
+    assert "item_type_trinket" in cursed_doc.tags
+    assert "curse_type_whispers" in cursed_doc.tags
+
+
+def test_qdrant_memory_index_upsert_uses_enriched_embedding_text(monkeypatch):
+    calls = []
+    embedder = RecordingEmbedder(dimension=4)
+    index = QdrantMemoryIndex("http://qdrant.local", collection_name="lore_memory", embedder=embedder)
+
+    def fake_request(method: str, path: str, payload=None):
+        calls.append((method, path, payload))
+        return {"status": "ok", "result": True}
+
+    monkeypatch.setattr(index, "_request_json", fake_request)
+
+    index.upsert([
+        MemoryDocument(
+            point_id="p1",
+            tenant_id=1,
+            world_id=7,
+            entity_type="rumor",
+            entity_id="9",
+            summary_text="Rumor: Harbor bells precede riots.",
+            character_names=("Mara Voss",),
+            tags=("entity_rumor", "spread_speed_fast"),
+        )
+    ])
+
+    assert calls[0][0:2] == ("PUT", "/collections/lore_memory")
+    assert calls[1][0:2] == ("PUT", "/collections/lore_memory/points")
+    assert embedder.calls
+    assert "Entity type: rumor" in embedder.calls[0][0]
+    assert "Characters: Mara Voss" in embedder.calls[0][0]
+    assert "Tags: entity_rumor, spread_speed_fast" in embedder.calls[0][0]
 
 
 def test_qdrant_memory_index_upsert_and_search_use_expected_http_contract(monkeypatch):
