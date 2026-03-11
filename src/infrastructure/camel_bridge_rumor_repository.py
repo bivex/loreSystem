@@ -45,6 +45,8 @@ class _BridgeSQLiteRepository:
     def __init__(self, db_path: str = "lore_system.db"):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._db_path_text = str(self.db_path)
+        self._cache_namespace_value = self._db_path_text if self._db_path_text == ":memory:" else str(self.db_path.resolve())
 
     def _open_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -52,8 +54,7 @@ class _BridgeSQLiteRepository:
         return conn
 
     def _transaction_key(self) -> tuple[int, str]:
-        namespace = str(self.db_path) if str(self.db_path) == ":memory:" else self._cache_namespace()
-        return (get_ident(), namespace)
+        return (get_ident(), self._cache_namespace())
 
     def _active_transaction_state(self) -> _SharedTransactionState | None:
         with self._cache_lock:
@@ -120,10 +121,10 @@ class _BridgeSQLiteRepository:
             conn.close()
 
     def _can_use_shared_cache(self) -> bool:
-        return str(self.db_path) != ":memory:"
+        return self._db_path_text != ":memory:"
 
     def _cache_namespace(self) -> str:
-        return str(self.db_path.resolve())
+        return self._cache_namespace_value
 
     def _db_identity(self) -> tuple[int, int] | None:
         if not self._can_use_shared_cache():

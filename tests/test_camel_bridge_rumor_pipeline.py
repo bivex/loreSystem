@@ -180,6 +180,29 @@ def test_bridge_repo_table_columns_are_cached_per_table(tmp_path, monkeypatch):
     assert calls == 1
 
 
+def test_bridge_repo_cache_namespace_is_resolved_once_per_repo(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "namespace_cache.db")
+
+    calls = 0
+    original = Path.resolve
+
+    def counted(self, *args, **kwargs):
+        nonlocal calls
+        if str(self) == db_path:
+            calls += 1
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", counted)
+
+    repo = CamelBridgeRumorRepository(db_path)
+
+    assert calls == 1
+    assert repo.list_by_world(TenantId(1), EntityId(1)) == []
+    assert repo._table_columns("rumors") == repo._table_columns("rumors")
+    assert repo._transaction_key() == repo._transaction_key()
+    assert calls == 1
+
+
 def test_bridge_repo_batched_transaction_reuses_connection_across_repositories(tmp_path):
     db_path = str(tmp_path / "batched_connection.db")
     rumor_repo = CamelBridgeRumorRepository(db_path)
