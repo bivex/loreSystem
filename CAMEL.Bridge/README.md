@@ -12,6 +12,12 @@
 
 `MiroFish/` всё ещё нужен для simulation runtime, report UI и graph exploration, но **не является основным рекомендуемым entrypoint** для новой lore generation работы.
 
+## Continuity architecture
+
+Ниже — актуальная C4-схема для `CAMEL.Bridge`: как runtime path, canonical SQLite storage, optional Qdrant memory и canon-control связаны между собой.
+
+![CAMEL.Bridge continuity architecture](../camel_c4_continuity_architecture_v2.png)
+
 ## Что bridge покрывает уже сейчас
 
 Текущий bridge уже умеет генерировать и сохранять:

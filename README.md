@@ -30,6 +30,12 @@ This repository is the **canonical lore / world-model layer**. The embedded [`Mi
 
 In short: **`loreSystem` compiles the world canon**, while **`MiroFish` simulates how actors behave inside that world**. They are complementary systems, not the same stack in different folders — and right now the **preferred default path is `CAMEL.Bridge/` inside `loreSystem`**, not the `MiroFish/` subproject.
 
+## 🗺️ CAMEL.Bridge continuity architecture
+
+This C4 diagram shows the preferred current generation path: `CAMEL.Bridge CLI` → `RumorBridgeService` → canonical SQLite persistence, optional Qdrant semantic memory, and canon-control via `CanonicalPersistEngine`.
+
+![CAMEL.Bridge continuity architecture](camel_c4_continuity_architecture_v2.png)
+
 ---
 
 ## ✨ Key Features
