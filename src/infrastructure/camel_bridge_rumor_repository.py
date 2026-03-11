@@ -7,6 +7,8 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import RLock, get_ident
+from typing import Callable
 
 from src.domain.entities.character import Character, CharacterElement, CharacterRole
 from src.domain.entities.character_relationship import CharacterRelationship, RelationshipType
@@ -29,14 +31,81 @@ from src.domain.value_objects.common import (
 
 
 class _BridgeSQLiteRepository:
+    _cache_lock = RLock()
+    _schema_cache: dict[tuple[str, str], tuple[int, int] | None] = {}
+    _table_columns_cache: dict[tuple[str, str], tuple[tuple[int, int] | None, frozenset[str]]] = {}
+    _transaction_states: dict[tuple[int, str], "_SharedTransactionState"] = {}
+
+    class _SharedTransactionState:
+        def __init__(self, conn: sqlite3.Connection):
+            self.conn = conn
+            self.depth = 1
+            self.rollback_only = False
+
     def __init__(self, db_path: str = "lore_system.db"):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-    @contextmanager
-    def _connection(self):
+    def _open_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
+        return conn
+
+    def _transaction_key(self) -> tuple[int, str]:
+        namespace = str(self.db_path) if str(self.db_path) == ":memory:" else self._cache_namespace()
+        return (get_ident(), namespace)
+
+    def _active_transaction_state(self) -> _SharedTransactionState | None:
+        with self._cache_lock:
+            return self._transaction_states.get(self._transaction_key())
+
+    @contextmanager
+    def _batched_transaction(self):
+        key = self._transaction_key()
+        with self._cache_lock:
+            state = self._transaction_states.get(key)
+            if state is None:
+                state = self._SharedTransactionState(self._open_connection())
+                self._transaction_states[key] = state
+            else:
+                state.depth += 1
+
+        try:
+            yield
+        except Exception:
+            with self._cache_lock:
+                active = self._transaction_states.get(key)
+                if active is not None:
+                    active.rollback_only = True
+            raise
+        finally:
+            final_state = None
+            with self._cache_lock:
+                active = self._transaction_states.get(key)
+                if active is not None:
+                    active.depth -= 1
+                    if active.depth == 0:
+                        final_state = self._transaction_states.pop(key)
+            if final_state is not None:
+                try:
+                    if final_state.rollback_only:
+                        final_state.conn.rollback()
+                    else:
+                        final_state.conn.commit()
+                except Exception:
+                    final_state.conn.rollback()
+                    raise
+                finally:
+                    final_state.conn.close()
+
+    @contextmanager
+    def _connection(self):
+        state = self._active_transaction_state()
+        if state is not None:
+            yield state.conn
+            return
+
+        conn = self._open_connection()
         try:
             yield conn
             conn.commit()
@@ -46,10 +115,59 @@ class _BridgeSQLiteRepository:
         finally:
             conn.close()
 
-    def _table_columns(self, table_name: str) -> set[str]:
+    def _can_use_shared_cache(self) -> bool:
+        return str(self.db_path) != ":memory:"
+
+    def _cache_namespace(self) -> str:
+        return str(self.db_path.resolve())
+
+    def _db_identity(self) -> tuple[int, int] | None:
+        if not self._can_use_shared_cache():
+            return None
+        try:
+            stat = self.db_path.stat()
+        except FileNotFoundError:
+            return None
+        return (stat.st_dev, stat.st_ino)
+
+    def _ensure_schema_cached(self, table_name: str, ensure_schema: Callable[[], None]) -> None:
+        if not self._can_use_shared_cache():
+            ensure_schema()
+            return
+
+        key = (self._cache_namespace(), table_name)
+        identity = self._db_identity()
+        with self._cache_lock:
+            if identity is not None and self._schema_cache.get(key) == identity:
+                return
+
+        ensure_schema()
+
+        with self._cache_lock:
+            self._schema_cache[key] = self._db_identity()
+            self._table_columns_cache.pop(key, None)
+
+    def _ensure_table_ready(self, table_name: str, ensure_schema: Callable[[], None]) -> None:
+        self._ensure_schema_cached(table_name, ensure_schema)
+
+    def _table_columns(self, table_name: str) -> frozenset[str]:
+        key = (self._cache_namespace(), table_name)
+        identity = self._db_identity()
+        if self._can_use_shared_cache():
+            with self._cache_lock:
+                cached = self._table_columns_cache.get(key)
+                if cached is not None and cached[0] == identity:
+                    return cached[1]
+
         with self._connection() as conn:
             rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
-        return {row[1] for row in rows}
+        columns = frozenset(row[1] for row in rows)
+
+        if self._can_use_shared_cache():
+            with self._cache_lock:
+                self._table_columns_cache[key] = (self._db_identity(), columns)
+
+        return columns
 
     def _timestamp(self, value: str) -> Timestamp:
         dt = datetime.fromisoformat(value)
@@ -61,9 +179,9 @@ class _BridgeSQLiteRepository:
 class CamelBridgeRumorRepository(_BridgeSQLiteRepository, IRumorRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Rumor) -> Rumor:
+        self._ensure_table_ready("rumors", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("rumors")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -81,11 +199,13 @@ class CamelBridgeRumorRepository(_BridgeSQLiteRepository, IRumorRepository):
         return entity
 
     def find_by_id(self, tenant_id: TenantId, entity_id: EntityId):
+        self._ensure_table_ready("rumors", self._ensure_schema)
         with self._connection() as conn:
             row = conn.execute("SELECT * FROM rumors WHERE id = ? AND tenant_id = ?", (entity_id.value, tenant_id.value)).fetchone()
         return self._row_to_entity(row) if row else None
 
     def list_by_world(self, tenant_id: TenantId, world_id: EntityId, limit: int = 50, offset: int = 0):
+        self._ensure_table_ready("rumors", self._ensure_schema)
         with self._connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM rumors WHERE tenant_id = ? AND world_id = ? ORDER BY id LIMIT ? OFFSET ?",
@@ -94,6 +214,7 @@ class CamelBridgeRumorRepository(_BridgeSQLiteRepository, IRumorRepository):
         return [self._row_to_entity(row) for row in rows]
 
     def delete(self, tenant_id: TenantId, entity_id: EntityId) -> bool:
+        self._ensure_table_ready("rumors", self._ensure_schema)
         with self._connection() as conn:
             cursor = conn.execute("DELETE FROM rumors WHERE id = ? AND tenant_id = ?", (entity_id.value, tenant_id.value))
         return cursor.rowcount > 0
@@ -175,9 +296,9 @@ class CamelBridgeRumorRepository(_BridgeSQLiteRepository, IRumorRepository):
 class CamelBridgeCharacterRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Character) -> Character:
+        self._ensure_table_ready("characters", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("characters")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -196,6 +317,7 @@ class CamelBridgeCharacterRepository(_BridgeSQLiteRepository):
         return entity
 
     def find_by_name(self, tenant_id: TenantId, world_id: EntityId, name: str):
+        self._ensure_table_ready("characters", self._ensure_schema)
         with self._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM characters WHERE tenant_id = ? AND world_id = ? AND lower(name) = lower(?) LIMIT 1",
@@ -204,6 +326,7 @@ class CamelBridgeCharacterRepository(_BridgeSQLiteRepository):
         return self._row_to_entity(row) if row else None
 
     def list_by_world(self, tenant_id: TenantId, world_id: EntityId):
+        self._ensure_table_ready("characters", self._ensure_schema)
         with self._connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM characters WHERE tenant_id = ? AND world_id = ? ORDER BY id",
@@ -291,9 +414,9 @@ class CamelBridgeCharacterRepository(_BridgeSQLiteRepository):
 class CamelBridgeEventRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Event) -> Event:
+        self._ensure_table_ready("events", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("events")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -312,6 +435,7 @@ class CamelBridgeEventRepository(_BridgeSQLiteRepository):
         return entity
 
     def list_by_world(self, tenant_id: TenantId, world_id: EntityId):
+        self._ensure_table_ready("events", self._ensure_schema)
         with self._connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM events WHERE tenant_id = ? AND world_id = ? ORDER BY id",
@@ -378,9 +502,9 @@ class CamelBridgeEventRepository(_BridgeSQLiteRepository):
 class CamelBridgeCharacterRelationshipRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: CharacterRelationship, world_id: EntityId) -> CharacterRelationship:
+        self._ensure_table_ready("character_relationships", self._ensure_schema)
         payload = self._payload_for(entity, world_id)
         columns = self._table_columns("character_relationships")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -399,6 +523,7 @@ class CamelBridgeCharacterRelationshipRepository(_BridgeSQLiteRepository):
         return entity
 
     def list_by_world(self, tenant_id: TenantId, world_id: EntityId):
+        self._ensure_table_ready("character_relationships", self._ensure_schema)
         with self._connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM character_relationships WHERE tenant_id = ? AND world_id = ? ORDER BY id",
@@ -416,6 +541,7 @@ class CamelBridgeCharacterRelationshipRepository(_BridgeSQLiteRepository):
         *,
         is_mutual: bool = False,
     ) -> CharacterRelationship | None:
+        self._ensure_table_ready("character_relationships", self._ensure_schema)
         with self._connection() as conn:
             row = conn.execute(
                 """

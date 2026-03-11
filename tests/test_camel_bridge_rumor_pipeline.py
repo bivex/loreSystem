@@ -133,6 +133,102 @@ def _seed_world(db_path) -> None:
         conn.close()
 
 
+def test_bridge_repo_schema_ensure_is_lazy_and_cached_per_db_path(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "schema_cache.db")
+
+    calls = 0
+    original = CamelBridgeRumorRepository._ensure_schema
+
+    def counted(self):
+        nonlocal calls
+        calls += 1
+        return original(self)
+
+    monkeypatch.setattr(CamelBridgeRumorRepository, "_ensure_schema", counted)
+
+    first_repo = CamelBridgeRumorRepository(db_path)
+    second_repo = CamelBridgeRumorRepository(db_path)
+
+    assert calls == 0
+
+    assert first_repo.list_by_world(TenantId(1), EntityId(1)) == []
+    assert second_repo.list_by_world(TenantId(1), EntityId(1)) == []
+
+    assert calls == 1
+
+
+def test_bridge_repo_table_columns_are_cached_per_table(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "column_cache.db")
+    repo = CamelBridgeRumorRepository(db_path)
+
+    assert repo.list_by_world(TenantId(1), EntityId(1)) == []
+
+    calls = 0
+    original = repo._connection
+
+    def counted_connection():
+        nonlocal calls
+        calls += 1
+        return original()
+
+    monkeypatch.setattr(repo, "_connection", counted_connection)
+
+    first = repo._table_columns("rumors")
+    second = repo._table_columns("rumors")
+
+    assert first == second
+    assert calls == 1
+
+
+def test_bridge_repo_batched_transaction_reuses_connection_across_repositories(tmp_path):
+    db_path = str(tmp_path / "batched_connection.db")
+    rumor_repo = CamelBridgeRumorRepository(db_path)
+    character_repo = CamelBridgeCharacterRepository(db_path)
+
+    with rumor_repo._batched_transaction():
+        with character_repo._batched_transaction():
+            with rumor_repo._connection() as rumor_conn:
+                rumor_conn.execute("CREATE TABLE probe (value INTEGER)")
+                rumor_conn.execute("INSERT INTO probe(value) VALUES (1)")
+            with character_repo._connection() as character_conn:
+                assert character_conn is rumor_conn
+                character_conn.execute("INSERT INTO probe(value) VALUES (2)")
+
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute("SELECT value FROM probe ORDER BY value").fetchall()
+    finally:
+        conn.close()
+
+    assert rows == [(1,), (2,)]
+
+
+def test_bridge_repo_batched_transaction_rolls_back_on_error(tmp_path):
+    db_path = str(tmp_path / "batched_rollback.db")
+    repo = CamelBridgeRumorRepository(db_path)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("CREATE TABLE probe (value INTEGER)")
+        conn.commit()
+    finally:
+        conn.close()
+
+    with pytest.raises(RuntimeError):
+        with repo._batched_transaction():
+            with repo._connection() as conn:
+                conn.execute("INSERT INTO probe(value) VALUES (1)")
+            raise RuntimeError("boom")
+
+    conn = sqlite3.connect(db_path)
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM probe").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert count == 0
+
+
 def test_camel_bridge_generates_and_persists_two_rumors(tmp_path):
     db_path = str(tmp_path / "rumors.db")
     _seed_world(db_path)

@@ -46,9 +46,9 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
 
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity):
+        self._ensure_table_ready(self.table_name, self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns(self.table_name)
         usable = {key: value for key, value in payload.items() if key in columns}

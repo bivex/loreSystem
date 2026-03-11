@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 import json
 import os
@@ -3357,6 +3358,107 @@ class RumorBridgeService:
         draft = self._generate_enriched_structure_draft(request, chain_result, self._memory_context_for(request))
         return self._persist_narrative_structure(request, chain_result, draft)
 
+    @contextmanager
+    def _bridge_transaction_scope(self, *repositories: object):
+        seen: set[int] = set()
+        with ExitStack() as stack:
+            for repository in repositories:
+                if repository is None or id(repository) in seen:
+                    continue
+                seen.add(id(repository))
+                batcher = getattr(repository, "_batched_transaction", None)
+                if callable(batcher):
+                    stack.enter_context(batcher())
+            yield
+
+    def _persist_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
+        with self._bridge_transaction_scope(
+            self.character_repository,
+            self.campaign_repository,
+            self.story_repository,
+            self.act_repository,
+            self.chapter_repository,
+            self.episode_repository,
+            self.prologue_repository,
+            self.epilogue_repository,
+            self.storyline_repository,
+            self.voice_actor_repository,
+            self.character_variant_repository,
+            self.character_profile_entry_repository,
+            self.motion_capture_repository,
+            self.character_evolution_repository,
+            self.affinity_repository,
+            self.disposition_repository,
+            self.quest_chain_repository,
+            self.quest_repository,
+            self.quest_prerequisite_repository,
+            self.quest_node_repository,
+            self.quest_objective_repository,
+            self.quest_reward_tier_repository,
+            self.quest_giver_repository,
+            self.quest_tracker_repository,
+            self.plot_branch_repository,
+            self.branch_point_repository,
+            self.choice_repository,
+            self.consequence_repository,
+            self.moral_choice_repository,
+            self.alternate_reality_repository,
+            self.flashback_repository,
+            self.flash_forward_repository,
+            self.ending_repository,
+        ):
+            return self._persist_narrative_structure_unbatched(request, chain_result, draft)
+
+    def _persist_systems_slice(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
+        with self._bridge_transaction_scope(
+            self.item_repository,
+            self.inventory_repository,
+            self.material_repository,
+            self.component_repository,
+            self.socket_repository,
+            self.crafting_recipe_repository,
+            self.blueprint_repository,
+            self.enchantment_repository,
+            self.rune_repository,
+            self.glyph_repository,
+            self.title_repository,
+            self.rank_repository,
+            self.leaderboard_repository,
+            self.trophy_repository,
+            self.badge_repository,
+            self.mastery_repository,
+            self.skill_repository,
+            self.perk_repository,
+            self.trait_repository,
+            self.attribute_repository,
+            self.talent_tree_repository,
+            self.achievement_repository,
+            self.level_up_repository,
+            self.experience_repository,
+            self.progression_state_repository,
+            self.progression_event_repository,
+            self.player_metric_repository,
+            self.drop_rate_repository,
+            self.loot_table_weight_repository,
+            self.difficulty_curve_repository,
+            self.dungeon_repository,
+            self.raid_repository,
+            self.world_event_repository,
+            self.arena_repository,
+            self.instance_repository,
+            self.open_world_zone_repository,
+            self.seasonal_event_repository,
+            self.invasion_repository,
+            self.war_repository,
+            self.legendary_weapon_repository,
+            self.mythical_armor_repository,
+            self.divine_item_repository,
+            self.cursed_item_repository,
+            self.artifact_set_repository,
+            self.relic_collection_repository,
+        ):
+            return self._persist_systems_slice_unbatched(request, chain_result, draft)
+
     def _generate_enriched_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult, memory_context: str = "") -> NarrativeStructureDraft:
         try:
             agent_name, system_message = DEFAULT_NARRATIVE_AGENT_PROMPT
@@ -5737,7 +5839,7 @@ class RumorBridgeService:
             candidate = candidate[:117].rstrip() + "..."
         return candidate or fallback
 
-    def _persist_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
+    def _persist_narrative_structure_unbatched(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
         characters_by_name = {
@@ -6695,7 +6797,7 @@ class RumorBridgeService:
             epilogue=epilogue,
         )
 
-    def _persist_systems_slice(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
+    def _persist_systems_slice_unbatched(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
         if not all([
             self.item_repository,
             self.inventory_repository,

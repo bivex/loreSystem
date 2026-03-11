@@ -26,9 +26,9 @@ def _json_to_ids(raw: str | None) -> list[EntityId]:
 class CamelBridgeCampaignRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Campaign) -> Campaign:
+        self._ensure_table_ready("campaigns", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("campaigns")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -91,9 +91,9 @@ class CamelBridgeCampaignRepository(_BridgeSQLiteRepository):
 class CamelBridgeStoryRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Story) -> Story:
+        self._ensure_table_ready("stories", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("stories")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -150,9 +150,9 @@ class CamelBridgeStoryRepository(_BridgeSQLiteRepository):
 class CamelBridgeActRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Act) -> Act:
+        self._ensure_table_ready("acts", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("acts")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -215,9 +215,9 @@ class CamelBridgeActRepository(_BridgeSQLiteRepository):
 class CamelBridgeChapterRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Chapter) -> Chapter:
+        self._ensure_table_ready("chapters", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("chapters")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -282,9 +282,9 @@ class CamelBridgeChapterRepository(_BridgeSQLiteRepository):
 class CamelBridgeEpisodeRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Episode) -> Episode:
+        self._ensure_table_ready("episodes", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("episodes")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -345,9 +345,9 @@ class CamelBridgeEpisodeRepository(_BridgeSQLiteRepository):
 class CamelBridgePrologueRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Prologue) -> Prologue:
+        self._ensure_table_ready("prologues", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("prologues")
         usable = {key: value for key, value in payload.items() if key in columns}
@@ -410,9 +410,9 @@ class CamelBridgePrologueRepository(_BridgeSQLiteRepository):
 class CamelBridgeEpilogueRepository(_BridgeSQLiteRepository):
     def __init__(self, db_path: str = "lore_system.db"):
         super().__init__(db_path)
-        self._ensure_schema()
 
     def save(self, entity: Epilogue) -> Epilogue:
+        self._ensure_table_ready("epilogues", self._ensure_schema)
         payload = self._payload_for(entity)
         columns = self._table_columns("epilogues")
         usable = {key: value for key, value in payload.items() if key in columns}
