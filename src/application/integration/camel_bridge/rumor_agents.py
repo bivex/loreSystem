@@ -5,8 +5,12 @@ from __future__ import annotations
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 import json
+import logging
 import os
 import re
+import signal
+import threading
+import time
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 from dataclasses import dataclass, field, replace
@@ -116,6 +120,8 @@ from src.domain.value_objects.common import (
     Version,
 )
 from src.domain.value_objects.progression import CharacterClass, CharacterLevel, EventType, ExperiencePoints, RuleReference, StatType, StatValue, TimePoint
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -3192,6 +3198,84 @@ DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT = (
     f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
+SYSTEMS_BATCH_SPECS = (
+    (
+        "economy_items",
+        (
+            "items",
+            "inventories",
+            "materials",
+            "components",
+            "sockets",
+            "crafting_recipes",
+            "blueprints",
+            "enchantments",
+            "runes",
+            "glyphs",
+        ),
+        "Focus on loot, crafting, and socketable progression. Keep the set compact and internally consistent.",
+    ),
+    (
+        "progression_meta",
+        (
+            "titles",
+            "ranks",
+            "leaderboards",
+            "trophies",
+            "badges",
+            "masteries",
+            "skills",
+            "perks",
+            "traits",
+            "attributes",
+            "talent_trees",
+            "achievements",
+            "level_ups",
+            "experiences",
+            "progression_states",
+            "progression_events",
+            "player_metrics",
+            "drop_rates",
+            "loot_table_weights",
+            "difficulty_curves",
+        ),
+        "Focus on character progression, account meta, rewards, and balance telemetry. Prefer minimal but valid structures over exhaustive detail.",
+    ),
+    (
+        "encounters_world",
+        (
+            "dungeons",
+            "raids",
+            "world_events",
+            "arenas",
+            "instances",
+            "open_world_zones",
+            "seasonal_events",
+            "invasions",
+            "wars",
+        ),
+        "Focus on playable world content, conflict escalation, and live-ops events grounded in the current harbor unrest.",
+    ),
+    (
+        "legendary_rewards",
+        (
+            "legendary_weapons",
+            "mythical_armors",
+            "divine_items",
+            "cursed_items",
+            "artifact_sets",
+            "relic_collections",
+        ),
+        "Focus on capstone rewards, relic loops, and high-rarity loot tied directly to the main conflict.",
+    ),
+)
+
+ALL_SYSTEMS_BATCH_FIELDS = tuple(
+    field_name
+    for _, field_names, _ in SYSTEMS_BATCH_SPECS
+    for field_name in field_names
+)
+
 
 class RumorBridgeService:
     def __init__(
@@ -3429,17 +3513,21 @@ class RumorBridgeService:
                 relationships.append(self._save_or_merge_relationship(relation, EntityId(request.world_id)))
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
-        if include_narrative_structure or include_systems_slice:
-            draft = self._generate_enriched_structure_draft(
+        if include_narrative_structure:
+            narrative_draft = self._generate_enriched_structure_draft(
                 request,
                 result,
                 memory_context,
-                include_systems_slice=include_systems_slice,
+                include_systems_slice=False,
             )
-            if include_narrative_structure:
-                result = self._persist_narrative_structure(request, result, draft)
-            if include_systems_slice:
-                result = self._persist_systems_slice(request, result, draft)
+            result = self._persist_narrative_structure(request, result, narrative_draft)
+        if include_systems_slice:
+            systems_draft = self._generate_systems_slice_draft(
+                request,
+                result,
+                memory_context,
+            )
+            result = self._persist_systems_slice(request, result, systems_draft)
         self._reindex_memory(request)
         return result
 
@@ -3573,7 +3661,8 @@ class RumorBridgeService:
     ) -> NarrativeStructureDraft:
         try:
             agent_name, system_message = self._narrative_agent_prompt(include_systems_slice)
-            raw = self.backend.generate(
+            raw = self._generate_with_logging(
+                "narrative_enriched",
                 system_message,
                 self._build_narrative_prompt(
                     request,
@@ -3582,6 +3671,7 @@ class RumorBridgeService:
                     memory_context,
                     include_systems_slice=include_systems_slice,
                 ),
+                timeout_seconds=self._generation_timeout_seconds("CAMEL_BRIDGE_ENRICHED_TIMEOUT_SECONDS", 45),
             )
             return self._stabilize_narrative_structure_draft(
                 request,
@@ -3595,6 +3685,43 @@ class RumorBridgeService:
 
     def _narrative_agent_prompt(self, include_systems_slice: bool) -> tuple[str, str]:
         return DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT if include_systems_slice else DEFAULT_NARRATIVE_AGENT_PROMPT
+
+    def _systems_batch_system_message(self, keys: Sequence[str]) -> str:
+        return (
+            "Systems Architect\n"
+            f"Return one compact JSON object with only these keys: {', '.join(keys)}. "
+            "Do not emit campaign, story, or unrelated keys. Keep objects concise, valid, and canon-consistent."
+        )
+
+    def _generate_systems_slice_draft(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        memory_context: str = "",
+    ) -> NarrativeStructureDraft:
+        draft = self._fallback_narrative_structure_draft(request, chain_result)
+        try:
+            for batch_name, keys, guidance in SYSTEMS_BATCH_SPECS:
+                raw = self._generate_with_logging(
+                    f"systems_batch:{batch_name}",
+                    self._systems_batch_system_message(keys),
+                    self._build_systems_batch_prompt(
+                        request,
+                        chain_result,
+                        batch_name,
+                        memory_context,
+                        keys=keys,
+                        guidance=guidance,
+                    ),
+                    timeout_seconds=self._generation_timeout_seconds("CAMEL_BRIDGE_SYSTEMS_BATCH_TIMEOUT_SECONDS", 35),
+                )
+                parsed = self._parse_narrative_structure(raw)
+                draft = self._merge_partial_draft_fields(draft, parsed, keys)
+            return draft
+        except Exception:
+            if not self.allow_fallback:
+                raise
+            return self._fallback_narrative_structure_draft(request, chain_result)
 
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
         prompt = (
@@ -3621,7 +3748,7 @@ class RumorBridgeService:
             "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads.\n"
             f"Return one JSON object with {self._narrative_scope_keys(include_systems_slice)}. "
             "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
-            "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value. For dispositions include entity_name, target_type, target_value, attitude, and intensity. "
+            "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value where value must be a numeric affinity score in the closed range [-1.0, 1.0]. For dispositions include entity_name, target_type, target_value, attitude, and intensity where intensity must be an integer in the closed range [0, 100]. Use only these disposition attitudes: hostile, unfriendly, neutral, friendly, helpful. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
             "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
             "For branch_points include description, branch_names, and optional choice_prompt. For choices include options with label, consequence, and optional next_story. "
@@ -3633,6 +3760,28 @@ class RumorBridgeService:
             prompt += self._narrative_systems_instructions()
         return self._append_memory_context(prompt, memory_context)
 
+    def _build_systems_batch_prompt(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        agent_name: str,
+        memory_context: str = "",
+        *,
+        keys: Sequence[str],
+        guidance: str,
+    ) -> str:
+        prompt = (
+            f"Theme: {request.theme}\n"
+            f"Context: {request.context or 'No extra context provided.'}\n"
+            f"Speaker persona: {agent_name}\n"
+            f"Return one JSON object with only these keys: {', '.join(keys)}.\n"
+            f"Guidance: {guidance}\n"
+            "Use grounded names from the anchors below. Keep the number of generated entities small and coherent."
+        )
+        prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
+        prompt += self._systems_batch_instructions(keys)
+        return self._append_memory_context(prompt, memory_context)
+
     def _narrative_scope_keys(self, include_systems_slice: bool) -> str:
         if include_systems_slice:
             return f"{NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}"
@@ -3642,6 +3791,56 @@ class RumorBridgeService:
         return (
             "For items include name, description, item_type, rarity, optional level, enhancement, max_enhancement, base_atk, base_hp, base_def, special_stat, special_stat_value, and optional location_id. For inventories include owner_name, capacity, gold, and slots with item_name, quantity, and slot_index. For materials include name, description, material_type, rarity, stack_size, base_value, optional conductivity, hardness, and magic_affinity. For components include name, description, category, rarity, quality, durability, max_durability, weight, size, is_craftable, and optional required_skill_level. For sockets include item_name, socket_type, socket_shape, slot_index, rarity, is_unlocked, is_required, optional required_gold, required_level, glow_color, stat_bonus_multiplier, and effect_duration_modifier. For crafting_recipes include name, description, result_item_name, result_quantity, ingredients, crafting_time_seconds, optional success_rate, difficulty, optional skill_name, skill_level_requirement, and gold_cost. For blueprints include name, description, blueprint_type, rarity, complexity, estimated_crafting_time, requirements, optional required_level, required_skill_name, required_skill_level, result_item_name, result_quantity, optional variant_of_name, upgrade_tier, max_upgrade_tier, is_discoverable, optional discovery_chance, is_tradable, and base_value. Each blueprint requirement should include requirement_type, value, and optional quantity. For enchantments include name, description, enchantment_type, rarity, effects, optional required_item_level, required_item_rarity, mutually_exclusive_names, required_material_names, required_gold, optional required_skill_name, required_skill_level, glow_color, is_cursed, is_permanent, optional duration_seconds, power_level, and max_stacks. Each enchantment effect should include effect, value, and is_percentage. For runes include name, description, rune_type, rank, bonuses, effects, optional level, experience, max_experience, required_socket_type, can_level_up, max_level, can_combine, combine_quantity, optional combine_result_rank, glow_color, is_tradeable, is_sellable, and base_value. Each rune bonus should include stat_name, value, and is_percentage. Each rune effect should include effect_name, effect_value, optional trigger_chance, and optional cooldown_seconds. For glyphs include name, description, glyph_school, tier, category, modifiers, abilities, optional tier_level, proficiency, required_socket_type, can_upgrade_tier, max_tier_level, synergizes_with_schools, synergy_bonus, current_charges, max_charges, charge_regen_time, symbol, color, is_tradeable, is_sellable, and base_value. Each glyph modifier should include stat_name, value, operation, and is_percentage. Each glyph ability should include ability_name, description, optional mana_cost, cooldown_seconds, optional duration_seconds, power, requires_target, and optional max_charges. For titles include name and description. For ranks include name, description, rank_type, tier, required_level, required_xp, perks, is_permanent, and optional icon. For leaderboards include name, description, board_type, sort_criterion, and size_limit. For trophies include name, description, trophy_type, rarity, optional icon, and achievement_names. For badges include name, description, badge_type, rarity, optional icon, and achievement_names. For masteries include character_name, name, description, category, level, max_level, progress, total_experience, optional bonuses, unlocked_bonuses, and tags. For skills include character_name, name, description, skill_type, category, rarity, level, max_level, experience, experience_to_next, power, mastery, optional cooldown_seconds, mana_cost, minimum_level, and tags. For perks include character_name, name, description, perk_type, source, rarity, optional stat_type, stat_modifier, resistance_type, resistance_value, ability_name, ability_modifier, stacking_limit, is_active, is_hidden, icon_id, and tags. For traits include character_name, name, description, category, nature, impact_value, optional positive_effects, negative_effects, stat_modifiers, conflicts_with, synergizes_with, is_inheritable, optional icon_id, and tags. For attributes include character_name, name, description, attribute_type, scale_type, base_value, optional current_value, maximum_value, flat_bonus, percentage_bonus, temporary_bonus, is_derived, optional derivation_formula, source_attributes, minimum_value, optional display_name, icon_id, and tags. For talent_trees include character_name, name, description, talent_tree_type, total_points, optional points_spent, nodes, optional unlocked_node_ids, icon_id, required_level, and tags. Each node should include id, name, description, node_type, tier, column, point_cost, optional prerequisite_node_ids, optional effects, optional icon_id, and is_unlocked. For achievements include name, description, achievement_type, difficulty, optional is_hidden, is_repeatable, and icon. For level_ups include character_name, level_up_type, old_level, new_level, optional stat_increases, skill_points_gained, optional choices_made, selected_rewards, health_increase, mana_increase, attack_increase, defense_increase, and notes. For experiences include character_name, experience_type, total_experience, current_level, current_xp, xp_to_next_level, optional xp_multiplier, total_gains, optional largest_gain, optional source_breakdown, and tags. For progression_states include time_point and character_states. Each character_state should include character_name, level, character_class, experience, and optional stats. For progression_events include character_name, event_type, from_time, optional to_time, description, reasons, and effects. Each reason should include rule_id and description. For player_metrics include player_name, metric_type, value, optional unit, optional session_name, is_aggregated, optional aggregation_period, and optional description. For drop_rates include name, category, drop_rate, optional conditions, optional affected_item_names, optional player_level_scaling, is_event_boosted, optional boost_multiplier, and optional description. For loot_table_weights include name, description, optional loot_table_name, item_type, rarity, weight, optional min_level, is_unique, and optional conditions. For difficulty_curves include name, description, curve_type, optional base_level, max_level, optional level_xp_requirement, optional scaling_factor, optional level_time_minutes, optional player_count_tiers, and is_adaptive. For dungeons include name, description, difficulty, optional max_players, optional min_level, optional boss_names, has_lockout, and optional lockout_duration. For raids include name, description, difficulty, optional max_players, optional min_players, optional min_level, optional boss_names, and has_weekly_lockout. For world_events include name, description, event_type, severity, optional duration_days, optional affected_location_names, and is_active. For arenas include name, description, match_type, optional team_size, optional max_teams, optional min_level, and has_ranked_mode. For instances include name, description, difficulty, optional max_players, optional min_level, optional recommended_level, and optional time_limit. For open_world_zones include name, description, biome, optional min_level, optional max_level, optional player_cap, optional poi_names, and has_dynamic_events. For seasonal_events include name, description, season, optional year_number, optional duration_days, optional reward_item_names, is_recurring, optional recurrence_period_days, and is_active. For invasions include name, description, invasion_type, invader_name, target_name, optional force_size, optional casualties, optional conquest_progress, optional is_successful, and is_active. For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, optional total_casualties, optional battles_fought, optional territorial_change_names, optional victor_name, and is_active. For legendary_weapons include name, description, weapon_type, optional damage, rarity, and optional special_ability. For mythical_armors include name, description, armor_type, optional defense, rarity, and optional special_protection. For divine_items include name, description, item_type, optional power, rarity, optional deity_name, optional domain, and optional divine_ability. For cursed_items include name, description, item_type, optional power, curse_type, rarity, optional benefit, optional curse_effect, and optional risk_level. For artifact_sets include name, description, set_type, total_pieces, rarity, and optional set_bonus. For relic_collections include name, description, collection_type, total_relics, rarity, optional collection_power, and optional completion_reward. "
         )
+
+    def _systems_batch_instructions(self, keys: Sequence[str]) -> str:
+        instructions = {
+            "items": "For items include name, description, item_type, and rarity.",
+            "inventories": "For inventories include owner_name and optional slots with item_name, quantity, and slot_index.",
+            "materials": "For materials include name, description, material_type, rarity, stack_size, and base_value.",
+            "components": "For components include name, description, category, rarity, quality, and durability.",
+            "sockets": "For sockets include item_name, socket_type, slot_index, and optional rarity.",
+            "crafting_recipes": "For crafting_recipes include name, description, result_item_name, result_quantity, and ingredients.",
+            "blueprints": "For blueprints include name, description, blueprint_type, rarity, and result_item_name.",
+            "enchantments": "For enchantments include name, description, enchantment_type, rarity, and effects.",
+            "runes": "For runes include name, description, rune_type, rank, bonuses, and effects.",
+            "glyphs": "For glyphs include name, description, glyph_school, tier, category, modifiers, and abilities.",
+            "titles": "For titles include name and description.",
+            "ranks": "For ranks include name, description, rank_type, tier, required_level, and required_xp.",
+            "leaderboards": "For leaderboards include name, description, board_type, sort_criterion, and size_limit.",
+            "trophies": "For trophies include name, description, trophy_type, rarity, and optional achievement_names.",
+            "badges": "For badges include name, description, badge_type, rarity, and optional achievement_names.",
+            "masteries": "For masteries include character_name, name, description, category, level, max_level, and progress.",
+            "skills": "For skills include character_name, name, description, skill_type, category, rarity, level, max_level, power, and mastery.",
+            "perks": "For perks include character_name, name, description, perk_type, source, and rarity.",
+            "traits": "For traits include character_name, name, description, category, nature, and impact_value.",
+            "attributes": "For attributes include character_name, name, description, attribute_type, scale_type, base_value, current_value, and maximum_value.",
+            "talent_trees": "For talent_trees include character_name, name, description, talent_tree_type, total_points, and nodes.",
+            "achievements": "For achievements include name, description, achievement_type, difficulty, and optional icon.",
+            "level_ups": "For level_ups include character_name, level_up_type, old_level, new_level, and major stat increases.",
+            "experiences": "For experiences include character_name, experience_type, total_experience, current_level, current_xp, and xp_to_next_level.",
+            "progression_states": "For progression_states include time_point and character_states with character_name, level, character_class, and experience.",
+            "progression_events": "For progression_events include character_name, event_type, from_time, description, reasons, and effects.",
+            "player_metrics": "For player_metrics include player_name, metric_type, value, and optional unit.",
+            "drop_rates": "For drop_rates include name, category, drop_rate, and optional affected_item_names.",
+            "loot_table_weights": "For loot_table_weights include name, description, item_type, rarity, and weight.",
+            "difficulty_curves": "For difficulty_curves include name, description, curve_type, base_level, max_level, and scaling_factor.",
+            "dungeons": "For dungeons include name, description, difficulty, optional max_players, min_level, and boss_names.",
+            "raids": "For raids include name, description, difficulty, optional max_players, min_level, and boss_names.",
+            "world_events": "For world_events include name, description, event_type, severity, and optional affected_location_names.",
+            "arenas": "For arenas include name, description, match_type, team_size, max_teams, and has_ranked_mode.",
+            "instances": "For instances include name, description, difficulty, max_players, min_level, and recommended_level.",
+            "open_world_zones": "For open_world_zones include name, description, biome, min_level, max_level, and optional poi_names.",
+            "seasonal_events": "For seasonal_events include name, description, season, duration_days, reward_item_names, and is_active.",
+            "invasions": "For invasions include name, description, invasion_type, invader_name, target_name, and conquest_progress.",
+            "wars": "For wars include name, description, war_type, aggressor_name, defender_name, conflict_region_name, and optional victor_name.",
+            "legendary_weapons": "For legendary_weapons include name, description, weapon_type, damage, rarity, and special_ability.",
+            "mythical_armors": "For mythical_armors include name, description, armor_type, defense, rarity, and special_protection.",
+            "divine_items": "For divine_items include name, description, item_type, power, rarity, optional deity_name, and divine_ability.",
+            "cursed_items": "For cursed_items include name, description, item_type, power, curse_type, rarity, optional benefit, and curse_effect.",
+            "artifact_sets": "For artifact_sets include name, description, set_type, total_pieces, rarity, and set_bonus.",
+            "relic_collections": "For relic_collections include name, description, collection_type, total_relics, rarity, collection_power, and completion_reward.",
+        }
+        return "\n" + " ".join(instructions[key] for key in keys if key in instructions)
 
     def _narrative_anchor_block(
         self,
@@ -3788,6 +3987,94 @@ class RumorBridgeService:
         if relationships:
             parts.append(f"The emotional throughline stays anchored in {relationships[0]}")
         return " ".join(parts) or f"{request.theme.title()} grows from whispers into public consequence."
+
+    def _merge_partial_draft_fields(
+        self,
+        base: NarrativeStructureDraft,
+        patch: NarrativeStructureDraft,
+        fields: Sequence[str],
+    ) -> NarrativeStructureDraft:
+        updates: dict[str, object] = {}
+        requested = set(fields)
+        for field_name in ALL_SYSTEMS_BATCH_FIELDS:
+            value = getattr(patch, field_name)
+            if field_name in requested:
+                if value or not getattr(base, field_name):
+                    updates[field_name] = value
+            elif value and not getattr(base, field_name):
+                updates[field_name] = value
+        return replace(base, **updates)
+
+    def _generation_timeout_seconds(self, env_name: str, default: int) -> int:
+        raw = os.getenv(env_name)
+        if raw is None or not raw.strip():
+            return default
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return default
+
+    @contextmanager
+    def _generation_timeout_scope(self, label: str, timeout_seconds: int):
+        if (
+            timeout_seconds <= 0
+            or threading.current_thread() is not threading.main_thread()
+            or not hasattr(signal, "SIGALRM")
+        ):
+            yield
+            return
+
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(f"CAMEL bridge generation timed out for {label} after {timeout_seconds}s")
+
+        previous_handler = signal.getsignal(signal.SIGALRM)
+        signal.signal(signal.SIGALRM, _handle_timeout)
+        signal.alarm(timeout_seconds)
+        try:
+            yield
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, previous_handler)
+
+    def _generate_with_logging(
+        self,
+        stage: str,
+        system_message: str,
+        user_message: str,
+        *,
+        timeout_seconds: int,
+    ) -> str:
+        start = time.monotonic()
+        LOGGER.info(
+            "CAMEL bridge generation started stage=%s timeout=%ss prompt_chars=%s",
+            stage,
+            timeout_seconds,
+            len(user_message),
+        )
+        try:
+            with self._generation_timeout_scope(stage, timeout_seconds):
+                raw = self.backend.generate(system_message, user_message)
+        except Exception as exc:
+            LOGGER.warning(
+                "CAMEL bridge generation failed stage=%s elapsed=%.2fs error=%s",
+                stage,
+                time.monotonic() - start,
+                exc,
+            )
+            raise
+        LOGGER.info(
+            "CAMEL bridge generation completed stage=%s elapsed=%.2fs response_chars=%s",
+            stage,
+            time.monotonic() - start,
+            len(raw),
+        )
+        return raw
+
+    def _clamp_affinity_value(self, value: float) -> float:
+        return max(-1.0, min(1.0, float(value)))
+
+    def _clamp_disposition_intensity(self, intensity: int) -> int:
+        return max(0, min(100, int(intensity)))
 
     def _prefer_grounded_text(self, current: object, fallback: str, *, generic: Sequence[str] = ()) -> str:
         text = self._coerce_optional_text(current)
@@ -6520,7 +6807,7 @@ class RumorBridgeService:
                     source_id=source_id,
                     target_id=target_id,
                     category=affinity_draft.category,
-                    value=affinity_draft.value,
+                    value=self._clamp_affinity_value(affinity_draft.value),
                 )))
 
         dispositions: list[Disposition] = []
@@ -6535,7 +6822,7 @@ class RumorBridgeService:
                     target_type=disposition_draft.target_type,
                     target_value=disposition_draft.target_value,
                     attitude=disposition_draft.attitude,
-                    intensity=disposition_draft.intensity,
+                    intensity=self._clamp_disposition_intensity(disposition_draft.intensity),
                 )))
 
         derived_node_names_by_chain: dict[str, list[str]] = {}
