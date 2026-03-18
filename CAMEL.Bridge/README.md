@@ -130,12 +130,15 @@ Bridge автоматически пытается загрузить `.env` и�
 Поддерживаемые переменные:
 
 - `OPENAI_API_KEY` / другой provider key
+- `OPENROUTER_API_KEY` — для OpenRouter / free моделей
 - `CAMEL_MODEL_PLATFORM` (например, `OPENAI`)
-- `CAMEL_MODEL_TYPE` (например, `GPT_4O_MINI` или raw model string вроде `openai/gpt-oss-20b`)
+- `CAMEL_MODEL_TYPE` (например, `arcee-ai/trinity-large-preview:free` или raw model string вроде `openai/gpt-oss-20b`)
 - `CAMEL_MODEL_BASE_URL` (например, `https://api.groq.com/openai/v1` для OpenAI-compatible провайдера)
 - `CAMEL_MODEL_TEMPERATURE` (например, `0.7`)
 - `CAMEL_MODEL_MAX_TOKENS`
+- `CAMEL_MODEL_REASONING_EFFORT` — optional reasoning level для OpenRouter-compatible reasoning models
 - `CAMEL_BRIDGE_STRICT_MODEL=true` — полностью выключает fallback
+- `OPENROUTER_HTTP_REFERER` / `OPENROUTER_X_TITLE` — optional OpenRouter leaderboard headers
 
 Для optional memory v1:
 
@@ -177,6 +180,23 @@ CAMEL_MEMORY_EMBED_BACKEND=local
 Если нужен прежний максимально простой fallback, можно явно оставить:
 
 - `CAMEL_MEMORY_EMBED_BACKEND=hash`
+
+### Пример `.env` для free OpenRouter generation
+
+```bash
+OPENROUTER_API_KEY=sk-or-...
+CAMEL_MODEL_PLATFORM=OPENROUTER
+CAMEL_MODEL_TYPE=arcee-ai/trinity-large-preview:free
+CAMEL_MODEL_BASE_URL=https://openrouter.ai/api/v1
+CAMEL_MODEL_REASONING_EFFORT=low
+CAMEL_BRIDGE_STRICT_MODEL=true
+
+# optional leaderboard headers
+OPENROUTER_HTTP_REFERER=https://your-app.example
+OPENROUTER_X_TITLE=MythWeave CAMEL Bridge
+```
+
+В текущем bridge `OPENROUTER` идёт через OpenAI-compatible `/chat/completions` path. Это позволяет запускать `arcee-ai/trinity-large-preview:free` даже если в активном интерпретаторе не установлен `camel-ai`.
 
 ## Что внутри
 

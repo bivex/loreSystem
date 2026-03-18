@@ -1095,6 +1095,43 @@ def test_load_env_file_supports_custom_model_and_base_url(tmp_path, monkeypatch)
     assert backend.model_url == "https://api.groq.com/openai/v1"
 
 
+def test_load_env_file_supports_openrouter_free_model_defaults(tmp_path, monkeypatch):
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "OPENROUTER_API_KEY=test-key\nCAMEL_MODEL_PLATFORM=OPENROUTER\nCAMEL_MODEL_TYPE=arcee-ai/trinity-large-preview:free\nCAMEL_MODEL_REASONING_EFFORT=low\n",
+        encoding="utf-8",
+    )
+    for key in [
+        "OPENROUTER_API_KEY",
+        "CAMEL_MODEL_PLATFORM",
+        "CAMEL_MODEL_TYPE",
+        "CAMEL_MODEL_BASE_URL",
+        "CAMEL_MODEL_REASONING_EFFORT",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+
+    load_env_file(str(env_path))
+    backend = CamelChatBackend()
+
+    assert backend.model_platform == "OPENROUTER"
+    assert backend.model_type == "arcee-ai/trinity-large-preview:free"
+    assert backend.model_url == "https://openrouter.ai/api/v1"
+
+
+def test_openrouter_headers_include_leaderboard_metadata(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("CAMEL_MODEL_PLATFORM", "OPENROUTER")
+    monkeypatch.setenv("OPENROUTER_HTTP_REFERER", "https://example.com/app")
+    monkeypatch.setenv("OPENROUTER_X_TITLE", "Lore Bridge Test")
+
+    backend = CamelChatBackend()
+    headers = backend._build_openai_compatible_headers()
+
+    assert headers["Authorization"] == "Bearer test-key"
+    assert headers["HTTP-Referer"] == "https://example.com/app"
+    assert headers["X-Title"] == "Lore Bridge Test"
+
+
 def test_relationship_parser_accepts_textual_strength_levels():
     service = RumorBridgeService(
         CamelBridgeRumorRepository(":memory:"),
