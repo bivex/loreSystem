@@ -3750,37 +3750,49 @@ class RumorBridgeService:
         character_hint = ""
         if request.character_names:
             character_hint = (
-                " Keep provided character names exactly as given unless a grammatical inflection is unavoidable; "
-                "prefer the original spelling."
+                " Keep provided character names exactly as given unless localization is required by the output language; "
+                "preserve original spelling for proper nouns."
             )
         if language == "ru":
             return (
                 "\nOutput language: Russian.\n"
-                "Write all natural-language field values in Russian: titles, names of generated arcs/items/quests, descriptions, "
-                "UI-facing quest text, branch text, ending text, and narrative prose. Keep JSON keys and enum-like machine values in English."
+                "ALL textual content MUST be in Russian, including:\n"
+                "  - top-level fields: name, description, title, journal_summary, briefing, completion_text\n"
+                "  - array items: consequences[], choice options[], plot_branch descriptions\n"
+                "  - nested values: disposition.target_value, quest objectives, event descriptions\n"
+                "  - narrative prose in story_content and branch outcomes\n"
+                "Keep ONLY JSON field names and structural enum identifiers in English (e.g., 'hostile', 'friendly', 'minor', 'major').\n"
                 f"{character_hint}\n"
             )
         if language == "uk":
             return (
                 "\nOutput language: Ukrainian.\n"
-                "Write all natural-language field values in Ukrainian: titles, names of generated arcs/items/quests, descriptions, "
-                "UI-facing quest text, branch text, ending text, and narrative prose. Keep JSON keys and enum-like machine values in English."
+                "ALL textual content MUST be in Ukrainian, including:\n"
+                "  - top-level fields: name, description, title, journal_summary, briefing, completion_text\n"
+                "  - array items: consequences[], choice options[], plot_branch descriptions\n"
+                "  - nested values: disposition.target_value, quest objectives, event descriptions\n"
+                "  - narrative prose in story_content and branch outcomes\n"
+                "Keep ONLY JSON field names and structural enum identifiers in English.\n"
                 f"{character_hint}\n"
             )
         return (
             "\nOutput language: English.\n"
-            "Write all natural-language field values in English. Keep JSON keys and enum-like machine values in English."
+            "All textual content in English. JSON keys and structural enum identifiers in English.\n"
             f"{character_hint}\n"
         )
 
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
-        prompt = (
+        prompt = self._language_instruction_block(request)
+        # Explicit reminder
+        language = self._resolve_output_language(request)
+        if language != "en":
+            prompt += f"\nIMPORTANT: name and description MUST be in {language.upper()}. truth_level is an enum (unverified/confirmed/false), keep in English.\n"
+        prompt += (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
             f"Need exactly 1 rumor as JSON with name, description, source_name, truth_level, spread_speed, credibility_score.\n"
             f"Speaker persona: {agent_name}"
         )
-        prompt += self._language_instruction_block(request)
         return self._append_memory_context(prompt, memory_context)
 
     def _build_narrative_prompt(
@@ -3798,7 +3810,7 @@ class RumorBridgeService:
             f"Speaker persona: {agent_name}\n"
             "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads.\n"
             f"Return one JSON object with {self._narrative_scope_keys(include_systems_slice)}. "
-            "For storylines include events/event_names. For character_variants include character_name, name, optional description, variant_type, and rarity. For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names. "
+            "For storylines include event_names. For character_variants include character_name (in output language), name (in output language), optional description (in output language), variant_type (enum), and rarity (enum). For character_evolutions include character_name (in output language), current_stage (enum), evolution_type (enum), and optional variant_names (in output language). "
             "For character_profile_entries include character_name, field_name, and field_value. For motion_captures include name, file_path, and optional character_name or actor_name. For voice_actors include name, language, and optional character_names. For affinities include source_name, target_name, category, and value where value must be a numeric affinity score in the closed range [-1.0, 1.0]. For dispositions include entity_name, target_type, target_value, attitude, and intensity where intensity must be an integer in the closed range [0, 100]. Use only these disposition attitudes: hostile, unfriendly, neutral, friendly, helpful. "
             "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names. For quest_chains include name, description, and optional node_names. For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions. For quest_objectives include quest_node_name, description, objective_type, optional target_name, and optional objective_hint. For quest_prerequisites include description, prerequisite_type, and optional required_quest_names. For quest_reward_tiers include quest_node_name, name, description, and tier_level. For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names. For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names. Write quest-facing text like UI copy a player would actually read. "
             "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions. "
@@ -3822,7 +3834,12 @@ class RumorBridgeService:
         keys: Sequence[str],
         guidance: str,
     ) -> str:
-        prompt = (
+        prompt = self._language_instruction_block(request)
+        # Explicit priority reminder
+        language = self._resolve_output_language(request)
+        if language != "en":
+            prompt += f"\nCRITICAL: Every textual field (names, descriptions, UI text, choices, consequences, etc.) MUST be in {language.upper()}. Do NOT use English for content values.\n"
+        prompt += (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
             f"Speaker persona: {agent_name}\n"
@@ -3830,7 +3847,6 @@ class RumorBridgeService:
             f"Guidance: {guidance}\n"
             "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads."
         )
-        prompt += self._language_instruction_block(request)
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._narrative_batch_instructions(keys)
@@ -3846,7 +3862,12 @@ class RumorBridgeService:
         keys: Sequence[str],
         guidance: str,
     ) -> str:
-        prompt = (
+        prompt = self._language_instruction_block(request)
+        # Explicit priority reminder
+        language = self._resolve_output_language(request)
+        if language != "en":
+            prompt += f"\nCRITICAL: Every textual field (names, descriptions, titles, UI text, choices, consequences, etc.) MUST be in {language.upper()}. Do NOT use English for content values.\n"
+        prompt += (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
             f"Speaker persona: {agent_name}\n"
@@ -3854,7 +3875,6 @@ class RumorBridgeService:
             f"Guidance: {guidance}\n"
             "Use grounded names from the anchors below. Keep the number of generated entities small and coherent."
         )
-        prompt += self._language_instruction_block(request)
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._systems_batch_instructions(keys)
@@ -3922,38 +3942,38 @@ class RumorBridgeService:
 
     def _narrative_batch_instructions(self, keys: Sequence[str]) -> str:
         instructions = {
-            "campaign": "For campaign include title, description, and optional campaign_type, recommended_level, estimated_hours, and is_replayable.",
-            "story": "For story include name, description, content, and optional story_type.",
-            "acts": "For acts include title, description, act_number, optional act_type, key_events, and estimated_minutes.",
-            "chapters": "For chapters include title, description, sequence_number, act_numbers, optional chapter_type, and estimated_minutes.",
-            "episodes": "For episodes include title, description, sequence_number, chapter_number, optional episode_type, and estimated_minutes.",
-            "prologue": "For prologue include title, description, content, and optional prologue_type and estimated_minutes.",
-            "epilogue": "For epilogue include title, description, content, and optional epilogue_type and estimated_minutes.",
-            "storylines": "For storylines include name, description, storyline_type, and event_names.",
-            "character_evolutions": "For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names, new_abilities, and stat_increases.",
-            "character_variants": "For character_variants include character_name, name, optional description, variant_type, and rarity.",
-            "character_profile_entries": "For character_profile_entries include character_name, field_name, and field_value.",
-            "motion_captures": "For motion_captures include name, file_path, and optional character_name or actor_name.",
-            "voice_actors": "For voice_actors include name, language, and optional character_names.",
-            "affinities": "For affinities include source_name, target_name, category, and numeric value in the closed range [-1.0, 1.0].",
-            "dispositions": "For dispositions include entity_name, target_type, target_value, attitude from hostile|unfriendly|neutral|friendly|helpful, and integer intensity in the closed range [0, 100].",
-            "quests": "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names.",
-            "quest_chains": "For quest_chains include name, description, and optional node_names.",
-            "quest_givers": "For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names.",
-            "quest_nodes": "For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions.",
-            "quest_objectives": "For quest_objectives include quest_node_name, description, objective_type, optional target_name, and objective_hint.",
-            "quest_prerequisites": "For quest_prerequisites include description, prerequisite_type, and optional required_quest_names.",
-            "quest_reward_tiers": "For quest_reward_tiers include quest_node_name, name, description, and tier_level.",
-            "quest_trackers": "For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names.",
-            "plot_branches": "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions.",
-            "branch_points": "For branch_points include description, branch_names, and optional choice_prompt.",
-            "choices": "For choices include prompt and options with label, consequence, and optional next_story.",
-            "consequences": "For consequences include description, consequence_type, severity, and optional conditions.",
-            "moral_choices": "For moral_choices include prompt, options with label and outcome, and optional consequence_descriptions.",
-            "alternate_realities": "For alternate_realities include name, description, reality_type, and optional access_method.",
-            "flashbacks": "For flashbacks include name, description, trigger_event or trigger_event_name, optional scene_id, and optional characters or character_names.",
-            "flash_forwards": "For flash_forwards include name, description, hinted_event or hinted_event_name, and clarity_level.",
-            "endings": "For endings include title, description, ending_type, rarity, and optional conditions.",
+            "campaign": "For campaign include title (in output language), description (in output language), and optional campaign_type (enum), recommended_level (int), estimated_hours (int), and is_replayable (bool).",
+            "story": "For story include name (in output language), description (in output language), content (in output language), and optional story_type (enum).",
+            "acts": "For acts include title (in output language), description (in output language), act_number (int), optional act_type (enum), key_events (in output language), and estimated_minutes (int).",
+            "chapters": "For chapters include title (in output language), description (in output language), sequence_number (int), act_numbers (list[int]), optional chapter_type (enum), and estimated_minutes (int).",
+            "episodes": "For episodes include title (in output language), description (in output language), sequence_number (int), chapter_number (int), optional episode_type (enum), and estimated_minutes (int).",
+            "prologue": "For prologue include title (in output language), description (in output language), content (in output language), and optional prologue_type (enum) and estimated_minutes (int).",
+            "epilogue": "For epilogue include title (in output language), description (in output language), content (in output language), and optional epilogue_type (enum) and estimated_minutes (int).",
+            "storylines": "For storylines include name (in output language), description (in output language), storyline_type (enum), and event_names (in output language).",
+            "character_evolutions": "For character_evolutions include character_name (in output language), current_stage (enum), evolution_type (enum), and optional variant_names (in output language), new_abilities (in output language), and stat_increases (numeric).",
+            "character_variants": "For character_variants include character_name (in output language), name (in output language), optional description (in output language), variant_type (enum), and rarity (enum).",
+            "character_profile_entries": "For character_profile_entries include character_name (in output language), field_name (e.g., 'fear', 'goal', 'secret'), and field_value (natural language in output language).",
+            "motion_captures": "For motion_captures include name (in output language), file_path, and optional character_name (in output language) or actor_name.",
+            "voice_actors": "For voice_actors include name (actor name), language (ISO code), and optional character_names (in output language).",
+            "affinities": "For affinities include source_name (in output language), target_name (in output language), category (e.g., 'trust', 'rivalry'), and numeric value [-1.0..1.0].",
+            "dispositions": "For dispositions include entity_name (natural language), target_type (machine enum), target_value (natural language), attitude (machine enum: hostile|unfriendly|neutral|friendly|helpful), and intensity [0-100]. All natural language fields in output language.",
+            "quests": "For quests include name (in output language), description (in output language), objectives (in output language), player_briefing (in output language), journal_summary (in output language), acceptance_text (in output language), completion_text (in output language), failure_text (in output language), reward_summary (in output language), and optional participant_names (in output language).",
+            "quest_chains": "For quest_chains include name (in output language), description (in output language), and optional node_names (in output language).",
+            "quest_givers": "For quest_givers include name (in output language), description (in output language), optional greeting_message (in output language), and optional quest_chain_names or quest_node_names (in output language).",
+            "quest_nodes": "For quest_nodes include quest_chain_name (in output language), name (in output language), description (in output language), and optional objective_descriptions (in output language).",
+            "quest_objectives": "For quest_objectives include quest_node_name (in output language), description (in output language), objective_type (enum), optional target_name (in output language), and objective_hint (in output language).",
+            "quest_prerequisites": "For quest_prerequisites include description (in output language), prerequisite_type (enum), and optional required_quest_names (in output language).",
+            "quest_reward_tiers": "For quest_reward_tiers include quest_node_name (in output language), name (in output language), description (in output language), and tier_level.",
+            "quest_trackers": "For quest_trackers include active_chain_names (in output language), completed_chain_names (in output language), active_node_names (in output language), and completed_node_names (in output language).",
+            "plot_branches": "For plot_branches include name (in output language), description (in output language), story_content (in output language), branch_type (enum), and optional consequence_descriptions (in output language).",
+            "branch_points": "For branch_points include description (in output language), branch_names (in output language), and optional choice_prompt (in output language).",
+            "choices": "For choices include prompt (in output language) and options with label (in output language), consequence (in output language), and optional next_story (in output language).",
+            "consequences": "For consequences include description (in output language), consequence_type (enum), severity (enum), and optional conditions (in output language).",
+            "moral_choices": "For moral_choices include prompt (in output language), options with label (in output language) and outcome (in output language), and optional consequence_descriptions (in output language).",
+            "alternate_realities": "For alternate_realities include name (in output language), description (in output language), reality_type (enum), and optional access_method (in output language).",
+            "flashbacks": "For flashbacks include name (in output language), description (in output language), trigger_event or trigger_event_name (in output language), optional scene_id, and optional characters or character_names (in output language).",
+            "flash_forwards": "For flash_forwards include name (in output language), description (in output language), hinted_event or hinted_event_name (in output language), and clarity_level (enum).",
+            "endings": "For endings include title (in output language), description (in output language), ending_type (enum), rarity (enum), and optional conditions (in output language).",
         }
         return "\n" + " ".join(instructions[key] for key in keys if key in instructions)
 
@@ -4096,12 +4116,12 @@ class RumorBridgeService:
         if self._coerce_optional_text(request.context):
             parts.append(request.context.strip())
         if rumors:
-            parts.append(f"Established rumors like {', '.join(rumors[:2])} push the setting toward open consequence.")
+            parts.append(f"Established rumors: {', '.join(rumors[:2])}.")
         if events:
-            parts.append(f"Confirmed events escalate into {', '.join(events[:2])}.")
+            parts.append(f"Confirmed events: {', '.join(events[:2])}.")
         if relationships:
-            parts.append(f"The emotional throughline stays anchored in {relationships[0]}")
-        return " ".join(parts) or f"{request.theme.title()} grows from whispers into public consequence."
+            parts.append(f"Emotional throughline: {relationships[0]}")
+        return " ".join(parts) or f"Theme '{request.theme}' unfolds through consequence."
 
     def _merge_partial_draft_fields(
         self,
@@ -4302,17 +4322,23 @@ class RumorBridgeService:
         return replace(draft, campaign=campaign, story=story, prologue=prologue, epilogue=epilogue, acts=acts, chapters=chapters, episodes=episodes, storylines=storylines)
 
     def _build_event_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], memory_context: str = "") -> str:
+        prompt = self._language_instruction_block(request)
+        language = self._resolve_output_language(request)
+        if language != "en":
+            prompt += f"\nNOTE: event name and description MUST be in {language.upper()}.\n"
         rumor_lines = "\n".join(f"- {rumor.name}: {rumor.description}" for rumor in rumors)
         seed = ", ".join(request.character_names) or "Invent participants if needed"
-        prompt = f"Theme: {request.theme}\nContext: {request.context}\nRumors:\n{rumor_lines}\nPreferred characters: {seed}"
-        prompt += self._language_instruction_block(request)
+        prompt += f"Theme: {request.theme}\nContext: {request.context}\nRumors:\n{rumor_lines}\nPreferred characters: {seed}"
         return self._append_memory_context(prompt, memory_context)
 
     def _build_relationship_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...], memory_context: str = "") -> str:
+        prompt = self._language_instruction_block(request)
+        language = self._resolve_output_language(request)
+        if language != "en":
+            prompt += f"\nNOTE: relationship description MUST be in {language.upper()}.\n"
         event_lines = "\n".join(f"- {event.name}: {event.description}" for event in events)
         cast = ", ".join(character_names) or "Invent two names"
-        prompt = f"Theme: {request.theme}\nRumors: {', '.join(r.name for r in rumors)}\nEvents:\n{event_lines}\nCast: {cast}"
-        prompt += self._language_instruction_block(request)
+        prompt += f"Theme: {request.theme}\nRumors: {', '.join(r.name for r in rumors)}\nEvents:\n{event_lines}\nCast: {cast}"
         return self._append_memory_context(prompt, memory_context)
 
     def _append_memory_context(self, prompt: str, memory_context: str) -> str:
@@ -9799,34 +9825,34 @@ class RumorBridgeService:
             ),
             plot_branches=(
                 PlotBranchDraft(
-                    name="Open Revolt",
-                    description="The harbor chooses open resistance.",
-                    story_content="The whisper network becomes a public uprising.",
+                    name=f"{theme}: Открытое Восстание",
+                    description="[Заполняется моделью]",
+                    story_content="[Заполняется моделью]",
                     branch_type="major",
-                    consequence_descriptions=("The harbor guard imposes a citywide curfew.",),
+                    consequence_descriptions=("[Заполняется моделью]",),
                 ),
                 PlotBranchDraft(
-                    name="Silent Compliance",
-                    description="The city buries the truth to preserve peace.",
-                    story_content="Fear sinks beneath the surface while authority grows harsher.",
+                    name=f"{theme}: Молчаливое Повиновение",
+                    description="[Заполняется моделью]",
+                    story_content="[Заполняется моделью]",
                     branch_type="temporary",
-                    consequence_descriptions=("The harbor guard imposes a citywide curfew.",),
+                    consequence_descriptions=("[Заполняется моделью]",),
                     is_reversible=True,
                 ),
             ),
             branch_points=(
                 BranchPointDraft(
-                    description="The final warning forces the harbor to choose between truth and order.",
-                    branch_names=("Open Revolt", "Silent Compliance"),
+                    description="[Заполняется моделью]",
+                    branch_names=(f"{theme}: Открытое Восстание", f"{theme}: Молчаливое Повиновение"),
                     branch_point_type="choice",
-                    choice_prompt="Who should carry the final warning?",
+                    choice_prompt="[Заполняется моделью]",
                 ),
             ),
             choices=(
                 ChoiceDraft(
-                    prompt="Who should carry the final warning?",
-                    options=("Trust the dockworkers", "Trust the magistrate"),
-                    consequences=("The crowd prepares itself.", "Authority seizes the message."),
+                    prompt="[Заполняется моделью]",
+                    options=("[Заполняется моделью]", "[Заполняется моделью]"),
+                    consequences=("[Заполняется моделью]", "[Заполняется моделью]"),
                     next_story_titles=(f"{theme} Chronicle", None),
                     choice_type="decision",
                     story_name=f"{theme} Chronicle",
@@ -9834,23 +9860,23 @@ class RumorBridgeService:
             ),
             consequences=(
                 ConsequenceDraft(
-                    description="The harbor guard imposes a citywide curfew.",
+                    description="[Заполняется моделью]",
                     consequence_type="story",
                     severity="major",
-                    trigger_choice_prompt="Who should carry the final warning?",
+                    trigger_choice_prompt="[Заполняется моделью]",
                 ),
             ),
             moral_choices=(
                 MoralChoiceDraft(
-                    prompt="Will the survivors reveal the truth or preserve calm?",
+                    prompt="[Заполняется моделью]",
                     options=(
-                        MoralChoiceOptionDraft(label="Reveal the truth", outcome="The city prepares for the cost.", alignment="good"),
-                        MoralChoiceOptionDraft(label="Preserve calm", outcome="Fear stays buried for another night.", alignment="lawful"),
+                        MoralChoiceOptionDraft(label="[Заполняется моделью]", outcome="[Заполняется моделью]", alignment="good"),
+                        MoralChoiceOptionDraft(label="[Заполняется моделью]", outcome="[Заполняется моделью]", alignment="lawful"),
                     ),
-                    description="A final moral reckoning closes the campaign.",
+                    description="[Заполняется моделью]",
                     choice_alignment="neutral",
                     urgency="high",
-                    consequence_descriptions=("The harbor guard imposes a citywide curfew.",),
+                    consequence_descriptions=("[Заполняется моделью]",),
                 ),
             ),
             alternate_realities=(
