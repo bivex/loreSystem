@@ -235,6 +235,11 @@ HTML_PAGE = """<!doctype html>
       state.currentDb = summary.db_path.split('/').pop();
       document.getElementById("db-info").textContent = `${summary.table_count} tables`;
       renderTables(summary.tables);
+      // Update selector to highlight current DB
+      const selector = document.getElementById("db-selector");
+      if (selector && state.currentDb) {
+        selector.value = state.currentDb;
+      }
     }
 
     function renderTables(tables) {
