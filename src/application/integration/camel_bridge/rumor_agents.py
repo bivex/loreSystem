@@ -1617,6 +1617,39 @@ def _canonical_text_similarity(left: str, right: str) -> float:
     return _canonical_set_similarity(set(left.split()), set(right.split()))
 
 
+def _row_payload_json(row: Any) -> dict[str, object]:
+    try:
+        payload_text = str(row["payload_json"] or "").strip()
+    except Exception:
+        return {}
+    if not payload_text:
+        return {}
+    try:
+        payload = json.loads(payload_text)
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _row_json_int_ids(row: Any, field: str) -> list[int]:
+    raw = row[field] if field in row.keys() else None
+    try:
+        return [int(item) for item in json.loads(raw or "[]")]
+    except Exception:
+        return []
+
+
+def _row_timestamp_value(row: Any, field: str) -> Timestamp | None:
+    raw = row[field] if field in row.keys() else None
+    text = _coerce_canonical_text(raw)
+    if not text:
+        return None
+    dt = datetime.fromisoformat(text)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return Timestamp(dt)
+
+
 def _spread_speed_rank(value: str) -> int:
     return {"Slow": 0, "Moderate": 1, "Rapid": 2, "Explosive": 3}.get(value, 0)
 
@@ -2201,7 +2234,7 @@ class CamelChatBackend:
 
     def __init__(self, model_platform: str | None = None, model_type: str | None = None, model_config: dict | None = None):
         self.model_platform = (model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI").upper()
-        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-large-preview:free"
+        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
         self.model_url = (
             os.getenv("CAMEL_MODEL_BASE_URL")
             or os.getenv("OPENAI_BASE_URL")
@@ -3851,6 +3884,85 @@ class RumorBridgeService:
                 raise
             return self._fallback_narrative_structure_draft(request, chain_result)
 
+    def _list_table_rows(
+        self,
+        repository: object | None,
+        table_name: str,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        *,
+        limit: int = 50,
+        include_worldless: bool = False,
+    ) -> list[Any]:
+        if repository is None:
+            return []
+        try:
+            with repository._connection() as conn:
+                if include_worldless:
+                    return conn.execute(
+                        f"SELECT * FROM {table_name} WHERE tenant_id = ? AND (world_id = ? OR world_id IS NULL) ORDER BY id DESC LIMIT ?",
+                        (tenant_id.value, world_id.value, limit),
+                    ).fetchall()
+                return conn.execute(
+                    f"SELECT * FROM {table_name} WHERE tenant_id = ? AND world_id = ? ORDER BY id DESC LIMIT ?",
+                    (tenant_id.value, world_id.value, limit),
+                ).fetchall()
+        except Exception:
+            return []
+
+    def _generic_payload_rows(
+        self,
+        repository: object | None,
+        table_name: str,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        *,
+        limit: int = 50,
+        include_worldless: bool = False,
+    ) -> list[tuple[Any, dict[str, object]]]:
+        return [(row, _row_payload_json(row)) for row in self._list_table_rows(repository, table_name, tenant_id, world_id, limit=limit, include_worldless=include_worldless)]
+
+    def _existing_canon_prompt_block(self, request: RumorGenerationRequest, keys: Sequence[str]) -> str:
+        context = self._canonical_persist_context(request)
+        lines: list[str] = []
+        key_set = set(keys)
+
+        if key_set & {"campaign", "story", "acts", "chapters", "episodes", "prologue", "epilogue", "storylines"}:
+            campaigns = [row["title"] for row in self._list_table_rows(self.campaign_repository, "campaigns", context.tenant_id, context.world_id, limit=2) if _coerce_canonical_text(row["title"])]
+            stories = [row["name"] for row in self._list_table_rows(self.story_repository, "stories", context.tenant_id, context.world_id, limit=2) if _coerce_canonical_text(row["name"])]
+            if campaigns:
+                lines.append(f"- campaigns: {', '.join(campaigns[:2])}")
+            if stories:
+                lines.append(f"- stories: {', '.join(stories[:2])}")
+
+        if key_set & {"quests", "quest_chains", "quest_nodes", "quest_objectives", "quest_reward_tiers"}:
+            quests = [str(payload.get("name") or row["label"]) for row, payload in self._generic_payload_rows(self.quest_repository, "quests", context.tenant_id, context.world_id, limit=3) if _coerce_canonical_text(payload.get("name") or row["label"])]
+            quest_chains = [str(payload.get("name") or row["label"]) for row, payload in self._generic_payload_rows(self.quest_chain_repository, "quest_chains", context.tenant_id, context.world_id, limit=2) if _coerce_canonical_text(payload.get("name") or row["label"])]
+            if quests:
+                lines.append(f"- quests: {', '.join(quests[:3])}")
+            if quest_chains:
+                lines.append(f"- quest chains: {', '.join(quest_chains[:2])}")
+
+        if key_set & {"items", "inventories", "materials", "components", "dungeons", "instances", "seasonal_events", "wars", "artifact_sets", "relic_collections"}:
+            items = [str(payload.get("name") or row["label"]) for row, payload in self._generic_payload_rows(self.item_repository, "items", context.tenant_id, context.world_id, limit=4) if _coerce_canonical_text(payload.get("name") or row["label"])]
+            world_events = [str(payload.get("name") or row["label"]) for row, payload in self._generic_payload_rows(self.seasonal_event_repository, "seasonal_events", context.tenant_id, context.world_id, limit=2) if _coerce_canonical_text(payload.get("name") or row["label"])]
+            wars = [str(payload.get("name") or row["label"]) for row, payload in self._generic_payload_rows(self.war_repository, "wars", context.tenant_id, context.world_id, limit=2) if _coerce_canonical_text(payload.get("name") or row["label"])]
+            if items:
+                lines.append(f"- items: {', '.join(items[:4])}")
+            if world_events:
+                lines.append(f"- seasonal events: {', '.join(world_events[:2])}")
+            if wars:
+                lines.append(f"- wars: {', '.join(wars[:2])}")
+
+        if not lines:
+            return ""
+        return (
+            "\nExisting canon to reuse when it matches:\n"
+            "Update or deepen the entities below instead of inventing renamed duplicates for the same arc, quest, or object.\n"
+            + "\n".join(lines)
+            + "\n"
+        )
+
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
         prompt = (
             f"Theme: {request.theme}\n"
@@ -3907,6 +4019,7 @@ class RumorBridgeService:
             "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads."
         )
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
+        prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._narrative_batch_instructions(keys)
         return self._append_memory_context(prompt, memory_context)
 
@@ -3929,6 +4042,7 @@ class RumorBridgeService:
             "Use grounded names from the anchors below. Keep the number of generated entities small and coherent."
         )
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
+        prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._systems_batch_instructions(keys)
         return self._append_memory_context(prompt, memory_context)
 
@@ -4901,18 +5015,27 @@ class RumorBridgeService:
 
     def _decode_json_prefix(self, snippet: str) -> object:
         decoder = json.JSONDecoder()
-        starts = sorted(
-            start
-            for start in (snippet.find("{"), snippet.find("["))
-            if start != -1
-        )
-        for start in starts:
+        candidate_snippets = [snippet]
+        sanitized = re.sub(r"[\x00-\x1f]", " ", snippet)
+        if sanitized != snippet:
+            candidate_snippets.append(sanitized)
+        for candidate in candidate_snippets:
+            starts = sorted(
+                start
+                for start in (candidate.find("{"), candidate.find("["))
+                if start != -1
+            )
+            for start in starts:
+                try:
+                    payload, _ = decoder.raw_decode(candidate[start:])
+                    return payload
+                except json.JSONDecodeError:
+                    continue
             try:
-                payload, _ = decoder.raw_decode(snippet[start:])
-                return payload
+                return json.loads(candidate)
             except json.JSONDecodeError:
                 continue
-        return json.loads(snippet)
+        return json.loads(sanitized)
 
     def _build_prologue_draft(self, payload: dict[str, object], scalar_text: str | None) -> PrologueDraft | None:
         if not payload and not scalar_text:
@@ -6760,7 +6883,7 @@ class RumorBridgeService:
             character = self._ensure_character(request, name, characters_by_name)
             return character.id
 
-        campaign = self.campaign_repository.save(Campaign.create(
+        campaign = self._save_or_merge_campaign(Campaign.create(
             tenant_id=tenant_id,
             world_id=world_id,
             title=draft.campaign.title,
@@ -6769,8 +6892,8 @@ class RumorBridgeService:
             recommended_level=draft.campaign.recommended_level,
             estimated_hours=draft.campaign.estimated_hours,
             is_replayable=draft.campaign.is_replayable,
-        ))
-        story = self.story_repository.save(Story.create(
+        ), request)
+        story = self._save_or_merge_story(Story.create(
             tenant_id=tenant_id,
             world_id=world_id,
             name=StoryName(draft.story.name),
@@ -6778,7 +6901,7 @@ class RumorBridgeService:
             story_type=self._coerce_story_type(draft.story.story_type),
             content=Content(draft.story.content),
             connected_world_ids=connected_ids,
-        ))
+        ), request)
 
         prologue = None
         if draft.prologue:
@@ -6798,7 +6921,7 @@ class RumorBridgeService:
 
         acts_by_number: dict[int, Act] = {}
         for act_draft in sorted(draft.acts, key=lambda item: item.act_number):
-            act = self.act_repository.save(Act.create(
+            act = self._save_or_merge_act(Act.create(
                 tenant_id=tenant_id,
                 campaign_id=campaign.id,
                 world_id=world_id,
@@ -6809,13 +6932,13 @@ class RumorBridgeService:
                 structure=self._coerce_act_structure(act_draft.structure),
                 key_events=list(act_draft.key_events),
                 estimated_minutes=act_draft.estimated_minutes,
-            ))
+            ), request)
             acts_by_number[act_draft.act_number] = act
 
         chapters_by_number: dict[int, Chapter] = {}
         for chapter_draft in sorted(draft.chapters, key=lambda item: item.sequence_number):
             act_ids = [acts_by_number[number].id for number in chapter_draft.act_numbers if number in acts_by_number]
-            chapter = self.chapter_repository.save(Chapter.create(
+            chapter = self._save_or_merge_chapter(Chapter.create(
                 tenant_id=tenant_id,
                 campaign_id=campaign.id,
                 world_id=world_id,
@@ -6827,14 +6950,16 @@ class RumorBridgeService:
                 required_level=chapter_draft.required_level,
                 estimated_minutes=chapter_draft.estimated_minutes,
                 unlocks_at_level=chapter_draft.unlocks_at_level,
-            ))
+            ), request)
             chapters_by_number[chapter.sequence_number] = chapter
-            campaign.add_chapter(chapter.id)
-            self.campaign_repository.save(campaign)
+            if chapter.id not in campaign.chapter_ids:
+                campaign.add_chapter(chapter.id)
+                self.campaign_repository.save(campaign)
             for number in chapter_draft.act_numbers:
                 if number in acts_by_number:
-                    acts_by_number[number].add_chapter(chapter.id)
-                    self.act_repository.save(acts_by_number[number])
+                    if chapter.id not in acts_by_number[number].chapter_ids:
+                        acts_by_number[number].add_chapter(chapter.id)
+                        self.act_repository.save(acts_by_number[number])
 
         episodes: list[Episode] = []
         previous_episode_ids: dict[int, EntityId] = {}
@@ -6843,7 +6968,7 @@ class RumorBridgeService:
             if chapter is None:
                 continue
             required_previous = [previous_episode_ids[chapter.sequence_number]] if chapter.sequence_number in previous_episode_ids else []
-            episode = self.episode_repository.save(Episode.create(
+            episode = self._save_or_merge_episode(Episode.create(
                 tenant_id=tenant_id,
                 chapter_id=chapter.id,
                 world_id=world_id,
@@ -6853,9 +6978,10 @@ class RumorBridgeService:
                 sequence_number=episode_draft.sequence_number,
                 estimated_minutes=episode_draft.estimated_minutes,
                 required_previous_episodes=required_previous,
-            ))
-            chapter.add_episode(episode.id)
-            self.chapter_repository.save(chapter)
+            ), request)
+            if episode.id not in chapter.episode_ids:
+                chapter.add_episode(episode.id)
+                self.chapter_repository.save(chapter)
             previous_episode_ids[chapter.sequence_number] = episode.id
             episodes.append(episode)
 
@@ -7080,7 +7206,7 @@ class RumorBridgeService:
                 node_names = list(quest_chain_draft.node_names) or derived_node_names_by_chain.get(self._normalize_lookup_key(quest_chain_draft.name), [])
                 if not node_names:
                     continue
-                quest_chain = self.quest_chain_repository.save(QuestChain.create(
+                quest_chain = self._save_or_merge_quest_chain(QuestChain.create(
                     tenant_id=tenant_id,
                     world_id=world_id,
                     name=quest_chain_draft.name,
@@ -7089,7 +7215,7 @@ class RumorBridgeService:
                     required_level=quest_chain_draft.required_level,
                     is_repeatable=quest_chain_draft.is_repeatable,
                     cooldown_hours=quest_chain_draft.cooldown_hours,
-                ))
+                ), request)
                 quest_chains.append(quest_chain)
                 quest_chains_by_name[self._normalize_lookup_key(quest_chain.name)] = quest_chain
 
@@ -7104,7 +7230,7 @@ class RumorBridgeService:
                     for participant_name in participant_names
                     if (participant_id := ensure_character_id(participant_name)) is not None
                 ]
-                quest = self.quest_repository.save(Quest(
+                quest = self._save_or_merge_quest(Quest(
                     id=None,
                     tenant_id=tenant_id,
                     world_id=world_id,
@@ -7123,7 +7249,7 @@ class RumorBridgeService:
                     completion_text=quest_draft.completion_text,
                     failure_text=quest_draft.failure_text,
                     reward_summary=quest_draft.reward_summary,
-                ))
+                ), request)
                 quests.append(quest)
                 quests_by_name[self._normalize_lookup_key(quest.name)] = quest
 
@@ -7762,7 +7888,7 @@ class RumorBridgeService:
         items: list[Item] = []
         items_by_name: dict[str, Item] = {}
         for item_draft in draft.items:
-            item = self.item_repository.save(Item.create(
+            item = self._save_or_merge_item(Item.create(
                 tenant_id=tenant_id,
                 world_id=world_id,
                 name=item_draft.name,
@@ -7778,7 +7904,7 @@ class RumorBridgeService:
                 base_def=self._coerce_non_negative_optional_int(item_draft.base_def),
                 special_stat=item_draft.special_stat,
                 special_stat_value=item_draft.special_stat_value,
-            ))
+            ), request)
             items.append(item)
             items_by_name[self._normalize_lookup_key(item.name)] = item
 
@@ -8743,7 +8869,7 @@ class RumorBridgeService:
                 for reward_name in seasonal_event_draft.reward_item_names
                 if self._normalize_lookup_key(reward_name) in items_by_name
             ]
-            seasonal_events.append(self.seasonal_event_repository.save(SeasonalEvent.create(
+            seasonal_events.append(self._save_or_merge_seasonal_event(SeasonalEvent.create(
                 tenant_id=tenant_id,
                 world_id=world_id,
                 name=seasonal_event_draft.name,
@@ -8755,7 +8881,7 @@ class RumorBridgeService:
                 is_recurring=seasonal_event_draft.is_recurring,
                 recurrence_period_days=max(1, seasonal_event_draft.recurrence_period_days) if seasonal_event_draft.recurrence_period_days is not None else None,
                 is_active=seasonal_event_draft.is_active,
-            )))
+            ), request))
 
         invasions: list[Invasion] = []
         for invasion_draft in draft.invasions:
@@ -8776,7 +8902,7 @@ class RumorBridgeService:
 
         wars: list[War] = []
         for war_draft in draft.wars:
-            wars.append(self.war_repository.save(War.create(
+            wars.append(self._save_or_merge_war(War.create(
                 tenant_id=tenant_id,
                 world_id=world_id,
                 name=war_draft.name,
@@ -8790,7 +8916,7 @@ class RumorBridgeService:
                 territorial_change_names=list(war_draft.territorial_change_names),
                 victor_name=war_draft.victor_name,
                 is_active=war_draft.is_active,
-            )))
+            ), request))
 
         legendary_weapons: list[LegendaryWeapon] = []
         for legendary_weapon_draft in draft.legendary_weapons:
@@ -8851,7 +8977,7 @@ class RumorBridgeService:
 
         artifact_sets: list[ArtifactSet] = []
         for artifact_set_draft in draft.artifact_sets:
-            artifact_sets.append(self.artifact_set_repository.save(ArtifactSet.create(
+            artifact_sets.append(self._save_or_merge_artifact_set(ArtifactSet.create(
                 tenant_id=tenant_id,
                 world_id=world_id,
                 name=artifact_set_draft.name,
@@ -8860,11 +8986,11 @@ class RumorBridgeService:
                 total_pieces=max(2, artifact_set_draft.total_pieces),
                 rarity=artifact_set_draft.rarity,
                 set_bonus=artifact_set_draft.set_bonus,
-            )))
+            ), request))
 
         relic_collections: list[RelicCollection] = []
         for relic_collection_draft in draft.relic_collections:
-            relic_collections.append(self.relic_collection_repository.save(RelicCollection.create(
+            relic_collections.append(self._save_or_merge_relic_collection(RelicCollection.create(
                 tenant_id=tenant_id,
                 world_id=world_id,
                 name=relic_collection_draft.name,
@@ -8874,7 +9000,7 @@ class RumorBridgeService:
                 rarity=relic_collection_draft.rarity,
                 collection_power=max(0, relic_collection_draft.collection_power),
                 completion_reward=relic_collection_draft.completion_reward,
-            )))
+            ), request))
 
         return RumorChainResult(
             rumors=chain_result.rumors,
@@ -10088,6 +10214,310 @@ class RumorBridgeService:
                 tenant_id=relation.tenant_id,
                 world_id=world_id,
             ),
+        )
+
+    def _carry_existing_row_metadata(self, entity: object, row: Any, payload: dict[str, object] | None = None) -> None:
+        payload = payload or {}
+        entity_id = row["id"] if "id" in row.keys() else None
+        if entity_id:
+            object.__setattr__(entity, "id", EntityId(int(entity_id)))
+        created_at = _row_timestamp_value(row, "created_at")
+        if created_at is None:
+            payload_created = _coerce_canonical_text(payload.get("created_at"))
+            if payload_created:
+                dt = datetime.fromisoformat(payload_created)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                created_at = Timestamp(dt)
+        if created_at is not None:
+            object.__setattr__(entity, "created_at", created_at)
+        row_version = row["version"] if "version" in row.keys() else payload.get("version")
+        try:
+            current_version = int(row_version)
+        except Exception:
+            current_version = getattr(getattr(entity, "version", None), "value", 1)
+        object.__setattr__(entity, "version", Version(max(1, current_version) + 1))
+        object.__setattr__(entity, "updated_at", Timestamp.now())
+
+    def _save_or_merge_campaign(self, campaign: Campaign, request: RumorGenerationRequest) -> Campaign:
+        rows = self._list_table_rows(self.campaign_repository, "campaigns", TenantId(request.tenant_id), EntityId(request.world_id), limit=12)
+        best_row = None
+        best_score = 0.0
+        candidate_title = _normalize_canonical_text(campaign.title)
+        candidate_desc = _normalize_canonical_text(campaign.description)
+        for row in rows:
+            title_score = _canonical_text_similarity(candidate_title, _normalize_canonical_text(row["title"]))
+            desc_score = _canonical_text_similarity(candidate_desc, _normalize_canonical_text(row["description"]))
+            score = (title_score * 0.7) + (desc_score * 0.3)
+            if row["campaign_type"] == campaign.campaign_type.value:
+                score += 0.05
+            if score > best_score:
+                best_score = score
+                best_row = row
+        if best_row is not None and best_score >= 0.78:
+            self._carry_existing_row_metadata(campaign, best_row)
+            object.__setattr__(campaign, "chapter_ids", [EntityId(item) for item in _row_json_int_ids(best_row, "chapter_ids")])
+            if len(_coerce_canonical_text(best_row["description"]) or "") > len(str(campaign.description or "")):
+                object.__setattr__(campaign, "description", Description(str(best_row["description"])))
+            if (best_row["recommended_level"] or 0) > (campaign.recommended_level or 0):
+                object.__setattr__(campaign, "recommended_level", best_row["recommended_level"])
+            if (best_row["estimated_hours"] or 0) > (campaign.estimated_hours or 0):
+                object.__setattr__(campaign, "estimated_hours", best_row["estimated_hours"])
+            if best_row["status"] == "active":
+                object.__setattr__(campaign, "status", type(campaign.status).ACTIVE)
+            if best_row["is_replayable"]:
+                object.__setattr__(campaign, "is_replayable", True)
+        return self.campaign_repository.save(campaign)
+
+    def _save_or_merge_story(self, story: Story, request: RumorGenerationRequest) -> Story:
+        rows = self._list_table_rows(self.story_repository, "stories", TenantId(request.tenant_id), EntityId(request.world_id), limit=12)
+        best_row = None
+        best_score = 0.0
+        candidate_name = _normalize_canonical_text(story.name)
+        candidate_desc = _normalize_canonical_text(story.description)
+        for row in rows:
+            name_score = _canonical_text_similarity(candidate_name, _normalize_canonical_text(row["name"]))
+            desc_score = _canonical_text_similarity(candidate_desc, _normalize_canonical_text(row["description"]))
+            score = (name_score * 0.7) + (desc_score * 0.3)
+            if row["story_type"] == story.story_type.value:
+                score += 0.05
+            if score > best_score:
+                best_score = score
+                best_row = row
+        if best_row is not None and best_score >= 0.8:
+            self._carry_existing_row_metadata(story, best_row)
+            object.__setattr__(story, "choice_ids", [EntityId(item) for item in _row_json_int_ids(best_row, "choice_ids")])
+            connected = {item.value for item in story.connected_world_ids}
+            for item in _row_json_int_ids(best_row, "connected_world_ids"):
+                if item not in connected:
+                    story.connected_world_ids.append(EntityId(item))
+                    connected.add(item)
+            if len(_coerce_canonical_text(best_row["description"]) or "") > len(story.description):
+                object.__setattr__(story, "description", str(best_row["description"]))
+            if len(_coerce_canonical_text(best_row["content"]) or "") > len(str(story.content)):
+                object.__setattr__(story, "content", Content(str(best_row["content"])))
+            if best_row["is_active"]:
+                object.__setattr__(story, "is_active", True)
+        return self.story_repository.save(story)
+
+    def _save_or_merge_act(self, act: Act, request: RumorGenerationRequest) -> Act:
+        rows = self._list_table_rows(self.act_repository, "acts", TenantId(request.tenant_id), EntityId(request.world_id), limit=24)
+        for row in rows:
+            if row["campaign_id"] != act.campaign_id.value:
+                continue
+            same_number = row["act_number"] == act.act_number
+            title_score = _canonical_text_similarity(_normalize_canonical_text(row["title"]), _normalize_canonical_text(act.title))
+            if same_number or title_score >= 0.82:
+                self._carry_existing_row_metadata(act, row)
+                object.__setattr__(act, "chapter_ids", [EntityId(item) for item in _row_json_int_ids(row, "chapter_ids")])
+                merged_key_events = list(dict.fromkeys([*json.loads(row["key_events"] or "[]"), *list(act.key_events)]))
+                object.__setattr__(act, "key_events", merged_key_events)
+                if len(_coerce_canonical_text(row["description"]) or "") > len(str(act.description or "")):
+                    object.__setattr__(act, "description", Description(str(row["description"])))
+                break
+        return self.act_repository.save(act)
+
+    def _save_or_merge_chapter(self, chapter: Chapter, request: RumorGenerationRequest) -> Chapter:
+        rows = self._list_table_rows(self.chapter_repository, "chapters", TenantId(request.tenant_id), EntityId(request.world_id), limit=32)
+        for row in rows:
+            if row["campaign_id"] != chapter.campaign_id.value:
+                continue
+            same_number = row["sequence_number"] == chapter.sequence_number
+            title_score = _canonical_text_similarity(_normalize_canonical_text(row["title"]), _normalize_canonical_text(chapter.title))
+            if same_number or title_score >= 0.82:
+                self._carry_existing_row_metadata(chapter, row)
+                object.__setattr__(chapter, "episode_ids", [EntityId(item) for item in _row_json_int_ids(row, "episode_ids")])
+                existing_act_ids = set(_row_json_int_ids(row, "act_ids"))
+                merged_act_ids = list({*existing_act_ids, *[item.value for item in chapter.act_ids]})
+                object.__setattr__(chapter, "act_ids", [EntityId(item) for item in merged_act_ids])
+                if len(_coerce_canonical_text(row["description"]) or "") > len(str(chapter.description or "")):
+                    object.__setattr__(chapter, "description", Description(str(row["description"])))
+                break
+        return self.chapter_repository.save(chapter)
+
+    def _save_or_merge_episode(self, episode: Episode, request: RumorGenerationRequest) -> Episode:
+        rows = self._list_table_rows(self.episode_repository, "episodes", TenantId(request.tenant_id), EntityId(request.world_id), limit=48)
+        for row in rows:
+            if row["chapter_id"] != episode.chapter_id.value:
+                continue
+            same_number = row["sequence_number"] == episode.sequence_number
+            title_score = _canonical_text_similarity(_normalize_canonical_text(row["title"]), _normalize_canonical_text(episode.title))
+            if same_number or title_score >= 0.82:
+                self._carry_existing_row_metadata(episode, row)
+                if len(_coerce_canonical_text(row["description"]) or "") > len(str(episode.description or "")):
+                    object.__setattr__(episode, "description", Description(str(row["description"])))
+                break
+        return self.episode_repository.save(episode)
+
+    def _save_or_merge_generic_named_entity(
+        self,
+        entity: object,
+        request: RumorGenerationRequest,
+        *,
+        repository: object | None,
+        table_name: str,
+        entity_name: str,
+        description_text: str,
+        match_fields: dict[str, object] | None = None,
+        include_worldless: bool = False,
+    ):
+        best_row = None
+        best_payload: dict[str, object] = {}
+        best_score = 0.0
+        candidate_name = _normalize_canonical_text(entity_name)
+        candidate_desc = _normalize_canonical_text(description_text)
+        for row, payload in self._generic_payload_rows(repository, table_name, TenantId(request.tenant_id), EntityId(request.world_id), limit=50, include_worldless=include_worldless):
+            existing_name = _normalize_canonical_text(payload.get("name") or row["label"])
+            existing_desc = _normalize_canonical_text(payload.get("description") or row["label"])
+            name_score = 1.0 if existing_name == candidate_name else _canonical_text_similarity(existing_name, candidate_name)
+            desc_score = 1.0 if existing_desc == candidate_desc else _canonical_text_similarity(existing_desc, candidate_desc)
+            field_score = 0.0
+            if match_fields:
+                matches = 0
+                total = 0
+                for key, value in match_fields.items():
+                    normalized_value = _normalize_canonical_text(value)
+                    if not normalized_value:
+                        continue
+                    total += 1
+                    if _normalize_canonical_text(payload.get(key)) == normalized_value:
+                        matches += 1
+                if total:
+                    field_score = matches / total
+            if existing_name == candidate_name and (field_score >= 0.5 or not match_fields):
+                best_row = row
+                best_payload = payload
+                best_score = 1.0
+                break
+            score = (name_score * 0.75) + (desc_score * 0.15) + (field_score * 0.10)
+            if score > best_score:
+                best_row = row
+                best_payload = payload
+                best_score = score
+        if best_row is not None and best_score >= 0.76:
+            self._carry_existing_row_metadata(entity, best_row, best_payload)
+            if hasattr(entity, "description") and len(_coerce_canonical_text(best_payload.get("description")) or "") > len(description_text):
+                existing_description = best_payload.get("description")
+                if isinstance(getattr(entity, "description", None), Description):
+                    object.__setattr__(entity, "description", Description(str(existing_description)))
+                else:
+                    object.__setattr__(entity, "description", str(existing_description))
+        return repository.save(entity)
+
+    def _save_or_merge_quest(self, quest: Quest, request: RumorGenerationRequest) -> Quest:
+        match_fields = {"status": quest.status.value}
+        quest = self._save_or_merge_generic_named_entity(
+            quest,
+            request,
+            repository=self.quest_repository,
+            table_name="quests",
+            entity_name=quest.name,
+            description_text=str(quest.description),
+            match_fields=match_fields,
+        )
+        return quest
+
+    def _save_or_merge_quest_chain(self, quest_chain: QuestChain, request: RumorGenerationRequest) -> QuestChain:
+        return self._save_or_merge_generic_named_entity(
+            quest_chain,
+            request,
+            repository=self.quest_chain_repository,
+            table_name="quest_chains",
+            entity_name=quest_chain.name,
+            description_text=str(quest_chain.description),
+        )
+
+    def _save_or_merge_item(self, item: Item, request: RumorGenerationRequest) -> Item:
+        match_fields = {"item_type": item.item_type.value}
+        item = self._save_or_merge_generic_named_entity(
+            item,
+            request,
+            repository=self.item_repository,
+            table_name="items",
+            entity_name=item.name,
+            description_text=str(item.description),
+            match_fields=match_fields,
+        )
+        return item
+
+    def _save_or_merge_seasonal_event(self, seasonal_event: SeasonalEvent, request: RumorGenerationRequest) -> SeasonalEvent:
+        return self._save_or_merge_generic_named_entity(
+            seasonal_event,
+            request,
+            repository=self.seasonal_event_repository,
+            table_name="seasonal_events",
+            entity_name=seasonal_event.name,
+            description_text=seasonal_event.description,
+            match_fields={"season": seasonal_event.season},
+        )
+
+    def _save_or_merge_war(self, war: War, request: RumorGenerationRequest) -> War:
+        return self._save_or_merge_generic_named_entity(
+            war,
+            request,
+            repository=self.war_repository,
+            table_name="wars",
+            entity_name=war.name,
+            description_text=war.description,
+            match_fields={"war_type": war.war_type, "aggressor_name": war.aggressor_name, "defender_name": war.defender_name},
+        )
+
+    def _save_or_merge_artifact_set(self, artifact_set: ArtifactSet, request: RumorGenerationRequest) -> ArtifactSet:
+        rows = self._generic_payload_rows(self.artifact_set_repository, "artifact_sets", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        same_type_rows = [
+            (row, payload)
+            for row, payload in rows
+            if _normalize_canonical_text(payload.get("set_type")) == _normalize_canonical_text(artifact_set.set_type)
+        ]
+        canonical_rows = same_type_rows or rows[:1]
+        if canonical_rows:
+            row, payload = sorted(canonical_rows, key=lambda item: int(item[0]["id"]))[0]
+            self._carry_existing_row_metadata(artifact_set, row, payload)
+            if len(_coerce_canonical_text(payload.get("description")) or "") > len(str(artifact_set.description)):
+                object.__setattr__(artifact_set, "description", Description(str(payload.get("description"))))
+            object.__setattr__(artifact_set, "total_pieces", max(artifact_set.total_pieces, int(payload.get("total_pieces") or 0) or artifact_set.total_pieces))
+            if _coerce_canonical_text(payload.get("rarity")) and _normalize_canonical_text(payload.get("rarity")) != _normalize_canonical_text(artifact_set.rarity):
+                object.__setattr__(artifact_set, "rarity", str(payload.get("rarity")))
+            if not same_type_rows and _coerce_canonical_text(payload.get("set_type")):
+                object.__setattr__(artifact_set, "set_type", str(payload.get("set_type")))
+            return self.artifact_set_repository.save(artifact_set)
+        return self._save_or_merge_generic_named_entity(
+            artifact_set,
+            request,
+            repository=self.artifact_set_repository,
+            table_name="artifact_sets",
+            entity_name=artifact_set.name,
+            description_text=artifact_set.description,
+            match_fields={"set_type": artifact_set.set_type},
+        )
+
+    def _save_or_merge_relic_collection(self, relic_collection: RelicCollection, request: RumorGenerationRequest) -> RelicCollection:
+        rows = self._generic_payload_rows(self.relic_collection_repository, "relic_collections", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        same_type_rows = [
+            (row, payload)
+            for row, payload in rows
+            if _normalize_canonical_text(payload.get("collection_type")) == _normalize_canonical_text(relic_collection.collection_type)
+        ]
+        canonical_rows = same_type_rows or rows[:1]
+        if canonical_rows:
+            row, payload = sorted(canonical_rows, key=lambda item: int(item[0]["id"]))[0]
+            self._carry_existing_row_metadata(relic_collection, row, payload)
+            if len(_coerce_canonical_text(payload.get("description")) or "") > len(str(relic_collection.description)):
+                object.__setattr__(relic_collection, "description", Description(str(payload.get("description"))))
+            object.__setattr__(relic_collection, "total_relics", max(relic_collection.total_relics, int(payload.get("total_relics") or 0) or relic_collection.total_relics))
+            if _coerce_canonical_text(payload.get("rarity")) and _normalize_canonical_text(payload.get("rarity")) != _normalize_canonical_text(relic_collection.rarity):
+                object.__setattr__(relic_collection, "rarity", str(payload.get("rarity")))
+            if not same_type_rows and _coerce_canonical_text(payload.get("collection_type")):
+                object.__setattr__(relic_collection, "collection_type", str(payload.get("collection_type")))
+            return self.relic_collection_repository.save(relic_collection)
+        return self._save_or_merge_generic_named_entity(
+            relic_collection,
+            request,
+            repository=self.relic_collection_repository,
+            table_name="relic_collections",
+            entity_name=relic_collection.name,
+            description_text=relic_collection.description,
+            match_fields={"collection_type": relic_collection.collection_type},
         )
 
     def _semantic_candidate_ids(self, entity_type: str, query_text: str, context: CanonicalPersistContext) -> set[int]:

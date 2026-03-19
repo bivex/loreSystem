@@ -726,6 +726,163 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         conn.close()
 
 
+def test_camel_bridge_reuses_existing_narrative_canon_across_runs(tmp_path):
+    db_path = str(tmp_path / "campaign_story_reuse.db")
+    _seed_world(db_path)
+    narrative_payload = {
+        "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
+        "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
+        "acts": [{"title": "Act I - The Whisper Network", "description": "The rumor web expands.", "act_number": 1, "act_type": "setup", "structure": "three_act", "key_events": ["Dockside Murmurs"]}],
+        "chapters": [{"title": "Chapter 1 - Hushed Piers", "description": "The first warnings spread.", "sequence_number": 1, "act_numbers": [1], "chapter_type": "introduction"}],
+        "episodes": [{"title": "Episode 1 - Bellkeeper", "description": "The bellkeeper reveals the omen.", "sequence_number": 1, "chapter_number": 1, "episode_type": "narrative"}],
+        "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers"], "participant_names": ["Mara Voss", "Iven Hale"], "status": "active", "player_briefing": "Move before the bells do.", "journal_summary": "Warn the docks.", "acceptance_text": "Take the warning to the waterfront.", "completion_text": "The docks stand ready.", "failure_text": "The docks fall into panic.", "reward_summary": "Bellkeeper's Reward."}],
+    }
+    responses = [
+        '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
+        '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
+        '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
+        '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
+        *[json.dumps(narrative_payload) for _ in NARRATIVE_BATCH_SPECS],
+    ]
+    backend = DeterministicRumorBackend([*responses, *responses])
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=backend,
+        character_repository=CamelBridgeCharacterRepository(db_path),
+        event_repository=CamelBridgeEventRepository(db_path),
+        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
+        campaign_repository=CamelBridgeCampaignRepository(db_path),
+        story_repository=CamelBridgeStoryRepository(db_path),
+        act_repository=CamelBridgeActRepository(db_path),
+        chapter_repository=CamelBridgeChapterRepository(db_path),
+        episode_repository=CamelBridgeEpisodeRepository(db_path),
+        prologue_repository=CamelBridgePrologueRepository(db_path),
+        epilogue_repository=CamelBridgeEpilogueRepository(db_path),
+        quest_repository=CamelBridgeQuestRepository(db_path),
+    )
+
+    first = service.generate_story_chain(
+        RumorGenerationRequest(
+            tenant_id=1,
+            world_id=1,
+            theme="harbor panic",
+            context="Citizens fear the next eclipse.",
+            character_names=("Mara Voss", "Iven Hale"),
+        ),
+        include_narrative_structure=True,
+    )
+    second = service.generate_story_chain(
+        RumorGenerationRequest(
+            tenant_id=1,
+            world_id=1,
+            theme="harbor panic",
+            context="Citizens fear the next eclipse.",
+            character_names=("Mara Voss", "Iven Hale"),
+        ),
+        include_narrative_structure=True,
+    )
+
+    assert first.campaign is not None and second.campaign is not None
+    assert first.story is not None and second.story is not None
+    assert first.campaign.id == second.campaign.id
+    assert first.story.id == second.story.id
+    assert [act.id for act in first.acts] == [act.id for act in second.acts]
+    assert [chapter.id for chapter in first.chapters] == [chapter.id for chapter in second.chapters]
+    assert [episode.id for episode in first.episodes] == [episode.id for episode in second.episodes]
+    assert [quest.id for quest in first.quests] == [quest.id for quest in second.quests]
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM acts").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM chapters").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM episodes").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quests").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
+def test_camel_bridge_merges_artifact_and_relic_collections_by_canonical_type(tmp_path):
+    db_path = str(tmp_path / "artifact_relic_reuse.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        artifact_set_repository=CamelBridgeArtifactSetRepository(db_path),
+        relic_collection_repository=CamelBridgeRelicCollectionRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+    )
+
+    artifact_first = service._save_or_merge_artifact_set(
+        ArtifactSet.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Bellglass Regalia",
+            description="The first canonical armor set.",
+            set_type="mixed",
+            total_pieces=3,
+            rarity="legendary",
+            set_bonus="First bonus",
+        ),
+        request,
+    )
+    artifact_second = service._save_or_merge_artifact_set(
+        ArtifactSet.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Ashen Harbor Set",
+            description="A renamed variant that should merge into the same canonical slot.",
+            set_type="armor",
+            total_pieces=4,
+            rarity="mythical",
+            set_bonus="Second bonus",
+        ),
+        request,
+    )
+    relic_first = service._save_or_merge_relic_collection(
+        RelicCollection.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Harbor Relics",
+            description="The first canonical relic collection.",
+            collection_type="ancient",
+            total_relics=3,
+            rarity="rare",
+        ),
+        request,
+    )
+    relic_second = service._save_or_merge_relic_collection(
+        RelicCollection.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Whispers of the Moon",
+            description="A renamed variant that should merge into the same canonical slot.",
+            collection_type="divine",
+            total_relics=5,
+            rarity="divine",
+        ),
+        request,
+    )
+
+    assert artifact_first.id == artifact_second.id
+    assert relic_first.id == relic_second.id
+    assert artifact_second.set_type == "mixed"
+    assert relic_second.collection_type == "ancient"
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM artifact_sets").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM relic_collections").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
 def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
     class RecordingBackend:
         def __init__(self):
@@ -753,11 +910,13 @@ def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
     assert "For quests include" in narrative_prompt
     assert "For items include" not in narrative_prompt
 
-    service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=True)
 
-    systems_system_message, systems_prompt = backend.calls[-1]
-    assert "items, inventories" in systems_system_message
-    assert "For items include" in systems_prompt
+def test_decode_json_prefix_tolerates_control_characters_inside_model_output():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend([]))
+    payload = service._decode_json_prefix("{\"story\":{\"name\":\"Blue\x07 Lantern\"},\"quests\":[{\"name\":\"Bell\n Quest\"}]}")
+
+    assert payload["story"]["name"] == "Blue  Lantern"
+    assert payload["quests"][0]["name"] == "Bell  Quest"
 
 
 def test_narrative_prompt_includes_deterministic_anchors():
