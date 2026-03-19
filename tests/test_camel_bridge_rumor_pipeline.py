@@ -2044,3 +2044,29 @@ def test_camel_bridge_normalizes_high_tier_rarity_values():
     assert service._coerce_high_tier_rarity("godly", default="divine") == "divine"
     assert service._coerce_high_tier_rarity("common", default="legendary") == "rare"
     assert service._coerce_high_tier_rarity("weird", default="legendary") == "legendary"
+
+
+def test_camel_bridge_normalizes_artifact_set_type_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_artifact_set_type_text("weapon") == "weapons"
+    assert service._coerce_artifact_set_type_text("jewelry") == "accessories"
+    assert service._coerce_artifact_set_type_text("unknown") == "mixed"
+
+
+def test_camel_bridge_normalizes_artifact_set_rarity_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_artifact_set_rarity("mythic") == "mythical"
+    assert service._coerce_artifact_set_rarity("godly") == "divine"
+    assert service._coerce_artifact_set_rarity("unknown") == "legendary"
+
+
+def test_camel_bridge_normalizes_relic_collection_fields():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_relic_collection_type_text("historic") == "historical"
+    assert service._coerce_relic_collection_type_text("holy") == "divine"
+    assert service._coerce_relic_collection_type_text("unknown") == "ancient"
+    assert service._coerce_relic_collection_rarity("mythic") == "mythical"
+    assert service._coerce_relic_collection_rarity("godly") == "divine"

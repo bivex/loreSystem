@@ -3567,21 +3567,57 @@ class RumorBridgeService:
 
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
         if include_narrative_structure:
+            LOGGER.info(
+                "CAMEL bridge narrative generation start rumors=%s events=%s relationships=%s characters=%s",
+                len(result.rumors),
+                len(result.events),
+                len(result.relationships),
+                len(result.characters),
+            )
             narrative_draft = self._generate_enriched_structure_draft(
                 request,
                 result,
                 memory_context,
                 include_systems_slice=False,
             )
+            LOGGER.info("CAMEL bridge narrative persistence start")
             result = self._persist_narrative_structure(request, result, narrative_draft)
+            LOGGER.info(
+                "CAMEL bridge narrative persistence completed campaign=%s story=%s acts=%s chapters=%s episodes=%s quests=%s",
+                1 if result.campaign else 0,
+                1 if result.story else 0,
+                len(result.acts),
+                len(result.chapters),
+                len(result.episodes),
+                len(result.quests),
+            )
         if include_systems_slice:
+            LOGGER.info(
+                "CAMEL bridge systems generation start seed_items=%s seed_characters=%s",
+                len(result.items),
+                len(result.characters),
+            )
             systems_draft = self._generate_systems_slice_draft(
                 request,
                 result,
                 memory_context,
             )
+            LOGGER.info("CAMEL bridge systems persistence start")
             result = self._persist_systems_slice(request, result, systems_draft)
+            LOGGER.info(
+                "CAMEL bridge systems persistence completed items=%s materials=%s skills=%s dungeons=%s seasonal_events=%s wars=%s artifact_sets=%s relic_collections=%s",
+                len(result.items),
+                len(result.materials),
+                len(result.skills),
+                len(result.dungeons),
+                len(result.seasonal_events),
+                len(result.wars),
+                len(result.artifact_sets),
+                len(result.relic_collections),
+            )
+        LOGGER.info("CAMEL bridge memory reindex start")
         self._reindex_memory(request)
+        LOGGER.info("CAMEL bridge memory reindex completed")
         return result
 
     def generate_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> RumorChainResult:
@@ -4373,8 +4409,19 @@ class RumorBridgeService:
         if self.memory_service is None:
             return
         try:
-            self.memory_service.index_world_snapshot(tenant_id=request.tenant_id, world_id=request.world_id)
+            indexed_count = self.memory_service.index_world_snapshot(tenant_id=request.tenant_id, world_id=request.world_id)
+            LOGGER.info(
+                "CAMEL bridge memory indexed documents=%s tenant_id=%s world_id=%s",
+                indexed_count,
+                request.tenant_id,
+                request.world_id,
+            )
         except Exception:
+            LOGGER.exception(
+                "CAMEL bridge memory reindex failed tenant_id=%s world_id=%s",
+                request.tenant_id,
+                request.world_id,
+            )
             return
 
     def _parse_rumor_drafts(self, raw: str) -> list[RumorDraft]:
@@ -6342,7 +6389,7 @@ class RumorBridgeService:
             ),
             set_type=self._coerce_artifact_set_type_text(payload.get("set_type") or payload.get("type")),
             total_pieces=max(2, self._coerce_non_negative_optional_int(payload.get("total_pieces")) or 3),
-            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            rarity=self._coerce_artifact_set_rarity(payload.get("rarity")),
             set_bonus=self._coerce_optional_text(payload.get("set_bonus") or payload.get("bonus")) or "",
         )
 
@@ -6356,9 +6403,9 @@ class RumorBridgeService:
                 scalar_text,
                 f"Relic collection {index} extracted from the rumor chain.",
             ),
-            collection_type=(self._coerce_optional_text(payload.get("collection_type") or payload.get("type")) or "ancient").lower(),
+            collection_type=self._coerce_relic_collection_type_text(payload.get("collection_type") or payload.get("type")),
             total_relics=max(1, self._coerce_non_negative_optional_int(payload.get("total_relics")) or 3),
-            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            rarity=self._coerce_relic_collection_rarity(payload.get("rarity")),
             collection_power=max(0, self._coerce_non_negative_optional_int(payload.get("collection_power") or payload.get("power")) or 0),
             completion_reward=self._coerce_optional_text(payload.get("completion_reward") or payload.get("reward")) or "",
         )
@@ -10250,6 +10297,47 @@ class RumorBridgeService:
         }
         normalized = aliases.get(normalized, normalized)
         return normalized if normalized in {"armor", "weapons", "accessories", "mixed"} else "mixed"
+
+    def _coerce_artifact_set_rarity(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "legendary").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "mythic": "mythical",
+            "godly": "divine",
+            "artifact": "legendary",
+            "unique": "legendary",
+            "common": "epic",
+            "rare": "epic",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"epic", "legendary", "mythical", "divine"} else "legendary"
+
+    def _coerce_relic_collection_type_text(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "ancient").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "historic": "historical",
+            "history": "historical",
+            "mythic": "mythological",
+            "myths": "mythological",
+            "holy": "divine",
+            "sacred": "divine",
+            "damned": "cursed",
+            "taboo": "forbidden",
+            "relic": "ancient",
+            "artifact": "ancient",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"historical", "mythological", "divine", "cursed", "forbidden", "ancient"} else "ancient"
+
+    def _coerce_relic_collection_rarity(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "legendary").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "mythic": "mythical",
+            "godly": "divine",
+            "artifact": "legendary",
+            "common": "rare",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"rare", "epic", "legendary", "mythical", "divine", "unique"} else "legendary"
 
     def _coerce_choice_type(self, value: str) -> ChoiceType:
         return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)
