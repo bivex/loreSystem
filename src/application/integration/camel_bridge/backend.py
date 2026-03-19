@@ -66,6 +66,9 @@ class CamelChatBackend:
         return self.model_platform in {"OPENAI", "OPENROUTER"}
 
     def _validate_environment(self) -> None:
+        # Skip validation for localhost connections (LM Studio, local servers)
+        if self.model_url and any(host in self.model_url for host in ("127.0.0.1", "localhost", "::1")):
+            return
         required_key = {
             "OPENAI": "OPENAI_API_KEY",
             "ANTHROPIC": "ANTHROPIC_API_KEY",
@@ -105,7 +108,7 @@ class CamelChatBackend:
         if reasoning_effort:
             payload["reasoning"] = {"effort": reasoning_effort}
         request = urllib_request.Request(
-            f"{self.model_url.rstrip('/')}/chat/completions",
+            f"{self.model_url.rstrip('/')}/v1/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
             headers=self._build_openai_compatible_headers(),
             method="POST",
@@ -153,10 +156,12 @@ class CamelChatBackend:
         raise RuntimeError("CAMEL bridge HTTP generation returned no assistant content")
 
     def _build_openai_compatible_headers(self) -> dict[str, str]:
-        headers = {
-            "Authorization": f"Bearer {self._get_api_key()}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json"}
+        # Skip Authorization header for localhost (LM Studio, local servers)
+        if not (self.model_url and any(host in self.model_url for host in ("127.0.0.1", "localhost", "::1"))):
+            api_key = self._get_api_key()
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
         if self.model_platform == "OPENROUTER":
             headers["HTTP-Referer"] = os.getenv("OPENROUTER_HTTP_REFERER") or "https://github.com/bivex/loreSystem"
             headers["X-Title"] = os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
