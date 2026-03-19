@@ -3284,22 +3284,40 @@ class RumorBridgeService:
             raise ValueError("Character, event, and relationship repositories are required for story chain generation")
 
         memory_context = self._memory_context_for(request)
+        LOGGER.info(
+            "CAMEL bridge story chain start tenant_id=%s world_id=%s narrative=%s systems=%s memory_chars=%s",
+            request.tenant_id,
+            request.world_id,
+            include_narrative_structure,
+            include_systems_slice,
+            len(memory_context),
+        )
+        LOGGER.info("CAMEL bridge core transaction scope entering")
         with self._bridge_transaction_scope(
             self.repository,
             self.character_repository,
             self.event_repository,
             self.relationship_repository,
         ):
+            LOGGER.info("CAMEL bridge core rumor generation start")
             rumors = self.generate_and_persist(request, memory_context=memory_context, reindex_memory=False)
+            LOGGER.info("CAMEL bridge core rumor generation completed rumors=%s", len(rumors))
+            LOGGER.info("CAMEL bridge core seed character resolution start")
             characters_by_name = self._ensure_seed_characters(request)
+            LOGGER.info("CAMEL bridge core seed character resolution completed characters=%s", len(characters_by_name))
+            LOGGER.info("CAMEL bridge core event generation start")
             event_drafts = self._generate_event_drafts(request, rumors, memory_context)
+            LOGGER.info("CAMEL bridge core event generation completed drafts=%s", len(event_drafts))
             events: list[Event] = []
             for draft in event_drafts:
                 participants = self._ensure_participants(request, draft.participant_names, characters_by_name)
                 event = self._save_or_merge_event(self._event_to_entity(request, draft, participants), request)
                 events.append(event)
+            LOGGER.info("CAMEL bridge core event persistence completed events=%s", len(events))
 
+            LOGGER.info("CAMEL bridge core relationship generation start")
             relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
+            LOGGER.info("CAMEL bridge core relationship generation completed drafts=%s", len(relationship_drafts))
             relationships: list[CharacterRelationship] = []
             for draft in relationship_drafts:
                 left = self._resolve_character(request, draft.character_from_name, characters_by_name, auto_create=True)
@@ -3310,8 +3328,18 @@ class RumorBridgeService:
                     continue
                 relation = self._relationship_to_entity(request, draft, left.id, right.id, events[0].id if events else None)
                 relationships.append(self._save_or_merge_relationship(relation, EntityId(request.world_id)))
+            LOGGER.info("CAMEL bridge core relationship persistence completed relationships=%s", len(relationships))
+        LOGGER.info("CAMEL bridge core transaction scope exited")
 
+        LOGGER.info("CAMEL bridge result assembly start")
         result = RumorChainResult(rumors=rumors, characters=list(characters_by_name.values()), events=events, relationships=relationships)
+        LOGGER.info(
+            "CAMEL bridge result assembly completed rumors=%s events=%s relationships=%s characters=%s",
+            len(result.rumors),
+            len(result.events),
+            len(result.relationships),
+            len(result.characters),
+        )
         if include_narrative_structure:
             LOGGER.info(
                 "CAMEL bridge narrative generation start rumors=%s events=%s relationships=%s characters=%s",
@@ -3388,15 +3416,25 @@ class RumorBridgeService:
     @contextmanager
     def _bridge_transaction_scope(self, *repositories: object):
         seen: set[int] = set()
+        repository_names: list[str] = []
         with ExitStack() as stack:
             for repository in repositories:
                 if repository is None or id(repository) in seen:
                     continue
                 seen.add(id(repository))
+                repository_names.append(type(repository).__name__)
                 batcher = getattr(repository, "_batched_transaction", None)
                 if callable(batcher):
                     stack.enter_context(batcher())
+            LOGGER.info(
+                "CAMEL bridge batched transaction entered repositories=%s",
+                ",".join(repository_names) or "none",
+            )
             yield
+        LOGGER.info(
+            "CAMEL bridge batched transaction exited repositories=%s",
+            ",".join(repository_names) or "none",
+        )
 
     def _persist_narrative_structure(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
         with self._bridge_transaction_scope(
