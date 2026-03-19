@@ -55,7 +55,7 @@ NARRATIVE_BATCH_SPECS = (
             "epilogue",
             "storylines",
         ),
-        "Focus on the campaign spine, dramatic escalation, and readable story structure grounded in the anchored rumor/event canon.",
+        "Focus on the campaign spine, dramatic escalation, and readable story structure grounded in the anchored rumor/event canon. CRITICAL: ALL text must be in output language. Examples for Russian: 'Act I - Setup' → 'Акт I - Завязка', 'Chapter 1' → 'Глава 1', 'Prologue' → 'Пролог'. NEVER use English for narrative structure.",
     ),
     (
         "character_meta",
@@ -68,7 +68,7 @@ NARRATIVE_BATCH_SPECS = (
             "affinities",
             "dispositions",
         ),
-        "Focus on character progression, voice production, and relationship metadata. Keep outputs compact and canon-consistent.",
+        "Focus on character progression, voice production, and relationship metadata. CRITICAL: ALL text must be in output language. Examples for Russian: 'Mara Voss' → 'Мара Восс', 'Dockmaster' → 'Гаваньмастер', 'Harbor Watch' → 'Гаваньская стража'. NEVER use English for character content. Keep outputs compact and canon-consistent.",
     ),
     (
         "quest_meta",
@@ -97,7 +97,7 @@ NARRATIVE_BATCH_SPECS = (
             "flash_forwards",
             "endings",
         ),
-        "Focus on branching narrative structure, player choices, and consequences. Keep outputs compact and canon-consistent.",
+        "Focus on branching narrative structure, player choices, and consequences. CRITICAL: ALL text must be in output language. Examples for Russian: 'The warning reaches' → 'Предупреждение достигает', 'harbor stands ready' → 'гавань готова'. NEVER use English for narrative content. Keep outputs compact and canon-consistent.",
     ),
 )
 
