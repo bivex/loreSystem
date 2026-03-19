@@ -496,8 +496,15 @@ class SQLiteLoreMemoryReader:
         ).fetchall()
         docs: list[MemoryDocument] = []
         for row in rows:
-            extras = ", ".join(f"{field}={row[field]}" for field in extra_fields if field in row.keys() and row[field] not in (None, ""))
-            summary = f"{entity_type.replace('_', ' ').title()}: {row[title_field]} — {_trim(row[body_field], 140)}"
+            payload = self._row_payload(row)
+            title = self._row_text_value(row, payload, title_field) or str(row["label"] if "label" in row.keys() else entity_type.title())
+            body = self._row_text_value(row, payload, body_field) or title
+            extras = ", ".join(
+                f"{field}={value}"
+                for field in extra_fields
+                if (value := self._row_value(row, payload, field)) not in (None, "")
+            )
+            summary = f"{entity_type.replace('_', ' ').title()}: {title} — {_trim(body, 140)}"
             if extras:
                 summary += f" [{extras}]"
             docs.append(MemoryDocument(
@@ -507,9 +514,37 @@ class SQLiteLoreMemoryReader:
                 entity_type=entity_type,
                 entity_id=str(row["id"]),
                 summary_text=summary,
-                tags=_build_memory_tags(entity_type, descriptors=tuple((field, row[field]) for field in extra_fields if field in row.keys())),
+                tags=_build_memory_tags(
+                    entity_type,
+                    descriptors=tuple(
+                        (field, value)
+                        for field in extra_fields
+                        if (value := self._row_value(row, payload, field)) not in (None, "")
+                    ),
+                ),
             ))
         return docs
+
+    def _row_payload(self, row: sqlite3.Row) -> dict[str, object]:
+        if "payload_json" not in row.keys():
+            return {}
+        payload_text = str(row["payload_json"] or "").strip()
+        if not payload_text:
+            return {}
+        try:
+            payload = json.loads(payload_text)
+        except json.JSONDecodeError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _row_value(self, row: sqlite3.Row, payload: dict[str, object], field: str) -> object:
+        if field in row.keys():
+            return row[field]
+        return payload.get(field)
+
+    def _row_text_value(self, row: sqlite3.Row, payload: dict[str, object], field: str) -> str:
+        value = self._row_value(row, payload, field)
+        return str(value).strip() if value not in (None, "") else ""
 
     def _relationship_docs(self, conn: sqlite3.Connection, tenant_id: int, world_id: int, limit: int) -> list[MemoryDocument]:
         if not self._table_exists(conn, "character_relationships") or not self._table_exists(conn, "characters"):

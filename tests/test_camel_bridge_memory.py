@@ -304,6 +304,39 @@ def test_sqlite_memory_reader_handles_generic_bridge_tables_without_character_id
     assert "Trait for Mara Voss: Harbor Instinct" in context
 
 
+def test_sqlite_memory_reader_reads_generic_simple_docs_from_payload_json(tmp_path):
+    db_path = str(tmp_path / "memory_generic_simple.db")
+    _seed_world(db_path)
+    conn = sqlite3.connect(db_path)
+    try:
+        _create_generic_bridge_table(conn, "quests")
+        conn.execute(
+            "INSERT INTO quests (tenant_id, world_id, label, payload_json, created_at, updated_at, version) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                1,
+                1,
+                "Moonlit Exodus",
+                json.dumps({
+                    "name": "Moonlit Exodus",
+                    "description": "Facilitate the coordinated disappearance of harbor souls.",
+                    "status": "active",
+                }),
+                "2026-03-10T00:00:00+00:00",
+                "2026-03-10T00:00:00+00:00",
+                1,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    docs = SQLiteLoreMemoryReader(db_path).load_index_documents(tenant_id=1, world_id=1)
+    quest_doc = next(doc for doc in docs if doc.entity_type == "quest")
+
+    assert quest_doc.summary_text.startswith("Quest: Moonlit Exodus")
+    assert "status=active" in quest_doc.summary_text
+
+
 def test_sqlite_memory_reader_includes_encounter_and_reward_bridge_tables_in_context(tmp_path):
     db_path = str(tmp_path / "memory_bridge_tables.db")
     _seed_world(db_path)
