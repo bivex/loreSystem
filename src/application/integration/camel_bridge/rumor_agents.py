@@ -3198,6 +3198,53 @@ DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT = (
     f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
 )
 
+NARRATIVE_BATCH_SPECS = (
+    (
+        "story_spine",
+        (
+            "campaign",
+            "story",
+            "acts",
+            "chapters",
+            "episodes",
+            "prologue",
+            "epilogue",
+            "storylines",
+        ),
+        "Focus on the campaign spine, dramatic escalation, and readable story structure grounded in the anchored rumor/event canon.",
+    ),
+    (
+        "character_quest_meta",
+        (
+            "character_evolutions",
+            "character_variants",
+            "character_profile_entries",
+            "motion_captures",
+            "voice_actors",
+            "affinities",
+            "dispositions",
+            "quests",
+            "quest_chains",
+            "quest_givers",
+            "quest_nodes",
+            "quest_objectives",
+            "quest_prerequisites",
+            "quest_reward_tiers",
+            "quest_trackers",
+            "plot_branches",
+            "branch_points",
+            "choices",
+            "consequences",
+            "moral_choices",
+            "alternate_realities",
+            "flashbacks",
+            "flash_forwards",
+            "endings",
+        ),
+        "Focus on character progression, quest structure, branching consequences, and lightweight production metadata. Keep outputs compact and canon-consistent.",
+    ),
+)
+
 SYSTEMS_BATCH_SPECS = (
     (
         "economy_items",
@@ -3273,6 +3320,12 @@ SYSTEMS_BATCH_SPECS = (
 ALL_SYSTEMS_BATCH_FIELDS = tuple(
     field_name
     for _, field_names, _ in SYSTEMS_BATCH_SPECS
+    for field_name in field_names
+)
+
+ALL_NARRATIVE_BATCH_FIELDS = tuple(
+    field_name
+    for _, field_names, _ in NARRATIVE_BATCH_SPECS
     for field_name in field_names
 )
 
@@ -3659,6 +3712,8 @@ class RumorBridgeService:
         *,
         include_systems_slice: bool = False,
     ) -> NarrativeStructureDraft:
+        if not include_systems_slice:
+            return self._generate_narrative_slice_draft(request, chain_result, memory_context)
         try:
             agent_name, system_message = self._narrative_agent_prompt(include_systems_slice)
             raw = self._generate_with_logging(
@@ -3685,6 +3740,43 @@ class RumorBridgeService:
 
     def _narrative_agent_prompt(self, include_systems_slice: bool) -> tuple[str, str]:
         return DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT if include_systems_slice else DEFAULT_NARRATIVE_AGENT_PROMPT
+
+    def _narrative_batch_system_message(self, keys: Sequence[str]) -> str:
+        return (
+            "Saga Architect\n"
+            f"Return one compact JSON object with only these keys: {', '.join(keys)}. "
+            "Do not emit systems keys or unrelated sections. Keep the output compact, valid, and grounded in the anchored canon."
+        )
+
+    def _generate_narrative_slice_draft(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        memory_context: str = "",
+    ) -> NarrativeStructureDraft:
+        draft = self._fallback_narrative_structure_draft(request, chain_result)
+        try:
+            for batch_name, keys, guidance in NARRATIVE_BATCH_SPECS:
+                raw = self._generate_with_logging(
+                    f"narrative_batch:{batch_name}",
+                    self._narrative_batch_system_message(keys),
+                    self._build_narrative_batch_prompt(
+                        request,
+                        chain_result,
+                        batch_name,
+                        memory_context,
+                        keys=keys,
+                        guidance=guidance,
+                    ),
+                    timeout_seconds=self._generation_timeout_seconds("CAMEL_BRIDGE_ENRICHED_TIMEOUT_SECONDS", 45),
+                )
+                parsed = self._parse_narrative_structure(raw)
+                draft = self._merge_partial_narrative_fields(draft, parsed, keys)
+            return self._stabilize_narrative_structure_draft(request, chain_result, draft)
+        except Exception:
+            if not self.allow_fallback:
+                raise
+            return self._fallback_narrative_structure_draft(request, chain_result)
 
     def _systems_batch_system_message(self, keys: Sequence[str]) -> str:
         return (
@@ -3758,6 +3850,28 @@ class RumorBridgeService:
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         if include_systems_slice:
             prompt += self._narrative_systems_instructions()
+        return self._append_memory_context(prompt, memory_context)
+
+    def _build_narrative_batch_prompt(
+        self,
+        request: RumorGenerationRequest,
+        chain_result: RumorChainResult,
+        agent_name: str,
+        memory_context: str = "",
+        *,
+        keys: Sequence[str],
+        guidance: str,
+    ) -> str:
+        prompt = (
+            f"Theme: {request.theme}\n"
+            f"Context: {request.context or 'No extra context provided.'}\n"
+            f"Speaker persona: {agent_name}\n"
+            f"Return one JSON object with only these keys: {', '.join(keys)}.\n"
+            f"Guidance: {guidance}\n"
+            "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads."
+        )
+        prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
+        prompt += self._narrative_batch_instructions(keys)
         return self._append_memory_context(prompt, memory_context)
 
     def _build_systems_batch_prompt(
@@ -3839,6 +3953,43 @@ class RumorBridgeService:
             "cursed_items": "For cursed_items include name, description, item_type, power, curse_type, rarity, optional benefit, and curse_effect.",
             "artifact_sets": "For artifact_sets include name, description, set_type, total_pieces, rarity, and set_bonus.",
             "relic_collections": "For relic_collections include name, description, collection_type, total_relics, rarity, collection_power, and completion_reward.",
+        }
+        return "\n" + " ".join(instructions[key] for key in keys if key in instructions)
+
+    def _narrative_batch_instructions(self, keys: Sequence[str]) -> str:
+        instructions = {
+            "campaign": "For campaign include title, description, and optional campaign_type, recommended_level, estimated_hours, and is_replayable.",
+            "story": "For story include name, description, content, and optional story_type.",
+            "acts": "For acts include title, description, act_number, optional act_type, key_events, and estimated_minutes.",
+            "chapters": "For chapters include title, description, sequence_number, act_numbers, optional chapter_type, and estimated_minutes.",
+            "episodes": "For episodes include title, description, sequence_number, chapter_number, optional episode_type, and estimated_minutes.",
+            "prologue": "For prologue include title, description, content, and optional prologue_type and estimated_minutes.",
+            "epilogue": "For epilogue include title, description, content, and optional epilogue_type and estimated_minutes.",
+            "storylines": "For storylines include name, description, storyline_type, and event_names.",
+            "character_evolutions": "For character_evolutions include character_name, current_stage, evolution_type, and optional variant_names, new_abilities, and stat_increases.",
+            "character_variants": "For character_variants include character_name, name, optional description, variant_type, and rarity.",
+            "character_profile_entries": "For character_profile_entries include character_name, field_name, and field_value.",
+            "motion_captures": "For motion_captures include name, file_path, and optional character_name or actor_name.",
+            "voice_actors": "For voice_actors include name, language, and optional character_names.",
+            "affinities": "For affinities include source_name, target_name, category, and numeric value in the closed range [-1.0, 1.0].",
+            "dispositions": "For dispositions include entity_name, target_type, target_value, attitude from hostile|unfriendly|neutral|friendly|helpful, and integer intensity in the closed range [0, 100].",
+            "quests": "For quests include name, description, objectives, player_briefing, journal_summary, acceptance_text, completion_text, failure_text, reward_summary, and optional participant_names.",
+            "quest_chains": "For quest_chains include name, description, and optional node_names.",
+            "quest_givers": "For quest_givers include name, description, optional greeting_message, and optional quest_chain_names or quest_node_names.",
+            "quest_nodes": "For quest_nodes include quest_chain_name, name, description, and optional objective_descriptions.",
+            "quest_objectives": "For quest_objectives include quest_node_name, description, objective_type, optional target_name, and objective_hint.",
+            "quest_prerequisites": "For quest_prerequisites include description, prerequisite_type, and optional required_quest_names.",
+            "quest_reward_tiers": "For quest_reward_tiers include quest_node_name, name, description, and tier_level.",
+            "quest_trackers": "For quest_trackers include active_chain_names, completed_chain_names, active_node_names, and completed_node_names.",
+            "plot_branches": "For plot_branches include name, description, story_content, branch_type, and optional consequence_descriptions.",
+            "branch_points": "For branch_points include description, branch_names, and optional choice_prompt.",
+            "choices": "For choices include prompt and options with label, consequence, and optional next_story.",
+            "consequences": "For consequences include description, consequence_type, severity, and optional conditions.",
+            "moral_choices": "For moral_choices include prompt, options with label and outcome, and optional consequence_descriptions.",
+            "alternate_realities": "For alternate_realities include name, description, reality_type, and optional access_method.",
+            "flashbacks": "For flashbacks include name, description, trigger_event or trigger_event_name, optional scene_id, and optional characters or character_names.",
+            "flash_forwards": "For flash_forwards include name, description, hinted_event or hinted_event_name, and clarity_level.",
+            "endings": "For endings include title, description, ending_type, rarity, and optional conditions.",
         }
         return "\n" + " ".join(instructions[key] for key in keys if key in instructions)
 
@@ -4002,6 +4153,28 @@ class RumorBridgeService:
                 if value or not getattr(base, field_name):
                     updates[field_name] = value
             elif value and not getattr(base, field_name):
+                updates[field_name] = value
+        return replace(base, **updates)
+
+    def _merge_partial_narrative_fields(
+        self,
+        base: NarrativeStructureDraft,
+        patch: NarrativeStructureDraft,
+        fields: Sequence[str],
+    ) -> NarrativeStructureDraft:
+        updates: dict[str, object] = {}
+        requested = set(fields)
+        singular_fields = {"campaign", "story", "prologue", "epilogue"}
+        for field_name in ALL_NARRATIVE_BATCH_FIELDS:
+            value = getattr(patch, field_name)
+            current = getattr(base, field_name)
+            if field_name in requested:
+                if field_name in singular_fields:
+                    if value is not None:
+                        updates[field_name] = value
+                elif value or not current:
+                    updates[field_name] = value
+            elif field_name not in singular_fields and value and not current:
                 updates[field_name] = value
         return replace(base, **updates)
 
@@ -4661,18 +4834,38 @@ class RumorBridgeService:
 
     def _parse_object(self, raw: str) -> dict:
         snippet = raw.strip()
-        match = re.search(r"(\{.*\})", snippet, re.S)
-        payload = json.loads(match.group(1) if match else snippet)
+        payload = self._decode_json_prefix(snippet)
+        if isinstance(payload, list):
+            merged: dict[str, object] = {}
+            for item in payload:
+                if isinstance(item, dict):
+                    merged.update(item)
+            if merged:
+                payload = merged
         if not isinstance(payload, dict):
             raise ValueError("Expected a JSON object")
         return payload
 
     def _parse_items(self, raw: str, key: str) -> list[dict]:
         snippet = raw.strip()
-        match = re.search(r"(\[.*\]|\{.*\})", snippet, re.S)
-        payload = json.loads(match.group(1) if match else snippet)
+        payload = self._decode_json_prefix(snippet)
         items = payload.get(key, [payload]) if isinstance(payload, dict) else payload
         return [item for item in items if isinstance(item, dict)]
+
+    def _decode_json_prefix(self, snippet: str) -> object:
+        decoder = json.JSONDecoder()
+        starts = sorted(
+            start
+            for start in (snippet.find("{"), snippet.find("["))
+            if start != -1
+        )
+        for start in starts:
+            try:
+                payload, _ = decoder.raw_decode(snippet[start:])
+                return payload
+            except json.JSONDecodeError:
+                continue
+        return json.loads(snippet)
 
     def _build_prologue_draft(self, payload: dict[str, object], scalar_text: str | None) -> PrologueDraft | None:
         if not payload and not scalar_text:
@@ -4864,7 +5057,7 @@ class RumorBridgeService:
             source_name=self._first_non_empty_text(payload.get("source_name"), payload.get("source"), f"Character {index}"),
             target_name=self._first_non_empty_text(payload.get("target_name"), payload.get("target"), f"Target {index}"),
             category=self._first_non_empty_text(payload.get("category"), "bond"),
-            value=self._coerce_optional_float(payload.get("value")) or 0.0,
+            value=self._coerce_optional_float(payload.get("value") or payload.get("numeric_value") or payload.get("score")) or 0.0,
             flags=self._coerce_text_tuple(payload.get("flags")),
         )
 
@@ -6296,7 +6489,7 @@ class RumorBridgeService:
                 f"Consequence {index} reshapes the city.",
             ),
             consequence_type=str(payload.get("consequence_type") or "story"),
-            severity=str(payload.get("severity") or "minor"),
+            severity=self._coerce_consequence_severity_text(payload.get("severity")),
             trigger_choice_prompt=self._coerce_optional_text(
                 payload.get("trigger_choice_prompt") or payload.get("choice_prompt") or payload.get("choice")
             ),
@@ -6419,7 +6612,7 @@ class RumorBridgeService:
                 "A glimpse of a future consequence still struggling to arrive.",
             ),
             hinted_event_name=self._coerce_optional_text(payload.get("hinted_event_name") or payload.get("hinted_event") or payload.get("event")),
-            clarity_level=self._first_non_empty_text(payload.get("clarity_level"), payload.get("clarity"), "symbolic"),
+            clarity_level=self._coerce_flash_forward_clarity(payload.get("clarity_level") or payload.get("clarity")),
             is_prophetic=self._coerce_bool(payload.get("is_prophetic", True)),
         )
 
@@ -6858,9 +7051,10 @@ class RumorBridgeService:
         if self.quest_repository:
             for quest_draft in draft.quests:
                 now = Timestamp.now()
+                participant_names = quest_draft.participant_names or tuple(self._grounded_character_names(request, chain_result)[:2])
                 participant_ids = [
                     participant_id
-                    for participant_name in quest_draft.participant_names
+                    for participant_name in participant_names
                     if (participant_id := ensure_character_id(participant_name)) is not None
                 ]
                 quest = self.quest_repository.save(Quest(
@@ -9949,6 +10143,28 @@ class RumorBridgeService:
         }
         normalized = aliases.get(normalized, normalized)
         return normalized if normalized in {"hostile", "unfriendly", "neutral", "friendly", "helpful"} else "neutral"
+
+    def _coerce_consequence_severity_text(self, value: object) -> str:
+        if isinstance(value, (int, float)):
+            numeric = float(value)
+            if numeric >= 75:
+                return "major"
+            if numeric >= 40:
+                return "moderate"
+            return "minor"
+        text = self._coerce_optional_text(value)
+        return text or "minor"
+
+    def _coerce_flash_forward_clarity(self, value: object) -> str:
+        if isinstance(value, (int, float)):
+            numeric = int(value)
+            if numeric >= 3:
+                return "vivid"
+            if numeric == 2:
+                return "clear"
+            return "symbolic"
+        text = self._coerce_optional_text(value)
+        return text or "symbolic"
 
     def _coerce_choice_type(self, value: str) -> ChoiceType:
         return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)

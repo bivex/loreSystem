@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
-from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend, RumorChainResult, SYSTEMS_BATCH_SPECS
+from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend, NARRATIVE_BATCH_SPECS, RumorChainResult, SYSTEMS_BATCH_SPECS
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
@@ -544,48 +544,49 @@ def test_camel_bridge_story_chain_merges_reversed_mutual_relationships(tmp_path)
 def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     db_path = str(tmp_path / "campaign_story.db")
     _seed_world(db_path)
+    narrative_payload = {
+        "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
+        "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
+        "storylines": [{"name": "Lantern Line", "description": "Tracks how harbor whispers become raids.", "storyline_type": "main", "events": ["Blue Lantern Raid"]}],
+        "character_variants": [{"character_name": "Mara Voss", "name": "Bellwarden Disguise", "description": "A covert look for curfew patrols.", "variant_type": "costume", "rarity": "uncommon"}],
+        "character_evolutions": [{"character_name": "Mara Voss", "current_stage": "advanced", "previous_stage": "intermediate", "evolution_type": "story_unlocked", "variant_names": ["Bellwarden Disguise"], "new_abilities": ["Rally the Harbor"]}],
+        "character_profile_entries": [{"character_name": "Mara Voss", "field_name": "fear", "field_value": "The harbor bells at low tide."}],
+        "motion_captures": [{"name": "Harbor Warning Gesture", "file_path": "captures/harbor_warning.fbx", "character_name": "Mara Voss", "actor_name": "Talan Reed", "animation_type": "social", "status": "completed"}],
+        "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
+        "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
+        "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
+        "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active", "player_briefing": "Dockmaster Elra needs a runner who can beat the bells to the waterfront.", "journal_summary": "Warn the harbor before fear becomes riot.", "acceptance_text": "Carry Elra's warning to the dockworkers and light the signal pyre before curfew.", "completion_text": "The harbor answers the bells with preparation, not panic.", "failure_text": "The warning comes too late and panic claims the piers.", "reward_summary": "Bellkeeper's Reward: silver, experience, and dockside trust."}],
+        "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
+        "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "location_id": 99, "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
+        "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"], "position": 1}],
+        "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "target_quantity": 1, "objective_hint": "Start with Iven Hale at the eastern piers."}],
+        "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
+        "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Practical aid for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
+        "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
+        "plot_branches": [
+            {"name": "Revolt at Dawn", "description": "The harbor rises openly.", "story_content": "The ledger becomes a banner for rebellion.", "branch_type": "major", "consequence_descriptions": ["The wardens tighten control over the harbor."]},
+            {"name": "Silence Before Ash", "description": "The truth is buried to preserve order.", "story_content": "The city survives under harsher law.", "branch_type": "temporary", "consequence_descriptions": ["The wardens tighten control over the harbor."], "is_reversible": True},
+        ],
+        "branch_points": [{"description": "The survivors choose what kind of harbor remains.", "branch_point_type": "choice", "choice_prompt": "Who do the survivors trust when the bells ring?", "branch_names": ["Revolt at Dawn", "Silence Before Ash"]}],
+        "choices": [{"prompt": "Who do the survivors trust when the bells ring?", "choice_type": "decision", "options": [{"label": "Trust Mara", "consequence": "Mara reveals the hidden ledger.", "next_story": "Blue Lantern Chronicle"}, {"label": "Trust Iven", "consequence": "Iven opens the armory for a last stand.", "next_story": None}]}],
+        "consequences": [{"description": "The wardens tighten control over the harbor.", "consequence_type": "story", "severity": "major", "trigger_choice_prompt": "Who do the survivors trust when the bells ring?"}],
+        "moral_choices": [{"prompt": "Will the survivors expose the magistrate or shield the city from panic?", "description": "Truth may save the harbor or break it.", "choice_alignment": "neutral", "urgency": "high", "options": [{"label": "Expose the magistrate", "outcome": "The public rises immediately.", "alignment": "good"}, {"label": "Shield the city", "outcome": "Order holds, but corruption survives.", "alignment": "lawful"}], "consequence_descriptions": ["The wardens tighten control over the harbor."]}],
+        "alternate_realities": [{"name": "Bellglass Reflection", "description": "An echo-reality where the eclipse never ends.", "reality_type": "alternate_possibility", "access_method": "choice", "divergence_point": "The harbor chose silence.", "entry_points": ["Broken bell tower"], "exit_points": ["Flooded archive"]}],
+        "flashbacks": [{"name": "The First Bell", "description": "Mara remembers the omen that started it all.", "scene_id": "prologue_1", "trigger_event": "Blue Lantern Raid", "characters": ["Mara Voss"], "filter_effect": "sepia"}],
+        "prologue": {"title": "Before the Raid", "description": "How fear first took hold.", "content": "The city learned to fear the bells before the raid.", "prologue_type": "backstory", "estimated_minutes": 9},
+        "acts": [{"title": "Act I - The Whisper Network", "description": "The rumor web expands.", "act_number": 1, "act_type": "setup", "structure": "three_act", "key_events": ["Dockside Murmurs"]}, {"title": "Act II - Blue Fire", "description": "The raid reaches its peak.", "act_number": 2, "act_type": "rising_action", "structure": "three_act", "key_events": ["Blue Lantern Raid"]}],
+        "chapters": [{"title": "Chapter 1 - Hushed Piers", "description": "The first warnings spread.", "sequence_number": 1, "act_numbers": [1], "chapter_type": "introduction"}, {"title": "Chapter 2 - The Magistrate Moves", "description": "Power answers panic.", "sequence_number": 2, "act_numbers": [2], "chapter_type": "climax"}],
+        "episodes": [{"title": "Episode 1 - Bellkeeper", "description": "The bellkeeper reveals the omen.", "sequence_number": 1, "chapter_number": 1, "episode_type": "narrative"}, {"title": "Episode 2 - Ash on Water", "description": "The harbor answers with fire.", "sequence_number": 2, "chapter_number": 2, "episode_type": "narrative"}],
+        "epilogue": {"title": "Harbor Reckoning", "description": "What remains after the crackdown.", "content": "The harbor never forgets the names whispered that night.", "epilogue_type": "aftermath", "trigger_condition": "always", "estimated_minutes": 8},
+        "flash_forwards": [{"name": "Ashes on the Tide", "description": "A prophetic glimpse of the harbor still burning.", "hinted_event": "Blue Lantern Raid", "clarity_level": "vivid", "is_prophetic": True}],
+        "endings": [{"title": "Lanterns at Dawn", "description": "The city accepts the cost of truth.", "ending_type": "good", "rarity": "uncommon", "conditions": ["Expose the magistrate"], "ending_number": 1}],
+    }
     backend = DeterministicRumorBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
         '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
         '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
-        json.dumps({
-            "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
-            "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
-            "storylines": [{"name": "Lantern Line", "description": "Tracks how harbor whispers become raids.", "storyline_type": "main", "events": ["Blue Lantern Raid"]}],
-            "character_variants": [{"character_name": "Mara Voss", "name": "Bellwarden Disguise", "description": "A covert look for curfew patrols.", "variant_type": "costume", "rarity": "uncommon"}],
-            "character_evolutions": [{"character_name": "Mara Voss", "current_stage": "advanced", "previous_stage": "intermediate", "evolution_type": "story_unlocked", "variant_names": ["Bellwarden Disguise"], "new_abilities": ["Rally the Harbor"]}],
-            "character_profile_entries": [{"character_name": "Mara Voss", "field_name": "fear", "field_value": "The harbor bells at low tide."}],
-            "motion_captures": [{"name": "Harbor Warning Gesture", "file_path": "captures/harbor_warning.fbx", "character_name": "Mara Voss", "actor_name": "Talan Reed", "animation_type": "social", "status": "completed"}],
-            "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
-            "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
-            "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
-            "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active", "player_briefing": "Dockmaster Elra needs a runner who can beat the bells to the waterfront.", "journal_summary": "Warn the harbor before fear becomes riot.", "acceptance_text": "Carry Elra's warning to the dockworkers and light the signal pyre before curfew.", "completion_text": "The harbor answers the bells with preparation, not panic.", "failure_text": "The warning comes too late and panic claims the piers.", "reward_summary": "Bellkeeper's Reward: silver, experience, and dockside trust."}],
-            "quest_chains": [{"name": "Harbor Reckoning", "description": "A civic mission chain.", "node_names": ["Warn the Docks"], "required_level": 3}],
-            "quest_givers": [{"name": "Dockmaster Elra", "description": "Turns rumor into action.", "character_name": "Mara Voss", "location_id": 99, "quest_chain_names": ["Harbor Reckoning"], "quest_node_names": ["Warn the Docks"]}],
-            "quest_nodes": [{"quest_chain_name": "Harbor Reckoning", "name": "Warn the Docks", "description": "Warn every district before curfew.", "objective_descriptions": ["Speak to the dockworkers"], "prerequisite_descriptions": ["Complete Silence Before the Bell"], "reward_tier_names": ["Bellkeeper's Reward"], "position": 1}],
-            "quest_objectives": [{"quest_node_name": "Warn the Docks", "description": "Speak to the dockworkers", "objective_type": "talk", "target_name": "Iven Hale", "target_quantity": 1, "objective_hint": "Start with Iven Hale at the eastern piers."}],
-            "quest_prerequisites": [{"description": "Complete Silence Before the Bell", "prerequisite_type": "quest", "required_quest_names": ["Silence Before the Bell"], "required_level": 3}],
-            "quest_reward_tiers": [{"quest_node_name": "Warn the Docks", "name": "Bellkeeper's Reward", "description": "Practical aid for warning the harbor.", "tier_level": 1, "currency_rewards": {"silver": 25}, "experience_reward": 120}],
-            "quest_trackers": [{"player_character_name": "Mara Voss", "active_chain_names": ["Harbor Reckoning"], "active_node_names": ["Warn the Docks"], "objective_progress": {"Speak to the dockworkers": 1}}],
-            "plot_branches": [
-                {"name": "Revolt at Dawn", "description": "The harbor rises openly.", "story_content": "The ledger becomes a banner for rebellion.", "branch_type": "major", "consequence_descriptions": ["The wardens tighten control over the harbor."]},
-                {"name": "Silence Before Ash", "description": "The truth is buried to preserve order.", "story_content": "The city survives under harsher law.", "branch_type": "temporary", "consequence_descriptions": ["The wardens tighten control over the harbor."], "is_reversible": True},
-            ],
-            "branch_points": [{"description": "The survivors choose what kind of harbor remains.", "branch_point_type": "choice", "choice_prompt": "Who do the survivors trust when the bells ring?", "branch_names": ["Revolt at Dawn", "Silence Before Ash"]}],
-            "choices": [{"prompt": "Who do the survivors trust when the bells ring?", "choice_type": "decision", "options": [{"label": "Trust Mara", "consequence": "Mara reveals the hidden ledger.", "next_story": "Blue Lantern Chronicle"}, {"label": "Trust Iven", "consequence": "Iven opens the armory for a last stand.", "next_story": None}]}],
-            "consequences": [{"description": "The wardens tighten control over the harbor.", "consequence_type": "story", "severity": "major", "trigger_choice_prompt": "Who do the survivors trust when the bells ring?"}],
-            "moral_choices": [{"prompt": "Will the survivors expose the magistrate or shield the city from panic?", "description": "Truth may save the harbor or break it.", "choice_alignment": "neutral", "urgency": "high", "options": [{"label": "Expose the magistrate", "outcome": "The public rises immediately.", "alignment": "good"}, {"label": "Shield the city", "outcome": "Order holds, but corruption survives.", "alignment": "lawful"}], "consequence_descriptions": ["The wardens tighten control over the harbor."]}],
-            "alternate_realities": [{"name": "Bellglass Reflection", "description": "An echo-reality where the eclipse never ends.", "reality_type": "alternate_possibility", "access_method": "choice", "divergence_point": "The harbor chose silence.", "entry_points": ["Broken bell tower"], "exit_points": ["Flooded archive"]}],
-            "flashbacks": [{"name": "The First Bell", "description": "Mara remembers the omen that started it all.", "scene_id": "prologue_1", "trigger_event": "Blue Lantern Raid", "characters": ["Mara Voss"], "filter_effect": "sepia"}],
-            "prologue": {"title": "Before the Raid", "description": "How fear first took hold.", "content": "The city learned to fear the bells before the raid.", "prologue_type": "backstory", "estimated_minutes": 9},
-            "acts": [{"title": "Act I - The Whisper Network", "description": "The rumor web expands.", "act_number": 1, "act_type": "setup", "structure": "three_act", "key_events": ["Dockside Murmurs"]}, {"title": "Act II - Blue Fire", "description": "The raid reaches its peak.", "act_number": 2, "act_type": "rising_action", "structure": "three_act", "key_events": ["Blue Lantern Raid"]}],
-            "chapters": [{"title": "Chapter 1 - Hushed Piers", "description": "The first warnings spread.", "sequence_number": 1, "act_numbers": [1], "chapter_type": "introduction"}, {"title": "Chapter 2 - The Magistrate Moves", "description": "Power answers panic.", "sequence_number": 2, "act_numbers": [2], "chapter_type": "climax"}],
-            "episodes": [{"title": "Episode 1 - Bellkeeper", "description": "The bellkeeper reveals the omen.", "sequence_number": 1, "chapter_number": 1, "episode_type": "narrative"}, {"title": "Episode 2 - Ash on Water", "description": "The harbor answers with fire.", "sequence_number": 2, "chapter_number": 2, "episode_type": "narrative"}],
-            "epilogue": {"title": "Harbor Reckoning", "description": "What remains after the crackdown.", "content": "The harbor never forgets the names whispered that night.", "epilogue_type": "aftermath", "trigger_condition": "always", "estimated_minutes": 8},
-            "flash_forwards": [{"name": "Ashes on the Tide", "description": "A prophetic glimpse of the harbor still burning.", "hinted_event": "Blue Lantern Raid", "clarity_level": "vivid", "is_prophetic": True}],
-            "endings": [{"title": "Lanterns at Dawn", "description": "The city accepts the cost of truth.", "ending_type": "good", "rarity": "uncommon", "conditions": ["Expose the magistrate"], "ending_number": 1}],
-        }),
+        *[json.dumps(narrative_payload) for _ in NARRATIVE_BATCH_SPECS],
     ])
     service = RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
@@ -1265,7 +1266,7 @@ def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch)
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
         '[{"name":"Blue Lantern Raid","description":"Wardens sweep the harbor after the bells ring.","participant_names":["Mara Voss","Iven Hale"],"outcome":"mixed"}]',
         '[{"character_from_name":"Mara Voss","character_to_name":"Iven Hale","description":"They trust each other after surviving the raid.","relationship_type":"ally","relationship_level":42,"is_mutual":true}]',
-        "{}",
+        *["{}" for _ in NARRATIVE_BATCH_SPECS],
         *["{}" for _ in SYSTEMS_BATCH_SPECS],
     ])
     service = RumorBridgeService(
@@ -1293,9 +1294,10 @@ def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch)
     )
 
     enriched_calls = backend.calls[4:]
-    assert len(enriched_calls) == 1 + len(SYSTEMS_BATCH_SPECS)
+    assert len(enriched_calls) == len(NARRATIVE_BATCH_SPECS) + len(SYSTEMS_BATCH_SPECS)
+    assert all("Saga Architect" in system_message for system_message, _ in enriched_calls[:len(NARRATIVE_BATCH_SPECS)])
     assert "campaign, story" in enriched_calls[0][0]
-    assert all("Systems Architect" in system_message for system_message, _ in enriched_calls[1:])
+    assert all("Systems Architect" in system_message for system_message, _ in enriched_calls[len(NARRATIVE_BATCH_SPECS):])
 
 
 def test_camel_bridge_generates_systems_slice(tmp_path):
@@ -1980,3 +1982,32 @@ def test_camel_bridge_clamps_affinity_and_disposition_ranges():
     assert service._clamp_disposition_intensity(120) == 100
     assert service._clamp_disposition_intensity(-8) == 0
     assert service._clamp_disposition_intensity(55) == 55
+
+
+def test_camel_bridge_decodes_first_valid_json_prefix():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    payload = service._parse_object('prefix {"campaign": {"title": "Moonlit"}} trailing ]')
+
+    assert payload["campaign"]["title"] == "Moonlit"
+
+
+def test_camel_bridge_merges_list_wrapped_object_payloads():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    payload = service._parse_object('[{"campaign": {"title": "Moonlit"}}, {"story": {"name": "Chronicle"}}]')
+
+    assert payload["campaign"]["title"] == "Moonlit"
+    assert payload["story"]["name"] == "Chronicle"
+
+
+def test_camel_bridge_accepts_known_model_alias_fields():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    affinity = service._build_affinity_draft({"source_name": "Mara", "target_name": "Iven", "category": "trust", "numeric_value": 0.85}, 1)
+    consequence = service._build_consequence_draft({"description": "Split the rebellion.", "severity": 85}, 1)
+    flash_forward = service._build_flash_forward_draft({"name": "End of Rebellion", "description": "A fleet burns.", "clarity_level": 3}, 1)
+
+    assert affinity.value == 0.85
+    assert consequence.severity == "major"
+    assert flash_forward.clarity_level == "vivid"
