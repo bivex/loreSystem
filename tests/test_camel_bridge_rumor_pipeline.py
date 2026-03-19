@@ -23,6 +23,7 @@ from src.domain.entities.invasion import Invasion
 from src.domain.entities.inventory import Inventory, InventorySlot
 from src.domain.entities.legendary_weapon import LegendaryWeapon
 from src.domain.entities.artifact_set import ArtifactSet
+from src.domain.entities.campaign import Campaign, CampaignType
 from src.domain.entities.material import MaterialType
 from src.domain.entities.mythical_armor import MythicalArmor
 from src.domain.entities.quest import Quest
@@ -32,11 +33,12 @@ from src.domain.entities.raid import Raid
 from src.domain.entities.relic_collection import RelicCollection
 from src.domain.entities.rune import RuneRank, RuneType
 from src.domain.entities.seasonal_event import SeasonalEvent
+from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
 from src.domain.entities.trait import TraitCategory, TraitNature
 from src.domain.entities.war import War
 from src.domain.entities.world_event import WorldEvent
-from src.domain.value_objects.common import Description, EntityId, TenantId, Timestamp, Version
+from src.domain.value_objects.common import Content, Description, EntityId, StoryName, StoryType, TenantId, Timestamp, Version
 from src.domain.value_objects.progression import CharacterClass, StatType
 from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAffinityRepository,
@@ -811,6 +813,85 @@ def test_camel_bridge_reuses_existing_narrative_canon_across_runs(tmp_path):
         conn.close()
 
 
+def test_camel_bridge_reuses_campaign_and_story_slots_across_renames(tmp_path):
+    db_path = str(tmp_path / "campaign_story_rename_reuse.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        campaign_repository=CamelBridgeCampaignRepository(db_path),
+        story_repository=CamelBridgeStoryRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+    )
+
+    first_campaign = service._save_or_merge_campaign(
+        Campaign.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            title="Moonlit Rebellion",
+            campaign_type=CampaignType.MAIN_STORY,
+            description=Description("The first canonical harbor campaign."),
+            recommended_level=5,
+            estimated_hours=8,
+        ),
+        request,
+    )
+    second_campaign = service._save_or_merge_campaign(
+        Campaign.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            title="Moonlit Rebellion: Veil of the Missing",
+            campaign_type=CampaignType.MAIN_STORY,
+            description=Description("A renamed continuation campaign draft."),
+            recommended_level=6,
+            estimated_hours=10,
+        ),
+        request,
+    )
+
+    first_story = service._save_or_merge_story(
+        Story.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name=StoryName("Moonlit Rebellion"),
+            description="The first canonical harbor storyline.",
+            story_type=StoryType.LINEAR,
+            content=Content("A chain of whispers turns the harbor against itself."),
+        ),
+        request,
+    )
+    second_story = service._save_or_merge_story(
+        Story.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name=StoryName("Moonlit Rebellion: Veil of the Missing"),
+            description="A renamed continuation storyline draft.",
+            story_type=StoryType.LINEAR,
+            content=Content("The continuation reframes the same harbor arc through missing ledgers and whispered reprisals."),
+        ),
+        request,
+    )
+
+    assert first_campaign.id == second_campaign.id
+    assert first_story.id == second_story.id
+    assert second_campaign.title == "Moonlit Rebellion"
+    assert str(second_story.name) == "Moonlit Rebellion"
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM stories").fetchone()[0] == 1
+        assert conn.execute("SELECT title FROM campaigns LIMIT 1").fetchone()[0] == "Moonlit Rebellion"
+        assert conn.execute("SELECT name FROM stories LIMIT 1").fetchone()[0] == "Moonlit Rebellion"
+    finally:
+        conn.close()
+
+
 def test_camel_bridge_merges_artifact_and_relic_collections_by_canonical_type(tmp_path):
     db_path = str(tmp_path / "artifact_relic_reuse.db")
     _seed_world(db_path)
@@ -1163,6 +1244,66 @@ def test_camel_bridge_caps_main_storyline_slots_across_continuation_runs(tmp_pat
     conn = sqlite3.connect(db_path)
     try:
         assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 2
+    finally:
+        conn.close()
+
+
+def test_camel_bridge_merges_main_storylines_with_shared_anchor_tokens(tmp_path):
+    db_path = str(tmp_path / "storyline_anchor_merge.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        storyline_repository=CamelBridgeStorylineRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="moonlit rebellion",
+        context="The harbor is tense after disappearances and a stolen ledger.",
+    )
+
+    first = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Ledger Rebellion",
+            description=Description("The main harbor arc follows the missing ledgers into rebellion."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(1)],
+            quest_ids=[EntityId(11)],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+    second = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Ledger Heist",
+            description=Description("Continuation of the same ledger arc through sabotage and dockside theft."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(2)],
+            quest_ids=[EntityId(12)],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+
+    assert first.id == second.id
+    assert second.name == "Moonlit Ledger Rebellion"
+    assert {item.value for item in second.event_ids} == {1, 2}
+    assert {item.value for item in second.quest_ids} == {11, 12}
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 1
     finally:
         conn.close()
 
@@ -1578,7 +1719,7 @@ def test_load_env_file_supports_custom_model_and_base_url(tmp_path, monkeypatch)
 def test_load_env_file_supports_openrouter_free_model_defaults(tmp_path, monkeypatch):
     env_path = tmp_path / ".env"
     env_path.write_text(
-        "OPENROUTER_API_KEY=test-key\nCAMEL_MODEL_PLATFORM=OPENROUTER\nCAMEL_MODEL_TYPE=arcee-ai/trinity-large-preview:free\nCAMEL_MODEL_REASONING_EFFORT=low\n",
+        "OPENROUTER_API_KEY=test-key\nCAMEL_MODEL_PLATFORM=OPENROUTER\nCAMEL_MODEL_TYPE=arcee-ai/trinity-mini:free\nCAMEL_MODEL_REASONING_EFFORT=low\n",
         encoding="utf-8",
     )
     for key in [
@@ -1594,7 +1735,7 @@ def test_load_env_file_supports_openrouter_free_model_defaults(tmp_path, monkeyp
     backend = CamelChatBackend()
 
     assert backend.model_platform == "OPENROUTER"
-    assert backend.model_type == "arcee-ai/trinity-large-preview:free"
+    assert backend.model_type == "arcee-ai/trinity-mini:free"
     assert backend.model_url == "https://openrouter.ai/api/v1"
 
 
@@ -1732,6 +1873,91 @@ def test_parser_unwraps_mapping_containers_for_meta_entities(tmp_path):
     assert [badge.name for badge in draft.badges] == ["Moonlit Whisper"]
     assert draft.ranks[0].tier == 2
     assert draft.leaderboards[0].size_limit == 100
+
+
+def test_parser_preserves_choice_and_moral_choice_mapping_payloads(tmp_path):
+    db_path = str(tmp_path / "wrapped_choices.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+    )
+
+    draft = service._parse_narrative_structure(json.dumps({
+        "campaign": {
+            "title": "Moonlit Rebellion",
+            "description": "A harbor rebellion campaign.",
+            "campaign_type": "main_story",
+        },
+        "story": {
+            "name": "Moonlit Rebellion",
+            "description": "The central storyline.",
+            "content": "A chain of whispers leads to rebellion.",
+            "story_type": "linear",
+        },
+        "choices": {
+            "Harbor Dilemma": {
+                "prompt": "Who should command the docks tonight?",
+                "choice_type": "decision",
+                "story": "Moonlit Rebellion",
+                "options": [
+                    {
+                        "label": "Trust Mara",
+                        "consequence": "Mara reveals the hidden ledger.",
+                        "next_story": "Moonlit Rebellion",
+                    },
+                    {
+                        "label": "Trust Iven",
+                        "consequence": "Iven arms the dockworkers.",
+                        "next_story": None,
+                    },
+                ],
+                "is_mandatory": True,
+            }
+        },
+        "moral_choices": {
+            "Harbor Mercy": {
+                "prompt": "Expose the magistrate or shield the city from panic?",
+                "description": "Truth may save the harbor or break it.",
+                "choice_alignment": "neutral",
+                "urgency": "high",
+                "options": [
+                    {
+                        "label": "Expose the magistrate",
+                        "outcome": "The public rises immediately.",
+                        "alignment": "good",
+                    },
+                    {
+                        "label": "Shield the city",
+                        "outcome": "Order holds, but corruption survives.",
+                        "alignment": "lawful",
+                    },
+                ],
+                "consequence_descriptions": [
+                    "The wardens tighten control over the harbor.",
+                ],
+            }
+        },
+    }))
+
+    assert len(draft.choices) == 1
+    assert draft.choices[0].prompt == "Who should command the docks tonight?"
+    assert draft.choices[0].options == ("Trust Mara", "Trust Iven")
+    assert draft.choices[0].consequences == (
+        "Mara reveals the hidden ledger.",
+        "Iven arms the dockworkers.",
+    )
+    assert draft.choices[0].next_story_titles == ("Moonlit Rebellion", None)
+
+    assert len(draft.moral_choices) == 1
+    assert draft.moral_choices[0].prompt == "Expose the magistrate or shield the city from panic?"
+    assert [option.label for option in draft.moral_choices[0].options] == [
+        "Expose the magistrate",
+        "Shield the city",
+    ]
+    assert draft.moral_choices[0].consequence_descriptions == (
+        "The wardens tighten control over the harbor.",
+    )
 
 
 def test_relationship_parser_accepts_textual_strength_levels():

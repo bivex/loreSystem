@@ -1632,6 +1632,26 @@ def _canonical_text_similarity(left: str, right: str) -> float:
     return _canonical_set_similarity(set(left.split()), set(right.split()))
 
 
+def _canonical_anchor_tokens(value: object) -> set[str]:
+    text = _normalize_canonical_text(value)
+    if not text:
+        return set()
+    stop_words = {
+        "the", "and", "for", "with", "from", "into", "over", "under", "this", "that",
+        "main", "side", "story", "storyline", "line", "arc", "chapter", "episode", "act",
+        "part", "path", "quest", "chain", "run", "tale",
+    }
+    return {
+        token
+        for token in text.split()
+        if len(token) >= 4 and token not in stop_words
+    }
+
+
+def _canonical_anchor_overlap(left: object, right: object) -> int:
+    return len(_canonical_anchor_tokens(left) & _canonical_anchor_tokens(right))
+
+
 def _row_payload_json(row: Any) -> dict[str, object]:
     try:
         payload_text = str(row["payload_json"] or "").strip()
@@ -6500,6 +6520,15 @@ class RumorBridgeService:
             "character_name", "player_character_name", "player_name", "actor_name", "source_name", "target_name",
             "entity_name", "quest_chain_name", "quest_node_name", "objective_type", "item_name", "owner_name",
             "board_type", "badge_type", "trophy_type", "rank_type", "category",
+            "requirement_type", "value", "quantity", "is_consumed", "bonus_type", "effect", "effect_name",
+            "stat_name", "operation", "rule_id", "id", "node_type", "column", "point_cost",
+            "prerequisite_node_ids",
+            "time_point", "character_states", "characters", "states", "from_time", "to_time", "reasons",
+            "reason", "effects",
+            "prompt", "question", "options", "choice_type", "story_name", "story", "is_mandatory",
+            "label", "option", "text", "outcome", "consequence", "next_story", "next_story_title",
+            "choice_alignment", "alignment", "urgency", "consequence_descriptions", "affects_reputation",
+            "affects_karma", "is_reversible", "time_limit_seconds",
         }
         normalized_keys = {self._normalize_lookup_key(key) for key in value.keys()}
         if normalized_keys & recognized_keys:
@@ -10061,21 +10090,16 @@ class RumorBridgeService:
 
     def _save_or_merge_campaign(self, campaign: Campaign, request: RumorGenerationRequest) -> Campaign:
         rows = self._list_table_rows(self.campaign_repository, "campaigns", TenantId(request.tenant_id), EntityId(request.world_id), limit=12)
-        best_row = None
-        best_score = 0.0
-        candidate_title = _normalize_canonical_text(campaign.title)
-        candidate_desc = _normalize_canonical_text(campaign.description)
-        for row in rows:
-            title_score = _canonical_text_similarity(candidate_title, _normalize_canonical_text(row["title"]))
-            desc_score = _canonical_text_similarity(candidate_desc, _normalize_canonical_text(row["description"]))
-            score = (title_score * 0.7) + (desc_score * 0.3)
-            if row["campaign_type"] == campaign.campaign_type.value:
-                score += 0.05
-            if score > best_score:
-                best_score = score
-                best_row = row
-        if best_row is not None and best_score >= 0.78:
+        canonical_rows = [
+            row
+            for row in rows
+            if _normalize_canonical_text(row["campaign_type"]) == _normalize_canonical_text(campaign.campaign_type.value)
+        ] or rows[:1]
+        if canonical_rows:
+            best_row = sorted(canonical_rows, key=lambda row: int(row["id"]))[0]
             self._carry_existing_row_metadata(campaign, best_row)
+            if existing_title := self._coerce_optional_text(best_row["title"]):
+                object.__setattr__(campaign, "title", existing_title)
             object.__setattr__(campaign, "chapter_ids", [EntityId(item) for item in _row_json_int_ids(best_row, "chapter_ids")])
             if len(_coerce_canonical_text(best_row["description"]) or "") > len(str(campaign.description or "")):
                 object.__setattr__(campaign, "description", Description(str(best_row["description"])))
@@ -10091,21 +10115,16 @@ class RumorBridgeService:
 
     def _save_or_merge_story(self, story: Story, request: RumorGenerationRequest) -> Story:
         rows = self._list_table_rows(self.story_repository, "stories", TenantId(request.tenant_id), EntityId(request.world_id), limit=12)
-        best_row = None
-        best_score = 0.0
-        candidate_name = _normalize_canonical_text(story.name)
-        candidate_desc = _normalize_canonical_text(story.description)
-        for row in rows:
-            name_score = _canonical_text_similarity(candidate_name, _normalize_canonical_text(row["name"]))
-            desc_score = _canonical_text_similarity(candidate_desc, _normalize_canonical_text(row["description"]))
-            score = (name_score * 0.7) + (desc_score * 0.3)
-            if row["story_type"] == story.story_type.value:
-                score += 0.05
-            if score > best_score:
-                best_score = score
-                best_row = row
-        if best_row is not None and best_score >= 0.8:
+        canonical_rows = [
+            row
+            for row in rows
+            if _normalize_canonical_text(row["story_type"]) == _normalize_canonical_text(story.story_type.value)
+        ] or rows[:1]
+        if canonical_rows:
+            best_row = sorted(canonical_rows, key=lambda row: int(row["id"]))[0]
             self._carry_existing_row_metadata(story, best_row)
+            if existing_name := self._coerce_optional_text(best_row["name"]):
+                object.__setattr__(story, "name", existing_name)
             object.__setattr__(story, "choice_ids", [EntityId(item) for item in _row_json_int_ids(best_row, "choice_ids")])
             connected = {item.value for item in story.connected_world_ids}
             for item in _row_json_int_ids(best_row, "connected_world_ids"):
@@ -10127,6 +10146,7 @@ class RumorBridgeService:
         candidate_event_ids = {item.value for item in storyline.event_ids}
         candidate_quest_ids = {item.value for item in storyline.quest_ids}
         candidate_type = _normalize_canonical_text(storyline.storyline_type.value)
+        candidate_name_overlap_tokens = _canonical_anchor_tokens(storyline.name)
         best_row = None
         best_payload: dict[str, object] = {}
         best_score = 0.0
@@ -10139,6 +10159,8 @@ class RumorBridgeService:
             existing_desc = _normalize_canonical_text(payload.get("description") or row["label"])
             name_score = 1.0 if existing_name == candidate_name else _canonical_text_similarity(existing_name, candidate_name)
             desc_score = 1.0 if existing_desc == candidate_desc else _canonical_text_similarity(existing_desc, candidate_desc)
+            name_anchor_overlap = len(candidate_name_overlap_tokens & _canonical_anchor_tokens(payload.get("name") or row["label"]))
+            desc_anchor_overlap = _canonical_anchor_overlap(payload.get("description") or row["label"], storyline.description)
             existing_event_ids = {int(item) for item in (payload.get("event_ids") or []) if str(item).isdigit()}
             existing_quest_ids = {int(item) for item in (payload.get("quest_ids") or []) if str(item).isdigit()}
             event_score = _canonical_set_similarity(existing_event_ids, candidate_event_ids)
@@ -10150,6 +10172,11 @@ class RumorBridgeService:
                 best_score = 1.0
                 break
             score = (name_score * 0.55) + (desc_score * 0.15) + (event_score * 0.15) + (quest_score * 0.10) + (type_score * 0.05)
+            if existing_type == candidate_type == "main":
+                if name_anchor_overlap >= 2:
+                    score = max(score, 0.84)
+                elif name_anchor_overlap >= 1 and (desc_anchor_overlap >= 1 or event_score > 0 or quest_score > 0):
+                    score = max(score, 0.78)
             if score > best_score:
                 best_row = row
                 best_payload = payload
