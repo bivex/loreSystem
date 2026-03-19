@@ -39,6 +39,7 @@ def main() -> int:
             world_id=args.world_id,
             theme=args.theme,
             context=args.context,
+            output_language=args.output_language,
             count=args.count,
             location_id=args.location_id,
             character_names=tuple(args.character),

@@ -1455,6 +1455,7 @@ class RumorGenerationRequest:
     world_id: int
     theme: str
     context: str = ""
+    output_language: str | None = None
     count: int = 2
     location_id: int | None = None
     character_names: tuple[str, ...] = field(default_factory=tuple)
@@ -1650,6 +1651,11 @@ def _canonical_anchor_tokens(value: object) -> set[str]:
 
 def _canonical_anchor_overlap(left: object, right: object) -> int:
     return len(_canonical_anchor_tokens(left) & _canonical_anchor_tokens(right))
+
+
+def _contains_cyrillic_text(value: object) -> bool:
+    text = _coerce_canonical_text(value) or ""
+    return bool(re.search(r"[А-Яа-яЁёІіЇїЄєҐґ]", text))
 
 
 def _row_payload_json(row: Any) -> dict[str, object]:
@@ -3714,6 +3720,59 @@ class RumorBridgeService:
             + "\n"
         )
 
+    def _resolve_output_language(self, request: RumorGenerationRequest) -> str:
+        raw = (request.output_language or "").strip().lower()
+        normalized = {
+            "ru": "ru",
+            "russian": "ru",
+            "русский": "ru",
+            "uk": "uk",
+            "ua": "uk",
+            "ukrainian": "uk",
+            "українська": "uk",
+            "украинский": "uk",
+            "en": "en",
+            "english": "en",
+            "английский": "en",
+        }.get(raw)
+        if normalized:
+            return normalized
+        samples: list[object] = [request.theme, request.context, *request.character_names]
+        combined = " ".join(str(item) for item in samples if item)
+        if re.search(r"[ІіЇїЄєҐґ]", combined):
+            return "uk"
+        if _contains_cyrillic_text(combined):
+            return "ru"
+        return "en"
+
+    def _language_instruction_block(self, request: RumorGenerationRequest) -> str:
+        language = self._resolve_output_language(request)
+        character_hint = ""
+        if request.character_names:
+            character_hint = (
+                " Keep provided character names exactly as given unless a grammatical inflection is unavoidable; "
+                "prefer the original spelling."
+            )
+        if language == "ru":
+            return (
+                "\nOutput language: Russian.\n"
+                "Write all natural-language field values in Russian: titles, names of generated arcs/items/quests, descriptions, "
+                "UI-facing quest text, branch text, ending text, and narrative prose. Keep JSON keys and enum-like machine values in English."
+                f"{character_hint}\n"
+            )
+        if language == "uk":
+            return (
+                "\nOutput language: Ukrainian.\n"
+                "Write all natural-language field values in Ukrainian: titles, names of generated arcs/items/quests, descriptions, "
+                "UI-facing quest text, branch text, ending text, and narrative prose. Keep JSON keys and enum-like machine values in English."
+                f"{character_hint}\n"
+            )
+        return (
+            "\nOutput language: English.\n"
+            "Write all natural-language field values in English. Keep JSON keys and enum-like machine values in English."
+            f"{character_hint}\n"
+        )
+
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
         prompt = (
             f"Theme: {request.theme}\n"
@@ -3721,6 +3780,7 @@ class RumorBridgeService:
             f"Need exactly 1 rumor as JSON with name, description, source_name, truth_level, spread_speed, credibility_score.\n"
             f"Speaker persona: {agent_name}"
         )
+        prompt += self._language_instruction_block(request)
         return self._append_memory_context(prompt, memory_context)
 
     def _build_narrative_prompt(
@@ -3746,6 +3806,7 @@ class RumorBridgeService:
             "For alternate_realities include name, description, reality_type, and optional access_method. For flashbacks include name, description, trigger_event, optional scene_id, and optional characters. "
             "For flash_forwards include name, description, hinted_event, and clarity_level. For chapters include act_numbers. For episodes include chapter_number."
         )
+        prompt += self._language_instruction_block(request)
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         if include_systems_slice:
             prompt += self._narrative_systems_instructions()
@@ -3769,6 +3830,7 @@ class RumorBridgeService:
             f"Guidance: {guidance}\n"
             "Treat the deterministic anchors below as the primary canon facts for rumors, events, and relationship threads."
         )
+        prompt += self._language_instruction_block(request)
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._narrative_batch_instructions(keys)
@@ -3792,6 +3854,7 @@ class RumorBridgeService:
             f"Guidance: {guidance}\n"
             "Use grounded names from the anchors below. Keep the number of generated entities small and coherent."
         )
+        prompt += self._language_instruction_block(request)
         prompt += self._narrative_anchor_block(request, chain_result, memory_context=memory_context)
         prompt += self._existing_canon_prompt_block(request, keys)
         prompt += self._systems_batch_instructions(keys)
@@ -4242,12 +4305,14 @@ class RumorBridgeService:
         rumor_lines = "\n".join(f"- {rumor.name}: {rumor.description}" for rumor in rumors)
         seed = ", ".join(request.character_names) or "Invent participants if needed"
         prompt = f"Theme: {request.theme}\nContext: {request.context}\nRumors:\n{rumor_lines}\nPreferred characters: {seed}"
+        prompt += self._language_instruction_block(request)
         return self._append_memory_context(prompt, memory_context)
 
     def _build_relationship_prompt(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...], memory_context: str = "") -> str:
         event_lines = "\n".join(f"- {event.name}: {event.description}" for event in events)
         cast = ", ".join(character_names) or "Invent two names"
         prompt = f"Theme: {request.theme}\nRumors: {', '.join(r.name for r in rumors)}\nEvents:\n{event_lines}\nCast: {cast}"
+        prompt += self._language_instruction_block(request)
         return self._append_memory_context(prompt, memory_context)
 
     def _append_memory_context(self, prompt: str, memory_context: str) -> str:

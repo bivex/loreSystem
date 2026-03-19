@@ -1,15 +1,22 @@
 import json
 import sqlite3
 import ssl
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from urllib import error as urllib_error
 
 import pytest
 
+ROOT = Path(__file__).resolve().parents[1]
+CAMEL_BRIDGE_DIR = ROOT / "CAMEL.Bridge"
+if str(CAMEL_BRIDGE_DIR) not in sys.path:
+    sys.path.insert(0, str(CAMEL_BRIDGE_DIR))
+
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend, NARRATIVE_BATCH_SPECS, RumorChainResult, SYSTEMS_BATCH_SPECS
 import src.application.integration.camel_bridge.backend as camel_backend_module
+from runner_args import build_parser
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
@@ -1519,6 +1526,55 @@ def test_narrative_prompt_uses_token_coverage_for_memory_backed_events():
     assert "Escalate from these confirmed events: Blue Lantern Raid." not in prompt
 
 
+def test_prompt_language_block_auto_detects_russian_from_cyrillic_theme():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="тёмное фэнтези: проклятая гавань под чёрной луной",
+        context="В северном порту исчезают люди и город медленно сползает в мрак.",
+        character_names=("Мара Восс", "Ивен Хейл"),
+    )
+
+    rumor_prompt = service._build_rumor_prompt(request, "Whisper Broker")
+    event_prompt = service._build_event_prompt(request, [])
+
+    assert "Output language: Russian." in rumor_prompt
+    assert "Write all natural-language field values in Russian" in rumor_prompt
+    assert "Keep provided character names exactly as given" in rumor_prompt
+    assert "Output language: Russian." in event_prompt
+
+
+def test_prompt_language_block_respects_explicit_output_language_override():
+    service = RumorBridgeService(CamelBridgeRumorRepository(":memory:"), backend=DeterministicRumorBackend())
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="тёмное фэнтези: проклятая гавань под чёрной луной",
+        context="В северном порту исчезают люди и город медленно сползает в мрак.",
+        output_language="en",
+        character_names=("Мара Восс", "Ивен Хейл"),
+    )
+    chain_result = RumorChainResult(
+        rumors=[],
+        characters=[],
+        events=[],
+        relationships=[],
+    )
+
+    prompt = service._build_narrative_batch_prompt(
+        request,
+        chain_result,
+        "Narrative Oracle",
+        keys=("campaign", "story"),
+        guidance="Keep the opening arc compact.",
+    )
+
+    assert "Output language: English." in prompt
+    assert "Write all natural-language field values in English." in prompt
+    assert "Output language: Russian." not in prompt
+
+
 def test_narrative_draft_stabilization_backfills_sparse_payload():
     class SparseBackend:
         def generate(self, system_message: str, user_message: str) -> str:
@@ -1737,6 +1793,18 @@ def test_load_env_file_supports_openrouter_free_model_defaults(tmp_path, monkeyp
     assert backend.model_platform == "OPENROUTER"
     assert backend.model_type == "arcee-ai/trinity-mini:free"
     assert backend.model_url == "https://openrouter.ai/api/v1"
+
+
+def test_runner_parser_accepts_output_language_override():
+    parser = build_parser()
+    args = parser.parse_args([
+        "--tenant-id", "1",
+        "--world-id", "1",
+        "--theme", "harbor panic",
+        "--output-language", "ru",
+    ])
+
+    assert args.output_language == "ru"
 
 
 def test_openrouter_headers_include_leaderboard_metadata(monkeypatch):

@@ -11,6 +11,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--world-id", type=int, required=True)
     parser.add_argument("--theme", required=True)
     parser.add_argument("--context", default="")
+    parser.add_argument("--output-language", default=None, help="Optional output language override for generated natural-language content, e.g. ru, uk, or en")
     parser.add_argument("--count", type=int, default=2)
     parser.add_argument("--location-id", type=int)
     parser.add_argument("--character", action="append", default=[])
