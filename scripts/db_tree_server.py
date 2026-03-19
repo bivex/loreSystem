@@ -195,12 +195,20 @@ HTML_PAGE = """<!doctype html>
         .replaceAll(">", "&gt;");
     }
 
+    // Get current DB from URL query parameter
+    function getCurrentDbFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("db");
+    }
+
     async function loadDatabaseList() {
       const response = await fetch("/api/databases");
       const dbs = await response.json();
       const selector = document.getElementById("db-selector");
+      const currentDb = getCurrentDbFromUrl();
+      state.currentDb = currentDb;
       selector.innerHTML = dbs.map((db, i) =>
-        `<option value="${escapeHtml(db)}"${db === state.currentDb ? " selected" : ""}>${escapeHtml(db)}</option>`
+        `<option value="${escapeHtml(db)}"${db === currentDb ? " selected" : ""}>${escapeHtml(db)}</option>`
       ).join("");
       selector.addEventListener("change", () => {
         const dbFile = selector.value;
@@ -229,7 +237,9 @@ HTML_PAGE = """<!doctype html>
     }
 
     async function loadSummary() {
-      const response = await fetch("/api/summary");
+      const currentDb = getCurrentDbFromUrl();
+      const url = currentDb ? `/api/summary?db=${encodeURIComponent(currentDb)}` : "/api/summary";
+      const response = await fetch(url);
       const summary = await response.json();
       state.summary = summary;
       state.currentDb = summary.db_path.split('/').pop();
@@ -265,9 +275,13 @@ HTML_PAGE = """<!doctype html>
       state.activeTable = tableName;
       renderTables(state.summary.tables);
       const limit = Number(document.getElementById("limit").value || 50);
+      const currentDb = getCurrentDbFromUrl();
+      const url = currentDb
+        ? `/api/table/${encodeURIComponent(tableName)}?limit=${limit}&db=${encodeURIComponent(currentDb)}`
+        : `/api/table/${encodeURIComponent(tableName)}?limit=${limit}`;
       const content = document.getElementById("content");
       content.innerHTML = `<div class="status">Loading ${escapeHtml(tableName)}…</div>`;
-      const response = await fetch(`/api/table/${encodeURIComponent(tableName)}?limit=${limit}`);
+      const response = await fetch(url);
       const payload = await response.json();
       if (payload.error) {
         content.innerHTML = `<div class="status">${escapeHtml(payload.error)}</div>`;
