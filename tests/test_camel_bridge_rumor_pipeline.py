@@ -2011,3 +2011,19 @@ def test_camel_bridge_accepts_known_model_alias_fields():
     assert affinity.value == 0.85
     assert consequence.severity == "major"
     assert flash_forward.clarity_level == "vivid"
+
+
+def test_camel_bridge_normalizes_season_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_season_value("fall") == "autumn"
+    assert service._coerce_season_value("year round") == "none"
+    assert service._coerce_season_value("monsoon") == "none"
+
+
+def test_camel_bridge_normalizes_invasion_type_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_invasion_type_text("pirate raid") == "naval"
+    assert service._coerce_invasion_type_text("uprising") == "military"
+    assert service._coerce_invasion_type_text("unknown") == "military"

@@ -6211,7 +6211,7 @@ class RumorBridgeService:
                 scalar_text,
                 f"Seasonal event {index} shaped by the rumor chain.",
             ),
-            season=(self._coerce_optional_text(payload.get("season")) or "winter").lower(),
+            season=self._coerce_season_value(payload.get("season")),
             year_number=max(0, self._coerce_positive_int(payload.get("year_number"), 1)),
             duration_days=max(1, self._coerce_positive_int(payload.get("duration_days"), 30)),
             reward_item_names=self._coerce_text_tuple(payload.get("reward_item_names") or payload.get("rewards") or payload.get("reward_names")),
@@ -6230,7 +6230,7 @@ class RumorBridgeService:
                 scalar_text,
                 f"Invasion {index} extracted from the rumor chain.",
             ),
-            invasion_type=(self._coerce_optional_text(payload.get("invasion_type") or payload.get("type")) or "military").lower(),
+            invasion_type=self._coerce_invasion_type_text(payload.get("invasion_type") or payload.get("type")),
             invader_name=self._first_non_empty_text(payload.get("invader_name"), "Unknown Invader"),
             target_name=self._first_non_empty_text(payload.get("target_name"), payload.get("target_region_name"), "Unknown Target"),
             force_size=max(1, self._coerce_positive_int(payload.get("force_size"), 1000)),
@@ -10165,6 +10165,42 @@ class RumorBridgeService:
             return "symbolic"
         text = self._coerce_optional_text(value)
         return text or "symbolic"
+
+    def _coerce_season_value(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "winter").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "fall": "autumn",
+            "autumnal": "autumn",
+            "springtime": "spring",
+            "summertime": "summer",
+            "wintertime": "winter",
+            "all_seasons": "none",
+            "year_round": "none",
+            "evergreen": "none",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"spring", "summer", "autumn", "winter", "none"} else "none"
+
+    def _coerce_invasion_type_text(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "military").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "pirate": "naval",
+            "pirate_raid": "naval",
+            "sea_raid": "naval",
+            "fleet": "naval",
+            "airborne": "aerial",
+            "dragon": "aerial",
+            "infernal": "demonic",
+            "demon": "demonic",
+            "rift": "extradimensional",
+            "void": "extradimensional",
+            "arcane": "magical",
+            "siege": "military",
+            "rebellion": "military",
+            "uprising": "military",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"aerial", "demonic", "extradimensional", "magical", "military", "naval"} else "military"
 
     def _coerce_choice_type(self, value: str) -> ChoiceType:
         return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)
