@@ -1689,6 +1689,51 @@ def test_openrouter_http_backend_retries_retryable_http_status(monkeypatch):
     assert calls["count"] == 2
 
 
+def test_parser_unwraps_mapping_containers_for_meta_entities(tmp_path):
+    db_path = str(tmp_path / "wrapped_meta.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+    )
+
+    draft = service._parse_narrative_structure(json.dumps({
+        "titles": {
+            "Moonlit Whisper": {
+                "description": "A title earned by hearing the fleet's whispers."
+            }
+        },
+        "ranks": {
+            "Spectral Operative": {
+                "description": "Rank for midnight coordinators.",
+                "rank_type": "prestige",
+                "tier": 2,
+            }
+        },
+        "leaderboards": {
+            "Moonlit Fleet Rank List": {
+                "description": "Tracks captains involved in the raids.",
+                "board_type": "event",
+                "sort_criterion": "score",
+                "size_limit": 100,
+            }
+        },
+        "badges": {
+            "Moonlit Whisper": {
+                "description": "Badge for hearing the fleet's whispers.",
+                "rarity": "common",
+            }
+        },
+    }))
+
+    assert [title.name for title in draft.titles] == ["Moonlit Whisper"]
+    assert [rank.name for rank in draft.ranks] == ["Spectral Operative"]
+    assert [leaderboard.name for leaderboard in draft.leaderboards] == ["Moonlit Fleet Rank List"]
+    assert [badge.name for badge in draft.badges] == ["Moonlit Whisper"]
+    assert draft.ranks[0].tier == 2
+    assert draft.leaderboards[0].size_limit == 100
+
+
 def test_relationship_parser_accepts_textual_strength_levels():
     service = RumorBridgeService(
         CamelBridgeRumorRepository(":memory:"),

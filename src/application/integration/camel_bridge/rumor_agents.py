@@ -6480,11 +6480,55 @@ class RumorBridgeService:
         )
 
     def _coerce_narrative_items(self, value: object) -> list[object]:
+        if isinstance(value, dict):
+            return self._coerce_mapping_narrative_items(value)
         if isinstance(value, list):
-            return [item for item in value if isinstance(item, (dict, str))]
+            result: list[object] = []
+            for item in value:
+                if isinstance(item, dict):
+                    result.extend(self._coerce_mapping_narrative_items(item))
+                elif isinstance(item, str):
+                    result.append(item)
+            return result
         if isinstance(value, (dict, str)):
             return [value]
         return []
+
+    def _coerce_mapping_narrative_items(self, value: dict[object, object]) -> list[object]:
+        recognized_keys = {
+            "name", "title", "description", "type", "story_type", "storyline_type", "campaign_type",
+            "character_name", "player_character_name", "player_name", "actor_name", "source_name", "target_name",
+            "entity_name", "quest_chain_name", "quest_node_name", "objective_type", "item_name", "owner_name",
+            "board_type", "badge_type", "trophy_type", "rank_type", "category",
+        }
+        normalized_keys = {self._normalize_lookup_key(key) for key in value.keys()}
+        if normalized_keys & recognized_keys:
+            return [value]
+
+        result: list[object] = []
+        for key, nested in value.items():
+            normalized = self._normalize_mapping_narrative_item(key, nested)
+            if isinstance(normalized, list):
+                result.extend(item for item in normalized if isinstance(item, (dict, str)))
+            elif isinstance(normalized, (dict, str)):
+                result.append(normalized)
+        return result or [value]
+
+    def _normalize_mapping_narrative_item(self, key: object, nested: object) -> object:
+        key_text = self._coerce_optional_text(key)
+        if isinstance(nested, dict):
+            payload = dict(nested)
+            if key_text and not self._coerce_optional_text(payload.get("name")) and not self._coerce_optional_text(payload.get("title")):
+                payload["name"] = key_text
+            return payload
+        if isinstance(nested, list):
+            return nested
+        if key_text and self._coerce_optional_text(nested):
+            return {
+                "name": key_text,
+                "description": self._coerce_optional_text(nested),
+            }
+        return nested
 
     def _coerce_text_tuple(self, value: object) -> tuple[str, ...]:
         if isinstance(value, list):
