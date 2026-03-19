@@ -3263,7 +3263,8 @@ class RumorBridgeService:
         drafts: list[RumorDraft] = []
         for index, (agent_name, system_message) in enumerate(DEFAULT_RUMOR_AGENT_PROMPTS, start=1):
             try:
-                raw = self.backend.generate(system_message, self._build_rumor_prompt(request, agent_name, memory_context))
+                localized_system = self._localize_system_prompt(system_message, request)
+                raw = self.backend.generate(localized_system, self._build_rumor_prompt(request, agent_name, memory_context))
                 drafts.extend(self._parse_rumor_drafts(raw))
             except Exception:
                 if not self.allow_fallback:
@@ -3542,9 +3543,10 @@ class RumorBridgeService:
             return self._generate_narrative_slice_draft(request, chain_result, memory_context)
         try:
             agent_name, system_message = self._narrative_agent_prompt(include_systems_slice)
+            localized_system = self._localize_system_prompt(system_message, request)
             raw = self._generate_with_logging(
                 "narrative_enriched",
-                system_message,
+                localized_system,
                 self._build_narrative_prompt(
                     request,
                     chain_result,
@@ -3583,9 +3585,11 @@ class RumorBridgeService:
         draft = self._fallback_narrative_structure_draft(request, chain_result)
         try:
             for batch_name, keys, guidance in NARRATIVE_BATCH_SPECS:
+                system_msg = self._narrative_batch_system_message(keys)
+                localized_system = self._localize_system_prompt(system_msg, request)
                 raw = self._generate_with_logging(
                     f"narrative_batch:{batch_name}",
-                    self._narrative_batch_system_message(keys),
+                    localized_system,
                     self._build_narrative_batch_prompt(
                         request,
                         chain_result,
@@ -3620,9 +3624,11 @@ class RumorBridgeService:
         draft = self._fallback_narrative_structure_draft(request, chain_result)
         try:
             for batch_name, keys, guidance in SYSTEMS_BATCH_SPECS:
+                system_msg = self._systems_batch_system_message(keys)
+                localized_system = self._localize_system_prompt(system_msg, request)
                 raw = self._generate_with_logging(
                     f"systems_batch:{batch_name}",
-                    self._systems_batch_system_message(keys),
+                    localized_system,
                     self._build_systems_batch_prompt(
                         request,
                         chain_result,
@@ -3780,6 +3786,14 @@ class RumorBridgeService:
             "All textual content in English. JSON keys and structural enum identifiers in English.\n"
             f"{character_hint}\n"
         )
+
+    def _localize_system_prompt(self, system_prompt: str, request: RumorGenerationRequest) -> str:
+        """Add language instruction to system prompt for non-English output."""
+        language = self._resolve_output_language(request)
+        if language == "en":
+            return system_prompt
+        instruction = self._language_instruction_block(request)
+        return f"{instruction}\n{system_prompt}"
 
     def _build_rumor_prompt(self, request: RumorGenerationRequest, agent_name: str, memory_context: str = "") -> str:
         prompt = self._language_instruction_block(request)
@@ -9924,7 +9938,8 @@ class RumorBridgeService:
 
     def _generate_event_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor], memory_context: str = "") -> list[EventDraft]:
         try:
-            raw = self.backend.generate(DEFAULT_EVENT_AGENT_PROMPT[1], self._build_event_prompt(request, rumors, memory_context))
+            localized_system = self._localize_system_prompt(DEFAULT_EVENT_AGENT_PROMPT[1], request)
+            raw = self.backend.generate(localized_system, self._build_event_prompt(request, rumors, memory_context))
             drafts = self._parse_event_drafts(raw)
         except Exception:
             if not self.allow_fallback:
@@ -9944,7 +9959,8 @@ class RumorBridgeService:
 
     def _generate_relationship_drafts(self, request: RumorGenerationRequest, rumors: list[Rumor], events: list[Event], character_names: tuple[str, ...], memory_context: str = "") -> list[CharacterRelationshipDraft]:
         try:
-            raw = self.backend.generate(DEFAULT_RELATIONSHIP_AGENT_PROMPT[1], self._build_relationship_prompt(request, rumors, events, character_names, memory_context))
+            localized_system = self._localize_system_prompt(DEFAULT_RELATIONSHIP_AGENT_PROMPT[1], request)
+            raw = self.backend.generate(localized_system, self._build_relationship_prompt(request, rumors, events, character_names, memory_context))
             drafts = self._parse_relationship_drafts(raw)
         except Exception:
             if not self.allow_fallback:
