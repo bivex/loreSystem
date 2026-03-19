@@ -82,7 +82,7 @@ NARRATIVE_BATCH_SPECS = (
             "quest_reward_tiers",
             "quest_trackers",
         ),
-        "Focus on quest structure, objectives, givers, and rewards. Keep outputs compact and canon-consistent.",
+        "Focus on quest structure, objectives, givers, and rewards. CRITICAL: ALL text must be in output language. Examples for Russian: 'Silence Before the Bell' → 'Тишина перед колоколом', 'Speak to the dockworkers' → 'Поговори с докерами', 'Light the signal pyre' → 'Зажги сигнальный костер'. NEVER use English for quest content. Keep outputs compact and canon-consistent.",
     ),
     (
         "narrative_branching",
