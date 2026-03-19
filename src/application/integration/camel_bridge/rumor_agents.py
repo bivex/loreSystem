@@ -3849,10 +3849,15 @@ class RumorBridgeService:
         guidance: str,
     ) -> str:
         prompt = self._language_instruction_block(request)
-        # Explicit priority reminder
+        # Explicit priority reminder - strengthened for complex batches
         language = self._resolve_output_language(request)
         if language != "en":
-            prompt += f"\nCRITICAL: Every textual field (names, descriptions, UI text, choices, consequences, etc.) MUST be in {language.upper()}. Do NOT use English for content values.\n"
+            prompt += f"\nCRITICAL LANGUAGE REQUIREMENT: Every textual field (names, descriptions, UI text, choices, consequences, objectives, etc.) MUST be in {language.upper()}.\n"
+            prompt += f"DO NOT use English for ANY content value. Not even partial words.\n"
+            prompt += f"Examples for Russian:\n"
+            prompt += f"  - 'Speak to the dockworkers' → 'Поговори с докерами'\n"
+            prompt += f"  - 'Light the signal pyre' → 'Зажги сигнальный костер'\n"
+            prompt += f"  - 'Silence Before the Bell' → 'Тишина перед колоколом'\n"
         prompt += (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
@@ -3877,10 +3882,11 @@ class RumorBridgeService:
         guidance: str,
     ) -> str:
         prompt = self._language_instruction_block(request)
-        # Explicit priority reminder
+        # Explicit priority reminder - strengthened for complex batches
         language = self._resolve_output_language(request)
         if language != "en":
-            prompt += f"\nCRITICAL: Every textual field (names, descriptions, titles, UI text, choices, consequences, etc.) MUST be in {language.upper()}. Do NOT use English for content values.\n"
+            prompt += f"\nCRITICAL LANGUAGE REQUIREMENT: Every textual field (names, descriptions, titles, UI text, choices, consequences, etc.) MUST be in {language.upper()}.\n"
+            prompt += f"DO NOT use English for ANY content value. Not even partial words.\n"
         prompt += (
             f"Theme: {request.theme}\n"
             f"Context: {request.context or 'No extra context provided.'}\n"
@@ -3964,14 +3970,14 @@ class RumorBridgeService:
             "prologue": "For prologue include title (in output language), description (in output language), content (in output language), and optional prologue_type (enum) and estimated_minutes (int).",
             "epilogue": "For epilogue include title (in output language), description (in output language), content (in output language), and optional epilogue_type (enum) and estimated_minutes (int).",
             "storylines": "For storylines include name (in output language), description (in output language), storyline_type (enum), and event_names (in output language).",
-            "character_evolutions": "For character_evolutions include character_name (in output language), current_stage (enum), evolution_type (enum), and optional variant_names (in output language), new_abilities (in output language), and stat_increases (numeric).",
-            "character_variants": "For character_variants include character_name (in output language), name (in output language), optional description (in output language), variant_type (enum), and rarity (enum).",
-            "character_profile_entries": "For character_profile_entries include character_name (in output language), field_name (e.g., 'fear', 'goal', 'secret'), and field_value (natural language in output language).",
+            "character_evolutions": "For character_evolutions include character_name (in output language), current_stage (enum), evolution_type (enum), and optional variant_names (in output language), new_abilities (in output language), and stat_increases (numeric). CRITICAL: All text fields MUST be in output language, do NOT mix English.",
+            "character_variants": "For character_variants include character_name (in output language), name (in output language), optional description (in output language, do NOT mix with English), variant_type (enum), and rarity (enum).",
+            "character_profile_entries": "For character_profile_entries include character_name (in output language), field_name (e.g., 'fear', 'goal', 'secret'), and field_value (CRITICAL: MUST be entirely in output language, no English words mixed in).",
             "motion_captures": "For motion_captures include name (in output language), file_path, and optional character_name (in output language) or actor_name.",
             "voice_actors": "For voice_actors include name (actor name), language (ISO code), and optional character_names (in output language).",
             "affinities": "For affinities include source_name (in output language), target_name (in output language), category (e.g., 'trust', 'rivalry'), and numeric value [-1.0..1.0].",
             "dispositions": "For dispositions include entity_name (natural language), target_type (machine enum), target_value (natural language), attitude (machine enum: hostile|unfriendly|neutral|friendly|helpful), and intensity [0-100]. All natural language fields in output language.",
-            "quests": "For quests include name (in output language), description (in output language), objectives (in output language), player_briefing (in output language), journal_summary (in output language), acceptance_text (in output language), completion_text (in output language), failure_text (in output language), reward_summary (in output language), and optional participant_names (in output language).",
+            "quests": "For quests include name (CRITICAL: MUST be in output language, NOT English), description (CRITICAL: MUST be in output language), objectives (CRITICAL: each item MUST be in output language), player_briefing (CRITICAL: MUST be in output language), journal_summary (CRITICAL: MUST be in output language), acceptance_text (CRITICAL: MUST be in output language), completion_text (CRITICAL: MUST be in output language), failure_text (CRITICAL: MUST be in output language), reward_summary (CRITICAL: MUST be in output language), and optional participant_names (in output language). NEVER use English for quest content values.",
             "quest_chains": "For quest_chains include name (in output language), description (in output language), and optional node_names (in output language).",
             "quest_givers": "For quest_givers include name (in output language), description (in output language), optional greeting_message (in output language), and optional quest_chain_names or quest_node_names (in output language).",
             "quest_nodes": "For quest_nodes include quest_chain_name (in output language), name (in output language), description (in output language), and optional objective_descriptions (in output language).",
@@ -10037,10 +10043,15 @@ class RumorBridgeService:
             return existing
         if not auto_create or not self._should_auto_ground_character_name(text, request, characters):
             return None
-        backstory = Backstory((
-            f"{text} grew up in the shadow of {request.theme}, learning to read every whisper in the market. "
-            f"Now they navigate the unrest around {request.theme.lower()} with equal parts fear, ambition, and survival instinct."
-        )[:220])
+        # Generate backstory in output language
+        language = self._resolve_output_language(request)
+        if language == "ru":
+            backstory_template = f"{text} вырос(ла) под тенью {request.theme}, научившись читать каждый шёпот на рынке. Теперь они пытаются пережить волнения вокруг {request.theme.lower()} с mixture страха, амбиций и инстинкта выживания."
+        elif language == "uk":
+            backstory_template = f"{text} виріс(ла) під тінню {request.theme}, навчившись читати кожен шепіт на ринку. Тепер вони намагаються вижити серед хвилювань навколо {request.theme.lower()} змішавши страх, амбіції та інстинкт виживання."
+        else:
+            backstory_template = f"{text} grew up in the shadow of {request.theme}, learning to read every whisper in the market. Now they navigate the unrest around {request.theme.lower()} with equal parts fear, ambition, and survival instinct."
+        backstory = Backstory(backstory_template[:220])
         created = Character.create(
             tenant_id=tenant_id,
             world_id=world_id,
