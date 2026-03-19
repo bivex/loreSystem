@@ -58,7 +58,7 @@ NARRATIVE_BATCH_SPECS = (
         "Focus on the campaign spine, dramatic escalation, and readable story structure grounded in the anchored rumor/event canon.",
     ),
     (
-        "character_quest_meta",
+        "character_meta",
         (
             "character_evolutions",
             "character_variants",
@@ -67,6 +67,12 @@ NARRATIVE_BATCH_SPECS = (
             "voice_actors",
             "affinities",
             "dispositions",
+        ),
+        "Focus on character progression, voice production, and relationship metadata. Keep outputs compact and canon-consistent.",
+    ),
+    (
+        "quest_meta",
+        (
             "quests",
             "quest_chains",
             "quest_givers",
@@ -75,6 +81,12 @@ NARRATIVE_BATCH_SPECS = (
             "quest_prerequisites",
             "quest_reward_tiers",
             "quest_trackers",
+        ),
+        "Focus on quest structure, objectives, givers, and rewards. Keep outputs compact and canon-consistent.",
+    ),
+    (
+        "narrative_branching",
+        (
             "plot_branches",
             "branch_points",
             "choices",
@@ -85,7 +97,7 @@ NARRATIVE_BATCH_SPECS = (
             "flash_forwards",
             "endings",
         ),
-        "Focus on character progression, quest structure, branching consequences, and lightweight production metadata. Keep outputs compact and canon-consistent.",
+        "Focus on branching narrative structure, player choices, and consequences. Keep outputs compact and canon-consistent.",
     ),
 )
 
