@@ -1,0 +1,142 @@
+"""Backend adapters for CAMEL.Bridge generation."""
+
+from __future__ import annotations
+
+import json
+import os
+from typing import Any, Protocol
+from urllib import error as urllib_error
+from urllib import request as urllib_request
+
+
+class AgentTextBackend(Protocol):
+    def generate(self, system_message: str, user_message: str) -> str: ...
+
+
+class CamelChatBackend:
+    """Lazy CAMEL backend that only imports CAMEL at runtime."""
+
+    def __init__(self, model_platform: str | None = None, model_type: str | None = None, model_config: dict | None = None):
+        self.model_platform = (model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI").upper()
+        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
+        self.model_url = (
+            os.getenv("CAMEL_MODEL_BASE_URL")
+            or os.getenv("OPENAI_BASE_URL")
+            or ("https://openrouter.ai/api/v1" if self.model_platform == "OPENROUTER" else None)
+        )
+        self.model_config = model_config or self._build_model_config()
+
+    def generate(self, system_message: str, user_message: str) -> str:
+        self._validate_environment()
+        if self.model_platform == "OPENROUTER":
+            return self._generate_via_openai_compatible_http(system_message, user_message)
+        try:
+            from camel.agents import ChatAgent
+            from camel.models import ModelFactory
+            from camel.types import ModelPlatformType, ModelType
+        except ImportError:
+            if self._supports_openai_compatible_http():
+                return self._generate_via_openai_compatible_http(system_message, user_message)
+            raise
+
+        model = ModelFactory.create(
+            model_platform=getattr(ModelPlatformType, self.model_platform, self.model_platform),
+            model_type=getattr(ModelType, self.model_type, self.model_type),
+            model_config_dict=self.model_config,
+            api_key=self._get_api_key(),
+            url=self.model_url,
+        )
+        agent = ChatAgent(model=model)
+        response = agent.step(f"System instruction:\n{system_message}\n\nUser request:\n{user_message}")
+        if hasattr(response, "msgs") and response.msgs:
+            return response.msgs[-1].content
+        return str(response)
+
+    def _build_model_config(self) -> dict:
+        config = {"temperature": float(os.getenv("CAMEL_MODEL_TEMPERATURE", "0.8"))}
+        if os.getenv("CAMEL_MODEL_MAX_TOKENS"):
+            config["max_tokens"] = int(os.getenv("CAMEL_MODEL_MAX_TOKENS", "0"))
+        return config
+
+    def _supports_openai_compatible_http(self) -> bool:
+        return self.model_platform in {"OPENAI", "OPENROUTER"}
+
+    def _validate_environment(self) -> None:
+        required_key = {
+            "OPENAI": "OPENAI_API_KEY",
+            "ANTHROPIC": "ANTHROPIC_API_KEY",
+            "GEMINI": "GOOGLE_API_KEY",
+            "GOOGLE": "GOOGLE_API_KEY",
+            "GROQ": "GROQ_API_KEY",
+            "MISTRAL": "MISTRAL_API_KEY",
+            "OPENROUTER": "OPENROUTER_API_KEY",
+        }.get(self.model_platform)
+        if required_key and not os.getenv(required_key):
+            raise RuntimeError(f"Missing required environment variable for CAMEL bridge: {required_key}")
+
+    def _get_api_key(self) -> str | None:
+        required_key = {
+            "OPENAI": "OPENAI_API_KEY",
+            "ANTHROPIC": "ANTHROPIC_API_KEY",
+            "GEMINI": "GOOGLE_API_KEY",
+            "GOOGLE": "GOOGLE_API_KEY",
+            "GROQ": "GROQ_API_KEY",
+            "MISTRAL": "MISTRAL_API_KEY",
+            "OPENROUTER": "OPENROUTER_API_KEY",
+        }.get(self.model_platform)
+        return os.getenv(required_key) if required_key else None
+
+    def _generate_via_openai_compatible_http(self, system_message: str, user_message: str) -> str:
+        if not self.model_url:
+            raise RuntimeError("CAMEL bridge needs CAMEL_MODEL_BASE_URL or OPENAI_BASE_URL for HTTP generation")
+        payload: dict[str, Any] = {
+            "model": self.model_type,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message},
+            ],
+        }
+        payload.update(self.model_config)
+        reasoning_effort = os.getenv("CAMEL_MODEL_REASONING_EFFORT")
+        if reasoning_effort:
+            payload["reasoning"] = {"effort": reasoning_effort}
+        request = urllib_request.Request(
+            f"{self.model_url.rstrip('/')}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers=self._build_openai_compatible_headers(),
+            method="POST",
+        )
+        try:
+            with urllib_request.urlopen(request, timeout=120) as response:
+                body = response.read().decode("utf-8")
+        except urllib_error.HTTPError as exc:
+            details = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
+            ) from exc
+        except urllib_error.URLError as exc:
+            raise RuntimeError(f"CAMEL bridge HTTP generation failed: {exc.reason}") from exc
+        parsed = json.loads(body)
+        content = (((parsed.get("choices") or [{}])[0].get("message") or {}).get("content"))
+        if isinstance(content, str) and content.strip():
+            return content
+        if isinstance(content, list):
+            fragments = [
+                part.get("text", "")
+                for part in content
+                if isinstance(part, dict) and part.get("type") in {None, "text"}
+            ]
+            merged = "".join(fragment for fragment in fragments if fragment)
+            if merged.strip():
+                return merged
+        raise RuntimeError("CAMEL bridge HTTP generation returned no assistant content")
+
+    def _build_openai_compatible_headers(self) -> dict[str, str]:
+        headers = {
+            "Authorization": f"Bearer {self._get_api_key()}",
+            "Content-Type": "application/json",
+        }
+        if self.model_platform == "OPENROUTER":
+            headers["HTTP-Referer"] = os.getenv("OPENROUTER_HTTP_REFERER") or "https://github.com/bivex/loreSystem"
+            headers["X-Title"] = os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
+        return headers

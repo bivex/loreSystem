@@ -1,19 +1,7 @@
 """CAMEL rumor bridge helpers."""
 
-from .rumor_agents import (
-    CanonicalPersistContext,
-    CanonicalPersistEngine,
-    CanonicalPersistRegistry,
-    CamelChatBackend,
-    DeterministicRumorBackend,
-    RumorChainResult,
-    CharacterRelationshipDraft,
-    EventDraft,
-    load_env_file,
-    RumorBridgeService,
-    RumorDraft,
-    RumorGenerationRequest,
-)
+from .backend import CamelChatBackend
+from .env import load_env_file
 from .memory import (
     HashingTextEmbedder,
     LocalNgramTextEmbedder,
@@ -21,6 +9,18 @@ from .memory import (
     QdrantMemoryIndex,
     SQLiteLoreMemoryReader,
     build_memory_service_from_env,
+)
+from .rumor_agents import (
+    CanonicalPersistContext,
+    CanonicalPersistEngine,
+    CanonicalPersistRegistry,
+    DeterministicRumorBackend,
+    RumorChainResult,
+    CharacterRelationshipDraft,
+    EventDraft,
+    RumorBridgeService,
+    RumorDraft,
+    RumorGenerationRequest,
 )
 
 __all__ = [

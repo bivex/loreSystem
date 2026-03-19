@@ -18,7 +18,22 @@ from pathlib import Path
 from typing import Any, Callable, Generic, Protocol, Sequence, TypeVar
 from uuid import uuid4
 
+from src.application.integration.camel_bridge.backend import AgentTextBackend, CamelChatBackend
+from src.application.integration.camel_bridge.env import _env_flag, load_env_file
 from src.application.integration.camel_bridge.memory import LoreMemoryService
+from src.application.integration.camel_bridge.specs import (
+    ALL_NARRATIVE_BATCH_FIELDS,
+    ALL_SYSTEMS_BATCH_FIELDS,
+    DEFAULT_EVENT_AGENT_PROMPT,
+    DEFAULT_NARRATIVE_AGENT_PROMPT,
+    DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT,
+    DEFAULT_RELATIONSHIP_AGENT_PROMPT,
+    DEFAULT_RUMOR_AGENT_PROMPTS,
+    NARRATIVE_BATCH_SPECS,
+    NARRATIVE_STRUCTURE_KEYS,
+    SYSTEMS_BATCH_SPECS,
+    SYSTEMS_SLICE_KEYS,
+)
 from src.domain.entities.act import Act, ActStructure, ActType
 from src.domain.entities.achievement import Achievement
 from src.domain.entities.affinity import Affinity
@@ -1866,35 +1881,6 @@ class RelationshipCanonicalPersistPolicy(CanonicalPersistPolicy[CharacterRelatio
         return existing
 
 
-def load_env_file(env_path: str | None = None, override: bool = False) -> str | None:
-    candidates = [Path(env_path)] if env_path else [Path.cwd() / ".env", Path(__file__).resolve().parents[4] / ".env"]
-    for candidate in candidates:
-        if not candidate.exists() or not candidate.is_file():
-            continue
-        for raw_line in candidate.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            key, value = line.split("=", 1)
-            key = key.strip()
-            value = value.strip().strip('"').strip("'")
-            if key and (override or key not in os.environ):
-                os.environ[key] = value
-        return str(candidate)
-    return None
-
-
-def _env_flag(name: str, default: bool = False) -> bool:
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
-class AgentTextBackend(Protocol):
-    def generate(self, system_message: str, user_message: str) -> str: ...
-
-
 class CharacterStore(Protocol):
     def find_by_name(self, tenant_id: TenantId, world_id: EntityId, name: str): ...
     def save(self, entity: Character) -> Character: ...
@@ -2227,135 +2213,6 @@ class ArtifactSetStore(Protocol):
 
 class RelicCollectionStore(Protocol):
     def save(self, entity: RelicCollection) -> RelicCollection: ...
-
-
-class CamelChatBackend:
-    """Lazy CAMEL backend that only imports CAMEL at runtime."""
-
-    def __init__(self, model_platform: str | None = None, model_type: str | None = None, model_config: dict | None = None):
-        self.model_platform = (model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI").upper()
-        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
-        self.model_url = (
-            os.getenv("CAMEL_MODEL_BASE_URL")
-            or os.getenv("OPENAI_BASE_URL")
-            or ("https://openrouter.ai/api/v1" if self.model_platform == "OPENROUTER" else None)
-        )
-        self.model_config = model_config or self._build_model_config()
-
-    def generate(self, system_message: str, user_message: str) -> str:
-        self._validate_environment()
-        if self.model_platform == "OPENROUTER":
-            return self._generate_via_openai_compatible_http(system_message, user_message)
-        try:
-            from camel.agents import ChatAgent
-            from camel.models import ModelFactory
-            from camel.types import ModelPlatformType, ModelType
-        except ImportError:
-            if self._supports_openai_compatible_http():
-                return self._generate_via_openai_compatible_http(system_message, user_message)
-            raise
-
-        model = ModelFactory.create(
-            model_platform=getattr(ModelPlatformType, self.model_platform, self.model_platform),
-            model_type=getattr(ModelType, self.model_type, self.model_type),
-            model_config_dict=self.model_config,
-            api_key=self._get_api_key(),
-            url=self.model_url,
-        )
-        agent = ChatAgent(model=model)
-        response = agent.step(f"System instruction:\n{system_message}\n\nUser request:\n{user_message}")
-        if hasattr(response, "msgs") and response.msgs:
-            return response.msgs[-1].content
-        return str(response)
-
-    def _build_model_config(self) -> dict:
-        config = {"temperature": float(os.getenv("CAMEL_MODEL_TEMPERATURE", "0.8"))}
-        if os.getenv("CAMEL_MODEL_MAX_TOKENS"):
-            config["max_tokens"] = int(os.getenv("CAMEL_MODEL_MAX_TOKENS", "0"))
-        return config
-
-    def _supports_openai_compatible_http(self) -> bool:
-        return self.model_platform in {"OPENAI", "OPENROUTER"}
-
-    def _validate_environment(self) -> None:
-        required_key = {
-            "OPENAI": "OPENAI_API_KEY",
-            "ANTHROPIC": "ANTHROPIC_API_KEY",
-            "GEMINI": "GOOGLE_API_KEY",
-            "GOOGLE": "GOOGLE_API_KEY",
-            "GROQ": "GROQ_API_KEY",
-            "MISTRAL": "MISTRAL_API_KEY",
-            "OPENROUTER": "OPENROUTER_API_KEY",
-        }.get(self.model_platform)
-        if required_key and not os.getenv(required_key):
-            raise RuntimeError(f"Missing required environment variable for CAMEL bridge: {required_key}")
-
-    def _get_api_key(self) -> str | None:
-        required_key = {
-            "OPENAI": "OPENAI_API_KEY",
-            "ANTHROPIC": "ANTHROPIC_API_KEY",
-            "GEMINI": "GOOGLE_API_KEY",
-            "GOOGLE": "GOOGLE_API_KEY",
-            "GROQ": "GROQ_API_KEY",
-            "MISTRAL": "MISTRAL_API_KEY",
-            "OPENROUTER": "OPENROUTER_API_KEY",
-        }.get(self.model_platform)
-        return os.getenv(required_key) if required_key else None
-
-    def _generate_via_openai_compatible_http(self, system_message: str, user_message: str) -> str:
-        if not self.model_url:
-            raise RuntimeError("CAMEL bridge needs CAMEL_MODEL_BASE_URL or OPENAI_BASE_URL for HTTP generation")
-        payload: dict[str, Any] = {
-            "model": self.model_type,
-            "messages": [
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message},
-            ],
-        }
-        payload.update(self.model_config)
-        reasoning_effort = os.getenv("CAMEL_MODEL_REASONING_EFFORT")
-        if reasoning_effort:
-            payload["reasoning"] = {"effort": reasoning_effort}
-        request = urllib_request.Request(
-            f"{self.model_url.rstrip('/')}/chat/completions",
-            data=json.dumps(payload).encode("utf-8"),
-            headers=self._build_openai_compatible_headers(),
-            method="POST",
-        )
-        try:
-            with urllib_request.urlopen(request, timeout=120) as response:
-                body = response.read().decode("utf-8")
-        except urllib_error.HTTPError as exc:
-            details = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(
-                f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
-            ) from exc
-        except urllib_error.URLError as exc:
-            raise RuntimeError(f"CAMEL bridge HTTP generation failed: {exc.reason}") from exc
-        parsed = json.loads(body)
-        content = (((parsed.get("choices") or [{}])[0].get("message") or {}).get("content"))
-        if isinstance(content, str) and content.strip():
-            return content
-        if isinstance(content, list):
-            fragments = [
-                part.get("text", "")
-                for part in content
-                if isinstance(part, dict) and part.get("type") in {None, "text"}
-            ]
-            merged = "".join(fragment for fragment in fragments if fragment)
-            if merged.strip():
-                return merged
-        raise RuntimeError("CAMEL bridge HTTP generation returned no assistant content")
-
-    def _build_openai_compatible_headers(self) -> dict[str, str]:
-        headers = {
-            "Authorization": f"Bearer {self._get_api_key()}",
-            "Content-Type": "application/json",
-        }
-        if self.model_platform == "OPENROUTER":
-            headers["HTTP-Referer"] = os.getenv("OPENROUTER_HTTP_REFERER") or "https://github.com/bivex/loreSystem"
-            headers["X-Title"] = os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
-        return headers
 
 
 class DeterministicRumorBackend:
@@ -3195,172 +3052,6 @@ class DeterministicRumorBackend:
             "spread_speed": "Rapid",
             "credibility_score": 5,
         }])
-
-
-DEFAULT_RUMOR_AGENT_PROMPTS = (
-    ("Whisper Broker", "Invent one street-level rumor as compact JSON. Keep it flavorful, uncertain, and socially contagious."),
-    ("Town Crier", "Invent one public-square rumor as compact JSON. Keep it vivid, dramatic, and suitable for codex seeding."),
-)
-DEFAULT_EVENT_AGENT_PROMPT = (
-    "Chronicle Weaver",
-    "Convert the rumors into one consequential event as compact JSON with name, description, participant_names, and outcome.",
-)
-DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
-    "Bond Archivist",
-    "Infer one character relationship from the rumors and event as compact JSON with character_from_name, character_to_name, description, relationship_type, relationship_level, is_mutual.",
-)
-NARRATIVE_STRUCTURE_KEYS = (
-    "campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, "
-    "affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, "
-    "quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, "
-    "alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings"
-)
-SYSTEMS_SLICE_KEYS = (
-    "items, inventories, materials, components, sockets, crafting_recipes, blueprints, enchantments, runes, glyphs, titles, "
-    "ranks, leaderboards, trophies, badges, masteries, skills, perks, traits, attributes, talent_trees, achievements, level_ups, "
-    "experiences, progression_states, progression_events, player_metrics, drop_rates, loot_table_weights, difficulty_curves, "
-    "dungeons, raids, world_events, arenas, instances, open_world_zones, seasonal_events, invasions, wars, legendary_weapons, "
-    "mythical_armors, divine_items, cursed_items, artifact_sets, relic_collections"
-)
-DEFAULT_NARRATIVE_AGENT_PROMPT = (
-    "Saga Architect",
-    f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
-)
-DEFAULT_NARRATIVE_SYSTEMS_AGENT_PROMPT = (
-    "Saga Architect",
-    f"Convert the rumor/event/relationship chain into one compact JSON object with keys {NARRATIVE_STRUCTURE_KEYS}, {SYSTEMS_SLICE_KEYS}. Write quest-facing copy as readable in-world journal/game UI text, not dry meta summaries.",
-)
-
-NARRATIVE_BATCH_SPECS = (
-    (
-        "story_spine",
-        (
-            "campaign",
-            "story",
-            "acts",
-            "chapters",
-            "episodes",
-            "prologue",
-            "epilogue",
-            "storylines",
-        ),
-        "Focus on the campaign spine, dramatic escalation, and readable story structure grounded in the anchored rumor/event canon.",
-    ),
-    (
-        "character_quest_meta",
-        (
-            "character_evolutions",
-            "character_variants",
-            "character_profile_entries",
-            "motion_captures",
-            "voice_actors",
-            "affinities",
-            "dispositions",
-            "quests",
-            "quest_chains",
-            "quest_givers",
-            "quest_nodes",
-            "quest_objectives",
-            "quest_prerequisites",
-            "quest_reward_tiers",
-            "quest_trackers",
-            "plot_branches",
-            "branch_points",
-            "choices",
-            "consequences",
-            "moral_choices",
-            "alternate_realities",
-            "flashbacks",
-            "flash_forwards",
-            "endings",
-        ),
-        "Focus on character progression, quest structure, branching consequences, and lightweight production metadata. Keep outputs compact and canon-consistent.",
-    ),
-)
-
-SYSTEMS_BATCH_SPECS = (
-    (
-        "economy_items",
-        (
-            "items",
-            "inventories",
-            "materials",
-            "components",
-            "sockets",
-            "crafting_recipes",
-            "blueprints",
-            "enchantments",
-            "runes",
-            "glyphs",
-        ),
-        "Focus on loot, crafting, and socketable progression. Keep the set compact and internally consistent.",
-    ),
-    (
-        "progression_meta",
-        (
-            "titles",
-            "ranks",
-            "leaderboards",
-            "trophies",
-            "badges",
-            "masteries",
-            "skills",
-            "perks",
-            "traits",
-            "attributes",
-            "talent_trees",
-            "achievements",
-            "level_ups",
-            "experiences",
-            "progression_states",
-            "progression_events",
-            "player_metrics",
-            "drop_rates",
-            "loot_table_weights",
-            "difficulty_curves",
-        ),
-        "Focus on character progression, account meta, rewards, and balance telemetry. Prefer minimal but valid structures over exhaustive detail.",
-    ),
-    (
-        "encounters_world",
-        (
-            "dungeons",
-            "raids",
-            "world_events",
-            "arenas",
-            "instances",
-            "open_world_zones",
-            "seasonal_events",
-            "invasions",
-            "wars",
-        ),
-        "Focus on playable world content, conflict escalation, and live-ops events grounded in the current harbor unrest.",
-    ),
-    (
-        "legendary_rewards",
-        (
-            "legendary_weapons",
-            "mythical_armors",
-            "divine_items",
-            "cursed_items",
-            "artifact_sets",
-            "relic_collections",
-        ),
-        "Focus on capstone rewards, relic loops, and high-rarity loot tied directly to the main conflict.",
-    ),
-)
-
-ALL_SYSTEMS_BATCH_FIELDS = tuple(
-    field_name
-    for _, field_names, _ in SYSTEMS_BATCH_SPECS
-    for field_name in field_names
-)
-
-ALL_NARRATIVE_BATCH_FIELDS = tuple(
-    field_name
-    for _, field_names, _ in NARRATIVE_BATCH_SPECS
-    for field_name in field_names
-)
 
 
 class RumorBridgeService:
