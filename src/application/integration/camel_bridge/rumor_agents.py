@@ -6250,7 +6250,7 @@ class RumorBridgeService:
                 scalar_text,
                 f"War {index} extracted from the rumor chain.",
             ),
-            war_type=(self._coerce_optional_text(payload.get("war_type") or payload.get("type")) or "territorial").lower(),
+            war_type=self._coerce_war_type_text(payload.get("war_type") or payload.get("type")),
             aggressor_name=self._first_non_empty_text(payload.get("aggressor_name"), "Unknown Aggressor"),
             defender_name=self._first_non_empty_text(payload.get("defender_name"), "Unknown Defender"),
             conflict_region_name=self._first_non_empty_text(payload.get("conflict_region_name"), payload.get("region_name"), "Unknown Frontier"),
@@ -6273,7 +6273,7 @@ class RumorBridgeService:
             ),
             weapon_type=(self._coerce_optional_text(payload.get("weapon_type") or payload.get("type")) or "sword").lower(),
             damage=max(0, self._coerce_non_negative_optional_int(payload.get("damage")) or 0),
-            rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
+            rarity=self._coerce_high_tier_rarity(payload.get("rarity"), default="legendary"),
             special_ability=self._coerce_optional_text(payload.get("special_ability") or payload.get("ability")) or "",
         )
 
@@ -6289,7 +6289,7 @@ class RumorBridgeService:
             ),
             armor_type=(self._coerce_optional_text(payload.get("armor_type") or payload.get("type")) or "plate").lower(),
             defense=max(0, self._coerce_non_negative_optional_int(payload.get("defense")) or 0),
-            rarity=(self._coerce_optional_text(payload.get("rarity")) or "mythic").lower(),
+            rarity=self._coerce_high_tier_rarity(payload.get("rarity"), default="mythic"),
             special_protection=self._coerce_optional_text(payload.get("special_protection") or payload.get("protection")) or "",
         )
 
@@ -6305,7 +6305,7 @@ class RumorBridgeService:
             ),
             item_type=(self._coerce_optional_text(payload.get("item_type") or payload.get("type")) or "relic").lower(),
             power=max(0, self._coerce_non_negative_optional_int(payload.get("power")) or 0),
-            rarity=(self._coerce_optional_text(payload.get("rarity")) or "divine").lower(),
+            rarity=self._coerce_high_tier_rarity(payload.get("rarity"), default="divine"),
             deity_name=self._coerce_optional_text(payload.get("deity_name") or payload.get("deity")) or "",
             domain=self._coerce_optional_text(payload.get("domain")) or "",
             divine_ability=self._coerce_optional_text(payload.get("divine_ability") or payload.get("ability")) or "",
@@ -6340,7 +6340,7 @@ class RumorBridgeService:
                 scalar_text,
                 f"Artifact set {index} extracted from the rumor chain.",
             ),
-            set_type=(self._coerce_optional_text(payload.get("set_type") or payload.get("type")) or "mixed").lower(),
+            set_type=self._coerce_artifact_set_type_text(payload.get("set_type") or payload.get("type")),
             total_pieces=max(2, self._coerce_non_negative_optional_int(payload.get("total_pieces")) or 3),
             rarity=(self._coerce_optional_text(payload.get("rarity")) or "legendary").lower(),
             set_bonus=self._coerce_optional_text(payload.get("set_bonus") or payload.get("bonus")) or "",
@@ -10201,6 +10201,55 @@ class RumorBridgeService:
         }
         normalized = aliases.get(normalized, normalized)
         return normalized if normalized in {"aerial", "demonic", "extradimensional", "magical", "military", "naval"} else "military"
+
+    def _coerce_war_type_text(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "territorial").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "border": "territorial",
+            "border_war": "territorial",
+            "independence": "civil",
+            "insurrection": "civil",
+            "rebellion": "civil",
+            "uprising": "civil",
+            "holy": "religious",
+            "faith": "religious",
+            "proxy": "ideological",
+            "cold": "ideological",
+            "imperial": "colonial",
+            "annexation": "territorial",
+            "world": "total",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"civil", "colonial", "ideological", "interstate", "religious", "territorial", "total"} else "territorial"
+
+    def _coerce_high_tier_rarity(self, value: object, *, default: str) -> str:
+        normalized = (self._coerce_optional_text(value) or default).strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "mythical": "mythic",
+            "godly": "divine",
+            "artifact": "legendary",
+            "unique": "legendary",
+            "uncommon": "rare",
+            "common": "rare",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"rare", "epic", "legendary", "mythic", "divine"} else default
+
+    def _coerce_artifact_set_type_text(self, value: object) -> str:
+        normalized = (self._coerce_optional_text(value) or "mixed").strip().lower().replace("-", "_").replace(" ", "_")
+        aliases = {
+            "weapon": "weapons",
+            "armor_set": "armor",
+            "armour": "armor",
+            "armour_set": "armor",
+            "jewelry": "accessories",
+            "jewellery": "accessories",
+            "trinkets": "accessories",
+            "relics": "mixed",
+            "artifact": "mixed",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return normalized if normalized in {"armor", "weapons", "accessories", "mixed"} else "mixed"
 
     def _coerce_choice_type(self, value: str) -> ChoiceType:
         return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)

@@ -2027,3 +2027,20 @@ def test_camel_bridge_normalizes_invasion_type_values():
     assert service._coerce_invasion_type_text("pirate raid") == "naval"
     assert service._coerce_invasion_type_text("uprising") == "military"
     assert service._coerce_invasion_type_text("unknown") == "military"
+
+
+def test_camel_bridge_normalizes_war_type_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_war_type_text("uprising") == "civil"
+    assert service._coerce_war_type_text("holy") == "religious"
+    assert service._coerce_war_type_text("unknown") == "territorial"
+
+
+def test_camel_bridge_normalizes_high_tier_rarity_values():
+    service = RumorBridgeService(repository=SimpleNamespace())
+
+    assert service._coerce_high_tier_rarity("mythical", default="mythic") == "mythic"
+    assert service._coerce_high_tier_rarity("godly", default="divine") == "divine"
+    assert service._coerce_high_tier_rarity("common", default="legendary") == "rare"
+    assert service._coerce_high_tier_rarity("weird", default="legendary") == "legendary"
