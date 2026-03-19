@@ -164,7 +164,12 @@ HTML_PAGE = """<!doctype html>
 <body>
   <header>
     <h1>loreSystem DB Tree</h1>
-    <div class="meta" id="db-meta">Loading…</div>
+    <div class="meta" id="db-meta">
+      <select id="db-selector" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;margin-left:12px;">
+        <option value="">Loading databases…</option>
+      </select>
+      <span id="db-info"></span>
+    </div>
   </header>
   <main>
     <aside>
@@ -181,13 +186,28 @@ HTML_PAGE = """<!doctype html>
     </section>
   </main>
   <script>
-    const state = { summary: null, activeTable: null };
+    const state = { summary: null, activeTable: null, currentDb: null };
 
     function escapeHtml(value) {
       return String(value)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;");
+    }
+
+    async function loadDatabaseList() {
+      const response = await fetch("/api/databases");
+      const dbs = await response.json();
+      const selector = document.getElementById("db-selector");
+      selector.innerHTML = dbs.map((db, i) =>
+        `<option value="${escapeHtml(db)}"${db === state.currentDb ? " selected" : ""}>${escapeHtml(db)}</option>`
+      ).join("");
+      selector.addEventListener("change", () => {
+        const dbFile = selector.value;
+        if (dbFile) {
+          window.location.href = `/?db=${encodeURIComponent(dbFile)}`;
+        }
+      });
     }
 
     function renderNode(key, value) {
@@ -212,7 +232,8 @@ HTML_PAGE = """<!doctype html>
       const response = await fetch("/api/summary");
       const summary = await response.json();
       state.summary = summary;
-      document.getElementById("db-meta").textContent = `${summary.db_path} • ${summary.table_count} tables`;
+      state.currentDb = summary.db_path.split('/').pop();
+      document.getElementById("db-info").textContent = `${summary.table_count} tables`;
       renderTables(summary.tables);
     }
 
@@ -268,7 +289,8 @@ HTML_PAGE = """<!doctype html>
     document.getElementById("limit").addEventListener("change", () => {
       if (state.activeTable) loadTable(state.activeTable);
     });
-    loadSummary().catch((error) => {
+    // Load database list first, then summary
+    loadDatabaseList().then(() => loadSummary()).catch((error) => {
       document.getElementById("table-list").textContent = String(error);
       document.getElementById("content").textContent = String(error);
     });
@@ -288,8 +310,20 @@ def parse_args() -> argparse.Namespace:
 
 
 class DatabaseExplorer:
-    def __init__(self, db_path: str):
-        self.db_path = str(Path(db_path).expanduser().resolve())
+    def __init__(self, db_path: str, base_dir: str = "tmp"):
+        self.base_dir = Path(base_dir).expanduser().resolve()
+        self.db_path = self._resolve_db_path(db_path)
+
+    def _resolve_db_path(self, db_path: str) -> str:
+        p = Path(db_path).expanduser()
+        if p.is_absolute():
+            return str(p.resolve())
+        # Relative to base_dir if not found as-is
+        candidate = self.base_dir / p
+        if candidate.exists():
+            return str(candidate.resolve())
+        # Fallback to as-is (for backwards compatibility)
+        return str(p.resolve()) if p.exists() else str(candidate)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -307,6 +341,15 @@ class DatabaseExplorer:
                 count = conn.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0]
                 tables.append({"name": name, "count": count})
             return tables
+
+    @staticmethod
+    def list_databases(base_dir: str = "tmp") -> list[str]:
+        """Return list of .db files in base_dir relative to project root."""
+        root = Path(__file__).parent.parent.resolve()
+        db_dir = root / base_dir
+        if not db_dir.exists():
+            return []
+        return [f"{base_dir}/{p.name}" for p in sorted(db_dir.glob("*.db"))]
 
     def fetch_table(self, table_name: str, limit: int) -> list[dict[str, Any]]:
         safe_limit = max(1, min(limit, 500))
@@ -381,32 +424,49 @@ class DatabaseExplorer:
 
 
 class TreeRequestHandler(BaseHTTPRequestHandler):
-    explorer: DatabaseExplorer
     default_limit: int
+    base_dir: str = "tmp"
+
+    def _get_explorer(self, db_query: str | None = None) -> DatabaseExplorer:
+        """Create explorer from query param or use default from server args."""
+        if db_query:
+            return DatabaseExplorer(db_query, base_dir=self.base_dir)
+        # Fallback to server-configured default (passed via class attribute)
+        if hasattr(self, "default_db"):
+            return DatabaseExplorer(self.default_db, base_dir=self.base_dir)
+        raise RuntimeError("No database specified")
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
+        query_params = parse_qs(parsed.query)
+        db_query = query_params.get("db", [None])[0]
+
         if parsed.path == "/":
             self._send_html(HTML_PAGE)
             return
+        if parsed.path == "/api/databases":
+            self._send_json(DatabaseExplorer.list_databases(base_dir=self.base_dir))
+            return
         if parsed.path == "/api/summary":
+            explorer = self._get_explorer(db_query)
             self._send_json({
-                "db_path": self.explorer.db_path,
-                "table_count": len(self.explorer.table_summary()),
-                "tables": self.explorer.table_summary(),
+                "db_path": explorer.db_path,
+                "table_count": len(explorer.table_summary()),
+                "tables": explorer.table_summary(),
             })
             return
         if parsed.path.startswith("/api/table/"):
             table_name = parsed.path.removeprefix("/api/table/")
-            params = parse_qs(parsed.query)
+            params = query_params
             limit = self.default_limit
             if "limit" in params:
                 try:
                     limit = int(params["limit"][0])
                 except Exception:
                     pass
+            explorer = self._get_explorer(db_query)
             try:
-                rows = self.explorer.fetch_table(table_name, limit)
+                rows = explorer.fetch_table(table_name, limit)
             except Exception as exc:
                 self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
                 return
@@ -434,12 +494,13 @@ class TreeRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
 
-def make_handler(explorer: DatabaseExplorer, default_limit: int) -> type[TreeRequestHandler]:
+def make_handler(default_db: str, default_limit: int) -> type[TreeRequestHandler]:
     class Handler(TreeRequestHandler):
         pass
 
-    Handler.explorer = explorer
+    Handler.default_db = default_db
     Handler.default_limit = default_limit
+    Handler.base_dir = "tmp"
     return Handler
 
 
@@ -448,9 +509,12 @@ def main() -> int:
     db_path = Path(args.db_path).expanduser().resolve()
     if not db_path.exists():
         raise SystemExit(f"Database not found: {db_path}")
-    explorer = DatabaseExplorer(str(db_path))
-    server = ThreadingHTTPServer((args.host, args.port), make_handler(explorer, args.limit))
+    server = ThreadingHTTPServer(
+        (args.host, args.port),
+        make_handler(str(db_path), args.limit)
+    )
     print(f"Serving DB tree for {db_path} on http://{args.host}:{args.port}")
+    print(f"Base directory for DB scans: {db_path.parent}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
