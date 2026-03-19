@@ -98,38 +98,48 @@ chapters: ["Ритуал Восстановления", "Покаяние"]
 
 ---
 
-## 🔧 РЕКОМЕНДАЦИИ
+## 🔧 РЕКОМЕНДАЦИИ - ИСПРАВЛЕНО ✅
 
-### 1. Для Quests (критично)
+### 1. Для Quests (критично) ✅ ИСПРАВЛЕНО
 ```python
-# Усилить language instruction
+# Усилить language instruction - СДЕЛАНО
 system_prompt += """
-CRITICAL: ALL text MUST be in Russian. NO English allowed.
-Examples:
-- "Speak to the dockworkers" → "Поговори с докерами"
-- "Light the signal pyre" → "Зажги сигнальный костер"
-"""
+CRITICAL LANGUAGE REQUIREMENT: Every textual field MUST be in Russian.
+DO NOT use English for ANY content value.
 
-# Или использовать post-processing translation
-def translate_quest_if_english(quest):
-    if any(ord(c) < 128 for c in quest["description"]):
-        return translate_to_russian(quest)
-    return quest
+Examples:
+- 'Speak to the dockworkers' → 'Поговори с докерами'
+- 'Light the signal pyre' → 'Зажги сигнальный костер'
+- 'Silence Before the Bell' → 'Тишина перед колоколом'
+"""
 ```
 
-### 2. Для Characters
+### 2. Для Characters ✅ ИСПРАВЛЕНО
 ```python
-# Добавить explicit language instruction
+# Добавить explicit language instruction - СДЕЛАНО
 system_prompt += """
-Character backstory MUST be entirely in Russian.
-Do NOT mix languages within sentences.
+CRITICAL: All text fields MUST be in output language, do NOT mix English.
+character_profile_entries field_value: MUST be entirely in output language
 """
+
+# Auto-generated backstory теперь на русском - СДЕЛАНО
+backstory_template = f"{text} вырос(ла) под тенью {request.theme}..."
 ```
 
 ### 3. Общая рекомендация
 **Использовать более мощную модель для quests:**
 - Trinity Mini: хорошо для rumors/events
 - GPT-4o/Claude 3.5: необходимо для quests/campaigns
+
+---
+
+## 🎯 ИСПРАВЛЕНИЯ В КОДЕ (commit ff5a67c)
+
+1. ✅ Quest instructions: добавлены CRITICAL reminders для ВСЕХ text fields
+2. ✅ Character evolutions/profiles: добавлены 'do NOT mix English' warnings
+3. ✅ Narrative batch prompt: добавлены явные примеры EN→RU перевода
+4. ✅ Systems batch prompt: усилен language requirement
+5. ✅ Character auto-generation backstory: теперь уважает output_language
 
 ---
 
