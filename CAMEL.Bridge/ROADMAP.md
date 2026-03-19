@@ -83,6 +83,18 @@ Roadmap для **предпочтительного current-generation path** в
 
 - ✅ tighten connection/resource cleanup around SQLite memory reads
 - ✅ refine memory document shaping for better semantic recall quality
+- ✅ stabilize canonical continuation for repeated runs of `campaign`, `story`, `quest`, `quest_chain`, `artifact_set`, and `relic_collection`
+
+### Current continuation TODO
+
+The bridge now keeps a stable canonical core across first and second runs, but repeated-run continuation is not yet fully noise-free.
+
+- TODO: canonical merge for `Storyline`
+- TODO: canonical merge for `WorldEvent`
+- TODO: canonical merge for `Inventory`
+- TODO: reduce side-content duplication in branching / flavor slices created during second-run continuation
+- TODO: distinguish clearly between "canonical update" and "genuinely new arc" so second-run growth is intentional instead of opportunistic
+- TODO: add a dedicated two-run live regression harness that snapshots counts and canonical names before/after continuation
 
 ## Priority roadmap by genre
 

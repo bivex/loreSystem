@@ -130,6 +130,110 @@ At that point:
 - Qdrant contains searchable continuity memory for that world
 - later runs can build on established canon instead of starting from zero
 
+## Second-Run Continuity Check
+
+Cold start alone is not enough. The more important validation is whether a second run against the same SQLite database and the same Qdrant collection:
+
+- reuses the existing canonical campaign/story spine
+- reuses the existing canonical quest and quest-chain slots
+- reuses singleton high-tier systems slots such as `artifact_sets` and `relic_collections`
+- adds continuity context instead of starting from zero
+
+The clean reference check was run against:
+
+- SQLite: `/Volumes/External/Code/loreSystem/tmp/camel_live_debug8.db`
+- Qdrant collection: `camel_bridge_memory_debug8`
+- model: `arcee-ai/trinity-mini:free`
+- flags: `--with-campaign-story --with-systems --with-memory --strict-model`
+
+### Run 1
+
+Persisted counts after the first run:
+
+- `campaigns=1`
+- `stories=1`
+- `acts=3`
+- `chapters=4`
+- `episodes=2`
+- `quests=1`
+- `quest_chains=1`
+- `items=3`
+- `seasonal_events=1`
+- `wars=1`
+- `artifact_sets=1`
+- `relic_collections=1`
+- `storylines=1`
+- `world_events=1`
+
+Canonical names after run 1:
+
+- `campaign`: `Moonlit Rebellion`
+- `story`: `Moonlit Rebellion`
+- `quest`: `Moonlit Rebellion`
+- `quest_chain`: `Moonlit Confrontation`
+- `artifact_set`: `Dockside Sabotage Set`
+- `relic_collection`: `Moonlit Mutiny Relics`
+
+Qdrant after run 1:
+
+- `points_count=25`
+
+### Run 2
+
+The same command was executed a second time against the same database and the same memory collection.
+
+Persisted counts after the second run:
+
+- `campaigns=1`
+- `stories=1`
+- `acts=3`
+- `chapters=4`
+- `episodes=4`
+- `quests=1`
+- `quest_chains=1`
+- `items=3`
+- `seasonal_events=1`
+- `wars=1`
+- `artifact_sets=1`
+- `relic_collections=1`
+- `storylines=3`
+- `world_events=2`
+
+Canonical names after run 2:
+
+- `campaign`: `Moonlit Rebellion`
+- `story`: `Moonlit Rebellion`
+- `quest`: `Moonlit Rebellion`
+- `quest_chain`: `Moonlit Confrontation`
+- `artifact_set`: `Rebellion Set`
+- `relic_collection`: `Rebel Relics`
+
+Qdrant after run 2:
+
+- `points_count=41`
+
+### Interpretation
+
+The second run confirms that continuity memory is active:
+
+- prompt size increased on the second run because continuity context was injected
+- Qdrant points increased from `25` to `41`
+- core canonical entities did **not** duplicate:
+  - `campaign`
+  - `story`
+  - `quest`
+  - `quest_chain`
+  - `artifact_set`
+  - `relic_collection`
+
+The current behavior is therefore:
+
+- **good**: the pipeline now preserves a single canonical world spine across repeated runs
+- **good**: the second run can still add new continuity-facing content such as new `world_events`
+- **not fully solved**: some auxiliary slices still create noise or partial duplication, especially `storylines` and other side-content entities that are not yet fully canonicalized
+
+This means the bridge now supports **soft canonical continuation with a stable core spine**, but not yet a perfectly noise-free continuation pass.
+
 ## Recommended Command
 
 ```bash
