@@ -89,6 +89,53 @@ python -m pytest tests/ -v
 
 ---
 
+## 🤖 LM Studio & Local Models
+
+**CAMEL.Bridge now works with local models via LM Studio!** No API keys required, fully offline generation.
+
+### Setup LM Studio
+
+1. Install [LM Studio](https://lmstudio.ai/)
+2. Load a model (tested with `L3-8B-Stheno-v3.2-MLX`)
+3. Start the server (default: `http://127.0.0.1:1234`)
+
+### Run with Local Model
+
+```bash
+# Set environment for LM Studio
+export CAMEL_MODEL_PLATFORM="OPENAI"
+export CAMEL_MODEL_BASE_URL="http://127.0.0.1:1234"
+export CAMEL_MODEL_TYPE="l3-8b-stheno-v3.2-mlx"
+export CAMEL_MODEL_TEMPERATURE="0.8"
+
+# Run CAMEL Bridge
+python CAMEL.Bridge/run_rumor_pipeline.py \
+  --tenant-id 1 \
+  --world-id 1 \
+  --theme "Dark Fantasy" \
+  --output-language ru \
+  --count 2 \
+  --db-path "lore_local.db"
+```
+
+### Quick Test Scripts
+
+```bash
+# Test LM Studio connection
+python3 scripts/test_lm_studio.py
+
+# Generate quests with local model
+python3 scripts/run_lm_studio.py --type quest --limit 3
+```
+
+**Note:** Local models are slower than cloud APIs (~8-10s per request) but offer:
+- Zero API costs
+- Full privacy (data never leaves your machine)
+- Custom model fine-tuning
+- Offline operation
+
+---
+
 ## 🤖 Agent Team System
 
 The core power of MythWeave is **AI-powered lore extraction**. You give it narrative text — it gives you structured entities.
