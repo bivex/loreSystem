@@ -21,6 +21,8 @@ from src.domain.entities.legendary_weapon import LegendaryWeapon
 from src.domain.entities.artifact_set import ArtifactSet
 from src.domain.entities.material import MaterialType
 from src.domain.entities.mythical_armor import MythicalArmor
+from src.domain.entities.quest import Quest
+from src.domain.entities.quest_chain import QuestChain
 from src.domain.entities.raid import Raid
 from src.domain.entities.relic_collection import RelicCollection
 from src.domain.entities.rune import RuneRank, RuneType
@@ -28,7 +30,7 @@ from src.domain.entities.seasonal_event import SeasonalEvent
 from src.domain.entities.trait import TraitCategory, TraitNature
 from src.domain.entities.war import War
 from src.domain.entities.world_event import WorldEvent
-from src.domain.value_objects.common import EntityId, TenantId
+from src.domain.value_objects.common import Description, EntityId, TenantId, Timestamp, Version
 from src.domain.value_objects.progression import CharacterClass, StatType
 from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeAffinityRepository,
@@ -879,6 +881,93 @@ def test_camel_bridge_merges_artifact_and_relic_collections_by_canonical_type(tm
     try:
         assert conn.execute("SELECT COUNT(*) FROM artifact_sets").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM relic_collections").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
+def test_camel_bridge_merges_active_quest_slots_across_renames(tmp_path):
+    db_path = str(tmp_path / "quest_reuse.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        quest_repository=CamelBridgeQuestRepository(db_path),
+        quest_chain_repository=CamelBridgeQuestChainRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+    )
+    now = Timestamp.now()
+
+    quest_first = service._save_or_merge_quest(
+        Quest(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Mutiny",
+            description=Description("The first canonical quest."),
+            objectives=["Warn the harbor watch."],
+            status=service._coerce_quest_status("active"),
+            participant_ids=[EntityId(1)],
+            reward_ids=[],
+            created_at=now,
+            updated_at=now,
+            version=Version(1),
+        ),
+        request,
+    )
+    quest_second = service._save_or_merge_quest(
+        Quest(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Silence Before the Bell",
+            description=Description("A renamed active continuation quest."),
+            objectives=["Speak to the dockworkers."],
+            status=service._coerce_quest_status("active"),
+            participant_ids=[EntityId(2)],
+            reward_ids=[],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+    chain_first = service._save_or_merge_quest_chain(
+        QuestChain.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Ghost Fleet Uprising",
+            description=Description("The first canonical quest chain."),
+            quest_node_ids=[EntityId(101)],
+            required_level=3,
+        ),
+        request,
+    )
+    chain_second = service._save_or_merge_quest_chain(
+        QuestChain.create(
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Harbor Reckoning",
+            description=Description("A renamed continuation chain."),
+            quest_node_ids=[EntityId(102)],
+            required_level=4,
+        ),
+        request,
+    )
+
+    assert quest_first.id == quest_second.id
+    assert chain_first.id == chain_second.id
+    assert {objective for objective in quest_second.objectives} == {"Warn the harbor watch.", "Speak to the dockworkers."}
+    assert {node_id.value for node_id in chain_second.quest_node_ids} == {101, 102}
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM quests").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_chains").fetchone()[0] == 1
     finally:
         conn.close()
 

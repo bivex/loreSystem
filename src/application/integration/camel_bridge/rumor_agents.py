@@ -10405,6 +10405,34 @@ class RumorBridgeService:
         return repository.save(entity)
 
     def _save_or_merge_quest(self, quest: Quest, request: RumorGenerationRequest) -> Quest:
+        rows = self._generic_payload_rows(self.quest_repository, "quests", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        same_status_rows = [
+            (row, payload)
+            for row, payload in rows
+            if _normalize_canonical_text(payload.get("status")) == _normalize_canonical_text(quest.status.value)
+        ]
+        canonical_rows = same_status_rows or rows[:1]
+        if canonical_rows:
+            row, payload = sorted(canonical_rows, key=lambda item: int(item[0]["id"]))[0]
+            self._carry_existing_row_metadata(quest, row, payload)
+            existing_objectives = payload.get("objectives") if isinstance(payload.get("objectives"), list) else []
+            merged_objectives = list(dict.fromkeys([*existing_objectives, *list(quest.objectives)]))
+            if merged_objectives:
+                object.__setattr__(quest, "objectives", merged_objectives)
+            existing_participant_ids = [
+                EntityId(int(item))
+                for item in (payload.get("participant_ids") or [])
+                if str(item).isdigit()
+            ]
+            merged_participant_ids = {
+                participant_id.value: participant_id
+                for participant_id in [*existing_participant_ids, *quest.participant_ids]
+            }
+            if merged_participant_ids:
+                object.__setattr__(quest, "participant_ids", list(merged_participant_ids.values()))
+            if len(_coerce_canonical_text(payload.get("description")) or "") > len(str(quest.description)):
+                object.__setattr__(quest, "description", Description(str(payload.get("description"))))
+            return self.quest_repository.save(quest)
         match_fields = {"status": quest.status.value}
         quest = self._save_or_merge_generic_named_entity(
             quest,
@@ -10418,6 +10446,37 @@ class RumorBridgeService:
         return quest
 
     def _save_or_merge_quest_chain(self, quest_chain: QuestChain, request: RumorGenerationRequest) -> QuestChain:
+        rows = self._generic_payload_rows(self.quest_chain_repository, "quest_chains", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        same_status_rows = [
+            (row, payload)
+            for row, payload in rows
+            if _normalize_canonical_text(payload.get("status")) == _normalize_canonical_text(quest_chain.status.value)
+        ]
+        canonical_rows = same_status_rows or rows[:1]
+        if canonical_rows:
+            row, payload = sorted(canonical_rows, key=lambda item: int(item[0]["id"]))[0]
+            self._carry_existing_row_metadata(quest_chain, row, payload)
+            existing_node_ids = [
+                EntityId(int(item))
+                for item in (payload.get("quest_node_ids") or [])
+                if str(item).isdigit()
+            ]
+            merged_node_ids = {
+                node_id.value: node_id
+                for node_id in [*existing_node_ids, *quest_chain.quest_node_ids]
+            }
+            if merged_node_ids:
+                object.__setattr__(quest_chain, "quest_node_ids", list(merged_node_ids.values()))
+            if len(_coerce_canonical_text(payload.get("description")) or "") > len(str(quest_chain.description)):
+                object.__setattr__(quest_chain, "description", Description(str(payload.get("description"))))
+            if payload.get("required_level") is not None:
+                object.__setattr__(quest_chain, "required_level", max(quest_chain.required_level or 0, int(payload.get("required_level") or 0)) or None)
+            object.__setattr__(quest_chain, "is_repeatable", bool(payload.get("is_repeatable")) or quest_chain.is_repeatable)
+            if payload.get("cooldown_hours") is not None:
+                existing_cooldown = int(payload.get("cooldown_hours") or 0)
+                candidate_cooldown = quest_chain.cooldown_hours or 0
+                object.__setattr__(quest_chain, "cooldown_hours", max(existing_cooldown, candidate_cooldown) or None)
+            return self.quest_chain_repository.save(quest_chain)
         return self._save_or_merge_generic_named_entity(
             quest_chain,
             request,
