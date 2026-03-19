@@ -3282,8 +3282,10 @@ class RumorBridgeService:
             relationship_drafts = self._generate_relationship_drafts(request, rumors, events, tuple(characters_by_name), memory_context)
             relationships: list[CharacterRelationship] = []
             for draft in relationship_drafts:
-                left = self._ensure_character(request, draft.character_from_name, characters_by_name)
-                right = self._ensure_character(request, draft.character_to_name, characters_by_name)
+                left = self._resolve_character(request, draft.character_from_name, characters_by_name, auto_create=True)
+                right = self._resolve_character(request, draft.character_to_name, characters_by_name, auto_create=True)
+                if left is None or right is None:
+                    continue
                 if left.id == right.id:
                     continue
                 relation = self._relationship_to_entity(request, draft, left.id, right.id, events[0].id if events else None)
@@ -6559,6 +6561,19 @@ class RumorBridgeService:
             candidate = candidate[:117].rstrip() + "..."
         return candidate or fallback
 
+    def _should_persist_storyline_name(
+        self,
+        name: str,
+        request: RumorGenerationRequest,
+        characters: dict[str, Character],
+    ) -> bool:
+        normalized = self._normalize_lookup_key(name)
+        if not normalized:
+            return False
+        grounded_names = {self._normalize_lookup_key(value) for value in request.character_names}
+        grounded_names.update(characters.keys())
+        return normalized not in grounded_names
+
     def _persist_narrative_structure_unbatched(self, request: RumorGenerationRequest, chain_result: RumorChainResult, draft: NarrativeStructureDraft) -> RumorChainResult:
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
@@ -6568,11 +6583,11 @@ class RumorBridgeService:
         }
         connected_ids = [character.id for character in chain_result.characters if character.id is not None]
 
-        def ensure_character_id(name: str | None) -> EntityId | None:
+        def ensure_character_id(name: str | None, *, auto_create: bool = False) -> EntityId | None:
             if not name:
                 return None
-            character = self._ensure_character(request, name, characters_by_name)
-            return character.id
+            character = self._resolve_character(request, name, characters_by_name, auto_create=auto_create)
+            return character.id if character is not None else None
 
         campaign = self._save_or_merge_campaign(Campaign.create(
             tenant_id=tenant_id,
@@ -6701,6 +6716,8 @@ class RumorBridgeService:
             }
             fallback_event_ids = [event.id for event in chain_result.events if event.id is not None]
             for storyline_draft in draft.storylines:
+                if not self._should_persist_storyline_name(storyline_draft.name, request, characters_by_name):
+                    continue
                 event_ids = [
                     event_lookup[key]
                     for key in (self._normalize_lookup_key(name) for name in storyline_draft.event_names)
@@ -6711,7 +6728,7 @@ class RumorBridgeService:
                 if not event_ids:
                     continue
                 now = Timestamp.now()
-                storylines.append(self.storyline_repository.save(Storyline(
+                storylines.append(self._save_or_merge_storyline(Storyline(
                     id=None,
                     tenant_id=tenant_id,
                     world_id=world_id,
@@ -6723,7 +6740,7 @@ class RumorBridgeService:
                     created_at=now,
                     updated_at=now,
                     version=Version(1),
-                )))
+                ), request))
 
         voice_actors: list[VoiceActor] = []
         voice_actor_ids_by_name: dict[str, EntityId] = {}
@@ -7184,7 +7201,7 @@ class RumorBridgeService:
                     quest_chain = quest_chains_by_name.get(self._normalize_lookup_key(quest_chain_name))
                     if quest_chain is not None and quest_chain.id is not None:
                         quest_tracker.quest_chain_completions[quest_chain.id] = count
-                quest_trackers.append(self.quest_tracker_repository.save(quest_tracker))
+                quest_trackers.append(self._save_or_merge_quest_tracker(quest_tracker, request))
 
         choices: list[Choice] = []
         choices_by_prompt: dict[str, Choice] = {}
@@ -7776,7 +7793,7 @@ class RumorBridgeService:
                 used_slot_indices.add(slot_index)
                 slots[slot_index] = InventorySlot(item_id=item_id, quantity=max(1, slot_draft.quantity), slot_index=slot_index)
             inventory.slots = slots
-            inventories.append(self.inventory_repository.save(inventory))
+            inventories.append(self._save_or_merge_inventory(inventory, request))
 
         for mastery_draft in draft.masteries:
             character = characters_by_name.get(self._normalize_lookup_key(mastery_draft.character_name or "")) or fallback_character
@@ -9753,29 +9770,63 @@ class RumorBridgeService:
 
     def _ensure_participants(self, request: RumorGenerationRequest, names: tuple[str, ...], characters: dict[str, Character]) -> list[Character]:
         participant_names = tuple(name for name in names if name) or request.character_names or ("Mara Voss", "Iven Hale")
-        participants = [self._ensure_character(request, name, characters) for name in participant_names[:3]]
+        participants: list[Character] = []
+        seen: set[int] = set()
+        for name in participant_names[:3]:
+            character = self._resolve_character(request, name, characters, auto_create=True)
+            if character is None or character.id is None or character.id.value in seen:
+                continue
+            participants.append(character)
+            seen.add(character.id.value)
+        if not participants:
+            for fallback_name in request.character_names or ("Mara Voss", "Iven Hale"):
+                character = self._resolve_character(request, fallback_name, characters, auto_create=True)
+                if character is None or character.id is None or character.id.value in seen:
+                    continue
+                participants.append(character)
+                seen.add(character.id.value)
+                if len(participants) >= 2:
+                    break
         if not participants:
             participants.append(self._ensure_character(request, "Mara Voss", characters))
         return participants
 
     def _ensure_character(self, request: RumorGenerationRequest, name: str, characters: dict[str, Character]) -> Character:
-        key = name.strip().lower()
+        character = self._resolve_character(request, name, characters, auto_create=True)
+        if character is None:
+            raise ValueError(f"CAMEL bridge refused to auto-ground non-character label as Character: {name}")
+        return character
+
+    def _resolve_character(
+        self,
+        request: RumorGenerationRequest,
+        name: str | None,
+        characters: dict[str, Character],
+        *,
+        auto_create: bool,
+    ) -> Character | None:
+        text = self._coerce_optional_text(name)
+        if not text:
+            return None
+        key = text.strip().lower()
         if key in characters:
             return characters[key]
         tenant_id = TenantId(request.tenant_id)
         world_id = EntityId(request.world_id)
-        existing = self.character_repository.find_by_name(tenant_id, world_id, name) if self.character_repository else None
+        existing = self.character_repository.find_by_name(tenant_id, world_id, text) if self.character_repository else None
         if existing:
             characters[key] = existing
             return existing
+        if not auto_create or not self._should_auto_ground_character_name(text, request, characters):
+            return None
         backstory = Backstory((
-            f"{name} grew up in the shadow of {request.theme}, learning to read every whisper in the market. "
+            f"{text} grew up in the shadow of {request.theme}, learning to read every whisper in the market. "
             f"Now they navigate the unrest around {request.theme.lower()} with equal parts fear, ambition, and survival instinct."
         )[:220])
         created = Character.create(
             tenant_id=tenant_id,
             world_id=world_id,
-            name=CharacterName(name),
+            name=CharacterName(text),
             backstory=backstory,
             base_hp=100,
             base_atk=50,
@@ -9786,6 +9837,40 @@ class RumorBridgeService:
         saved = self.character_repository.save(created)
         characters[key] = saved
         return saved
+
+    def _should_auto_ground_character_name(
+        self,
+        name: str,
+        request: RumorGenerationRequest,
+        characters: dict[str, Character],
+    ) -> bool:
+        normalized = self._normalize_lookup_key(name)
+        grounded_names = {self._normalize_lookup_key(value) for value in request.character_names}
+        grounded_names.update(characters.keys())
+        if normalized in grounded_names:
+            return True
+        if len(normalized) < 3:
+            return False
+        tokens = [
+            token.casefold()
+            for token in re.findall(r"[^\W_]+", name)
+            if token and token.casefold() not in {"the", "of", "and", "or", "a", "an", "&"}
+        ]
+        if not tokens:
+            return False
+        generic_tokens = {
+            "rebel", "rebels", "cell", "cells", "leader", "leaders", "defender", "defenders", "guard", "guards",
+            "fleet", "fleets", "council", "councils", "ritual", "rituals", "harbor", "harbour", "dock", "docks",
+            "dockworker", "dockworkers", "merchant", "merchants", "warden", "wardens", "watch", "watchers",
+            "militia", "masters", "captain", "captains", "crew", "crews", "uprising", "rebellion", "season",
+            "seasons", "event", "events", "ghost", "ghosts", "worker", "workers", "faction", "factions",
+            "order", "orders", "cabal", "guild", "guilds", "army", "armies", "navy", "raiders", "corsairs",
+            "resistance", "rebellion", "watchmen", "sentinels", "followers", "acolyte", "acolytes",
+            "cultist", "cultists", "priest", "priests", "disciple", "disciples", "initiates", "initiate",
+        }
+        if all(token in generic_tokens for token in tokens):
+            return False
+        return any(token not in generic_tokens for token in tokens)
 
     def _dedupe_rumors(self, request: RumorGenerationRequest, drafts: list[RumorDraft], limit: int) -> list[RumorDraft]:
         unique: list[RumorDraft] = []
@@ -9991,6 +10076,63 @@ class RumorBridgeService:
                 object.__setattr__(story, "is_active", True)
         return self.story_repository.save(story)
 
+    def _save_or_merge_storyline(self, storyline: Storyline, request: RumorGenerationRequest) -> Storyline:
+        rows = self._generic_payload_rows(self.storyline_repository, "storylines", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        candidate_name = _normalize_canonical_text(storyline.name)
+        candidate_desc = _normalize_canonical_text(str(storyline.description))
+        candidate_event_ids = {item.value for item in storyline.event_ids}
+        candidate_quest_ids = {item.value for item in storyline.quest_ids}
+        candidate_type = _normalize_canonical_text(storyline.storyline_type.value)
+        best_row = None
+        best_payload: dict[str, object] = {}
+        best_score = 0.0
+        same_type_rows: list[tuple[Any, dict[str, object]]] = []
+        for row, payload in rows:
+            existing_type = _normalize_canonical_text(payload.get("storyline_type"))
+            if existing_type == candidate_type:
+                same_type_rows.append((row, payload))
+            existing_name = _normalize_canonical_text(payload.get("name") or row["label"])
+            existing_desc = _normalize_canonical_text(payload.get("description") or row["label"])
+            name_score = 1.0 if existing_name == candidate_name else _canonical_text_similarity(existing_name, candidate_name)
+            desc_score = 1.0 if existing_desc == candidate_desc else _canonical_text_similarity(existing_desc, candidate_desc)
+            existing_event_ids = {int(item) for item in (payload.get("event_ids") or []) if str(item).isdigit()}
+            existing_quest_ids = {int(item) for item in (payload.get("quest_ids") or []) if str(item).isdigit()}
+            event_score = _canonical_set_similarity(existing_event_ids, candidate_event_ids)
+            quest_score = _canonical_set_similarity(existing_quest_ids, candidate_quest_ids)
+            type_score = 1.0 if existing_type == candidate_type else 0.0
+            if existing_name == candidate_name and (event_score > 0 or quest_score > 0 or type_score > 0):
+                best_row = row
+                best_payload = payload
+                best_score = 1.0
+                break
+            score = (name_score * 0.55) + (desc_score * 0.15) + (event_score * 0.15) + (quest_score * 0.10) + (type_score * 0.05)
+            if score > best_score:
+                best_row = row
+                best_payload = payload
+                best_score = score
+        if best_row is None and same_type_rows:
+            best_row, best_payload = same_type_rows[0]
+            best_score = 0.74
+        elif best_score < 0.74 and candidate_type == "main" and len(same_type_rows) >= 2 and best_row is not None:
+            best_score = 0.74
+        if best_row is not None and best_score >= 0.74:
+            self._carry_existing_row_metadata(storyline, best_row, best_payload)
+            if existing_name := self._coerce_optional_text(best_payload.get("name") or best_row["label"]):
+                object.__setattr__(storyline, "name", existing_name)
+            merged_event_ids = {
+                item.value: item
+                for item in [*[EntityId(int(item)) for item in (best_payload.get("event_ids") or []) if str(item).isdigit()], *storyline.event_ids]
+            }
+            merged_quest_ids = {
+                item.value: item
+                for item in [*[EntityId(int(item)) for item in (best_payload.get("quest_ids") or []) if str(item).isdigit()], *storyline.quest_ids]
+            }
+            object.__setattr__(storyline, "event_ids", list(merged_event_ids.values()))
+            object.__setattr__(storyline, "quest_ids", list(merged_quest_ids.values()))
+            if len(_coerce_canonical_text(best_payload.get("description")) or "") > len(str(storyline.description)):
+                object.__setattr__(storyline, "description", Description(str(best_payload.get("description"))))
+        return self.storyline_repository.save(storyline)
+
     def _save_or_merge_act(self, act: Act, request: RumorGenerationRequest) -> Act:
         rows = self._list_table_rows(self.act_repository, "acts", TenantId(request.tenant_id), EntityId(request.world_id), limit=24)
         for row in rows:
@@ -10189,6 +10331,110 @@ class RumorBridgeService:
             match_fields=match_fields,
         )
         return item
+
+    def _save_or_merge_inventory(self, inventory: Inventory, request: RumorGenerationRequest) -> Inventory:
+        rows = self._generic_payload_rows(self.inventory_repository, "inventories", TenantId(request.tenant_id), EntityId(request.world_id), limit=20, include_worldless=True)
+        for row, payload in rows:
+            if int(payload.get("owner_id") or 0) != inventory.owner_id.value:
+                continue
+            self._carry_existing_row_metadata(inventory, row, payload)
+            inventory.capacity = max(int(payload.get("capacity") or 0), inventory.capacity)
+            inventory.gold = max(int(payload.get("gold") or 0), inventory.gold)
+            merged_slots: dict[int, InventorySlot] = {}
+            item_to_slot_index: dict[int, int] = {}
+            raw_slots = payload.get("slots") or {}
+            if isinstance(raw_slots, dict):
+                for slot_value in raw_slots.values():
+                    if not isinstance(slot_value, dict):
+                        continue
+                    item_id = slot_value.get("item_id")
+                    slot_index = slot_value.get("slot_index")
+                    quantity = slot_value.get("quantity")
+                    if not str(item_id).isdigit() or not str(slot_index).isdigit() or not str(quantity).isdigit():
+                        continue
+                    parsed_item_id = EntityId(int(item_id))
+                    parsed_slot_index = int(slot_index)
+                    merged_slots[parsed_slot_index] = InventorySlot(item_id=parsed_item_id, quantity=max(1, int(quantity)), slot_index=parsed_slot_index)
+                    item_to_slot_index[parsed_item_id.value] = parsed_slot_index
+            next_slot_index = max(merged_slots.keys(), default=-1) + 1
+            for slot in inventory.slots.values():
+                if slot.item_id is None:
+                    continue
+                existing_index = item_to_slot_index.get(slot.item_id.value)
+                if existing_index is not None:
+                    existing_slot = merged_slots[existing_index]
+                    merged_slots[existing_index] = InventorySlot(
+                        item_id=existing_slot.item_id,
+                        quantity=max(existing_slot.quantity, slot.quantity),
+                        slot_index=existing_index,
+                    )
+                    continue
+                slot_index = slot.slot_index
+                while slot_index in merged_slots:
+                    slot_index = next_slot_index
+                    next_slot_index += 1
+                if inventory.capacity > 0 and slot_index >= inventory.capacity:
+                    continue
+                merged_slots[slot_index] = InventorySlot(item_id=slot.item_id, quantity=slot.quantity, slot_index=slot_index)
+                item_to_slot_index[slot.item_id.value] = slot_index
+                next_slot_index = max(next_slot_index, slot_index + 1)
+            inventory.slots = merged_slots
+            return self.inventory_repository.save(inventory)
+        return self.inventory_repository.save(inventory)
+
+    def _save_or_merge_quest_tracker(self, quest_tracker: QuestTracker, request: RumorGenerationRequest) -> QuestTracker:
+        rows = self._generic_payload_rows(self.quest_tracker_repository, "quest_trackers", TenantId(request.tenant_id), EntityId(request.world_id), limit=20)
+        for row, payload in rows:
+            if int(payload.get("player_profile_id") or 0) != quest_tracker.player_profile_id.value:
+                continue
+            self._carry_existing_row_metadata(quest_tracker, row, payload)
+
+            def _entity_id_list(name: str) -> list[EntityId]:
+                return [EntityId(int(item)) for item in (payload.get(name) or []) if str(item).isdigit()]
+
+            completed_quest_chain_ids = {item.value: item for item in [*_entity_id_list("completed_quest_chain_ids"), *quest_tracker.completed_quest_chain_ids]}
+            active_quest_chain_ids = {
+                item.value: item
+                for item in [*_entity_id_list("active_quest_chain_ids"), *quest_tracker.active_quest_chain_ids]
+                if item.value not in completed_quest_chain_ids
+            }
+            completed_quest_node_ids = {item.value: item for item in [*_entity_id_list("completed_quest_node_ids"), *quest_tracker.completed_quest_node_ids]}
+            failed_quest_node_ids = {
+                item.value: item
+                for item in [*_entity_id_list("failed_quest_node_ids"), *quest_tracker.failed_quest_node_ids]
+                if item.value not in completed_quest_node_ids
+            }
+            active_quest_node_ids = {
+                item.value: item
+                for item in [*_entity_id_list("active_quest_node_ids"), *quest_tracker.active_quest_node_ids]
+                if item.value not in completed_quest_node_ids and item.value not in failed_quest_node_ids
+            }
+            existing_progress = {
+                EntityId(int(key)): int(value)
+                for key, value in (payload.get("objective_progress") or {}).items()
+                if str(key).isdigit() and str(value).isdigit()
+            }
+            merged_progress = dict(existing_progress)
+            for objective_id, progress in quest_tracker.objective_progress.items():
+                merged_progress[objective_id] = max(merged_progress.get(objective_id, 0), progress)
+            existing_completions = {
+                EntityId(int(key)): int(value)
+                for key, value in (payload.get("quest_chain_completions") or {}).items()
+                if str(key).isdigit() and str(value).isdigit()
+            }
+            merged_completions = dict(existing_completions)
+            for quest_chain_id, count in quest_tracker.quest_chain_completions.items():
+                merged_completions[quest_chain_id] = max(merged_completions.get(quest_chain_id, 0), count)
+
+            object.__setattr__(quest_tracker, "active_quest_chain_ids", list(active_quest_chain_ids.values()))
+            object.__setattr__(quest_tracker, "completed_quest_chain_ids", list(completed_quest_chain_ids.values()))
+            object.__setattr__(quest_tracker, "active_quest_node_ids", list(active_quest_node_ids.values()))
+            object.__setattr__(quest_tracker, "completed_quest_node_ids", list(completed_quest_node_ids.values()))
+            object.__setattr__(quest_tracker, "failed_quest_node_ids", list(failed_quest_node_ids.values()))
+            object.__setattr__(quest_tracker, "objective_progress", merged_progress)
+            object.__setattr__(quest_tracker, "quest_chain_completions", merged_completions)
+            return self.quest_tracker_repository.save(quest_tracker)
+        return self.quest_tracker_repository.save(quest_tracker)
 
     def _save_or_merge_seasonal_event(self, seasonal_event: SeasonalEvent, request: RumorGenerationRequest) -> SeasonalEvent:
         return self._save_or_merge_generic_named_entity(

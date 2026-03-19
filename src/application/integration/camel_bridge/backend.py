@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
+import socket
+import ssl
+import time
 from typing import Any, Protocol
 from urllib import error as urllib_error
 from urllib import request as urllib_request
@@ -106,16 +110,33 @@ class CamelChatBackend:
             headers=self._build_openai_compatible_headers(),
             method="POST",
         )
-        try:
-            with urllib_request.urlopen(request, timeout=120) as response:
-                body = response.read().decode("utf-8")
-        except urllib_error.HTTPError as exc:
-            details = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(
-                f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
-            ) from exc
-        except urllib_error.URLError as exc:
-            raise RuntimeError(f"CAMEL bridge HTTP generation failed: {exc.reason}") from exc
+        last_error: Exception | None = None
+        for attempt in range(1, self._http_retry_attempts() + 1):
+            try:
+                with urllib_request.urlopen(request, timeout=120) as response:
+                    body = response.read().decode("utf-8")
+                break
+            except urllib_error.HTTPError as exc:
+                details = exc.read().decode("utf-8", errors="replace")
+                if self._should_retry_http_status(exc.code) and attempt < self._http_retry_attempts():
+                    last_error = RuntimeError(
+                        f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
+                    )
+                    self._sleep_before_retry(attempt)
+                    continue
+                raise RuntimeError(
+                    f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
+                ) from exc
+            except Exception as exc:
+                if self._is_retryable_http_exception(exc) and attempt < self._http_retry_attempts():
+                    last_error = exc
+                    self._sleep_before_retry(attempt)
+                    continue
+                reason = getattr(exc, "reason", exc)
+                raise RuntimeError(f"CAMEL bridge HTTP generation failed: {reason}") from exc
+        else:
+            reason = getattr(last_error, "reason", last_error)
+            raise RuntimeError(f"CAMEL bridge HTTP generation failed after retries: {reason}")
         parsed = json.loads(body)
         content = (((parsed.get("choices") or [{}])[0].get("message") or {}).get("content"))
         if isinstance(content, str) and content.strip():
@@ -140,3 +161,42 @@ class CamelChatBackend:
             headers["HTTP-Referer"] = os.getenv("OPENROUTER_HTTP_REFERER") or "https://github.com/bivex/loreSystem"
             headers["X-Title"] = os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
         return headers
+
+    def _http_retry_attempts(self) -> int:
+        raw = os.getenv("CAMEL_HTTP_RETRY_ATTEMPTS")
+        try:
+            return max(1, int(raw)) if raw else 3
+        except ValueError:
+            return 3
+
+    def _http_retry_base_delay_seconds(self) -> float:
+        raw = os.getenv("CAMEL_HTTP_RETRY_BASE_DELAY_SECONDS")
+        try:
+            return max(0.0, float(raw)) if raw else 1.0
+        except ValueError:
+            return 1.0
+
+    def _sleep_before_retry(self, attempt: int) -> None:
+        delay = self._http_retry_base_delay_seconds() * (2 ** max(0, attempt - 1))
+        if delay > 0:
+            time.sleep(delay)
+
+    def _should_retry_http_status(self, status_code: int) -> bool:
+        return status_code in {408, 409, 425, 429, 500, 502, 503, 504}
+
+    def _is_retryable_http_exception(self, exc: Exception) -> bool:
+        if isinstance(exc, (
+            TimeoutError,
+            socket.timeout,
+            ConnectionError,
+            ConnectionResetError,
+            ConnectionAbortedError,
+            http.client.RemoteDisconnected,
+            ssl.SSLEOFError,
+        )):
+            return True
+        if isinstance(exc, urllib_error.URLError):
+            return self._is_retryable_http_exception(exc.reason) if isinstance(exc.reason, Exception) else False
+        if isinstance(exc, ssl.SSLError):
+            return True
+        return False

@@ -1,12 +1,15 @@
 import json
 import sqlite3
+import ssl
 from pathlib import Path
 from types import SimpleNamespace
+from urllib import error as urllib_error
 
 import pytest
 
 from src.application.integration.camel_bridge import DeterministicRumorBackend, RumorBridgeService, RumorGenerationRequest, load_env_file
 from src.application.integration.camel_bridge.rumor_agents import CamelChatBackend, NARRATIVE_BATCH_SPECS, RumorChainResult, SYSTEMS_BATCH_SPECS
+import src.application.integration.camel_bridge.backend as camel_backend_module
 from src.domain.entities.attribute import AttributeScale, AttributeType
 from src.domain.entities.blueprint import BlueprintType
 from src.domain.entities.crafting_recipe import RecipeDifficulty
@@ -17,16 +20,19 @@ from src.domain.entities.enchantment import EnchantmentEffect, EnchantmentType
 from src.domain.entities.experience import ExperienceSource
 from src.domain.entities.glyph import GlyphCategory, GlyphSchool, GlyphTier
 from src.domain.entities.invasion import Invasion
+from src.domain.entities.inventory import Inventory, InventorySlot
 from src.domain.entities.legendary_weapon import LegendaryWeapon
 from src.domain.entities.artifact_set import ArtifactSet
 from src.domain.entities.material import MaterialType
 from src.domain.entities.mythical_armor import MythicalArmor
 from src.domain.entities.quest import Quest
 from src.domain.entities.quest_chain import QuestChain
+from src.domain.entities.quest_tracker import QuestTracker
 from src.domain.entities.raid import Raid
 from src.domain.entities.relic_collection import RelicCollection
 from src.domain.entities.rune import RuneRank, RuneType
 from src.domain.entities.seasonal_event import SeasonalEvent
+from src.domain.entities.storyline import Storyline
 from src.domain.entities.trait import TraitCategory, TraitNature
 from src.domain.entities.war import War
 from src.domain.entities.world_event import WorldEvent
@@ -972,6 +978,231 @@ def test_camel_bridge_merges_active_quest_slots_across_renames(tmp_path):
         conn.close()
 
 
+def test_camel_bridge_merges_storyline_inventory_and_tracker_singletons(tmp_path):
+    db_path = str(tmp_path / "continuation_singletons.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        storyline_repository=CamelBridgeStorylineRepository(db_path),
+        inventory_repository=CamelBridgeInventoryRepository(db_path),
+        quest_tracker_repository=CamelBridgeQuestTrackerRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+    )
+
+    storyline_first = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Rebellion",
+            description=Description("The first canonical storyline."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(1)],
+            quest_ids=[EntityId(11)],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+    storyline_second = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Rebellion",
+            description=Description("A broader continuation storyline for the same arc."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(2)],
+            quest_ids=[EntityId(12)],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+
+    inventory_first = Inventory.create(
+        tenant_id=TenantId(1),
+        owner_id=EntityId(1),
+        capacity=20,
+        gold=0,
+    )
+    inventory_first.slots = {
+        0: InventorySlot(item_id=EntityId(101), quantity=1, slot_index=0),
+    }
+    inventory_first = service._save_or_merge_inventory(inventory_first, request)
+
+    inventory_second = Inventory.create(
+        tenant_id=TenantId(1),
+        owner_id=EntityId(1),
+        capacity=20,
+        gold=0,
+    )
+    inventory_second.slots = {
+        1: InventorySlot(item_id=EntityId(102), quantity=2, slot_index=1),
+    }
+    inventory_second = service._save_or_merge_inventory(inventory_second, request)
+
+    tracker_first = QuestTracker.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(1),
+        player_profile_id=EntityId(1),
+    )
+    tracker_first.start_quest_chain(EntityId(21))
+    tracker_first.start_quest(EntityId(31))
+    tracker_first.update_objective_progress(EntityId(41), 1)
+    tracker_first = service._save_or_merge_quest_tracker(tracker_first, request)
+
+    tracker_second = QuestTracker.create(
+        tenant_id=TenantId(1),
+        world_id=EntityId(1),
+        player_profile_id=EntityId(1),
+    )
+    tracker_second.start_quest_chain(EntityId(21))
+    tracker_second.complete_quest_chain(EntityId(21))
+    tracker_second.start_quest(EntityId(32))
+    tracker_second.update_objective_progress(EntityId(42), 3)
+    tracker_second = service._save_or_merge_quest_tracker(tracker_second, request)
+
+    assert storyline_first.id == storyline_second.id
+    assert {item.value for item in storyline_second.event_ids} == {1, 2}
+    assert {item.value for item in storyline_second.quest_ids} == {11, 12}
+
+    assert inventory_first.id == inventory_second.id
+    assert {slot.item_id.value for slot in inventory_second.slots.values() if slot.item_id is not None} == {101, 102}
+
+    assert tracker_first.id == tracker_second.id
+    assert {item.value for item in tracker_second.completed_quest_chain_ids} == {21}
+    assert {item.value for item in tracker_second.active_quest_node_ids} == {31, 32}
+    assert tracker_second.objective_progress[EntityId(41)] == 1
+    assert tracker_second.objective_progress[EntityId(42)] == 3
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM inventories").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM quest_trackers").fetchone()[0] == 1
+    finally:
+        conn.close()
+
+
+def test_camel_bridge_caps_main_storyline_slots_across_continuation_runs(tmp_path):
+    db_path = str(tmp_path / "storyline_slots.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        storyline_repository=CamelBridgeStorylineRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+    )
+
+    first = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="Moonlit Rebellion",
+            description=Description("The first canonical rebellion arc."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(1)],
+            quest_ids=[],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+    second = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="The Silver Conspiracy",
+            description=Description("The covert conspiracy running beneath the harbor."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(2)],
+            quest_ids=[],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+    third = service._save_or_merge_storyline(
+        Storyline(
+            id=None,
+            tenant_id=TenantId(1),
+            world_id=EntityId(1),
+            name="The Harbor's Fate",
+            description=Description("A continuation run reframes the harbor-wide consequences."),
+            storyline_type=service._coerce_storyline_type("main"),
+            event_ids=[EntityId(3)],
+            quest_ids=[],
+            created_at=Timestamp.now(),
+            updated_at=Timestamp.now(),
+            version=Version(1),
+        ),
+        request,
+    )
+
+    assert {first.id, second.id} == {EntityId(1), EntityId(2)}
+    assert third.id in {first.id, second.id}
+
+    conn = sqlite3.connect(db_path)
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM storylines").fetchone()[0] == 2
+    finally:
+        conn.close()
+
+
+def test_camel_bridge_does_not_auto_ground_faction_or_role_labels_as_characters(tmp_path):
+    db_path = str(tmp_path / "character_grounding.db")
+    _seed_world(db_path)
+    service = RumorBridgeService(
+        CamelBridgeRumorRepository(db_path),
+        backend=DeterministicRumorBackend([]),
+        character_repository=CamelBridgeCharacterRepository(db_path),
+    )
+    request = RumorGenerationRequest(
+        tenant_id=1,
+        world_id=1,
+        theme="harbor panic",
+        context="Citizens fear the next eclipse.",
+        character_names=("Mara Voss", "Iven Hale"),
+    )
+
+    characters = service._ensure_seed_characters(request)
+    participants = service._ensure_participants(request, ("Rebel Cell", "Harbor Defenders", "Mara Voss"), characters)
+
+    assert [character.name.value for character in participants] == ["Mara Voss"]
+    assert service._resolve_character(request, "Rebel Leader", characters, auto_create=True) is None
+    assert service._resolve_character(request, "Acolyte", characters, auto_create=True) is None
+    assert service._resolve_character(request, "M", characters, auto_create=True) is None
+    assert service._resolve_character(request, "r", characters, auto_create=True) is None
+    assert service._should_persist_storyline_name("Mara Voss", request, characters) is False
+    assert service._should_persist_storyline_name("Iven Hale", request, characters) is False
+    assert service._should_persist_storyline_name("The Moonlit Pact", request, characters) is True
+
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute("SELECT name FROM characters ORDER BY id").fetchall()
+        assert rows == [("Mara Voss",), ("Iven Hale",)]
+    finally:
+        conn.close()
+
+
 def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
     class RecordingBackend:
         def __init__(self):
@@ -1379,6 +1610,83 @@ def test_openrouter_headers_include_leaderboard_metadata(monkeypatch):
     assert headers["Authorization"] == "Bearer test-key"
     assert headers["HTTP-Referer"] == "https://example.com/app"
     assert headers["X-Title"] == "Lore Bridge Test"
+
+
+def test_openrouter_http_backend_retries_transient_url_errors(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("CAMEL_MODEL_PLATFORM", "OPENROUTER")
+    monkeypatch.setenv("CAMEL_HTTP_RETRY_ATTEMPTS", "3")
+    monkeypatch.setenv("CAMEL_HTTP_RETRY_BASE_DELAY_SECONDS", "0")
+
+    backend = CamelChatBackend()
+    calls = {"count": 0}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"choices":[{"message":{"content":"OK"}}]}'
+
+    def fake_urlopen(request, timeout=120):
+        calls["count"] += 1
+        if calls["count"] < 3:
+            raise urllib_error.URLError(ssl.SSLEOFError(8, "EOF occurred in violation of protocol"))
+        return FakeResponse()
+
+    monkeypatch.setattr(camel_backend_module.urllib_request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(camel_backend_module.time, "sleep", lambda _: None)
+
+    assert backend.generate("system", "user") == "OK"
+    assert calls["count"] == 3
+
+
+def test_openrouter_http_backend_retries_retryable_http_status(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("CAMEL_MODEL_PLATFORM", "OPENROUTER")
+    monkeypatch.setenv("CAMEL_HTTP_RETRY_ATTEMPTS", "2")
+    monkeypatch.setenv("CAMEL_HTTP_RETRY_BASE_DELAY_SECONDS", "0")
+
+    backend = CamelChatBackend()
+    calls = {"count": 0}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"choices":[{"message":{"content":"Recovered"}}]}'
+
+    class FakeHTTPError(urllib_error.HTTPError):
+        def __init__(self):
+            super().__init__(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                code=429,
+                msg="Too Many Requests",
+                hdrs=None,
+                fp=None,
+            )
+
+        def read(self):
+            return b'{"error":"rate limited"}'
+
+    def fake_urlopen(request, timeout=120):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise FakeHTTPError()
+        return FakeResponse()
+
+    monkeypatch.setattr(camel_backend_module.urllib_request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(camel_backend_module.time, "sleep", lambda _: None)
+
+    assert backend.generate("system", "user") == "Recovered"
+    assert calls["count"] == 2
 
 
 def test_relationship_parser_accepts_textual_strength_levels():
