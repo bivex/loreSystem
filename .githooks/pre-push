@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# git-version pre-push hook
+# Warns when auto-bumped versions or tags are out of sync before push
+
+find_git_version_cmd() {
+    local candidate=""
+
+    for candidate in \
+        "${GIT_VERSION_CMD:-}" \
+        "$HOME/.local/bin/git-version" \
+        "/usr/local/bin/git-version" \
+        "/opt/homebrew/bin/git-version"
+    do
+        if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+
+    candidate=$(command -v git-version 2>/dev/null || true)
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        case "$candidate" in
+            */git-core/git-version)
+                ;;
+            *)
+                echo "$candidate"
+                return 0
+                ;;
+        esac
+    fi
+
+    return 1
+}
+
+should_continue() {
+    local prompt="$1"
+
+    if [ ! -t 0 ]; then
+        return 0
+    fi
+
+    read -p "$prompt" -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]]
+}
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+cd "$REPO_ROOT" || exit 0
+
+GIT_VERSION_CMD=$(find_git_version_cmd || true)
+if [ -z "$GIT_VERSION_CMD" ]; then
+    exit 0
+fi
+
+VERSION_FILE="VERSION.txt"
+
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "Warning: $VERSION_FILE not found. Run 'git-version init' to initialize."
+    if ! should_continue "Continue pushing? (y/N) "; then
+        echo "Push cancelled."
+        exit 1
+    fi
+    exit 0
+fi
+
+FILE_VERSION=$(cat "$VERSION_FILE" | tr -d '\033' | sed 's/\[[0-9;]*m//g' | sed 's/^v//' | tr -d '[:cntrl:]')
+
+if ! [[ "$FILE_VERSION" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(-[0-9]+)?$ ]]; then
+    echo "Error: Invalid version format in $VERSION_FILE: $FILE_VERSION"
+    echo "Expected format: YYYY.MM.DD or YYYY.MM.DD-N"
+    if ! should_continue "Push anyway? (y/N) "; then
+        echo "Push cancelled."
+        exit 1
+    fi
+    exit 0
+fi
+
+if ! git diff --quiet -- "$VERSION_FILE" 2>/dev/null || \
+   ! git diff --cached --quiet -- "$VERSION_FILE" 2>/dev/null; then
+    echo "Warning: auto-bumped VERSION.txt is not fully committed yet"
+    if ! should_continue "Continue pushing anyway? (y/N) "; then
+        echo "Push cancelled. Commit the VERSION.txt change first."
+        exit 1
+    fi
+fi
+
+TAG_VERSION="v${FILE_VERSION}"
+if ! git rev-parse -q --verify "refs/tags/${TAG_VERSION}" >/dev/null 2>&1; then
+    echo "Warning: Tag $TAG_VERSION does not exist"
+    echo "Create it with 'git-version bump' when you want a tagged release."
+    if ! should_continue "Continue pushing anyway? (y/N) "; then
+        echo "Push cancelled. Create a release tag first if this push should be versioned."
+        exit 1
+    fi
+fi
+
+exit 0

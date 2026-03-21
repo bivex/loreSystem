@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e mutation-test lint format type-check clean db-init db-migrate db-downgrade es-init run-tests
+.PHONY: help install install-dev hooks-install hooks-uninstall test test-unit test-integration test-e2e mutation-test lint format type-check clean db-init db-migrate db-downgrade es-init run-tests
 
 # Colors for output
 BLUE=\033[0;34m
@@ -21,6 +21,16 @@ install-dev: install ## Install development dependencies
 	@echo "$(BLUE)Installing development dependencies...$(NC)"
 	pip install -r requirements-dev.txt
 	@echo "$(GREEN)✓ Development setup complete$(NC)"
+
+hooks-install: ## Install versioned git hooks for this clone
+	@echo "$(BLUE)Installing git hooks from .githooks/...$(NC)"
+	bash scripts/install_git_hooks.sh
+	@echo "$(GREEN)✓ Git hooks installed$(NC)"
+
+hooks-uninstall: ## Disable versioned git hooks for this clone
+	@echo "$(BLUE)Disabling repository git hooks...$(NC)"
+	git config --unset core.hooksPath || true
+	@echo "$(GREEN)✓ Repository git hooks disabled$(NC)"
 
 test: ## Run all tests
 	@echo "$(BLUE)Running all tests...$(NC)"
@@ -118,7 +128,7 @@ es-recreate: ## Recreate Elasticsearch indices (destroys data)
 
 check: format lint type-check test ## Run all quality checks
 
-setup: install-dev db-init es-init ## Complete setup for new developers
+setup: install-dev hooks-install db-init es-init ## Complete setup for new developers
 	@echo "$(GREEN)✓ Setup complete! Ready to develop.$(NC)"
 
 # Docker commands (future)

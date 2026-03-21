@@ -66,7 +66,10 @@ This C4 diagram shows the preferred current generation path: `CAMEL.Bridge CLI` 
 git clone https://github.com/bivex/loreSystem && cd loreSystem
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+make hooks-install
 ```
+
+The repository ships its git hooks in [`.githooks/`](.githooks/) so they survive fresh clones. Run `make hooks-install` once per clone to activate them.
 
 ### Run
 
