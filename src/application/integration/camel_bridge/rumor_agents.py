@@ -21,6 +21,7 @@ from uuid import uuid4
 from src.application.integration.camel_bridge.backend import AgentTextBackend, CamelChatBackend
 from src.application.integration.camel_bridge.env import _env_flag, load_env_file
 from src.application.integration.camel_bridge.memory import LoreMemoryService
+from src.application.integration.camel_bridge.fallback_i18n import t, get_default_characters, get_default_theme_suffix
 from src.application.integration.camel_bridge.specs import (
     ALL_NARRATIVE_BATCH_FIELDS,
     ALL_SYSTEMS_BATCH_FIELDS,
@@ -9017,44 +9018,167 @@ class RumorBridgeService:
         )
 
     def _fallback_narrative_structure_draft(self, request: RumorGenerationRequest, chain_result: RumorChainResult) -> NarrativeStructureDraft:
-        theme = request.theme.strip().title() or "Harbor"
+        language = self._resolve_output_language(request)
+        is_ru = language == "ru"
+
+        theme = request.theme.strip().title()
+        if not theme:
+            suffixes = get_default_theme_suffix(language)
+            theme = suffixes["default_theme"]
+
         character_names = self._grounded_character_names(request, chain_result)
         rumor_names = self._grounded_rumor_names(chain_result)
         event_names = self._grounded_event_names(chain_result)
         relationship_threads = self._grounded_relationship_threads(chain_result)
-        primary_character = character_names[0] if character_names else "Mara Voss"
-        secondary_character = character_names[1] if len(character_names) > 1 else "Iven Hale"
-        primary_rumor = rumor_names[0] if rumor_names else f"{theme} Whisper"
-        primary_event = event_names[0] if event_names else f"{theme} Rising"
-        primary_thread = relationship_threads[0] if relationship_threads else f"{primary_character} and {secondary_character} stay bound by the unrest."
+
+        # Localized defaults
+        default_chars = get_default_characters(language)
+        primary_character = character_names[0] if character_names else default_chars[0]
+        secondary_character = character_names[1] if len(character_names) > 1 else default_chars[1]
+
+        suffixes = get_default_theme_suffix(language)
+        primary_rumor = rumor_names[0] if rumor_names else f"{theme} {suffixes['whisper']}"
+        primary_event = event_names[0] if event_names else f"{theme} {suffixes['rising']}"
+
+        if is_ru:
+            primary_thread = relationship_threads[0] if relationship_threads else f"{primary_character} и {secondary_character} связаны беспорядками."
+        else:
+            primary_thread = relationship_threads[0] if relationship_threads else f"{primary_character} and {secondary_character} stay bound by the unrest."
+
         story_seed = self._grounded_story_seed(request, chain_result)
+
+        # Localize common strings
+        campaign_title = t(f"{theme} Campaign", language) if not is_ru else f"{theme} {t('Campaign', language)}"
+        story_name = t(f"{theme} Chronicle", language) if not is_ru else f"{theme} {t('Chronicle', language)}"
+        prologue_title = t("Before the First Whisper", language)
+
+        act_titles = [t("Act I - Setup", language), t("Act II - Confrontation", language), t("Act III - Resolution", language)]
+        chapter_titles = [t("Chapter 1", language), t("Chapter 2", language), t("Chapter 3", language)]
+        episode_titles = [t("Episode 1", language), t("Episode 2", language), t("Episode 3", language)]
+
+        quest_name = t("Silence Before the Bell", language)
+        quest_objectives = [t("Speak to the dockworkers", language), t("Light the signal pyre", language)]
+        quest_chain_name = t("Harbor Reckoning", language)
+        quest_node_name = t("Warn the Docks", language)
+        quest_giver_name = t("Dockmaster Elra", language)
+        reward_tier_name = t("Bellkeeper's Reward", language)
+
+        character_variant_name = t("Bellwarden Disguise", language)
+        character_fear = t("Hears the harbor bells in every silence.", language)
+        motion_name = t("Harbor Warning Gesture", language)
+        actor_name = t("Talan Reed", language)
+        faction_name = t("Harbor Guard", language)
+
+        # Build localized descriptions
+        if is_ru:
+            campaign_desc = f"Кампания сформирована {request.theme}, где {primary_rumor} приводит к {primary_event}."
+            story_desc = f"Главная история {request.theme}, следующая за {primary_character} через {primary_event}."
+            prologue_desc = f"Начальная установка вокруг {primary_rumor}."
+            prologue_content = f"До первого столкновения {primary_character} слышит {primary_rumor.lower()}, пока {request.theme} накрывает город."
+            act_descs = [
+                f"{primary_rumor} превращает фоновый страх в видимое напряжение.",
+                f"{primary_event} выводит конфликт наружу.",
+                f"Последствия утихают вокруг {primary_thread}"
+            ]
+            chapter_descs = [
+                f"{primary_character} замечает первые признаки {primary_rumor}.",
+                f"{primary_event} разрывает хрупкое спокойствие.",
+                f"Город впитывает цену {primary_thread}"
+            ]
+            episode_descs = [
+                f"{primary_rumor} перестает звучать безобидно.",
+                f"Погоня сжимается вокруг {primary_event}.",
+                f"{primary_character} и {secondary_character} решают какая правда выживет."
+            ]
+            storyline_desc = f"Сюжетная линия, которая несет {primary_rumor} в {primary_event}."
+            variant_desc = "Скрытый внешний вид для перемещения по городу без привлечения внимания."
+            variant_reqs = ("Выжить в бунте колоколов",)
+            variant_abilities = ("Собрать гавань",)
+            character_fear = t("Hears the harbor bells in every silence.", language)
+            motion_desc = "Жест предупреждения для сигнализации опасности."
+            quest_desc = "Доставь последнее предупреждение по гавани перед тем, как колокола вызовут панику."
+            quest_briefing = "Гаваньмастеру Эльре нужен кто-то быстрый и надежный для доставки предупреждения до комендантского часа."
+            quest_journal = "Предупреди гавань и зажги сигнальный костер прежде чем колокола превратят страх в хаос."
+            quest_acceptance = "Эльра протягивает запечатанную записку. Приведи докеров в движение и зажги костер до того как стража запрёт набережную."
+            quest_completion = "Предупреждение достигает последнего пирса вовремя. Фонари отвечают на колокола, и гавань готова вместо слепоты."
+            quest_failure = "Колокола обогнали предупреждение. К моменту когда правда распространится, гавань уже рушится в панике."
+            quest_reward = f"{reward_tier_name}: 25 серебра, 120 опыта и доверие докеров."
+            quest_chain_desc = "Цепочка гражданских миссий, которые решат восстанет гавань или подчинится."
+            quest_node_desc = "Пройдись по набережной и предупреди каждый район до комендантского часа."
+            quest_giver_desc = "Ветеран гаваньмастер превращающий слухи в срочные поручения."
+            quest_giver_greeting = "Если колокола зазвенят снова, мы потеряем ночь."
+            quest_obj_hint = f"Найди {secondary_character} у восточных пирсов; он может распространить предупреждение быстрее городских глашатаев."
+            quest_prereq_desc = t("Complete Silence Before the Bell", language)
+            quest_reward_desc = "Практичная награда за своевременное предупреждение гавани."
+            storyline_name = f"{theme} {t('Main Line', language)}"
+        else:
+            campaign_desc = f"A campaign shaped by {request.theme} as {primary_rumor} gives way to {primary_event}."
+            story_desc = f"The main story behind {request.theme}, following {primary_character} through {primary_event}."
+            prologue_desc = f"The opening setup around {primary_rumor}."
+            prologue_content = f"Before the first clash, {primary_character} hears {primary_rumor.lower()} while {request.theme} tightens across the city."
+            act_descs = [
+                f"{primary_rumor} turns background fear into visible tension.",
+                f"{primary_event} forces the conflict into the open.",
+                f"The fallout settles around {primary_thread}"
+            ]
+            chapter_descs = [
+                f"{primary_character} catches the first hints of {primary_rumor}.",
+                f"{primary_event} tears through the harbor's fragile calm.",
+                f"The city absorbs the cost of {primary_thread}"
+            ]
+            episode_descs = [
+                f"{primary_rumor} stops sounding harmless.",
+                f"The chase tightens around {primary_event}.",
+                f"{primary_character} and {secondary_character} decide what truth survives."
+            ]
+            storyline_desc = f"A storyline that carries {primary_rumor} forward into {primary_event}."
+            variant_desc = "A covert look used to move through the harbor without drawing notice."
+            variant_reqs = ("Survive the bell riots",)
+            variant_abilities = ("Rally the harbor",)
+            motion_desc = "A sharp hand signal to warn of danger."
+            quest_desc = "Carry the final warning through the harbor before the bells trigger panic."
+            quest_briefing = "Dockmaster Elra needs someone fast and trusted to move the warning before curfew closes the piers."
+            quest_journal = "Warn the harbor and light the signal pyre before the bells turn fear into chaos."
+            quest_acceptance = "Elra presses a sealed note into your hand. Get the dockworkers moving and light the pyre before the watch locks the waterfront."
+            quest_completion = "The warning reaches the last pier in time. Lanterns answer the bells, and the harbor stands ready instead of blind."
+            quest_failure = "The bells outrun the warning. By the time the truth spreads, the harbor is already breaking into panic."
+            quest_reward = f"Bellkeeper's Reward: 25 silver, 120 experience, and the dockworkers' trust."
+            quest_chain_desc = "A chain of civic missions that decide whether the harbor revolts or submits."
+            quest_node_desc = "Move along the waterfront and warn every district before curfew locks the gates."
+            quest_giver_desc = "A veteran dockmaster who turns rumor into urgent errands."
+            quest_giver_greeting = "If the bells ring again, we lose the night."
+            quest_obj_hint = f"Find {secondary_character} near the eastern piers; he can spread the warning faster than the town criers."
+            quest_prereq_desc = "Complete Silence Before the Bell"
+            quest_reward_desc = "A practical reward for warning the harbor in time."
+            storyline_name = f"{theme} Main Line"
+
         return NarrativeStructureDraft(
-            campaign=CampaignDraft(title=f"{theme} Campaign", description=f"A campaign shaped by {request.theme} as {primary_rumor} gives way to {primary_event}.", campaign_type="main_story", recommended_level=5, estimated_hours=8),
-            story=StoryDraft(name=f"{theme} Chronicle", description=f"The main story behind {request.theme}, following {primary_character} through {primary_event}.", content=story_seed, story_type="linear"),
-            prologue=PrologueDraft(title="Before the First Whisper", description=f"The opening setup around {primary_rumor}.", content=f"Before the first clash, {primary_character} hears {primary_rumor.lower()} while {request.theme} tightens across the city.", prologue_type="world_building", estimated_minutes=10),
+            campaign=CampaignDraft(title=campaign_title, description=campaign_desc, campaign_type="main_story", recommended_level=5, estimated_hours=8),
+            story=StoryDraft(name=story_name, description=story_desc, content=story_seed, story_type="linear"),
+            prologue=PrologueDraft(title=prologue_title, description=prologue_desc, content=prologue_content, prologue_type="world_building", estimated_minutes=10),
             acts=(
-                ActDraft(title="Act I - Setup", description=f"{primary_rumor} turns background fear into visible tension.", act_number=1, act_type="setup", structure="three_act", key_events=tuple(rumor_names[:1]) or (primary_rumor,), estimated_minutes=30),
-                ActDraft(title="Act II - Confrontation", description=f"{primary_event} forces the conflict into the open.", act_number=2, act_type="rising_action", structure="three_act", key_events=tuple(event_names[:1]) or (primary_event,), estimated_minutes=40),
-                ActDraft(title="Act III - Resolution", description=f"The fallout settles around {primary_thread}", act_number=3, act_type="resolution", structure="three_act", key_events=tuple(relationship_threads[:1]) or (primary_thread,), estimated_minutes=25),
+                ActDraft(title=act_titles[0], description=act_descs[0], act_number=1, act_type="setup", structure="three_act", key_events=tuple(rumor_names[:1]) or (primary_rumor,), estimated_minutes=30),
+                ActDraft(title=act_titles[1], description=act_descs[1], act_number=2, act_type="rising_action", structure="three_act", key_events=tuple(event_names[:1]) or (primary_event,), estimated_minutes=40),
+                ActDraft(title=act_titles[2], description=act_descs[2], act_number=3, act_type="resolution", structure="three_act", key_events=tuple(relationship_threads[:1]) or (primary_thread,), estimated_minutes=25),
             ),
             chapters=(
-                ChapterDraft(title="Chapter 1", description=f"{primary_character} catches the first hints of {primary_rumor}.", sequence_number=1, act_numbers=(1,), chapter_type="introduction", estimated_minutes=20),
-                ChapterDraft(title="Chapter 2", description=f"{primary_event} tears through the harbor's fragile calm.", sequence_number=2, act_numbers=(2,), chapter_type="climax", estimated_minutes=25),
-                ChapterDraft(title="Chapter 3", description=f"The city absorbs the cost of {primary_thread}", sequence_number=3, act_numbers=(3,), chapter_type="resolution", estimated_minutes=20),
+                ChapterDraft(title=chapter_titles[0], description=chapter_descs[0], sequence_number=1, act_numbers=(1,), chapter_type="introduction", estimated_minutes=20),
+                ChapterDraft(title=chapter_titles[1], description=chapter_descs[1], sequence_number=2, act_numbers=(2,), chapter_type="climax", estimated_minutes=25),
+                ChapterDraft(title=chapter_titles[2], description=chapter_descs[2], sequence_number=3, act_numbers=(3,), chapter_type="resolution", estimated_minutes=20),
             ),
             episodes=(
-                EpisodeDraft(title="Episode 1", description=f"{primary_rumor} stops sounding harmless.", sequence_number=1, chapter_number=1, episode_type="narrative", estimated_minutes=12),
-                EpisodeDraft(title="Episode 2", description=f"The chase tightens around {primary_event}.", sequence_number=2, chapter_number=2, episode_type="narrative", estimated_minutes=15),
-                EpisodeDraft(title="Episode 3", description=f"{primary_character} and {secondary_character} decide what truth survives.", sequence_number=3, chapter_number=3, episode_type="narrative", estimated_minutes=12),
+                EpisodeDraft(title=episode_titles[0], description=episode_descs[0], sequence_number=1, chapter_number=1, episode_type="narrative", estimated_minutes=12),
+                EpisodeDraft(title=episode_titles[1], description=episode_descs[1], sequence_number=2, chapter_number=2, episode_type="narrative", estimated_minutes=15),
+                EpisodeDraft(title=episode_titles[2], description=episode_descs[2], sequence_number=3, chapter_number=3, episode_type="narrative", estimated_minutes=12),
             ),
             storylines=(
-                StorylineDraft(name=f"{theme} Main Line", description=f"A storyline that carries {primary_rumor} forward into {primary_event}.", storyline_type="main", event_names=tuple(event_names[:2])),
+                StorylineDraft(name=storyline_name, description=storyline_desc, storyline_type="main", event_names=tuple(event_names[:2])),
             ),
             character_variants=(
                 CharacterVariantDraft(
                     character_name=primary_character,
-                    name="Bellwarden Disguise",
-                    description="A covert look used to move through the harbor without drawing notice.",
+                    name=character_variant_name,
+                    description=variant_desc,
                     variant_type="costume",
                     rarity="uncommon",
                 ),
@@ -9065,9 +9189,9 @@ class RumorBridgeService:
                     current_stage="advanced",
                     evolution_type="story_unlocked",
                     previous_stage="intermediate",
-                    requirements=("Survive the bell riots",),
-                    variant_names=("Bellwarden Disguise",),
-                    new_abilities=("Rally the harbor",),
+                    requirements=variant_reqs,
+                    variant_names=(character_variant_name,),
+                    new_abilities=variant_abilities,
                     stat_increases={"resolve": 2},
                 ),
             ),
@@ -9075,23 +9199,23 @@ class RumorBridgeService:
                 CharacterProfileEntryDraft(
                     character_name=primary_character,
                     field_name="fear",
-                    field_value="Hears the harbor bells in every silence.",
+                    field_value=character_fear,
                     is_public=False,
                 ),
             ),
             motion_captures=(
                 MotionCaptureDraft(
-                    name="Harbor Warning Gesture",
+                    name=motion_name,
                     file_path="captures/harbor_warning.fbx",
                     character_name=primary_character,
-                    actor_name="Talan Reed",
+                    actor_name=actor_name,
                     animation_type="social",
                     status="completed",
                 ),
             ),
             voice_actors=(
                 VoiceActorDraft(
-                    name="Talan Reed",
+                    name=actor_name,
                     language="Common",
                     character_names=(primary_character,),
                     status="active",
@@ -9109,77 +9233,77 @@ class RumorBridgeService:
                 DispositionDraft(
                     entity_name=primary_character,
                     target_type="faction",
-                    target_value="Harbor Guard",
+                    target_value=faction_name,
                     attitude="unfriendly",
                     intensity=6,
                 ),
             ),
             quests=(
                 QuestDraft(
-                    name="Silence Before the Bell",
-                    description="Carry the final warning through the harbor before the bells trigger panic.",
-                    player_briefing="Dockmaster Elra needs someone fast and trusted to move the warning before curfew closes the piers.",
-                    journal_summary="Warn the harbor and light the signal pyre before the bells turn fear into chaos.",
-                    acceptance_text="Elra presses a sealed note into your hand. Get the dockworkers moving and light the pyre before the watch locks the waterfront.",
-                    completion_text="The warning reaches the last pier in time. Lanterns answer the bells, and the harbor stands ready instead of blind.",
-                    failure_text="The bells outrun the warning. By the time the truth spreads, the harbor is already breaking into panic.",
-                    reward_summary="Bellkeeper's Reward: 25 silver, 120 experience, and the dockworkers' trust.",
-                    objectives=("Speak to the dockworkers", "Light the signal pyre"),
+                    name=quest_name,
+                    description=quest_desc,
+                    player_briefing=quest_briefing,
+                    journal_summary=quest_journal,
+                    acceptance_text=quest_acceptance,
+                    completion_text=quest_completion,
+                    failure_text=quest_failure,
+                    reward_summary=quest_reward,
+                    objectives=tuple(quest_objectives),
                     participant_names=tuple(character_names[:2]),
-                    reward_tier_names=("Bellkeeper's Reward",),
+                    reward_tier_names=(reward_tier_name,),
                 ),
             ),
             quest_chains=(
                 QuestChainDraft(
-                    name="Harbor Reckoning",
-                    description="A chain of civic missions that decide whether the harbor revolts or submits.",
-                    node_names=("Warn the Docks",),
+                    name=quest_chain_name,
+                    description=quest_chain_desc,
+                    node_names=(quest_node_name,),
                     required_level=3,
                 ),
             ),
             quest_givers=(
                 QuestGiverDraft(
-                    name="Dockmaster Elra",
-                    description="A veteran dockmaster who turns rumor into urgent errands.",
+                    name=quest_giver_name,
+                    description=quest_giver_desc,
                     character_name=primary_character,
-                    quest_chain_names=("Harbor Reckoning",),
-                    quest_node_names=("Warn the Docks",),
-                    greeting_message="If the bells ring again, we lose the night.",
+                    quest_chain_names=(quest_chain_name,),
+                    quest_node_names=(quest_node_name,),
+                    greeting_message=quest_giver_greeting,
                 ),
             ),
             quest_nodes=(
                 QuestNodeDraft(
-                    quest_chain_name="Harbor Reckoning",
-                    name="Warn the Docks",
-                    description="Move along the waterfront and warn every district before curfew locks the gates.",
-                    objective_descriptions=("Speak to the dockworkers",),
-                    prerequisite_descriptions=("Complete Silence Before the Bell",),
-                    reward_tier_names=("Bellkeeper's Reward",),
+                    quest_chain_name=quest_chain_name,
+                    name=quest_node_name,
+                    description=quest_node_desc,
+                    objective_descriptions=(quest_objectives[0],),
+                    prerequisite_descriptions=(quest_prereq_desc,),
+                    reward_tier_names=(reward_tier_name,),
                     position=1,
                 ),
             ),
             quest_objectives=(
                 QuestObjectiveDraft(
-                    quest_node_name="Warn the Docks",
-                    description="Speak to the dockworkers",
+                    quest_node_name=quest_node_name,
+                    description=quest_objectives[0],
                     objective_type="talk",
                     target_name=secondary_character,
-                    objective_hint="Find Iven Hale near the eastern piers; he can spread the warning faster than the town criers.",
+                    objective_hint=quest_obj_hint,
                 ),
             ),
             quest_prerequisites=(
                 QuestPrerequisiteDraft(
-                    description="Complete Silence Before the Bell",
+                    description=quest_prereq_desc,
                     prerequisite_type="quest",
-                    required_quest_names=("Silence Before the Bell",),
+                    required_quest_names=(quest_name,),
                     required_level=3,
                 ),
             ),
             quest_reward_tiers=(
                 QuestRewardTierDraft(
-                    quest_node_name="Warn the Docks",
-                    name="Bellkeeper's Reward",
-                    description="A practical reward for warning the harbor in time.",
+                    quest_node_name=quest_node_name,
+                    name=reward_tier_name,
+                    description=quest_reward_desc,
                     tier_level=1,
                     currency_rewards={"silver": 25},
                     experience_reward=120,
@@ -9188,9 +9312,9 @@ class RumorBridgeService:
             quest_trackers=(
                 QuestTrackerDraft(
                     player_character_name=primary_character,
-                    active_chain_names=("Harbor Reckoning",),
-                    active_node_names=("Warn the Docks",),
-                    objective_progress={"Speak to the dockworkers": 1},
+                    active_chain_names=(quest_chain_name,),
+                    active_node_names=(quest_node_name,),
+                    objective_progress={quest_objectives[0]: 1},
                 ),
             ),
             items=(
