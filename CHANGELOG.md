@@ -283,3 +283,31 @@ MIT License
 ---
 
 For detailed information about any release, see the corresponding documentation in the `docs/` directory.
+## [v2026.03.21] - 2026-03-21
+
+### Added
+
+- **scripts**: add post-processing quest translation script ([2c38a23])
+- **camel-bridge**: add LM Studio local model support ([c4773e1])
+- **db_tree_server**: add database selector with auto-scan of tmp/*.db ([a1de30e])
+- **runner**: add full narrative generation with all CamelBridge repos ([1fc7b45])
+- **camel-bridge**: strengthen i18n by localizing system prompts ([e308c43])
+- add camel bridge i18n prompt controls ([94c5afd])
+
+### Fixed
+
+- **camel-bridge**: add explicit EN→RU examples to quest_meta guidance ([722ac69])
+- **camel-bridge**: strengthen Russian language enforcement for quests and characters ([ff5a67c])
+- **db_tree_server**: properly handle db query parameter ([c843192])
+- **db_tree_server**: sync db selector with current database on load ([c3b5389])
+- harden camel bridge continuation and http retries ([a478ac1])
+
+### Changed
+
+- **camel-bridge**: split character_quest_meta into separate batches ([c7c3948])
+- extract camel bridge backend and specs ([307c5f7])
+- split CAMEL Bridge runner modules ([dc9f57c])
+
+### Internal
+
+- add git-calver versioning ([8f75244])
