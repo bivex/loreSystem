@@ -46,12 +46,15 @@ class CamelChatBackend:
             )
         )
         self.model_config = model_config or self._build_model_config()
+        self._request_timeout = int(
+            os.getenv("CAMEL_BRIDGE_REQUEST_TIMEOUT_SECONDS", "300")
+        )
 
     def generate(self, system_message: str, user_message: str) -> str:
         self._validate_environment()
         if self.model_platform == "OPENROUTER":
             return self._generate_via_openai_compatible_http(
-                system_message, user_message
+                system_message, user_message, request_timeout=self._request_timeout
             )
         try:
             from camel.agents import ChatAgent
@@ -60,7 +63,7 @@ class CamelChatBackend:
         except ImportError:
             if self._supports_openai_compatible_http():
                 return self._generate_via_openai_compatible_http(
-                    system_message, user_message
+                    system_message, user_message, request_timeout=self._request_timeout
                 )
             raise
 
@@ -123,7 +126,7 @@ class CamelChatBackend:
         return os.getenv(required_key) if required_key else None
 
     def _generate_via_openai_compatible_http(
-        self, system_message: str, user_message: str
+        self, system_message: str, user_message: str, request_timeout: int = 300
     ) -> str:
         if not self.model_url:
             raise RuntimeError(
@@ -151,7 +154,9 @@ class CamelChatBackend:
         last_error: Exception | None = None
         for attempt in range(1, self._http_retry_attempts() + 1):
             try:
-                with urllib_request.urlopen(request, timeout=120) as response:
+                with urllib_request.urlopen(
+                    request, timeout=request_timeout
+                ) as response:
                     body = response.read().decode("utf-8")
                 break
             except urllib_error.HTTPError as exc:

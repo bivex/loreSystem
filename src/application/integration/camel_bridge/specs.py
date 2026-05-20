@@ -3,8 +3,30 @@
 from __future__ import annotations
 
 DEFAULT_RUMOR_AGENT_PROMPTS = (
-    ("Whisper Broker", "Invent one street-level rumor as compact JSON. Keep it flavorful, uncertain, and socially contagious."),
-    ("Town Crier", "Invent one public-square rumor as compact JSON. Keep it vivid, dramatic, and suitable for codex seeding."),
+    (
+        "Whisper Broker",
+        "Invent one street-level rumor as compact JSON. Keep it flavorful, uncertain, and socially contagious.",
+    ),
+    (
+        "Town Crier",
+        "Invent one public-square rumor as compact JSON. Keep it vivid, dramatic, and suitable for codex seeding.",
+    ),
+    (
+        "Dockside Informant",
+        "Invent one dockside rumor as compact JSON. Focus on smuggling, cargo, and waterfront secrets.",
+    ),
+    (
+        "Rooftop Scavenger",
+        "Invent one rumor from the cyberpunk heights as compact JSON. Focus on surveillance, hacking, and rooftop life.",
+    ),
+    (
+        "Night Market Vendor",
+        "Invent one night market rumor as compact JSON. Focus on street trade, underground tech, and local gossip.",
+    ),
+    (
+        "Cyber-Clinic Healer",
+        "Invent one rumor from the underground clinics as compact JSON. Focus on black-market implants, body mods, and medical secrets.",
+    ),
 )
 
 DEFAULT_EVENT_AGENT_PROMPT = (
