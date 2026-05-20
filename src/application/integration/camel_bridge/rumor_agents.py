@@ -3066,7 +3066,7 @@ class DeterministicRumorBackend:
             }])
         if "event" in system_message.lower():
             return json.dumps([{
-                "name": f"{theme.title()} Flashpoint",
+                "name": f"FALLBACK_{theme}",
                 "description": f"An escalating incident tied to {theme} sweeps through the district.",
                 "participant_names": ["Mara Voss", "Iven Hale"],
                 "outcome": "ongoing",
@@ -10081,7 +10081,7 @@ class RumorBridgeService:
             raise RuntimeError("CAMEL bridge did not produce any event drafts")
         participants = request.character_names or ("Mara Voss", "Iven Hale")
         return [EventDraft(
-            name=f"{request.theme.strip().title() or 'Rumor'} Flashpoint",
+            name=f"FALLBACK_{request.theme}",
             description=f"Whispered tensions around {request.theme.lower()} burst into a visible public incident.",
             participant_names=tuple(participants[:2]),
             outcome="ongoing",
@@ -10174,7 +10174,7 @@ class RumorBridgeService:
         elif language == "uk":
             backstory_template = f"{text} виріс(ла) під тінню {request.theme}, навчившись читати кожен шепіт на ринку. Тепер вони намагаються вижити серед хвилювань навколо {request.theme.lower()} змішавши страх, амбіції та інстинкт виживання."
         else:
-            backstory_template = f"{text} grew up in the shadow of {request.theme}, learning to read every whisper in the market. Now they navigate the unrest around {request.theme.lower()} with equal parts fear, ambition, and survival instinct."
+            backstory_template = "FALLBACK_BIO"
         backstory = Backstory(backstory_template[:220])
         created = Character.create(
             tenant_id=tenant_id,
@@ -10243,7 +10243,7 @@ class RumorBridgeService:
         theme = request.theme.strip().title() or "Rumor"
         return RumorDraft(
             name=f"{theme} Rumor {index}",
-            description=f"{agent_name} reports whispered talk that {request.theme.lower()} is changing the balance of power.",
+            description="FALLBACK_DESCRIPTION",
             source_name=agent_name,
             truth_level="Unverified",
             spread_speed="Moderate",

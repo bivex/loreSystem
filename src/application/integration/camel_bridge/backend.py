@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import http.client
 import json
+import logging
 import os
+import re
 import socket
 import ssl
 import time
 from typing import Any, Protocol
 from urllib import error as urllib_error
 from urllib import request as urllib_request
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgentTextBackend(Protocol):
@@ -20,38 +24,59 @@ class AgentTextBackend(Protocol):
 class CamelChatBackend:
     """Lazy CAMEL backend that only imports CAMEL at runtime."""
 
-    def __init__(self, model_platform: str | None = None, model_type: str | None = None, model_config: dict | None = None):
-        self.model_platform = (model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI").upper()
-        self.model_type = model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
+    def __init__(
+        self,
+        model_platform: str | None = None,
+        model_type: str | None = None,
+        model_config: dict | None = None,
+    ):
+        self.model_platform = (
+            model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI"
+        ).upper()
+        self.model_type = (
+            model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
+        )
         self.model_url = (
             os.getenv("CAMEL_MODEL_BASE_URL")
             or os.getenv("OPENAI_BASE_URL")
-            or ("https://openrouter.ai/api/v1" if self.model_platform == "OPENROUTER" else None)
+            or (
+                "https://openrouter.ai/api/v1"
+                if self.model_platform == "OPENROUTER"
+                else None
+            )
         )
         self.model_config = model_config or self._build_model_config()
 
     def generate(self, system_message: str, user_message: str) -> str:
         self._validate_environment()
         if self.model_platform == "OPENROUTER":
-            return self._generate_via_openai_compatible_http(system_message, user_message)
+            return self._generate_via_openai_compatible_http(
+                system_message, user_message
+            )
         try:
             from camel.agents import ChatAgent
             from camel.models import ModelFactory
             from camel.types import ModelPlatformType, ModelType
         except ImportError:
             if self._supports_openai_compatible_http():
-                return self._generate_via_openai_compatible_http(system_message, user_message)
+                return self._generate_via_openai_compatible_http(
+                    system_message, user_message
+                )
             raise
 
         model = ModelFactory.create(
-            model_platform=getattr(ModelPlatformType, self.model_platform, self.model_platform),
+            model_platform=getattr(
+                ModelPlatformType, self.model_platform, self.model_platform
+            ),
             model_type=getattr(ModelType, self.model_type, self.model_type),
             model_config_dict=self.model_config,
             api_key=self._get_api_key(),
             url=self.model_url,
         )
         agent = ChatAgent(model=model)
-        response = agent.step(f"System instruction:\n{system_message}\n\nUser request:\n{user_message}")
+        response = agent.step(
+            f"System instruction:\n{system_message}\n\nUser request:\n{user_message}"
+        )
         if hasattr(response, "msgs") and response.msgs:
             return response.msgs[-1].content
         return str(response)
@@ -67,7 +92,9 @@ class CamelChatBackend:
 
     def _validate_environment(self) -> None:
         # Skip validation for localhost connections (LM Studio, local servers)
-        if self.model_url and any(host in self.model_url for host in ("127.0.0.1", "localhost", "::1")):
+        if self.model_url and any(
+            host in self.model_url for host in ("127.0.0.1", "localhost", "::1")
+        ):
             return
         required_key = {
             "OPENAI": "OPENAI_API_KEY",
@@ -79,7 +106,9 @@ class CamelChatBackend:
             "OPENROUTER": "OPENROUTER_API_KEY",
         }.get(self.model_platform)
         if required_key and not os.getenv(required_key):
-            raise RuntimeError(f"Missing required environment variable for CAMEL bridge: {required_key}")
+            raise RuntimeError(
+                f"Missing required environment variable for CAMEL bridge: {required_key}"
+            )
 
     def _get_api_key(self) -> str | None:
         required_key = {
@@ -93,9 +122,13 @@ class CamelChatBackend:
         }.get(self.model_platform)
         return os.getenv(required_key) if required_key else None
 
-    def _generate_via_openai_compatible_http(self, system_message: str, user_message: str) -> str:
+    def _generate_via_openai_compatible_http(
+        self, system_message: str, user_message: str
+    ) -> str:
         if not self.model_url:
-            raise RuntimeError("CAMEL bridge needs CAMEL_MODEL_BASE_URL or OPENAI_BASE_URL for HTTP generation")
+            raise RuntimeError(
+                "CAMEL bridge needs CAMEL_MODEL_BASE_URL or OPENAI_BASE_URL for HTTP generation"
+            )
         payload: dict[str, Any] = {
             "model": self.model_type,
             "messages": [
@@ -107,8 +140,10 @@ class CamelChatBackend:
         reasoning_effort = os.getenv("CAMEL_MODEL_REASONING_EFFORT")
         if reasoning_effort:
             payload["reasoning"] = {"effort": reasoning_effort}
+        base_url = self.model_url.rstrip("/")
+        base_url = base_url.rpartition("/v1")[0] if "/v1" in base_url else base_url
         request = urllib_request.Request(
-            f"{self.model_url.rstrip('/')}/v1/chat/completions",
+            f"{base_url}/v1/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
             headers=self._build_openai_compatible_headers(),
             method="POST",
@@ -121,7 +156,10 @@ class CamelChatBackend:
                 break
             except urllib_error.HTTPError as exc:
                 details = exc.read().decode("utf-8", errors="replace")
-                if self._should_retry_http_status(exc.code) and attempt < self._http_retry_attempts():
+                if (
+                    self._should_retry_http_status(exc.code)
+                    and attempt < self._http_retry_attempts()
+                ):
                     last_error = RuntimeError(
                         f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
                     )
@@ -131,19 +169,33 @@ class CamelChatBackend:
                     f"CAMEL bridge HTTP generation failed with status {exc.code}: {details}"
                 ) from exc
             except Exception as exc:
-                if self._is_retryable_http_exception(exc) and attempt < self._http_retry_attempts():
+                if (
+                    self._is_retryable_http_exception(exc)
+                    and attempt < self._http_retry_attempts()
+                ):
                     last_error = exc
                     self._sleep_before_retry(attempt)
                     continue
                 reason = getattr(exc, "reason", exc)
-                raise RuntimeError(f"CAMEL bridge HTTP generation failed: {reason}") from exc
+                raise RuntimeError(
+                    f"CAMEL bridge HTTP generation failed: {reason}"
+                ) from exc
         else:
             reason = getattr(last_error, "reason", last_error)
-            raise RuntimeError(f"CAMEL bridge HTTP generation failed after retries: {reason}")
+            raise RuntimeError(
+                f"CAMEL bridge HTTP generation failed after retries: {reason}"
+            )
+
         parsed = json.loads(body)
-        content = (((parsed.get("choices") or [{}])[0].get("message") or {}).get("content"))
+        content = ((parsed.get("choices") or [{}])[0].get("message") or {}).get(
+            "content"
+        )
         if isinstance(content, str) and content.strip():
-            return content
+            # Extract JSON from markdown blocks or messy text
+            json_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
+            if json_match:
+                return json_match.group(0)
+            return content.strip()
         if isinstance(content, list):
             fragments = [
                 part.get("text", "")
@@ -158,13 +210,23 @@ class CamelChatBackend:
     def _build_openai_compatible_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         # Skip Authorization header for localhost (LM Studio, local servers)
-        if not (self.model_url and any(host in self.model_url for host in ("127.0.0.1", "localhost", "::1"))):
+        if not (
+            self.model_url
+            and any(
+                host in self.model_url for host in ("127.0.0.1", "localhost", "::1")
+            )
+        ):
             api_key = self._get_api_key()
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
         if self.model_platform == "OPENROUTER":
-            headers["HTTP-Referer"] = os.getenv("OPENROUTER_HTTP_REFERER") or "https://github.com/bivex/loreSystem"
-            headers["X-Title"] = os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
+            headers["HTTP-Referer"] = (
+                os.getenv("OPENROUTER_HTTP_REFERER")
+                or "https://github.com/bivex/loreSystem"
+            )
+            headers["X-Title"] = (
+                os.getenv("OPENROUTER_X_TITLE") or "loreSystem CAMEL.Bridge"
+            )
         return headers
 
     def _http_retry_attempts(self) -> int:
@@ -190,18 +252,25 @@ class CamelChatBackend:
         return status_code in {408, 409, 425, 429, 500, 502, 503, 504}
 
     def _is_retryable_http_exception(self, exc: Exception) -> bool:
-        if isinstance(exc, (
-            TimeoutError,
-            socket.timeout,
-            ConnectionError,
-            ConnectionResetError,
-            ConnectionAbortedError,
-            http.client.RemoteDisconnected,
-            ssl.SSLEOFError,
-        )):
+        if isinstance(
+            exc,
+            (
+                TimeoutError,
+                socket.timeout,
+                ConnectionError,
+                ConnectionResetError,
+                ConnectionAbortedError,
+                http.client.RemoteDisconnected,
+                ssl.SSLEOFError,
+            ),
+        ):
             return True
         if isinstance(exc, urllib_error.URLError):
-            return self._is_retryable_http_exception(exc.reason) if isinstance(exc.reason, Exception) else False
+            return (
+                self._is_retryable_http_exception(exc.reason)
+                if isinstance(exc.reason, Exception)
+                else False
+            )
         if isinstance(exc, ssl.SSLError):
             return True
         return False
