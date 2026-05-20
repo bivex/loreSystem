@@ -69,9 +69,18 @@ pip install -r requirements.txt
 make hooks-install
 ```
 
-The repository ships its git hooks in [`.githooks/`](.githooks/) so they survive fresh clones. Run `make hooks-install` once per clone to activate them.
+### 🐳 Run with Docker (Recommended Fast Path)
 
-### Run
+If you have Docker installed, you can start everything (including search and memory engines) with one command:
+
+```bash
+cp .env.example .env  # Add your API keys here
+docker compose up -d
+```
+
+See [DOCKER.md](DOCKER.md) for full usage instructions and CLI commands.
+
+### Run (Native)
 
 ```bash
 # Main application

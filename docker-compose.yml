@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Main Lore System application
+  lore-system:
+    build: .
+    container_name: lore-system
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - lore_data:/app/data
+    depends_on:
+      - qdrant
+      - elasticsearch
+    ports:
+      - "8000:8000"
+      - "12345:12345"
+
+  # Vector database for CAMEL.Bridge (Memory v1)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: lore-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # Elasticsearch search engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: lore-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+volumes:
+  lore_data:
+  qdrant_data:
+  es_data:
