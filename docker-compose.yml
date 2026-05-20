@@ -15,7 +15,7 @@ services:
     depends_on:
       - qdrant
       - elasticsearch
-    command: python lore_mcp_server/run_server.py
+    command: tail -f /dev/null
     ports:
       - "8000:8000"
       - "12345:12345"

@@ -808,7 +808,7 @@ ceremony_repo = SQLiteCeremonyRepository(sqlite_db)# Placeholder repositories
     inspiration_repo = SQLiteInspirationRepository(sqlite_db)
     map_repo = SQLiteMapRepository(sqlite_db)
     tokenboard_repo = SQLiteTokenboardRepository(sqlite_db)
-else:
+    else:
     # Default to in-memory repositories
     world_repo = InMemoryWorldRepository()
     character_repo = InMemoryCharacterRepository()
@@ -830,7 +830,8 @@ else:
     image_repo = InMemoryImageRepository()
     inspiration_repo = InMemoryInspirationRepository()
     map_repo = InMemoryMapRepository()
-    tokenboard_repo = InMemoryTokenboardRepository()    skill_repo = Skill()
+    tokenboard_repo = InMemoryTokenboardRepository()
+    skill_repo = Skill()
     perk_repo = Perk()
     trait_repo = Trait()
     attribute_repo = Attribute()
