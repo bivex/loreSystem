@@ -7,12 +7,15 @@ services:
     container_name: lore-system
     env_file:
       - .env
+    environment:
+      - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
       - lore_data:/app/data
     depends_on:
       - qdrant
       - elasticsearch
+    command: python lore_mcp_server/run_server.py
     ports:
       - "8000:8000"
       - "12345:12345"

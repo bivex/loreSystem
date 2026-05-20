@@ -142,7 +142,8 @@ if connection_type == "sqlite":
     # Use path relative to mcp_server directory
     full_db_path = Path(__file__).parent / db_path
     sqlite_db = SQLiteDatabase(str(full_db_path))
-    sqlite_db.initialize_schema()    skill_repo = Skill()
+    sqlite_db.initialize_schema()
+    skill_repo = Skill()
     perk_repo = Perk()
     trait_repo = Trait()
     attribute_repo = Attribute()
