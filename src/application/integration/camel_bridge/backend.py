@@ -42,7 +42,11 @@ class CamelChatBackend:
             or (
                 "https://openrouter.ai/api/v1"
                 if self.model_platform == "OPENROUTER"
-                else None
+                else (
+                    "http://localhost:1234/v1"
+                    if self.model_platform in {"LM_STUDIO", "LMLINK"}
+                    else None
+                )
             )
         )
         self.model_config = model_config or self._build_model_config()
@@ -52,7 +56,7 @@ class CamelChatBackend:
 
     def generate(self, system_message: str, user_message: str) -> str:
         self._validate_environment()
-        if self.model_platform == "OPENROUTER":
+        if self.model_platform in {"OPENROUTER", "LM_STUDIO", "LMLINK"}:
             return self._generate_via_openai_compatible_http(
                 system_message, user_message, request_timeout=self._request_timeout
             )
@@ -91,13 +95,15 @@ class CamelChatBackend:
         return config
 
     def _supports_openai_compatible_http(self) -> bool:
-        return self.model_platform in {"OPENAI", "OPENROUTER"}
+        return self.model_platform in {"OPENAI", "OPENROUTER", "LM_STUDIO", "LMLINK"}
 
     def _validate_environment(self) -> None:
-        # Skip validation for localhost connections (LM Studio, local servers)
+        # Skip validation for localhost and docker host connections (LM Studio, local servers)
         if self.model_url and any(
-            host in self.model_url for host in ("127.0.0.1", "localhost", "::1")
+            host in self.model_url for host in ("127.0.0.1", "localhost", "::1", "host.docker.internal")
         ):
+            return
+        if self.model_platform in {"LM_STUDIO", "LMLINK"}:
             return
         required_key = {
             "OPENAI": "OPENAI_API_KEY",
@@ -214,13 +220,12 @@ class CamelChatBackend:
 
     def _build_openai_compatible_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
-        # Skip Authorization header for localhost (LM Studio, local servers)
-        if not (
-            self.model_url
-            and any(
-                host in self.model_url for host in ("127.0.0.1", "localhost", "::1")
-            )
-        ):
+        # Skip Authorization header for localhost, docker host, and LM Studio / LM Link
+        is_local = self.model_url and any(
+            host in self.model_url for host in ("127.0.0.1", "localhost", "::1", "host.docker.internal")
+        )
+        is_lm = self.model_platform in {"LM_STUDIO", "LMLINK"}
+        if not (is_local or is_lm):
             api_key = self._get_api_key()
             if api_key:
                 headers["Authorization"] = f"Bearer {api_key}"
