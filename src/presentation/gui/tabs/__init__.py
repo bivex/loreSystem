@@ -33,6 +33,13 @@ from .faction_membership_tab import FactionMembershipTab
 from .pity_tab import PityTab
 from .player_profile_tab import PlayerProfileTab
 from .pull_tab import PullTab
+from .worlds_tab import WorldsTab
+from .characters_tab import CharactersTab
+from .events_tab import EventsTab
+from .improvements_tab import ImprovementsTab
+from .items_tab import ItemsTab
+from .quests_tab import QuestsTab
+from .storylines_tab import StorylinesTab
 
 __all__ = [
     'PagesTab',
@@ -64,5 +71,13 @@ __all__ = [
     'PityTab',
     'PlayerProfileTab',
     'PullTab',
+    'WorldsTab',
+    'CharactersTab',
+    'EventsTab',
+    'ImprovementsTab',
+    'ItemsTab',
+    'QuestsTab',
+    'StorylinesTab',
 ]
+
 
