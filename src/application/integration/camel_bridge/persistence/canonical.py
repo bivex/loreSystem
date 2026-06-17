@@ -89,7 +89,10 @@ def _coerce_canonical_text(value: object) -> str | None:
 
 def _normalize_canonical_text(value: object) -> str:
     text = (_coerce_canonical_text(value) or "").lower().strip()
-    text = re.sub(r"[^a-z0-9]+", " ", text)
+    # Preserve alphanumeric characters from any language, and spaces.
+    # \w in Python 3 with re.UNICODE (default) includes unicode letters.
+    # We want to remove punctuation but keep letters and numbers.
+    text = re.sub(r"[^\w\s]+", " ", text, flags=re.UNICODE)
     return re.sub(r"\s+", " ", text).strip()
 
 

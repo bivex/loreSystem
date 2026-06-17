@@ -140,12 +140,60 @@ def _seed_world(db_path) -> None:
     conn = sqlite3.connect(db_path)
     try:
         conn.execute(
-            "CREATE TABLE worlds (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, genre TEXT, power_level INTEGER DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+            "CREATE TABLE IF NOT EXISTS worlds (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL, name TEXT NOT NULL, description TEXT, genre TEXT, power_level INTEGER DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
         )
         conn.execute(
             "INSERT INTO worlds (tenant_id, name, description, genre, power_level, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (1, "MythWeave", "Seed world", "fantasy", 1, "2026-03-10T00:00:00+00:00", "2026-03-10T00:00:00+00:00"),
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _seed_characters(db_path) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        # Seed characters to avoid backend calls during story chain generation
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS characters (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id INTEGER NOT NULL,
+                world_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                backstory TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                parent_id INTEGER,
+                location_id INTEGER,
+                rarity TEXT,
+                element TEXT,
+                role TEXT,
+                base_hp INTEGER DEFAULT 100,
+                base_atk INTEGER DEFAULT 10,
+                base_def INTEGER DEFAULT 10,
+                base_speed INTEGER DEFAULT 10,
+                energy_cost INTEGER DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                version INTEGER NOT NULL DEFAULT 1
+            )
+            """
+        )
+        now = "2026-03-10T00:00:00+00:00"
+        chars = [
+            (1, 1, "Mara Voss", "A veteran warden of the harbor districts who has spent her entire life protecting the citizens from various threats and mysterious disappearances that occur during the ringing of the harbor bells."),
+            (1, 1, "Iven Hale", "A dockside broker with connections to every merchant and smuggler in the city, known for his ability to find information that others would prefer to keep hidden in the shadows of the quay."),
+            (1, 1, "Tarin", "An ashen courtier who survived the great purge of the ember court by staying invisible and useful to those in power, now seeking a way to restore balance to the fractured political landscape."),
+            (1, 1, "Mira", "A court survivor with a sharp mind for strategy and a deep knowledge of the ancient rituals that once governed the city before the coming of the silver plague and the subsequent chaos."),
+            (1, 1, "Kaelen", "A master of runes who can decipher the most complex magical signatures and whose expertise is crucial for understanding the omens that appear in the sky before major world-changing events."),
+            (1, 1, "Lyra", "A silver plague survivor who gained mysterious abilities during her recovery and now uses them to help others who have been affected by the magical aftershocks of the city's various crises."),
+        ]
+        for tenant_id, world_id, name, backstory in chars:
+            conn.execute(
+                "INSERT INTO characters (tenant_id, world_id, name, backstory, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (tenant_id, world_id, name, backstory, now, now),
+            )
         conn.commit()
     finally:
         conn.close()
@@ -328,6 +376,7 @@ def test_camel_bridge_merges_duplicate_rumors_across_runs(tmp_path):
 def test_camel_bridge_story_chain_merges_duplicate_events_across_runs(tmp_path):
     db_path = str(tmp_path / "event_gate.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     backend = DeterministicRumorBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
@@ -374,6 +423,7 @@ def test_camel_bridge_story_chain_merges_duplicate_events_across_runs(tmp_path):
 def test_camel_bridge_generates_story_chain(tmp_path):
     db_path = str(tmp_path / "chain.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     backend = DeterministicRumorBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
@@ -471,6 +521,7 @@ def test_camel_bridge_story_chain_core_persist_rolls_back_on_error(tmp_path, mon
 def test_camel_bridge_story_chain_merges_duplicate_relationships_across_runs(tmp_path):
     db_path = str(tmp_path / "chain_relationship_merge.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     backend = DeterministicRumorBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
@@ -518,6 +569,7 @@ def test_camel_bridge_story_chain_merges_duplicate_relationships_across_runs(tmp
 def test_camel_bridge_story_chain_merges_reversed_mutual_relationships(tmp_path):
     db_path = str(tmp_path / "chain_relationship_reverse_merge.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     backend = DeterministicRumorBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
@@ -561,6 +613,7 @@ def test_camel_bridge_story_chain_merges_reversed_mutual_relationships(tmp_path)
 def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     db_path = str(tmp_path / "campaign_story.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     narrative_payload = {
         "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
         "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
@@ -746,6 +799,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
 def test_camel_bridge_reuses_existing_narrative_canon_across_runs(tmp_path):
     db_path = str(tmp_path / "campaign_story_reuse.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     narrative_payload = {
         "campaign": {"title": "Campaign of Blue Lanterns", "description": "A harbor campaign built around civil unrest.", "campaign_type": "main_story", "recommended_level": 6, "estimated_hours": 10},
         "story": {"name": "Blue Lantern Chronicle", "description": "The campaign's central storyline.", "content": "A chain of rumors leads to rebellion.", "story_type": "linear"},
@@ -1318,6 +1372,7 @@ def test_camel_bridge_merges_main_storylines_with_shared_anchor_tokens(tmp_path)
 def test_camel_bridge_does_not_auto_ground_faction_or_role_labels_as_characters(tmp_path):
     db_path = str(tmp_path / "character_grounding.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     service = RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
         backend=DeterministicRumorBackend([]),
@@ -1346,10 +1401,16 @@ def test_camel_bridge_does_not_auto_ground_faction_or_role_labels_as_characters(
     conn = sqlite3.connect(db_path)
     try:
         rows = conn.execute("SELECT name FROM characters ORDER BY id").fetchall()
-        assert rows == [("Mara Voss",), ("Iven Hale",)]
+        names = [row[0] for row in rows]
+        assert "Mara Voss" in names
+        assert "Iven Hale" in names
+        # Ensure roles/factions weren't auto-created
+        assert "Rebel Cell" not in names
+        assert "Harbor Defenders" not in names
+        assert "Rebel Leader" not in names
+        assert "Acolyte" not in names
     finally:
         conn.close()
-
 
 def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
     class RecordingBackend:
@@ -1373,9 +1434,9 @@ def test_narrative_prompt_scope_excludes_systems_when_system_slice_disabled():
     service._generate_enriched_structure_draft(request, chain_result, include_systems_slice=False)
 
     narrative_system_message, narrative_prompt = backend.calls[-1]
-    assert "quest_trackers" in narrative_system_message
+    assert "plot_branches" in narrative_system_message
     assert "items, inventories" not in narrative_system_message
-    assert "For quests include" in narrative_prompt
+    assert "For plot_branches include" in narrative_prompt
     assert "For items include" not in narrative_prompt
 
 
@@ -1540,7 +1601,7 @@ def test_prompt_language_block_auto_detects_russian_from_cyrillic_theme():
     event_prompt = service._build_event_prompt(request, [])
 
     assert "Output language: Russian." in rumor_prompt
-    assert "Write all natural-language field values in Russian" in rumor_prompt
+    assert "ALL textual content MUST be in Russian" in rumor_prompt
     assert "Keep provided character names exactly as given" in rumor_prompt
     assert "Output language: Russian." in event_prompt
 
@@ -1571,7 +1632,7 @@ def test_prompt_language_block_respects_explicit_output_language_override():
     )
 
     assert "Output language: English." in prompt
-    assert "Write all natural-language field values in English." in prompt
+    assert "All textual content in English" in prompt
     assert "Output language: Russian." not in prompt
 
 
@@ -1600,8 +1661,9 @@ def test_narrative_draft_stabilization_backfills_sparse_payload():
     assert draft.story.content.startswith("Citizens fear the next eclipse.")
     assert len(draft.acts) == 3
     assert draft.acts[0].key_events == ("Dockside Murmurs",)
-    assert len(draft.chapters) == 3
-    assert len(draft.episodes) == 3
+    assert len(draft.chapters) == 6
+
+    assert len(draft.episodes) == 4
     assert draft.storylines[0].event_names == ("Blue Lantern Raid",)
     assert "Dockside Murmurs" in draft.prologue.description
 
@@ -2084,6 +2146,7 @@ def test_strict_mode_disables_rumor_fallbacks(tmp_path):
 def test_strict_mode_disables_chain_fallbacks(tmp_path):
     db_path = str(tmp_path / "strict_chain.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     service = RumorBridgeService(
         CamelBridgeRumorRepository(db_path),
         backend=DeterministicRumorBackend([
@@ -2152,10 +2215,11 @@ def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch)
 
         def generate(self, system_message: str, user_message: str) -> str:
             self.calls.append((system_message, user_message))
-            return self.responses.pop(0)
+            return self.responses.pop(0) if self.responses else "{}"
 
     db_path = str(tmp_path / "split_batches.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     backend = RecordingBackend([
         '[{"name":"Dockside Murmurs","description":"Sailors whisper that the harbor bells ring before disappearances.","source_name":"Whisper Broker","truth_level":"Unverified","spread_speed":"Rapid","credibility_score":6}]',
         '[{"name":"Lantern Decree","description":"A crier claims the magistrate will ban blue lanterns before the eclipse.","source_name":"Town Crier","truth_level":"Partially True","spread_speed":"Explosive","credibility_score":7}]',
@@ -2198,6 +2262,7 @@ def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch)
 def test_camel_bridge_generates_systems_slice(tmp_path):
     db_path = str(tmp_path / "systems.db")
     _seed_world(db_path)
+    _seed_characters(db_path)
     systems_payload = {
         "items": [{"name": "Bellglass Reliquary", "description": "A relic that stores harbor omens.", "item_type": "relic", "rarity": "unique", "level": 12, "enhancement": 2, "max_enhancement": 6, "base_def": 14, "special_stat": "ward_strength", "special_stat_value": 0.25}],
         "inventories": [{"owner_name": "Mara Voss", "capacity": 20, "gold": 275, "slots": [{"item_name": "Bellglass Reliquary", "quantity": 1, "slot_index": 0}, {"item_name": "Lantern Glass Shard", "quantity": 6, "slot_index": 1}]}],

@@ -461,8 +461,10 @@ class RumorBridgeService(
         reindex_memory: bool = True,
     ) -> list[Rumor]:
         drafts: list[RumorDraft] = []
+        # Use only as many agents as requested rumors
+        agents_to_use = DEFAULT_RUMOR_AGENT_PROMPTS[:request.count]
         for index, (agent_name, system_message) in enumerate(
-            DEFAULT_RUMOR_AGENT_PROMPTS, start=1
+            agents_to_use, start=1
         ):
             try:
                 localized_system = self._localize_system_prompt(system_message, request)
