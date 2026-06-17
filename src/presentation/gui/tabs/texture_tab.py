@@ -18,7 +18,7 @@ from src.application.presentation_contracts import EntityId, TenantId, Texture
 class TextureTab(QWidget):
     """Tab for managing 3D textures."""
 
-    texture_selected = pyqtSignal(EntityId)
+    texture_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

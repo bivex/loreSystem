@@ -23,7 +23,7 @@ from src.presentation.gui.i18n import I18n
 class QuestsTab(QWidget):
     """Tab for managing quests."""
 
-    quest_selected = pyqtSignal(EntityId)
+    quest_selected = pyqtSignal(object)
 
     def __init__(self, lore_data: LoreData):
         super().__init__()

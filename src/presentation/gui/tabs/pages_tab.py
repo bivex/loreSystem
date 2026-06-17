@@ -18,7 +18,7 @@ from src.application.presentation_contracts import Content, EntityId, Page, Page
 class PagesTab(QWidget):
     """Tab for managing pages with template support."""
 
-    page_selected = pyqtSignal(EntityId)
+    page_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

@@ -17,7 +17,7 @@ from src.presentation.gui.i18n import I18n
 class StorylinesTab(QWidget):
     """Tab for managing storylines."""
 
-    storyline_selected = pyqtSignal(EntityId)
+    storyline_selected = pyqtSignal(object)
 
     def __init__(self, lore_data: LoreData):
         super().__init__()

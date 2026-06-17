@@ -19,7 +19,7 @@ from src.application.presentation_contracts import EntityId, Model3D, TenantId
 class Model3DTab(QWidget):
     """Tab for managing 3D models."""
 
-    model_selected = pyqtSignal(EntityId)
+    model_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

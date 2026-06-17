@@ -17,7 +17,7 @@ from src.application.presentation_contracts import Description, EntityId, Tenant
 class WorldsTab(QWidget):
     """Tab for managing worlds."""
     
-    world_selected = pyqtSignal(EntityId)
+    world_selected = pyqtSignal(object)
     
     def __init__(self, lore_data):
         super().__init__()

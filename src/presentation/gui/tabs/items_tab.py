@@ -18,7 +18,7 @@ from src.presentation.gui.lore_data import LoreData
 class ItemsTab(QWidget):
     """Enhanced tab for managing items with improved UX."""
 
-    item_selected = pyqtSignal(EntityId)
+    item_selected = pyqtSignal(object)
 
     def __init__(self, lore_data: LoreData):
         super().__init__()

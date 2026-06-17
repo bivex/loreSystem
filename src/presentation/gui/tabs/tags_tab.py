@@ -17,7 +17,7 @@ from src.application.presentation_contracts import EntityId, Tag, TagName, TagTy
 class TagsTab(QWidget):
     """Tab for managing visual tags for content organization."""
 
-    tag_selected = pyqtSignal(EntityId)
+    tag_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

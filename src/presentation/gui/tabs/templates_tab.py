@@ -17,7 +17,7 @@ from src.application.presentation_contracts import Content, EntityId, Template, 
 class TemplatesTab(QWidget):
     """Tab for managing templates (page templates and runes)."""
 
-    template_selected = pyqtSignal(EntityId)
+    template_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

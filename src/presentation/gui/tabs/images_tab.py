@@ -18,7 +18,7 @@ from src.application.presentation_contracts import EntityId, Image, ImagePath, I
 class ImagesTab(QWidget):
     """Tab for managing image media library."""
 
-    image_selected = pyqtSignal(EntityId)
+    image_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()

@@ -17,7 +17,7 @@ from src.application.presentation_contracts import Content, EntityId, Story, Sto
 class StoriesTab(QWidget):
     """Tab for managing stories with linear and non-linear narratives."""
 
-    story_selected = pyqtSignal(EntityId)
+    story_selected = pyqtSignal(object)
 
     def __init__(self, lore_data):
         super().__init__()
