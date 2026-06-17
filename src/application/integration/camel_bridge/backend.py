@@ -34,7 +34,7 @@ class CamelChatBackend:
             model_platform or os.getenv("CAMEL_MODEL_PLATFORM") or "OPENAI"
         ).upper()
         self.model_type = (
-            model_type or os.getenv("CAMEL_MODEL_TYPE") or "arcee-ai/trinity-mini:free"
+            model_type or os.getenv("CAMEL_MODEL_TYPE") or "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
         )
         self.model_url = (
             os.getenv("CAMEL_MODEL_BASE_URL")
