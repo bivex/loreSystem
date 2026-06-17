@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
         import sys
         is_testing = 'pytest' in sys.modules or 'PYTEST_CURRENT_TEST' in os.environ
         if not is_testing:
-            sample_path = Path(__file__).parent.parent.parent / 'examples' / 'sample_dark_fantasy_gacha_ru.json'
+            sample_path = Path(__file__).parent.parent.parent.parent / 'examples' / 'sample_dark_fantasy_gacha_ru.json'
             if sample_path.exists():
                 self._load_file_by_path(str(sample_path), show_message=False)
 
@@ -767,7 +767,7 @@ class MainWindow(QMainWindow):
 
     def _load_sample_data(self):
         """Load the sample data file."""
-        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
+        sample_file = Path(__file__).parent.parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
         
         if sample_file.exists():
             try:

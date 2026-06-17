@@ -494,7 +494,7 @@ class MainWindow(QMainWindow):
 
     def _load_sample_data(self):
         """Load the sample data file."""
-        sample_file = Path(__file__).parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
+        sample_file = Path(__file__).parent.parent.parent.parent / "examples" / "sample_dark_fantasy_gacha_ru.json"
 
         if sample_file.exists():
             try:
