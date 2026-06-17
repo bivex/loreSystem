@@ -532,7 +532,7 @@ class MainWindow(QMainWindow):
 
         self.open_action = QAction(I18n.t('menu.file.open', "Open..."), self)
         self.open_action.triggered.connect(self._load_file)
-        self.open_action.setStatusTip(I18N.t('menu.file.open', "Open an existing lore file"))
+        self.open_action.setStatusTip(I18n.t('menu.file.open', "Open an existing lore file"))
         self.file_menu.addAction(self.open_action)
 
         self.file_menu.addSeparator()
