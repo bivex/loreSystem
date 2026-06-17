@@ -3747,8 +3747,16 @@ class RumorBridgeService:
                     continue
                 if left.id == right.id:
                     continue
+                matching_event_id = None
+                for ev in events:
+                    if ev.id and left.id in ev.participant_ids and right.id in ev.participant_ids:
+                        matching_event_id = ev.id
+                        break
+                if matching_event_id is None and events:
+                    matching_event_id = events[0].id
+
                 relation = self._relationship_to_entity(
-                    request, draft, left.id, right.id, events[0].id if events else None
+                    request, draft, left.id, right.id, matching_event_id
                 )
                 relationships.append(
                     self._save_or_merge_relationship(
@@ -13944,6 +13952,36 @@ class RumorBridgeService:
             "disciples",
             "initiates",
             "initiate",
+            "witness",
+            "witnesses",
+            "crier",
+            "criers",
+            "townsperson",
+            "townspeople",
+            "subject",
+            "subjects",
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "first",
+            "second",
+            "third",
+            "fourth",
+            "fifth",
+            "свидетель",
+            "свидетели",
+            "житель",
+            "жители",
+            "горожанин",
+            "горожане",
+            "один",
+            "два",
+            "три",
+            "первый",
+            "второй",
+            "третий",
         }
         if all(token in generic_tokens for token in tokens):
             return False
