@@ -21,3 +21,6 @@ build/
 # MCP specific
 *.log
 .mcp_cache/
+
+# Rope
+.ropeproject/

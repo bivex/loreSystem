@@ -786,6 +786,7 @@ ceremony_repo = SQLiteCeremonyRepository(sqlite_db)# Placeholder repositories
 
 
 
+if connection_type == "sqlite":
     # Use SQLite repositories for all entities
     world_repo = SQLiteWorldRepository(sqlite_db)
     character_repo = SQLiteCharacterRepository(sqlite_db)
@@ -808,7 +809,7 @@ ceremony_repo = SQLiteCeremonyRepository(sqlite_db)# Placeholder repositories
     inspiration_repo = SQLiteInspirationRepository(sqlite_db)
     map_repo = SQLiteMapRepository(sqlite_db)
     tokenboard_repo = SQLiteTokenboardRepository(sqlite_db)
-    else:
+else:
     # Default to in-memory repositories
     world_repo = InMemoryWorldRepository()
     character_repo = InMemoryCharacterRepository()
