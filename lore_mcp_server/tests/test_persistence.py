@@ -26,6 +26,11 @@ from src.infrastructure.in_memory_repositories import (
     InMemoryStoryRepository,
     InMemoryEventRepository,
     InMemoryPageRepository,
+    InMemoryItemRepository,
+    InMemoryLocationRepository,
+    InMemoryEnvironmentRepository,
+    InMemoryTextureRepository,
+    InMemoryModel3DRepository,
 )
 
 
@@ -43,6 +48,11 @@ def test_json_persistence():
     story_repo = InMemoryStoryRepository()
     event_repo = InMemoryEventRepository()
     page_repo = InMemoryPageRepository()
+    item_repo = InMemoryItemRepository()
+    location_repo = InMemoryLocationRepository()
+    environment_repo = InMemoryEnvironmentRepository()
+    texture_repo = InMemoryTextureRepository()
+    model3d_repo = InMemoryModel3DRepository()
 
     tenant_id = TenantId(1)
     tenant_id_str = "1"
@@ -77,6 +87,11 @@ def test_json_persistence():
         story_repo,
         event_repo,
         page_repo,
+        item_repo,
+        location_repo,
+        environment_repo,
+        texture_repo,
+        model3d_repo,
         tenant_id_str
     )
 
