@@ -3351,3 +3351,306 @@ def get_economy_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_open_world_graph():
+    """Open world & events graph.
+
+    Built only from real DB fields. Rich cross-graph structural links:
+      - quest_givers.quest_chain_ids -> quest_chains (which chain a giver offers)
+      - quest_givers.location_id -> locations (where the giver stands)
+      - quest_objectives.quest_node_id -> quest_nodes (which step the
+        objective belongs to)
+      - quest_objectives.target_id -> characters (the NPC/objective target)
+      - quest_trackers.player_profile_id -> characters (the tracking player)
+      - world_id shared by all entities -> world hub
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        open_world_zones = load_table('open_world_zones')
+        seasonal_events = load_table('seasonal_events')
+        quest_givers = load_table('quest_givers')
+        quest_objectives = load_table('quest_objectives')
+        quest_trackers = load_table('quest_trackers')
+        # Cross-graph references.
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        locations = load_table('locations')
+        quest_chains = load_table('quest_chains')
+        quest_nodes = load_table('quest_nodes')
+        char_ids = {c['id'] for c in characters}
+        location_ids = {l['id'] for l in locations}
+        chain_ids = {c['id'] for c in quest_chains}
+        qnode_ids = {qn['id'] for qn in quest_nodes}
+
+        # ---------- World hub node ----------
+        world_id = None
+        for ents in (open_world_zones, seasonal_events, quest_givers,
+                     quest_objectives, quest_trackers):
+            for e in ents:
+                payload = parse(e)
+                if payload.get('world_id') is not None:
+                    world_id = payload['world_id']
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб открытого мира",
+                'color': {'background': '#64748b', 'border': '#334155'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Open world zone nodes ----------
+        for zw in open_world_zones:
+            payload = parse(zw)
+            name = payload.get('name') or zw['label']
+            tooltip = f"<b>🗺️ Зона: {name}</b>"
+            if payload.get('biome'):
+                tooltip += f"<br><b>Биом:</b> {payload['biome']}"
+            tooltip += f"<br><b>Уровни:</b> {payload.get('min_level', '?')}–{payload.get('max_level', '?')}"
+            tooltip += f"<br><b>Лимит игроков:</b> {payload.get('player_cap', '?')}"
+            if payload.get('has_dynamic_events'):
+                tooltip += "<br><i>(динамические события)</i>"
+            nodes.append({
+                'id': f"zone_{zw['id']}",
+                'label': f"🗺️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 13, 'bold': True}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"zone_{zw['id']}",
+                         '#10b981', width=2, label='зона')
+
+        # ---------- Seasonal event nodes ----------
+        for se in seasonal_events:
+            payload = parse(se)
+            name = payload.get('name') or se['label']
+            tooltip = f"<b>🎃 Сезонное событие: {name}</b>"
+            if payload.get('season'):
+                tooltip += f"<br><b>Сезон:</b> {payload['season']}"
+            if payload.get('is_active'):
+                tooltip += "<br><b>Статус:</b> активно"
+            if payload.get('is_recurring'):
+                tooltip += f"<br><b>Повтор:</b> каждые {payload.get('recurrence_period_days', '?')} дн."
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"seasonal_event_{se['id']}",
+                'label': f"🎃 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"seasonal_event_{se['id']}",
+                         '#ec4899', width=1.5, label='событие', dashes=True)
+
+        # ---------- Location nodes (referenced by quest givers) ----------
+        referenced_loc_ids = set()
+        for qg in quest_givers:
+            payload = parse(qg)
+            lid = payload.get('location_id')
+            if lid in location_ids:
+                referenced_loc_ids.add(lid)
+        for l in locations:
+            if l['id'] not in referenced_loc_ids:
+                continue
+            payload = parse(l)
+            name = payload.get('name') or l['label']
+            nodes.append({
+                'id': f"location_{l['id']}",
+                'label': f"📍 {name[:20]}",
+                'title': f"<b>Локация: {name}</b>",
+                'color': {'background': '#0ea5e9', 'border': '#0369a1'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Quest chain nodes (referenced by givers) ----------
+        referenced_chain_ids = set()
+        for qg in quest_givers:
+            payload = parse(qg)
+            for cid in _parse_id_list(payload.get('quest_chain_ids')):
+                if cid in chain_ids:
+                    referenced_chain_ids.add(cid)
+        for ch in quest_chains:
+            if ch['id'] not in referenced_chain_ids:
+                continue
+            payload = parse(ch)
+            name = payload.get('name') or ch['label']
+            nodes.append({
+                'id': f"quest_chain_{ch['id']}",
+                'label': f"📜 {name[:20]}",
+                'title': f"<b>Цепочка квестов: {name}</b>",
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Quest node nodes (referenced by objectives) ----------
+        referenced_qnode_ids = set()
+        for qo in quest_objectives:
+            payload = parse(qo)
+            qid = payload.get('quest_node_id')
+            if qid in qnode_ids:
+                referenced_qnode_ids.add(qid)
+        for qn in quest_nodes:
+            if qn['id'] not in referenced_qnode_ids:
+                continue
+            payload = parse(qn)
+            name = payload.get('name') or qn['label']
+            nodes.append({
+                'id': f"quest_node_{qn['id']}",
+                'label': f"🗂️ {name[:20]}",
+                'title': f"<b>Шаг квеста: {name}</b>",
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Target character nodes (referenced by objectives/trackers) ----------
+        referenced_char_ids = set()
+        for qo in quest_objectives:
+            payload = parse(qo)
+            tid = payload.get('target_id')
+            if tid in char_ids:
+                referenced_char_ids.add(tid)
+        for qt in quest_trackers:
+            payload = parse(qt)
+            pid = payload.get('player_profile_id')
+            if pid in char_ids:
+                referenced_char_ids.add(pid)
+        for ch in characters:
+            if ch['id'] not in referenced_char_ids:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"🧝 {ch['name']}",
+                'title': f"<b>Персонаж: {ch['name']}</b>",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},
+                'shape': 'dot',
+                'size': 14
+            })
+
+        # ---------- Quest giver nodes (linked to location + chain) ----------
+        for qg in quest_givers:
+            payload = parse(qg)
+            name = payload.get('name') or qg['label']
+            tooltip = f"<b>💬 Квестгивер: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            if payload.get('greeting_message'):
+                tooltip += f"<br><i>«{payload['greeting_message']}»</i>"
+            if payload.get('has_daily_quests'):
+                tooltip += "<br><b>Дейлики:</b> да"
+            nodes.append({
+                'id': f"quest_giver_{qg['id']}",
+                'label': f"💬 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12, 'bold': True}
+            })
+            # Quest giver -> location (real FK location_id).
+            lid = payload.get('location_id')
+            if lid in location_ids:
+                add_edge(f"location_{lid}", f"quest_giver_{qg['id']}",
+                         '#0ea5e9', width=2, label='стоит в')
+            # Quest giver -> quest chain (real FK quest_chain_ids).
+            for cid in _parse_id_list(payload.get('quest_chain_ids')):
+                if cid in chain_ids:
+                    add_edge(f"quest_giver_{qg['id']}", f"quest_chain_{cid}",
+                             '#a855f7', width=2, label='выдаёт')
+
+        # ---------- Quest objective nodes (linked to quest_node + target) ----------
+        for qo in quest_objectives:
+            payload = parse(qo)
+            desc = payload.get('description') or qo['label']
+            otype = payload.get('objective_type', '')
+            tooltip = f"<b>🎯 Цель: {desc}</b>"
+            if otype:
+                tooltip += f"<br><b>Тип:</b> {otype}"
+            tooltip += f"<br><b>Прогресс:</b> {payload.get('current_progress', 0)} / {payload.get('target_quantity', '?')}"
+            if payload.get('objective_hint'):
+                tooltip += f"<br><i>{payload['objective_hint']}</i>"
+            if payload.get('status'):
+                tooltip += f"<br><b>Статус:</b> {payload['status']}"
+            nodes.append({
+                'id': f"quest_objective_{qo['id']}",
+                'label': f"🎯 {desc[:18]}",
+                'title': tooltip,
+                'color': {'background': '#eab308', 'border': '#a16207'},
+                'shape': 'diamond',
+                'size': 13
+            })
+            # Objective -> quest node (real FK quest_node_id).
+            qnid = payload.get('quest_node_id')
+            if qnid in qnode_ids:
+                add_edge(f"quest_node_{qnid}", f"quest_objective_{qo['id']}",
+                         '#06b6d4', width=2, label='цель')
+            # Objective -> target character (real FK target_id).
+            tid = payload.get('target_id')
+            if tid in char_ids:
+                add_edge(f"quest_objective_{qo['id']}", f"char_{tid}",
+                         '#fbbf24', width=1.5, label='цель в', dashes=True)
+
+        # ---------- Quest tracker nodes (linked to player) ----------
+        for qt in quest_trackers:
+            payload = parse(qt)
+            pid = payload.get('player_profile_id')
+            tooltip = f"<b>📊 Трекер квестов #{qt['id']}</b>"
+            if pid in char_ids:
+                pname = next((c['name'] for c in characters if c['id'] == pid), pid)
+                tooltip += f"<br><b>Игрок:</b> {pname}"
+            if payload.get('last_updated'):
+                tooltip += f"<br><b>Обновлён:</b> {payload['last_updated']}"
+            nodes.append({
+                'id': f"quest_tracker_{qt['id']}",
+                'label': f"📊 Трекер #{qt['id']}",
+                'title': tooltip,
+                'color': {'background': '#6366f1', 'border': '#4338ca'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            if pid in char_ids:
+                add_edge(f"char_{pid}", f"quest_tracker_{qt['id']}",
+                         '#6366f1', width=1.5, label='трекер', dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building open world graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

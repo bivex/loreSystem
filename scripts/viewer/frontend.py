@@ -487,6 +487,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="achievements">🏆 Достижения и прогресс игрока</option>
                             <option value="combat">⚔️ Боевая карта и подземелья</option>
                             <option value="economy">💰 Экономика и лут</option>
+                            <option value="open_world">🌍 Открытый мир и события</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -958,6 +959,33 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            open_world: `
+                <div class="control-group">
+                    <label>Узлы открытого мира</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857;"></div> Зона мира</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d;"></div> Сезонное событие</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Квестгивер (NPC)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #0ea5e9; border: 1px solid #0369a1;"></div> Локация (где стоит NPC)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Цепочка квестов</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2;"></div> Шаг квеста</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #eab308; border: 1px solid #a16207; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Цель квеста</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Трекер прогресса</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24;"></div> Персонаж (цель/игрок)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи мира</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #0ea5e9;"></div> стоит в (локация ➔ квестгивер)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7;"></div> выдаёт (квестгивер ➔ цепочка)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4;"></div> цель (шаг ➔ цель квеста)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24; border-top: 2px dashed #fbbf24;"></div> цель в (цель ➔ NPC)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #6366f1; border-top: 2px dashed #6366f1;"></div> трекер (игрок ➔ трекер)</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -1278,6 +1306,23 @@ HTML_CONTENT = """<!DOCTYPE html>
                         springConstant: 0.035,
                         damping: 0.5,
                         avoidOverlap: 0.9
+                    },
+                    stabilization: { iterations: 300 }
+                };
+            } else if (currentGraphType === 'open_world') {
+                // Mixed: world hub anchors zones/events; quest chains branch
+                // out (giver -> chain -> node -> objective -> target).
+                // Force-directed with wide spacing for cross-domain labels.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -160,
+                        centralGravity: 0.18,
+                        springLength: 280,
+                        springConstant: 0.03,
+                        damping: 0.5,
+                        avoidOverlap: 0.92
                     },
                     stabilization: { iterations: 300 }
                 };
