@@ -147,6 +147,7 @@ class SQLiteNewspaperRepository:
 
 
 
+
 class SQLiteRadioRepository:
     """SQLite implementation of Radio repository."""
     def __init__(self, db):
@@ -193,6 +194,7 @@ class SQLiteRadioRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -245,6 +247,7 @@ class SQLiteTelevisionRepository:
 
 
 
+
 class SQLiteInternetRepository:
     """SQLite implementation of Internet repository."""
     def __init__(self, db):
@@ -294,6 +297,7 @@ class SQLiteInternetRepository:
 
 
 
+
 class SQLiteVoice_actorRepository:
     """SQLite implementation of Voice_actor repository."""
     def __init__(self, db):
@@ -340,6 +344,7 @@ class SQLiteVoice_actorRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -393,6 +398,7 @@ class SQLiteVoiceLineRepository:
 
 
 
+
 class SQLiteVoice_lineRepository:
     """SQLite implementation of Voice_line repository."""
     def __init__(self, db):
@@ -439,6 +445,7 @@ class SQLiteVoice_lineRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -492,6 +499,7 @@ class SQLiteVoiceOverRepository:
 
 
 
+
 class SQLiteVoice_overRepository:
     """SQLite implementation of Voice_over repository."""
     def __init__(self, db):
@@ -538,6 +546,7 @@ class SQLiteVoice_overRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -591,6 +600,7 @@ class SQLiteSubtitleRepository:
 
 
 
+
 class SQLiteTranslationRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
@@ -641,6 +651,7 @@ class SQLiteTranslationRepository:
 
 
 
+
 class SQLiteDubbingRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
@@ -688,6 +699,7 @@ class SQLiteDubbingRepository:
     def _entity_from_row(row):
         # Placeholder: return simple object
         return None
+
 
 
 
@@ -794,6 +806,7 @@ class SQLiteImageRepository:
 
 
 
+
 class SQLiteNoteRepository:
     """SQLite implementation of Note repository."""
 
@@ -887,6 +900,7 @@ class SQLiteNoteRepository:
             updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
             id=EntityId(row['id'])
         )
+
 
 
 

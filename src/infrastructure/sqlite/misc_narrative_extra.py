@@ -148,6 +148,7 @@ class SQLiteChekhovsGunRepository:
 
 
 
+
 class SQLiteChekhovs_gunRepository:
     """SQLite implementation of Chekhovs_gun repository."""
     def __init__(self, db):
@@ -194,6 +195,7 @@ class SQLiteChekhovs_gunRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -246,6 +248,7 @@ class SQLiteRedHerringRepository:
 
 
 
+
 class SQLiteRed_herringRepository:
     """SQLite implementation of Red_herring repository."""
     def __init__(self, db):
@@ -295,6 +298,7 @@ class SQLiteRed_herringRepository:
 
 
 
+
 class SQLiteForeshadowingRepository:
     """SQLite implementation of Foreshadowing repository."""
     def __init__(self, db):
@@ -341,6 +345,7 @@ class SQLiteForeshadowingRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -394,154 +399,6 @@ class SQLiteMysteryRepository:
 
 
 
-class SQLiteEnigmaRepository:
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO {table_name} (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, entity.world_id.value if hasattr(entity, 'world_id') else None, entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE {table_name} SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-        return entity
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM {table_name} WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        # Placeholder: return simple object
-        return None
-
-
-
-class SQLiteAlternateRealityRepository:
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO {table_name} (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, entity.world_id.value if hasattr(entity, 'world_id') else None, entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE {table_name} SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-        return entity
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM {table_name} WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        # Placeholder: return simple object
-        return None
-
-
-
-class SQLiteAlternate_realityRepository:
-    """SQLite implementation of Alternate_reality repository."""
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO alternate_realitys (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE alternate_realitys SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM alternate_realitys WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM alternate_realitys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM alternate_realitys WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        return None  # Placeholder - should import entity
-
-
 
 class SQLiteEvidenceRepository:
     """SQLite implementation of Evidence repository."""
@@ -589,6 +446,7 @@ class SQLiteEvidenceRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -641,104 +499,6 @@ class SQLiteWitnessRepository:
 
 
 
-class SQLiteEasterEggRepository:
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO {table_name} (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, entity.world_id.value if hasattr(entity, 'world_id') else None, entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE {table_name} SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-        return entity
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM {table_name} WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM {table_name} WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        # Placeholder: return simple object
-        return None
-
-
-
-class SQLiteEaster_eggRepository:
-    """SQLite implementation of Easter_egg repository."""
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO easter_eggs (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE easter_eggs SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM easter_eggs WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM easter_eggs WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM easter_eggs WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        return None  # Placeholder - should import entity
-
-
 
 class SQLiteDreamRepository:
     """SQLite implementation of Dream repository."""
@@ -789,6 +549,7 @@ class SQLiteDreamRepository:
 
 
 
+
 class SQLiteNightmareRepository:
     """SQLite implementation of Nightmare repository."""
     def __init__(self, db):
@@ -835,5 +596,55 @@ class SQLiteNightmareRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
+
+
+class SQLiteFlash_forwardRepository:
+    """SQLite implementation of Flash_forward repository."""
+    def __init__(self, db):
+        from src.infrastructure.sqlite_repositories import SQLiteDatabase
+        import sqlite3
+        from datetime import datetime
+        self.db = db
+
+    def save(self, entity):
+        now = datetime.now().isoformat()
+        if entity.id is None:
+            with self.db.get_connection() as conn:
+                cursor = conn.execute(f"INSERT INTO flash_forwards (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
+                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
+        else:
+            with self.db.get_connection() as conn:
+                conn.execute(f"UPDATE flash_forwards SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
+                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
+
+    def find_by_id(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            row = conn.execute(f"SELECT * FROM flash_forwards WHERE id = ? AND tenant_id = ?",
+                (entity_id.value, tenant_id.value)).fetchone()
+            if not row:
+                return None
+            return self._row_to_entity(row)
+
+    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
+        with self.db.get_connection() as conn:
+            rows = conn.execute(f"SELECT * FROM flash_forwards WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
+                (world_id.value, tenant_id.value, limit, offset)).fetchall()
+            return [self._row_to_entity(row) for row in rows]
+
+    def delete(self, tenant_id, entity_id):
+        with self.db.get_connection() as conn:
+            cursor = conn.execute(f"DELETE FROM flash_forwards WHERE id = ? AND tenant_id = ?",
+                (entity_id.value, tenant_id.value))
+            return cursor.rowcount > 0
+
+    def _row_to_entity(self, row):
+        return self._entity_from_row(row)
+
+    @staticmethod
+    def _entity_from_row(row):
+        return None  # Placeholder - should import entity
+
 
 

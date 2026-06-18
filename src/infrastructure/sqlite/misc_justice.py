@@ -98,7 +98,7 @@ from src.domain.entities.wormhole import Wormhole
 
 # Entity types whose modules fail to import on this Python version (omitted; SQL is duck-typed): ['Heatmap', 'Localization']
 
-class SQLiteBlackHoleRepository:
+class SQLiteCrimeRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
         import sqlite3
@@ -149,8 +149,8 @@ class SQLiteBlackHoleRepository:
 
 
 
-class SQLiteBlack_holeRepository:
-    """SQLite implementation of Black_hole repository."""
+class SQLiteJudgeRepository:
+    """SQLite implementation of Judge repository."""
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
         import sqlite3
@@ -161,17 +161,17 @@ class SQLiteBlack_holeRepository:
         now = datetime.now().isoformat()
         if entity.id is None:
             with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO black_holes (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                cursor = conn.execute(f"INSERT INTO judges (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                     (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
                 object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
         else:
             with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE black_holes SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
+                conn.execute(f"UPDATE judges SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
                     (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
 
     def find_by_id(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM black_holes WHERE id = ? AND tenant_id = ?",
+            row = conn.execute(f"SELECT * FROM judges WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value)).fetchone()
             if not row:
                 return None
@@ -179,13 +179,13 @@ class SQLiteBlack_holeRepository:
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
         with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM black_holes WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
+            rows = conn.execute(f"SELECT * FROM judges WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
                 (world_id.value, tenant_id.value, limit, offset)).fetchall()
             return [self._row_to_entity(row) for row in rows]
 
     def delete(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM black_holes WHERE id = ? AND tenant_id = ?",
+            cursor = conn.execute(f"DELETE FROM judges WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value))
             return cursor.rowcount > 0
 
@@ -199,8 +199,8 @@ class SQLiteBlack_holeRepository:
 
 
 
-class SQLiteGalaxyRepository:
-    """SQLite implementation of Galaxy repository."""
+class SQLiteJuryRepository:
+    """SQLite implementation of Jury repository."""
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
         import sqlite3
@@ -211,17 +211,17 @@ class SQLiteGalaxyRepository:
         now = datetime.now().isoformat()
         if entity.id is None:
             with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO galaxys (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                cursor = conn.execute(f"INSERT INTO jurys (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                     (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
                 object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
         else:
             with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE galaxys SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
+                conn.execute(f"UPDATE jurys SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
                     (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
 
     def find_by_id(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM galaxys WHERE id = ? AND tenant_id = ?",
+            row = conn.execute(f"SELECT * FROM jurys WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value)).fetchone()
             if not row:
                 return None
@@ -229,13 +229,13 @@ class SQLiteGalaxyRepository:
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
         with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM galaxys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
+            rows = conn.execute(f"SELECT * FROM jurys WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
                 (world_id.value, tenant_id.value, limit, offset)).fetchall()
             return [self._row_to_entity(row) for row in rows]
 
     def delete(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM galaxys WHERE id = ? AND tenant_id = ?",
+            cursor = conn.execute(f"DELETE FROM jurys WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value))
             return cursor.rowcount > 0
 
@@ -249,8 +249,8 @@ class SQLiteGalaxyRepository:
 
 
 
-class SQLiteNebulaRepository:
-    """SQLite implementation of Nebula repository."""
+class SQLitePunishmentRepository:
+    """SQLite implementation of Punishment repository."""
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
         import sqlite3
@@ -261,17 +261,17 @@ class SQLiteNebulaRepository:
         now = datetime.now().isoformat()
         if entity.id is None:
             with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO nebulas (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+                cursor = conn.execute(f"INSERT INTO punishments (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                     (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
                 object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
         else:
             with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE nebulas SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
+                conn.execute(f"UPDATE punishments SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
                     (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
 
     def find_by_id(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM nebulas WHERE id = ? AND tenant_id = ?",
+            row = conn.execute(f"SELECT * FROM punishments WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value)).fetchone()
             if not row:
                 return None
@@ -279,13 +279,13 @@ class SQLiteNebulaRepository:
 
     def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
         with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM nebulas WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
+            rows = conn.execute(f"SELECT * FROM punishments WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
                 (world_id.value, tenant_id.value, limit, offset)).fetchall()
             return [self._row_to_entity(row) for row in rows]
 
     def delete(self, tenant_id, entity_id):
         with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM nebulas WHERE id = ? AND tenant_id = ?",
+            cursor = conn.execute(f"DELETE FROM punishments WHERE id = ? AND tenant_id = ?",
                 (entity_id.value, tenant_id.value))
             return cursor.rowcount > 0
 
@@ -296,137 +296,5 @@ class SQLiteNebulaRepository:
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
 
-
-
-
-class SQLiteWormholeRepository:
-    """SQLite implementation of Wormhole repository."""
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO wormholes (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE wormholes SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM wormholes WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM wormholes WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM wormholes WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        return None  # Placeholder - should import entity
-
-
-        class SimpleFlowchart:
-            def __init__(self, id, tenant_id, world_id, story_id, name, is_active, created_at, updated_at):
-                self.id = EntityId(id) if id else None
-                self.tenant_id = TenantId(tenant_id)
-                self.world_id = EntityId(world_id)
-                self.story_id = EntityId(story_id) if story_id else None
-                self.name = name
-                self.is_active = bool(is_active)
-                self.created_at = Timestamp(datetime.fromisoformat(created_at))
-                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
-
-
-        class SimpleImage:
-            def __init__(self, id, tenant_id, world_id, name, path, created_at, updated_at):
-                self.id = EntityId(id) if id else None
-                self.tenant_id = TenantId(tenant_id)
-                self.world_id = EntityId(world_id)
-                self.name = name
-                self.path = path
-                self.created_at = Timestamp(datetime.fromisoformat(created_at))
-                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
-
-
-        class SimpleInspiration:
-            def __init__(self, id, tenant_id, world_id, category, content, is_used, created_at, updated_at):
-                self.id = EntityId(id) if id else None
-                self.tenant_id = TenantId(tenant_id)
-                self.world_id = EntityId(world_id)
-                self.category = category
-                self.content = content
-                self.is_used = bool(is_used)
-                self.created_at = Timestamp(datetime.fromisoformat(created_at))
-                self.updated_at = Timestamp(datetime.fromisoformat(updated_at))
-
-
-class SQLiteSpaceshipRepository:
-    """SQLite implementation of Spaceship repository."""
-    def __init__(self, db):
-        from src.infrastructure.sqlite_repositories import SQLiteDatabase
-        import sqlite3
-        from datetime import datetime
-        self.db = db
-
-    def save(self, entity):
-        now = datetime.now().isoformat()
-        if entity.id is None:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(f"INSERT INTO spaceships (tenant_id, world_id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (entity.tenant_id.value, getattr(entity, 'world_id', lambda: entity.world_id.value, None), entity.name, getattr(entity, 'description', None), now, now))
-                object.__setattr__(entity, 'id', EntityId(cursor.lastrowid))
-        else:
-            with self.db.get_connection() as conn:
-                conn.execute(f"UPDATE spaceships SET name = ?, description = ? WHERE id = ? AND tenant_id = ?",
-                    (entity.name, getattr(entity, 'description', None), entity.id.value, entity.tenant_id.value))
-
-    def find_by_id(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            row = conn.execute(f"SELECT * FROM spaceships WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value)).fetchone()
-            if not row:
-                return None
-            return self._row_to_entity(row)
-
-    def list_by_world(self, tenant_id, world_id, limit=50, offset=0):
-        with self.db.get_connection() as conn:
-            rows = conn.execute(f"SELECT * FROM spaceships WHERE world_id = ? AND tenant_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                (world_id.value, tenant_id.value, limit, offset)).fetchall()
-            return [self._row_to_entity(row) for row in rows]
-
-    def delete(self, tenant_id, entity_id):
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(f"DELETE FROM spaceships WHERE id = ? AND tenant_id = ?",
-                (entity_id.value, tenant_id.value))
-            return cursor.rowcount > 0
-
-    def _row_to_entity(self, row):
-        return self._entity_from_row(row)
-
-    @staticmethod
-    def _entity_from_row(row):
-        return None  # Placeholder - should import entity
 
 

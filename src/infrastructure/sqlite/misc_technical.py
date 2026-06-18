@@ -148,6 +148,7 @@ class SQLiteAutosaveRepository:
 
 
 
+
 class SQLiteCheckpointRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
@@ -195,6 +196,7 @@ class SQLiteCheckpointRepository:
     def _entity_from_row(row):
         # Placeholder: return simple object
         return None
+
 
 
 
@@ -248,6 +250,7 @@ class SQLiteSavePointRepository:
 
 
 
+
 class SQLiteSave_pointRepository:
     """SQLite implementation of Save_point repository."""
     def __init__(self, db):
@@ -294,6 +297,7 @@ class SQLiteSave_pointRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -346,6 +350,7 @@ class SQLiteMemoryRepository:
 
 
 
+
 class SQLitePlayer_profileRepository:
     """SQLite implementation of Player_profile repository."""
     def __init__(self, db):
@@ -395,6 +400,7 @@ class SQLitePlayer_profileRepository:
 
 
 
+
 class SQLiteLocalizationRepository:
     """SQLite implementation of Localization repository."""
     def __init__(self, db):
@@ -441,6 +447,7 @@ class SQLiteLocalizationRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -547,6 +554,7 @@ class SQLiteTagRepository:
             updated_at=Timestamp(datetime.fromisoformat(row['updated_at'])),
             id=EntityId(row['id'])
         )
+
 
 
 
@@ -667,6 +675,7 @@ class SQLiteTemplateRepository:
 
 
 
+
 class SQLiteTimePeriodRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
@@ -714,6 +723,7 @@ class SQLiteTimePeriodRepository:
     def _entity_from_row(row):
         # Placeholder: return simple object
         return None
+
 
 
 
@@ -766,6 +776,7 @@ class SQLiteTime_periodRepository:
 
 
 
+
 class SQLiteShareCodeRepository:
     def __init__(self, db):
         from src.infrastructure.sqlite_repositories import SQLiteDatabase
@@ -815,6 +826,7 @@ class SQLiteShareCodeRepository:
 
 
 
+
 class SQLiteShare_codeRepository:
     """SQLite implementation of Share_code repository."""
     def __init__(self, db):
@@ -861,6 +873,7 @@ class SQLiteShare_codeRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
