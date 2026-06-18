@@ -13,11 +13,13 @@ from .misc_geography import *  # noqa: F401,F403
 from .misc_media import *  # noqa: F401,F403
 from .misc_audio_visual import *  # noqa: F401,F403
 from .misc_knowledge import *  # noqa: F401,F403
+from .misc_crafting import *  # noqa: F401,F403
 from .misc_faith import *  # noqa: F401,F403
 from .misc_biology import *  # noqa: F401,F403
 from .misc_phenomena import *  # noqa: F401,F403
 from .misc_travel import *  # noqa: F401,F403
 from .misc_gameplay import *  # noqa: F401,F403
+from .misc_progression import *  # noqa: F401,F403
 from .misc_narrative_extra import *  # noqa: F401,F403
 from .misc_secrets import *  # noqa: F401,F403
 from .misc_warfare import *  # noqa: F401,F403

@@ -206,6 +206,7 @@ class SQLiteFlowchartRepository:
 
 
 
+
 class SQLiteRequirementRepository:
     """SQLite implementation of Requirement repository."""
     def __init__(self, db):
@@ -252,6 +253,7 @@ class SQLiteRequirementRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -307,6 +309,7 @@ class SQLiteUserScenarioRepository:
 
 
 
+
 class SQLiteUser_scenarioRepository:
     """SQLite implementation of User_scenario repository."""
     def __init__(self, db):
@@ -357,6 +360,7 @@ class SQLiteUser_scenarioRepository:
 
 
 
+
 class SQLiteTransitionRepository:
     """SQLite implementation of Transition repository."""
     def __init__(self, db):
@@ -403,6 +407,7 @@ class SQLiteTransitionRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -458,6 +463,7 @@ class SQLiteDispositionRepository:
 
 
 
+
 class SQLitePityRepository:
     """SQLite implementation of Pity repository."""
     def __init__(self, db):
@@ -508,6 +514,7 @@ class SQLitePityRepository:
 
 
 
+
 class SQLitePullRepository:
     """SQLite implementation of Pull repository."""
     def __init__(self, db):
@@ -554,6 +561,7 @@ class SQLitePullRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -609,6 +617,7 @@ class SQLiteDropRateRepository:
 
 
 
+
 class SQLiteDrop_rateRepository:
     """SQLite implementation of Drop_rate repository."""
     def __init__(self, db):
@@ -655,6 +664,7 @@ class SQLiteDrop_rateRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -710,6 +720,7 @@ class SQLiteDifficultyCurveRepository:
 
 
 
+
 class SQLiteDifficulty_curveRepository:
     """SQLite implementation of Difficulty_curve repository."""
     def __init__(self, db):
@@ -760,6 +771,7 @@ class SQLiteDifficulty_curveRepository:
 
 
 
+
 class SQLiteScoreRepository:
     """SQLite implementation of Score repository."""
     def __init__(self, db):
@@ -806,6 +818,7 @@ class SQLiteScoreRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -861,6 +874,7 @@ class SQLiteBalanceEntitiesRepository:
 
 
 
+
 class SQLiteBalance_entitiesRepository:
     """SQLite implementation of Balance_entities repository."""
     def __init__(self, db):
@@ -907,6 +921,7 @@ class SQLiteBalance_entitiesRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -962,6 +977,7 @@ class SQLitePlayerMetricRepository:
 
 
 
+
 class SQLitePlayer_metricRepository:
     """SQLite implementation of Player_metric repository."""
     def __init__(self, db):
@@ -1008,6 +1024,7 @@ class SQLitePlayer_metricRepository:
     @staticmethod
     def _entity_from_row(row):
         return None  # Placeholder - should import entity
+
 
 
 
@@ -1059,6 +1076,7 @@ class SQLiteKillCountRepository:
     def _entity_from_row(row):
         # Placeholder: return simple object
         return None
+
 
 
 
