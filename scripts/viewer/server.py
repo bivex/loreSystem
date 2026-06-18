@@ -16,7 +16,8 @@ from .database import (
     get_story_branches_graph, get_timeline_graph,
     get_factions_graph, get_crafting_graph, get_progression_graph,
     get_narrative_graph, get_legendary_items_graph, get_achievements_graph,
-    get_combat_graph, get_economy_graph, get_open_world_graph
+    get_combat_graph, get_economy_graph, get_open_world_graph,
+    get_production_graph, get_social_graph
 )
 from .frontend import HTML_CONTENT
 
@@ -200,6 +201,26 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
 
             graph_data = get_open_world_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Production (Voice & Mocap) Graph
+        elif parsed_url.path == "/api/graph/production":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_production_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Social & Moral Choices Graph
+        elif parsed_url.path == "/api/graph/social":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_social_graph()
             self.wfile.write(json.dumps(graph_data).encode('utf-8'))
             
         # Frontend index html page

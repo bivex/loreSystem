@@ -488,6 +488,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="combat">⚔️ Боевая карта и подземелья</option>
                             <option value="economy">💰 Экономика и лут</option>
                             <option value="open_world">🌍 Открытый мир и события</option>
+                            <option value="production">🎭 Продакшн: озвучка и моушн</option>
+                            <option value="social">💬 Социальные и моральные выборы</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -986,6 +988,48 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            production: `
+                <div class="control-group">
+                    <label>Узлы продакшна</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d;"></div> Актёр озвучки (активен)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #9ca3af; border: 1px solid #4b5563;"></div> Актёр озвучки (прочее)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Mocap (в работе)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d;"></div> Mocap (готово)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи продакшна</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #22c55e;"></div> озвучка (мир ➔ актёр)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b; border-top: 2px dashed #f59e0b;"></div> mocap (мир ➔ клип)</div>
+                    </div>
+                </div>
+            `,
+            social: `
+                <div class="control-group">
+                    <label>Узлы социальных связей</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Кампания</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Моральная дилемма</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Вариант выбора</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24;"></div> Персонаж (участник)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Слух (непроверенный)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d;"></div> Слух (подтверждённый)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи выбора</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #6366f1;"></div> дилемма (кампания ➔ выбор)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24; border-top: 2px dashed #fbbf24;"></div> затрагивает (выбор ➔ персонаж)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7;"></div> вариант (выбор ➔ опция)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b; border-top: 2px dashed #f59e0b;"></div> слух (мир ➔ слух)</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -1097,7 +1141,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                     shadow: true,
                     // Constrain wide node labels so they wrap instead of
                     // stretching across neighbours and overlapping text.
-                    widthConstraint: { maximum: 160 },
+                    widthConstraint: { maximum: 220 },
                     heightConstraint: { valign: 'middle' },
                     font: {
                         face: 'Inter',
@@ -1130,15 +1174,15 @@ HTML_CONTENT = """<!DOCTYPE html>
                 physics: {
                     enabled: physicsEnabled,
                     barnesHut: {
-                        gravitationalConstant: -4000,
-                        centralGravity: 0.25,
-                        springLength: 200,
-                        springConstant: 0.04,
+                        gravitationalConstant: -8000,
+                        centralGravity: 0.12,
+                        springLength: 400,
+                        springConstant: 0.02,
                         damping: 0.09,
-                        avoidOverlap: 0.65
+                        avoidOverlap: 0.9
                     },
                     stabilization: {
-                        iterations: 250,
+                        iterations: 400,
                         fit: true
                     }
                 },
@@ -1152,17 +1196,17 @@ HTML_CONTENT = """<!DOCTYPE html>
 
             // Custom adjustments for graph layouts
             if (currentGraphType === 'locations') {
-                options.physics.barnesHut.springLength = 80;
-                options.physics.barnesHut.gravitationalConstant = -2000;
+                options.physics.barnesHut.springLength = 160;
+                options.physics.barnesHut.gravitationalConstant = -4000;
             } else if (currentGraphType === 'story_branches') {
                 options.layout = {
                     hierarchical: {
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 220,
-                        treeSpacing: 320,
-                        levelSeparation: 180
+                        nodeSpacing: 440,
+                        treeSpacing: 640,
+                        levelSeparation: 360
                     }
                 };
                 options.physics = { enabled: false };
@@ -1172,9 +1216,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'LR',
                         sortMethod: 'directed',
-                        nodeSpacing: 160,
-                        treeSpacing: 260,
-                        levelSeparation: 220
+                        nodeSpacing: 320,
+                        treeSpacing: 520,
+                        levelSeparation: 440
                     }
                 };
                 options.physics = { enabled: false };
@@ -1185,14 +1229,14 @@ HTML_CONTENT = """<!DOCTYPE html>
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -90,
-                        centralGravity: 0.008,
-                        springLength: 220,
-                        springConstant: 0.05,
+                        gravitationalConstant: -180,
+                        centralGravity: 0.004,
+                        springLength: 440,
+                        springConstant: 0.025,
                         damping: 0.5,
-                        avoidOverlap: 0.8
+                        avoidOverlap: 0.96
                     },
-                    stabilization: { iterations: 250 }
+                    stabilization: { iterations: 500 }
                 };
             } else if (currentGraphType === 'crafting') {
                 // Left-to-right flow: inputs (materials/components) on the
@@ -1202,9 +1246,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'LR',
                         sortMethod: 'directed',
-                        nodeSpacing: 140,
-                        treeSpacing: 240,
-                        levelSeparation: 260
+                        nodeSpacing: 280,
+                        treeSpacing: 480,
+                        levelSeparation: 520
                     }
                 };
                 options.physics = { enabled: false };
@@ -1216,9 +1260,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 200,
-                        treeSpacing: 300,
-                        levelSeparation: 200
+                        nodeSpacing: 400,
+                        treeSpacing: 600,
+                        levelSeparation: 400
                     }
                 };
                 options.physics = { enabled: false };
@@ -1232,9 +1276,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 180,
-                        treeSpacing: 260,
-                        levelSeparation: 170,
+                        nodeSpacing: 360,
+                        treeSpacing: 520,
+                        levelSeparation: 340,
                         blockShifting: true,
                         edgeMinimization: true
                     }
@@ -1249,14 +1293,14 @@ HTML_CONTENT = """<!DOCTYPE html>
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -180,
-                        centralGravity: 0.15,
-                        springLength: 320,
-                        springConstant: 0.03,
+                        gravitationalConstant: -360,
+                        centralGravity: 0.06,
+                        springLength: 640,
+                        springConstant: 0.015,
                         damping: 0.5,
-                        avoidOverlap: 0.95
+                        avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 300 }
+                    stabilization: { iterations: 600 }
                 };
             } else if (currentGraphType === 'achievements') {
                 // Top-down tree: character at the root, progression meta
@@ -1267,9 +1311,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 170,
-                        treeSpacing: 240,
-                        levelSeparation: 160,
+                        nodeSpacing: 340,
+                        treeSpacing: 480,
+                        levelSeparation: 320,
                         blockShifting: true
                     }
                 };
@@ -1283,14 +1327,14 @@ HTML_CONTENT = """<!DOCTYPE html>
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -180,
-                        centralGravity: 0.15,
-                        springLength: 300,
-                        springConstant: 0.03,
+                        gravitationalConstant: -360,
+                        centralGravity: 0.06,
+                        springLength: 600,
+                        springConstant: 0.015,
                         damping: 0.5,
-                        avoidOverlap: 0.95
+                        avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 300 }
+                    stabilization: { iterations: 600 }
                 };
             } else if (currentGraphType === 'economy') {
                 // Mixed: inventories flow owner -> inventory -> items (LR
@@ -1300,31 +1344,70 @@ HTML_CONTENT = """<!DOCTYPE html>
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -150,
-                        centralGravity: 0.2,
-                        springLength: 260,
-                        springConstant: 0.035,
+                        gravitationalConstant: -300,
+                        centralGravity: 0.08,
+                        springLength: 520,
+                        springConstant: 0.017,
                         damping: 0.5,
-                        avoidOverlap: 0.9
+                        avoidOverlap: 0.96
                     },
-                    stabilization: { iterations: 300 }
+                    stabilization: { iterations: 600 }
                 };
             } else if (currentGraphType === 'open_world') {
                 // Mixed: world hub anchors zones/events; quest chains branch
                 // out (giver -> chain -> node -> objective -> target).
                 // Force-directed with wide spacing for cross-domain labels.
+                // Allow wider node labels for this dense cross-domain graph.
+                options.nodes = options.nodes || {};
+                options.nodes.widthConstraint = { maximum: 320 };
+                options.nodes.font = options.nodes.font || {};
+                options.nodes.font.size = 13;
                 options.physics = {
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -160,
-                        centralGravity: 0.18,
-                        springLength: 280,
-                        springConstant: 0.03,
+                        gravitationalConstant: -520,
+                        centralGravity: 0.04,
+                        springLength: 800,
+                        springConstant: 0.012,
                         damping: 0.5,
-                        avoidOverlap: 0.92
+                        avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 300 }
+                    stabilization: { iterations: 600 }
+                };
+            } else if (currentGraphType === 'production') {
+                // Radial cluster: world hub at centre, voice actors and mocap
+                // clips radiating outward. Wide spacing for producer labels.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -360,
+                        centralGravity: 0.06,
+                        springLength: 600,
+                        springConstant: 0.015,
+                        damping: 0.5,
+                        avoidOverlap: 0.98
+                    },
+                    stabilization: { iterations: 600 }
+                };
+            } else if (currentGraphType === 'social') {
+                // Mixed: campaigns branch to moral dilemmas -> options/chars,
+                // rumors hang off the world hub. Wide spacing for dilemma text.
+                options.nodes = options.nodes || {};
+                options.nodes.widthConstraint = { maximum: 280 };
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -360,
+                        centralGravity: 0.08,
+                        springLength: 600,
+                        springConstant: 0.015,
+                        damping: 0.5,
+                        avoidOverlap: 0.96
+                    },
+                    stabilization: { iterations: 600 }
                 };
             }
 

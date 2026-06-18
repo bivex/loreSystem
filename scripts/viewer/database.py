@@ -3654,3 +3654,352 @@ def get_open_world_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_production_graph():
+    """Production: voice & mocap graph.
+
+    Built only from real DB fields. The production tables are very flat:
+      - voice_actors carry only world_id (no character_id FK), so a voice
+        actor links to the world hub only.
+      - motion_captures carry a `name` that matches a character name, but
+        that is a free-text label, not an FK. We therefore surface the mocap
+        clip under the world hub. We do NOT guess character links from the
+        name string (that would be keyword matching, which we avoid).
+    Grouping is by status (active/pending) to give producers a workload view.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        voice_actors = load_table('voice_actors')
+        motion_captures = load_table('motion_captures')
+
+        # ---------- World hub node ----------
+        world_id = None
+        for ents in (voice_actors, motion_captures):
+            for e in ents:
+                payload = parse(e)
+                if payload.get('world_id') is not None:
+                    world_id = payload['world_id']
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб продакшна",
+                'color': {'background': '#64748b', 'border': '#334155'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Voice actor nodes ----------
+        for va in voice_actors:
+            payload = parse(va)
+            name = payload.get('name') or va['label']
+            tooltip = f"<b>🎙️ Актёр озвучки: {name}</b>"
+            if payload.get('language'):
+                tooltip += f"<br><b>Язык:</b> {payload['language']}"
+            if payload.get('status'):
+                tooltip += f"<br><b>Статус:</b> {payload['status']}"
+            # Color by status for producer workload view.
+            status = (payload.get('status') or '').lower()
+            bg = '#22c55e' if status == 'active' else '#9ca3af'
+            border = '#15803d' if status == 'active' else '#4b5563'
+            nodes.append({
+                'id': f"voice_actor_{va['id']}",
+                'label': f"🎙️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': bg, 'border': border},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"voice_actor_{va['id']}",
+                         '#22c55e', width=1.5, label='озвучка')
+
+        # ---------- Motion capture nodes ----------
+        for mc in motion_captures:
+            payload = parse(mc)
+            name = payload.get('name') or mc['label']
+            tooltip = f"<b>🏃 Mocap: {name}</b>"
+            if payload.get('animation_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['animation_type']}"
+            if payload.get('status'):
+                tooltip += f"<br><b>Статус:</b> {payload['status']}"
+            if payload.get('file_path'):
+                tooltip += f"<br><b>Файл:</b> {payload['file_path']}"
+            if payload.get('is_looping'):
+                tooltip += "<br><i>(зацикленная)</i>"
+            status = (payload.get('status') or '').lower()
+            bg = '#22c55e' if status == 'done' else ('#f59e0b' if status == 'pending' else '#9ca3af')
+            border = '#15803d' if status == 'done' else ('#b45309' if status == 'pending' else '#4b5563')
+            nodes.append({
+                'id': f"motion_capture_{mc['id']}",
+                'label': f"🏃 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': bg, 'border': border},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"motion_capture_{mc['id']}",
+                         '#f59e0b', width=1.5, label='mocap', dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building production graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+
+def get_social_graph():
+    """Social & moral choices graph.
+
+    Built only from real DB fields. Rich structural links:
+      - moral_choices.character_ids -> characters (who the dilemma involves)
+      - moral_choices.campaign_id -> campaigns (which campaign it belongs to)
+      - moral_choices.options[] -> inline option nodes (the choice branches)
+      - rumors.location_id -> locations (where the rumor circulates, often null)
+      - rumors.source_name is free text (not an FK), surfaced as tooltip only
+      - world_id shared by all entities -> world hub
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        moral_choices = []
+        if 'moral_choices' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM moral_choices")
+            moral_choices = [dict(r) for r in cursor.fetchall()]
+
+        rumors = []
+        if 'rumors' in tables:
+            cursor.execute("SELECT id, name, description, location_id, source_name, "
+                           "truth_level, spread_speed, credibility_score, is_active, world_id "
+                           "FROM rumors")
+            rumors = [dict(r) for r in cursor.fetchall()]
+
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        campaigns = []
+        if 'campaigns' in tables:
+            cursor.execute("SELECT id, title FROM campaigns")
+            campaigns = [dict(r) for r in cursor.fetchall()]
+        locations = []
+        if 'locations' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM locations")
+            locations = [dict(r) for r in cursor.fetchall()]
+
+        char_ids = {c['id'] for c in characters}
+        campaign_ids = {c['id'] for c in campaigns}
+        location_ids = {l['id'] for l in locations}
+
+        # ---------- World hub node ----------
+        world_id = None
+        for ents in (moral_choices, rumors):
+            for e in ents:
+                wid = e.get('world_id')
+                if wid is None:
+                    payload = parse(e) if 'payload_json' in e.keys() else {}
+                    wid = payload.get('world_id')
+                if wid is not None:
+                    world_id = wid
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб социальных связей",
+                'color': {'background': '#64748b', 'border': '#334155'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Referenced character nodes ----------
+        referenced_chars = set()
+        for mc in moral_choices:
+            payload = parse(mc)
+            for cid in _parse_id_list(payload.get('character_ids')):
+                if cid in char_ids:
+                    referenced_chars.add(cid)
+        for ch in characters:
+            if ch['id'] not in referenced_chars:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"🧝 {ch['name']}",
+                'title': f"<b>Персонаж: {ch['name']}</b>",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},
+                'shape': 'dot',
+                'size': 14
+            })
+
+        # ---------- Referenced campaign nodes ----------
+        referenced_campaigns = set()
+        for mc in moral_choices:
+            payload = parse(mc)
+            cid = payload.get('campaign_id')
+            if cid in campaign_ids:
+                referenced_campaigns.add(cid)
+        for cm in campaigns:
+            if cm['id'] not in referenced_campaigns:
+                continue
+            nodes.append({
+                'id': f"campaign_{cm['id']}",
+                'label': f"🎭 {cm['title']}",
+                'title': f"<b>Кампания: {cm['title']}</b>",
+                'color': {'background': '#6366f1', 'border': '#4338ca'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Moral choice nodes (linked to characters + campaign + options) ----------
+        for mc in moral_choices:
+            payload = parse(mc)
+            prompt = payload.get('prompt') or mc['label']
+            alignment = payload.get('choice_alignment', '')
+            urgency = payload.get('urgency', '')
+            tooltip = f"<b>⚖️ Моральный выбор: {prompt}</b>"
+            if alignment:
+                tooltip += f"<br><b>Канон:</b> {alignment}"
+            if urgency:
+                tooltip += f"<br><b>Срочность:</b> {urgency}"
+            if payload.get('affects_karma'):
+                tooltip += "<br><b>Влияет на карму</b>"
+            if payload.get('affects_reputation'):
+                tooltip += "<br><b>Влияет на репутацию</b>"
+            options = payload.get('options')
+            if isinstance(options, list) and options:
+                tooltip += "<br><b>Опции:</b>"
+                for opt in options[:4]:
+                    if isinstance(opt, dict):
+                        tooltip += f"<br>• {opt.get('label', '?')}"
+            nodes.append({
+                'id': f"moral_choice_{mc['id']}",
+                'label': f"⚖️ {prompt[:20]}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},
+                'shape': 'diamond',
+                'size': 16
+            })
+            # Moral choice -> campaign (real FK campaign_id).
+            cid = payload.get('campaign_id')
+            if cid in campaign_ids:
+                add_edge(f"campaign_{cid}", f"moral_choice_{mc['id']}",
+                         '#6366f1', width=2, label='дилемма')
+            # Moral choice -> characters (real FK character_ids).
+            for chid in _parse_id_list(payload.get('character_ids')):
+                if chid in char_ids:
+                    add_edge(f"moral_choice_{mc['id']}", f"char_{chid}",
+                             '#fbbf24', width=1.5, label='затрагивает', dashes=True)
+            # Moral choice -> option nodes (inline branches).
+            if isinstance(options, list):
+                for idx, opt in enumerate(options):
+                    if not isinstance(opt, dict):
+                        continue
+                    opt_label = opt.get('label', f'Опция {idx+1}')
+                    opt_align = opt.get('alignment', '')
+                    opt_outcome = opt.get('outcome', '')
+                    opt_tooltip = f"<b>Опция: {opt_label}</b>"
+                    if opt_align:
+                        opt_tooltip += f"<br><b>Канон:</b> {opt_align}"
+                    if opt_outcome:
+                        opt_tooltip += f"<br><b>Исход:</b> {opt_outcome}"
+                    opt_id = f"moral_opt_{mc['id']}_{idx}"
+                    nodes.append({
+                        'id': opt_id,
+                        'label': f"🔀 {opt_label[:18]}",
+                        'title': opt_tooltip,
+                        'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                        'shape': 'box',
+                        'font': {'color': '#ffffff', 'size': 11}
+                    })
+                    add_edge(f"moral_choice_{mc['id']}", opt_id,
+                             '#a855f7', width=1.5, label='вариант')
+
+        # ---------- Rumor nodes (linked to world; location if present) ----------
+        for ru in rumors:
+            name = ru.get('name') or f"Слух {ru['id']}"
+            tooltip = f"<b> Whisper: {name}</b>"
+            if ru.get('description'):
+                tooltip += f"<br>{ru['description']}"
+            if ru.get('source_name'):
+                tooltip += f"<br><b>Источник:</b> {ru['source_name']}"
+            if ru.get('truth_level'):
+                tooltip += f"<br><b>Достоверность:</b> {ru['truth_level']}"
+            if ru.get('spread_speed'):
+                tooltip += f"<br><b>Распространение:</b> {ru['spread_speed']}"
+            tooltip += f"<br><b>Оценка:</b> {ru.get('credibility_score', '?')}/10"
+            if ru.get('is_active'):
+                tooltip += "<br><b>Статус:</b> активен"
+            # Color by truth level.
+            truth = (ru.get('truth_level') or '').lower()
+            bg = '#22c55e' if 'verified' in truth and 'un' not in truth else '#f59e0b'
+            border = '#15803d' if bg == '#22c55e' else '#b45309'
+            nodes.append({
+                'id': f"rumor_{ru['id']}",
+                'label': f" Whisper {name[:18]}",
+                'title': tooltip,
+                'color': {'background': bg, 'border': border},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"rumor_{ru['id']}",
+                         '#f59e0b', width=1.5, label='слух', dashes=True)
+            # Rumor -> location (real column location_id, usually null).
+            lid = ru.get('location_id')
+            if lid in location_ids:
+                add_edge(f"location_{lid}", f"rumor_{ru['id']}",
+                         '#0ea5e9', width=1.5, label='где')
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building social graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+
