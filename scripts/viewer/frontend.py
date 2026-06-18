@@ -713,18 +713,24 @@ HTML_CONTENT = """<!DOCTYPE html>
                     <label>Типы узлов сюжета</label>
                     <div style="margin-top: 4px;">
                         <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Сюжет (Story)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #0ea5e9; border: 1px solid #0369a1;"></div> Сюжетная линия (Storyline)</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #8b5cf6; border: 1px solid #6d28d9;"></div> Ветка (Plot Branch)</div>
                         <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> Выбор (Choice)</div>
-                        <div class="legend-item"><div class="legend-color" style="background-color: #ec4899;"></div> Последствие</div>
-                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> Финал (Ending)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #ec4899;"></div> Последствие (Consequence)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> Финал: хороший</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ef4444; border: 1px solid #b91c1c; border-radius: 5px;"></div> Финал: плохой</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #9ca3af; border: 1px solid #4b5563; border-radius: 5px;"></div> Финал: нейтральный</div>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label>Связи переходов</label>
+                    <label>Связи повествования</label>
                     <div style="margin-top: 4px;">
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b;"></div> Выбор игрока</div>
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> Результат выбора</div>
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #8b5cf6; border-top: 2px dashed #8b5cf6;"></div> Открытие ветки / финала</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b;"></div> выбор (Сюжет ➔ Choice)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> приводит к последствию</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #d97706;"></div> открывает ветку</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #8b5cf6; border-top: 2px dashed #8b5cf6;"></div> разветвляет историю</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981; border-top: 2px dashed #10b981;"></div> ведет к финалу</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #0ea5e9; border-top: 2px dashed #0ea5e9;"></div> часть сюжета</div>
                     </div>
                 </div>
             `,

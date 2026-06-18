@@ -528,6 +528,28 @@ def get_story_branches_graph():
     nodes = []
     edges = []
     
+    # Track edge endpoints to avoid duplicates from redundant branch_points
+    # and overlapping keyword matches.
+    seen_edges = set()
+    def add_edge(from_id, to_id, color, width=1.5, label=None, dashes=False):
+        key = (from_id, to_id, label)
+        if key in seen_edges:
+            return
+        seen_edges.add(key)
+        edge = {
+            'from': from_id,
+            'to': to_id,
+            'arrows': 'to',
+            'color': color,
+            'width': width
+        }
+        if dashes:
+            edge['dashes'] = True
+        if label:
+            edge['label'] = label
+            edge['font'] = {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'}
+        edges.append(edge)
+    
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -540,7 +562,17 @@ def get_story_branches_graph():
         if 'stories' in tables:
             cursor.execute("SELECT id, name, description FROM stories")
             stories = [dict(row) for row in cursor.fetchall()]
-            
+
+        storylines = []
+        if 'storylines' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM storylines")
+            storylines = [dict(row) for row in cursor.fetchall()]
+
+        campaigns = []
+        if 'campaigns' in tables:
+            cursor.execute("SELECT id, title, description FROM campaigns")
+            campaigns = [dict(row) for row in cursor.fetchall()]
+
         choices = []
         if 'choices' in tables:
             cursor.execute("SELECT id, label, payload_json FROM choices")
@@ -567,13 +599,25 @@ def get_story_branches_graph():
             branch_points = [dict(row) for row in cursor.fetchall()]
             
         conn.close()
+
+        # Helper to parse a payload_json blob.
+        def parse_payload(row):
+            if not row.get('payload_json'):
+                return {}
+            try:
+                return json.loads(row['payload_json'])
+            except Exception:
+                return {}
         
-        # Add Story nodes
+        # Pre-compute campaign id -> title for tooltip enrichment.
+        campaign_titles = {c['id']: c['title'] for c in campaigns}
+        
+        # ---------- Story nodes ----------
         for s in stories:
             nodes.append({
                 'id': f"story_{s['id']}",
                 'label': s['name'],
-                'title': f"<b>Сюжет: {s['name']}</b><br>{s['description']}",
+                'title': f"<b>Сюжет: {s['name']}</b><br>{s.get('description') or ''}",
                 'color': {
                     'background': '#3b82f6', # Blue
                     'border': '#1d4ed8'
@@ -581,22 +625,46 @@ def get_story_branches_graph():
                 'shape': 'box',
                 'font': {'color': '#ffffff', 'size': 14, 'bold': True}
             })
-            
-        # Add Choice nodes
+
+        # ---------- Storyline (Сюжетный шаг) nodes ----------
+        # Storylines are the high-level narrative beats that "provide choices".
+        storyline_ids = set()
+        for sl in storylines:
+            payload = parse_payload(sl)
+            name = payload.get('name') or sl['label']
+            desc = payload.get('description', '')
+            sl_type = payload.get('storyline_type', '')
+            tooltip = f"<b>Сюжетная линия: {name}</b>"
+            if sl_type:
+                tooltip += f" ({sl_type})"
+            tooltip += f"<br>{desc}"
+
+            storyline_ids.add(sl['id'])
+            nodes.append({
+                'id': f"storyline_{sl['id']}",
+                'label': name,
+                'title': tooltip,
+                'color': {
+                    'background': '#0ea5e9', # Sky blue — distinct from Story
+                    'border': '#0369a1'
+                },
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 13}
+            })
+
+        # ---------- Choice nodes ----------
+        # "Сюжетный шаг ➔ предоставляет выбор ➔ Choice Node"
+        choice_story = {}  # choice_id -> story_id
         for c in choices:
-            payload = {}
-            if c.get('payload_json'):
-                try:
-                    payload = json.loads(c['payload_json'])
-                except: pass
+            payload = parse_payload(c)
             prompt = payload.get('prompt') or c['label']
             options = payload.get('options', [])
-            opt_str = "<br>".join([f"- {opt}" for opt in options])
+            opt_str = "<br>".join([f"- {opt}" for opt in options]) or '—'
             tooltip = f"<b>Выбор:</b> {prompt}<br><b>Варианты:</b><br>{opt_str}"
-            
+
             nodes.append({
                 'id': f"choice_{c['id']}",
-                'label': prompt[:30] + '...' if len(prompt) > 30 else prompt,
+                'label': prompt[:30] + '…' if len(prompt) > 30 else prompt,
                 'title': tooltip,
                 'color': {
                     'background': '#f59e0b', # Amber
@@ -605,33 +673,31 @@ def get_story_branches_graph():
                 'shape': 'dot',
                 'size': 15
             })
-            
-            # Connect Story -> Choice
+
+            # Story -> Choice ("Story offers this choice").
             story_id = payload.get('story_id')
             if story_id:
-                edges.append({
-                    'from': f"story_{story_id}",
-                    'to': f"choice_{c['id']}",
-                    'arrows': 'to',
-                    'color': '#f59e0b',
-                    'label': 'выбор',
-                    'font': {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'},
-                    'width': 1.5
-                })
-                
-        # Add Consequence nodes
+                choice_story[c['id']] = story_id
+                add_edge(f"story_{story_id}", f"choice_{c['id']}", '#f59e0b',
+                         width=1.5, label='выбор')
+
+        # ---------- Consequence nodes ----------
+        # "Choice Node ➔ приводит к последствиям ➔ Consequence"
+        consequence_choice = {}  # consequence_id -> triggering choice_id
         for con in consequences:
-            payload = {}
-            if con.get('payload_json'):
-                try:
-                    payload = json.loads(con['payload_json'])
-                except: pass
+            payload = parse_payload(con)
             desc = payload.get('description') or con['label']
+            con_type = payload.get('consequence_type', '')
+            severity = payload.get('severity', '')
             tooltip = f"<b>Последствие:</b> {desc}"
-            
+            if con_type:
+                tooltip += f"<br><b>Тип:</b> {con_type}"
+            if severity:
+                tooltip += f"<br><b>Серьёзность:</b> {severity}"
+
             nodes.append({
                 'id': f"consequence_{con['id']}",
-                'label': desc[:30] + '...' if len(desc) > 30 else desc,
+                'label': desc[:30] + '…' if len(desc) > 30 else desc,
                 'title': tooltip,
                 'color': {
                     'background': '#ec4899', # Pink
@@ -640,29 +706,30 @@ def get_story_branches_graph():
                 'shape': 'dot',
                 'size': 12
             })
-            
-            # Connect Choice -> Consequence
+
+            # Choice -> Consequence.
             trigger_choice_id = payload.get('trigger_choice_id')
             if trigger_choice_id:
-                edges.append({
-                    'from': f"choice_{trigger_choice_id}",
-                    'to': f"consequence_{con['id']}",
-                    'arrows': 'to',
-                    'color': '#ec4899',
-                    'width': 1.5
-                })
-                
-        # Add Plot Branch nodes
+                consequence_choice[con['id']] = trigger_choice_id
+                add_edge(f"choice_{trigger_choice_id}", f"consequence_{con['id']}",
+                         '#ec4899', width=1.5)
+
+        # ---------- Plot Branch nodes ----------
+        # "Consequence ➔ разветвляет историю ➔ Сюжетный шаг"
+        # Each plot branch carries an origin_branch_point_id pointing at the
+        # branch_point that spawned it; the branch_point in turn carries the
+        # choice_id. We use that chain for Consequence -> Plot Branch links.
+        branch_origin_choice = {}  # branch_id -> choice_id (via branch_point)
         for pb in plot_branches:
-            payload = {}
-            if pb.get('payload_json'):
-                try:
-                    payload = json.loads(pb['payload_json'])
-                except: pass
+            payload = parse_payload(pb)
             name = payload.get('name') or pb['label']
             desc = payload.get('description', '')
-            tooltip = f"<b>Сюжетная ветка: {name}</b><br>{desc}"
-            
+            b_type = payload.get('branch_type', '')
+            tooltip = f"<b>Сюжетная ветка: {name}</b>"
+            if b_type:
+                tooltip += f" ({b_type})"
+            tooltip += f"<br>{desc}"
+
             nodes.append({
                 'id': f"branch_{pb['id']}",
                 'label': name,
@@ -674,40 +741,15 @@ def get_story_branches_graph():
                 'shape': 'box',
                 'font': {'color': '#ffffff', 'size': 12}
             })
-            
-        # Connect Branch Points (Plot Branch -> Choice Node)
-        for bp in branch_points:
-            payload = {}
-            if bp.get('payload_json'):
-                try:
-                    payload = json.loads(bp['payload_json'])
-                except: pass
-            choice_id = payload.get('choice_id')
-            branch_ids = payload.get('branch_ids', [])
-            
-            if choice_id and isinstance(branch_ids, list):
-                for bid in branch_ids:
-                    edges.append({
-                        'from': f"branch_{bid}",
-                        'to': f"choice_{choice_id}",
-                        'arrows': 'to',
-                        'color': '#d97706',
-                        'width': 1.5,
-                        'label': 'выбор',
-                        'font': {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'}
-                    })
-                    
-        # Add Ending nodes
+
+        # ---------- Ending nodes ----------
+        # Endings appear as star nodes; type drives color.
         for e in endings:
-            payload = {}
-            if e.get('payload_json'):
-                try:
-                    payload = json.loads(e['payload_json'])
-                except: pass
+            payload = parse_payload(e)
             title = payload.get('title') or e['label']
             desc = payload.get('description', '')
             e_type = payload.get('ending_type', 'neutral')
-            
+
             bg_color = '#9ca3af' # gray (neutral)
             border_color = '#4b5563'
             if e_type == 'good':
@@ -716,9 +758,9 @@ def get_story_branches_graph():
             elif e_type == 'bad':
                 bg_color = '#ef4444' # red
                 border_color = '#b91c1c'
-                
+
             tooltip = f"<b>Финал: {title}</b> ({e_type})<br>{desc}"
-            
+
             nodes.append({
                 'id': f"ending_{e['id']}",
                 'label': title,
@@ -730,84 +772,80 @@ def get_story_branches_graph():
                 'shape': 'star',
                 'size': 20
             })
-            
-        # Logical / Keyword Connections: Consequence -> Plot Branch / Ending
-        keywords = ["мара", "ивен", "ивон", "валон", "амулет", "культ", "союз"]
+
+        # ---------- Structural edges ----------
+
+        # Storyline -> Story: a storyline belongs to a story/campaign. We link
+        # storylines to the matching story via campaign_id (== story id by
+        # convention) when available, otherwise to the first story as a hub.
+        story_ids = [s['id'] for s in stories]
+        for sl in storylines:
+            payload = parse_payload(sl)
+            sl_story_id = None
+            campaign_id = payload.get('campaign_id')
+            if campaign_id in story_ids:
+                sl_story_id = campaign_id
+            elif story_ids:
+                sl_story_id = story_ids[0]
+            if sl_story_id:
+                add_edge(f"storyline_{sl['id']}", f"story_{sl_story_id}",
+                         '#0ea5e9', width=1.5, dashes=True, label='часть')
+
+        # Branch points bridge Plot Branch <-> Choice. branch_points carry a
+        # choice_id and a list of branch_ids; the same (branch, choice) pair
+        # may be referenced by several branch_points, so we dedup via add_edge.
+        # This realises "Сюжетный шаг ➔ предоставляет выбор ➔ Choice Node" and
+        # its inverse "Consequence ➔ разветвляет ➔ Plot Branch".
+        branch_to_choice = {}  # branch_id -> [choice_id, ...]
+        for bp in branch_points:
+            payload = parse_payload(bp)
+            choice_id = payload.get('choice_id')
+            branch_ids = payload.get('branch_ids', [])
+            if choice_id and isinstance(branch_ids, list):
+                for bid in branch_ids:
+                    branch_to_choice.setdefault(bid, []).append(choice_id)
+                    branch_origin_choice.setdefault(bid, choice_id)
+                    # Choice -> Plot Branch ("this choice opens a branch").
+                    add_edge(f"choice_{choice_id}", f"branch_{bid}",
+                             '#d97706', width=1.5, label='открывает')
+
+        # Consequence -> Plot Branch: link a consequence back to the branches
+        # spawned by the same choice that triggered the consequence. This is
+        # the "разветвляет историю" step from the spec.
+        for con_id, trig_choice_id in consequence_choice.items():
+            for bid in branch_to_choice:
+                if trig_choice_id in branch_to_choice[bid]:
+                    add_edge(f"consequence_{con_id}", f"branch_{bid}",
+                             '#8b5cf6', width=2, dashes=True, label='разветвляет')
+
+        # Consequence -> Ending: prefer explicit field matches; fall back to a
+        # conservative keyword match on conditions/descriptions. We only draw
+        # a link when the consequence description and an ending condition share
+        # a concrete story token (character/object/faction name).
+        keywords = ["мара", "ивен", "ивон", "валон", "амулет", "культ"]
         for con in consequences:
-            payload_con = {}
-            if con.get('payload_json'):
-                try:
-                    payload_con = json.loads(con['payload_json'])
-                except: pass
+            payload_con = parse_payload(con)
             con_desc = (payload_con.get('description') or con['label'] or '').lower()
-            
-            # Connect to endings
+            con_conds = [str(x).lower() for x in payload_con.get('conditions', [])]
+            con_text = con_desc + ' ' + ' '.join(con_conds)
+
             for e in endings:
-                payload_e = {}
-                if e.get('payload_json'):
-                    try:
-                        payload_e = json.loads(e['payload_json'])
-                    except: pass
-                e_conds = payload_e.get('conditions', [])
-                matched = False
-                for cond in e_conds:
-                    cond_lower = cond.lower()
-                    for kw in keywords:
-                        if kw in con_desc and kw in cond_lower:
-                            matched = True
-                            break
-                    if matched:
-                        break
+                payload_e = parse_payload(e)
+                e_conds = [str(x).lower() for x in payload_e.get('conditions', [])]
+                e_text = ' '.join(e_conds)
+                matched = any(kw in con_text and kw in e_text for kw in keywords)
                 if matched:
-                    edges.append({
-                        'from': f"consequence_{con['id']}",
-                        'to': f"ending_{e['id']}",
-                        'arrows': 'to',
-                        'color': '#10b981',
-                        'width': 2,
-                        'dashes': True,
-                        'label': 'ведет к',
-                        'font': {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'}
-                    })
-                    
-            # Connect to plot branches
-            for pb in plot_branches:
-                payload_pb = {}
-                if pb.get('payload_json'):
-                    try:
-                        payload_pb = json.loads(pb['payload_json'])
-                    except: pass
-                pb_desc = (payload_pb.get('description') or pb['label'] or '').lower()
-                pb_name = (payload_pb.get('name') or '').lower()
-                matched = False
-                for kw in keywords:
-                    if kw in con_desc and (kw in pb_desc or kw in pb_name):
-                        if kw != "союз" or ("союз" in con_desc and "союз" in pb_desc):
-                            matched = True
-                            break
-                if matched:
-                    edges.append({
-                        'from': f"consequence_{con['id']}",
-                        'to': f"branch_{pb['id']}",
-                        'arrows': 'to',
-                        'color': '#8b5cf6',
-                        'width': 2,
-                        'dashes': True,
-                        'label': 'открывает',
-                        'font': {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'}
-                    })
-                    
-        # Connect sequential plot branches as a backbone sequence
+                    add_edge(f"consequence_{con['id']}", f"ending_{e['id']}",
+                             '#10b981', width=2, dashes=True, label='ведет к')
+
+        # Backbone sequence of plot branches ordered by id — gives the tree a
+        # readable spine when no explicit ordering field exists.
         if len(plot_branches) > 1:
             sorted_branches = sorted(plot_branches, key=lambda x: x['id'])
             for i in range(len(sorted_branches) - 1):
-                edges.append({
-                    'from': f"branch_{sorted_branches[i]['id']}",
-                    'to': f"branch_{sorted_branches[i+1]['id']}",
-                    'arrows': 'to',
-                    'color': '#8b5cf6',
-                    'width': 2
-                })
+                add_edge(f"branch_{sorted_branches[i]['id']}",
+                         f"branch_{sorted_branches[i+1]['id']}",
+                         '#8b5cf6', width=2)
                 
     except Exception as e:
         print(f"Error building story branches graph: {e}")
