@@ -7,7 +7,7 @@ keyword-матчинга по тексту — это принцип, приня
 
 ---
 
-## ✅ Реализованные графы (14)
+## ✅ Реализованные графы (16)
 
 | # | Граф | Таблицы | Эндпоинт |
 |---|------|---------|----------|
@@ -25,39 +25,15 @@ keyword-матчинга по тексту — это принцип, приня
 | 12 | ⚔️ Боевая карта и подземелья | `arenas`, `dungeons`, `instances`, `raids`, `invasions`, `difficulty_curves`, `characters` (bosses), `wars` (factions) | `/api/graph/combat` |
 | 13 | 💰 Экономика и лут | `inventories`, `loot_table_weights`, `drop_rates`, `quest_reward_tiers`, `relic_collections`, `characters` (owners), `items`, `quest_nodes` | `/api/graph/economy` |
 | 14 | 🌍 Открытый мир и события | `open_world_zones`, `seasonal_events`, `quest_givers`, `quest_objectives`, `quest_trackers`, `locations`, `quest_chains`, `quest_nodes`, `characters` | `/api/graph/open_world` |
+| 15 | 🎭 Продакшн: озвучка и моушн | `voice_actors`, `motion_captures` | `/api/graph/production` |
+| 16 | 💬 Социальные и моральные выборы | `moral_choices`, `rumors`, `characters`, `campaigns`, `locations` | `/api/graph/social` |
 
-> ⚠️ Графы 6 и 8 работают на **производных** связях, т.к. в БД отсутствуют
-> таблицы `factions`/`faction_memberships` и `prerequisite_id`/`talent_node_id`
-> FK. Дипломатия выводится из `wars` + `character_relationships`; прокачка —
-> через общий `character_id` и level-based требования. При появлении
-> недостающих таблиц/полей графы нужно будет переключить на прямые FK.
-
----
-
-## 📋 Планируемые графы (кандидаты)
-
-Сгруппированы по реальным неиспользуемым таблицам БД. Порядок — по
-приоритету (релевантность + наполненность данных).
-
-### 🥇 Высокий приоритет
-
-*(пусто — все высокоприоритетные графы реализованы)*
-
-### 🥈 Средний приоритет
-
-#### A. 🎭 Продакшн: озвучка и моушн (Production: Voice & Mocap)
-- **Цель**: Карта озвучки персонажей и захвата движений — продакшн-трекинг.
-- **Таблицы**: `voice_actors` (7), `motion_captures` (7).
-- **Ожидаемые связи**: `voice_actor → character_id/scene_id`; `motion_capture → character_id/scene_id`.
-- **Польза**: Продюсерам видна загрузка актёров и покрытие сцен.
-
-### 🥉 Низкий приоритет (sparse / niche)
-
-#### B. 💬 Социальные и моральные выборы (Social & Moral Choices)
-- **Таблицы**: `moral_choices` (2), `rumors` (2).
-- **Цель**: Дополнить граф сюжета моральными дилеммами и сетью слухов/репутации.
-- **Ожидаемые связи**: `moral_choice → choice_id/consequence_ids`; `rumor → character_id/faction_id/event_id`.
-- **Польза**: Сценаристам — карта моральных развилок и информационных потоков в мире.
+> ⚠️ Графы 6, 8, 15 работают на **производных** связях, т.к. в БД отсутствуют
+> соответствующие прямые FK (нет `factions`/`prerequisite_id`/`character_id`
+> в voice_actors). Дипломатия выводится из `wars` + `character_relationships`;
+> прокачка — через общий `character_id` и level-based требования; продакшн —
+> только через общий `world_id`. При появлении недостающих таблиц/полей графы
+> нужно будет переключить на прямые FK.
 
 ---
 
@@ -74,5 +50,10 @@ keyword-матчинга по тексту — это принцип, приня
 4. **Легенда и physics.** Каждый новый граф требует: пункт в dropdown,
    цветокодированную легенду (`legends[...]`) и профиль physics
    (`forceAtlas2Based` для кластеров, `hierarchical LR/UD` для потоков/деревьев).
-5. **Ширина подписей.** Глобально включены `widthConstraint.maximum: 160` и
+5. **Ширина подписей.** Глобально включены `widthConstraint.maximum: 220` и
    `font.multi: 'html'` — длинные лейблы переносятся, не налезая на соседей.
+   Для плотных кросс-доменных графов (open_world, social) максимум поднят
+   до 280–320.
+6. **Широкий layout.** Все 16 графов используют удвоенные расстояния
+   (`springLength` 400–800, `nodeSpacing`/`treeSpacing`/`levelSeparation`
+   280–640) для читаемости подписей.
