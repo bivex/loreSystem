@@ -151,3 +151,43 @@ CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 \
   --with-memory
 ```
 
+---
+
+## Верификация работы памяти (Пример из практики)
+
+Ниже приведен практический сценарий для подтверждения работоспособности векторной памяти:
+
+### Шаг 1: Очистка БД и чистый запуск (Core Pass + Narrative Pass)
+Сначала база данных полностью очищается:
+```python
+# python -c "import sqlite3; conn=sqlite3.connect('lore_system.db'); cur=conn.cursor(); ... (очистка таблиц)"
+```
+Затем запускаются 2 прохода с сохранением канона в Qdrant:
+```bash
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 ./venv/bin/python3 CAMEL.Bridge/run_rumor_pipeline.py \
+  --tenant-id 1 --world-id 1 --theme "Темные фэнтези силы" \
+  --context "Древние культы призывают силы тьмы." --count 1 \
+  --db-path lore_system.db --output-language ru --env-file .env --with-memory --with-campaign-story
+```
+*На данном этапе лог запуска показывает `memory_chars=0`, так как база данных пуста.*
+
+### Шаг 2: Проверка извлечения контекста (Core Pass на связанных данных)
+Запускается генерация продолжения истории (без очистки БД):
+```bash
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 ./venv/bin/python3 CAMEL.Bridge/run_rumor_pipeline.py \
+  --tenant-id 1 --world-id 1 --theme "Последствия ритуала в гавани" \
+  --context "Ивен Хейл пытается помочь Маре Восс справиться с проклятием тлеющего пепла, пока городские стражники ищут скрывающихся культистов." \
+  --count 1 --db-path lore_system.db --output-language ru --env-file .env --with-memory
+```
+
+### Шаг 3: Результат логирования
+Логи подтверждают, что конвейер считал контекст из Qdrant и SQLite:
+```text
+2026-06-18 16:43:56,929 INFO CAMEL bridge story chain start tenant_id=1 world_id=1 narrative=False systems=False memory_chars=940
+...
+2026-06-18 16:44:38,315 INFO CAMEL bridge memory indexed documents=10 tenant_id=1 world_id=1
+```
+* `memory_chars=940` означает, что LLM перед началом генерации получила 940 символов связанных канонических данных (персонажей, прошлых событий и слухов).
+* Новый слух логически сослался на сущности прошлых проходов: *«Черный пепел в гавани шепчет о новых угрозах»* (притягивающий «теневых стражей», созданных во 2-м проходе).
+
+
