@@ -1788,3 +1788,340 @@ def get_progression_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def _parse_id_list(value):
+    """Parse a column/payload value that holds a list of ids.
+
+    The narrative tables store id lists in three shapes:
+      - a real Python list (from row_factory on a JSON column)
+      - a JSON string  '[11, 12]'
+      - a comma-separated string '11, 12'
+    Returns a list of ints, never None.
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        out = []
+        for v in value:
+            try:
+                out.append(int(v))
+            except (TypeError, ValueError):
+                continue
+        return out
+    if isinstance(value, str):
+        s = value.strip()
+        if not s:
+            return []
+        # Try JSON first, then fall back to comma split.
+        try:
+            parsed = json.loads(s)
+            if isinstance(parsed, list):
+                return _parse_id_list(parsed)
+        except Exception:
+            pass
+        parts = [p.strip() for p in s.strip('[]').split(',') if p.strip()]
+        out = []
+        for p in parts:
+            try:
+                out.append(int(p))
+            except ValueError:
+                continue
+        return out
+    return []
+
+
+def get_narrative_graph():
+    """Narrative structure graph: campaign -> act -> chapter -> episode,
+    plus prologues, flashbacks, flash_forwards and alternate realities.
+
+    Built only from real DB fields. The narrative tables (unlike many
+    others) carry rich structural columns:
+      - acts.campaign_id, acts.chapter_ids
+      - chapters.campaign_id, chapters.act_ids, chapters.episode_ids
+      - episodes.chapter_id, episodes.required_previous_episodes
+      - prologues.campaign_id
+      - alternate_realities.parent_world_id
+      - flashbacks/flash_forwards: world_id inside payload
+    Campaigns anchor everything via shared world_id / campaign_id.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        # ---------- Load ----------
+        campaigns = []
+        if 'campaigns' in tables:
+            cursor.execute("SELECT id, title, description, world_id FROM campaigns")
+            campaigns = [dict(r) for r in cursor.fetchall()]
+        acts = []
+        if 'acts' in tables:
+            cursor.execute("SELECT id, title, description, act_type, act_number, "
+                           "campaign_id, world_id, chapter_ids FROM acts")
+            acts = [dict(r) for r in cursor.fetchall()]
+        chapters = []
+        if 'chapters' in tables:
+            cursor.execute("SELECT id, title, description, chapter_type, "
+                           "sequence_number, campaign_id, world_id, episode_ids, act_ids "
+                           "FROM chapters")
+            chapters = [dict(r) for r in cursor.fetchall()]
+        episodes = []
+        if 'episodes' in tables:
+            cursor.execute("SELECT id, title, description, episode_type, "
+                           "sequence_number, chapter_id, world_id, required_previous_episodes "
+                           "FROM episodes")
+            episodes = [dict(r) for r in cursor.fetchall()]
+        prologues = []
+        if 'prologues' in tables:
+            cursor.execute("SELECT id, title, description, prologue_type, "
+                           "campaign_id, world_id, is_required, is_skippable FROM prologues")
+            prologues = [dict(r) for r in cursor.fetchall()]
+        flashbacks = []
+        if 'flashbacks' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM flashbacks")
+            flashbacks = [dict(r) for r in cursor.fetchall()]
+        flash_forwards = []
+        if 'flash_forwards' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM flash_forwards")
+            flash_forwards = [dict(r) for r in cursor.fetchall()]
+        alternate_realities = []
+        if 'alternate_realities' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM alternate_realities")
+            alternate_realities = [dict(r) for r in cursor.fetchall()]
+
+        campaign_ids = {c['id'] for c in campaigns}
+        act_ids = {a['id'] for a in acts}
+        chapter_ids = {ch['id'] for ch in chapters}
+        episode_ids = {ep['id'] for ep in episodes}
+
+        # Map world_id -> campaign_id so entities that only carry world_id
+        # (flashbacks, flash_forwards, alternate_realities) can still attach
+        # to their campaign.
+        world_to_campaign = {}
+        for c in campaigns:
+            if c.get('world_id') is not None:
+                world_to_campaign.setdefault(c['world_id'], c['id'])
+
+        # ---------- Campaign (root) nodes ----------
+        for c in campaigns:
+            tooltip = f"<b>Кампания: {c['title']}</b>"
+            if c.get('description'):
+                tooltip += f"<br>{c['description']}"
+            nodes.append({
+                'id': f"campaign_{c['id']}",
+                'label': f"🎭 {c['title']}",
+                'title': tooltip,
+                'color': {'background': '#6366f1', 'border': '#4338ca'},  # Indigo
+                'shape': 'star',
+                'size': 24
+            })
+
+        # ---------- Act nodes ----------
+        for a in acts:
+            tooltip = f"<b>Акт {a.get('act_number', a['id'])}: {a['title']}</b>"
+            if a.get('act_type'):
+                tooltip += f"<br><b>Тип:</b> {a['act_type']}"
+            if a.get('description'):
+                tooltip += f"<br>{a['description']}"
+            nodes.append({
+                'id': f"act_{a['id']}",
+                'label': f"🎬 Акт {a.get('act_number', a['id'])}",
+                'title': tooltip,
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},  # Blue
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 14, 'bold': True}
+            })
+            # Act -> Campaign
+            cid = a.get('campaign_id')
+            if cid in campaign_ids:
+                add_edge(f"campaign_{cid}", f"act_{a['id']}",
+                         '#3b82f6', width=2, label='акт')
+
+        # Act sequence backbone (Act I -> II -> III) by act_number.
+        sorted_acts = sorted(acts, key=lambda x: (x.get('act_number') or 0, x['id']))
+        for i in range(len(sorted_acts) - 1):
+            add_edge(f"act_{sorted_acts[i]['id']}",
+                     f"act_{sorted_acts[i+1]['id']}",
+                     '#3b82f6', width=1.5, dashes=True, label='далее')
+
+        # ---------- Chapter nodes ----------
+        for ch in chapters:
+            tooltip = f"<b>Глава {ch.get('sequence_number', ch['id'])}: {ch['title']}</b>"
+            if ch.get('chapter_type'):
+                tooltip += f"<br><b>Тип:</b> {ch['chapter_type']}"
+            if ch.get('description'):
+                tooltip += f"<br>{ch['description']}"
+            nodes.append({
+                'id': f"chapter_{ch['id']}",
+                'label': f"📖 Гл. {ch.get('sequence_number', ch['id'])}",
+                'title': tooltip,
+                'color': {'background': '#0ea5e9', 'border': '#0369a1'},  # Sky
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+            # Chapter -> Act (via act_ids). This is the primary 'chapter belongs
+            # to act' link; acts.chapter_ids is the inverse and we don't need
+            # to draw it twice.
+            for aid in _parse_id_list(ch.get('act_ids')):
+                if aid in act_ids:
+                    add_edge(f"act_{aid}", f"chapter_{ch['id']}",
+                             '#0ea5e9', width=2, label='глава')
+
+            # Chapter -> Campaign (campaign_id column).
+            cid = ch.get('campaign_id')
+            if cid in campaign_ids:
+                add_edge(f"campaign_{cid}", f"chapter_{ch['id']}",
+                         '#0ea5e9', width=1, label='часть', dashes=True)
+
+        # Chapter sequence backbone by sequence_number.
+        sorted_chapters = sorted(chapters, key=lambda x: (x.get('sequence_number') or 0, x['id']))
+        for i in range(len(sorted_chapters) - 1):
+            add_edge(f"chapter_{sorted_chapters[i]['id']}",
+                     f"chapter_{sorted_chapters[i+1]['id']}",
+                     '#0ea5e9', width=1.5, dashes=True, label='далее')
+
+        # ---------- Episode nodes ----------
+        for ep in episodes:
+            tooltip = f"<b>Эпизод {ep.get('sequence_number', ep['id'])}: {ep['title']}</b>"
+            if ep.get('episode_type'):
+                tooltip += f"<br><b>Тип:</b> {ep['episode_type']}"
+            if ep.get('description'):
+                tooltip += f"<br>{ep['description']}"
+            nodes.append({
+                'id': f"episode_{ep['id']}",
+                'label': f"🎞️ Эп. {ep.get('sequence_number', ep['id'])}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},  # Cyan
+                'shape': 'dot',
+                'size': 14
+            })
+
+            # Episode -> Chapter (direct FK chapter_id).
+            chid = ep.get('chapter_id')
+            if chid in chapter_ids:
+                add_edge(f"chapter_{chid}", f"episode_{ep['id']}",
+                         '#06b6d4', width=2, label='эпизод')
+
+            # Episode prerequisite chain (required_previous_episodes).
+            for prev in _parse_id_list(ep.get('required_previous_episodes')):
+                if prev in episode_ids and prev != ep['id']:
+                    add_edge(f"episode_{prev}", f"episode_{ep['id']}",
+                             '#f59e0b', width=1.5, label='требует', dashes=True)
+
+        # ---------- Prologue nodes ----------
+        for p in prologues:
+            tooltip = f"<b>Пролог: {p['title']}</b>"
+            if p.get('prologue_type'):
+                tooltip += f"<br><b>Тип:</b> {p['prologue_type']}"
+            req = 'обязательный' if p.get('is_required') else 'необязательный'
+            tooltip += f"<br><b>Статус:</b> {req}"
+            if p.get('is_skippable'):
+                tooltip += ' (можно пропустить)'
+            if p.get('description'):
+                tooltip += f"<br>{p['description']}"
+            nodes.append({
+                'id': f"prologue_{p['id']}",
+                'label': f"📜 {p['title'][:25]}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},  # Green
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            cid = p.get('campaign_id')
+            if cid in campaign_ids:
+                add_edge(f"campaign_{cid}", f"prologue_{p['id']}",
+                         '#10b981', width=2, label='пролог')
+
+        # ---------- Flashback nodes ----------
+        for fb in flashbacks:
+            payload = parse(fb)
+            name = payload.get('name') or fb['label']
+            tooltip = f"<b>Флэшбэк: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"flashback_{fb['id']}",
+                'label': f"⏮️ {name[:22]}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},  # Purple
+                'shape': 'diamond',
+                'size': 13
+            })
+            meta = payload.get('metadata') or {}
+            wid = meta.get('world_id') or payload.get('world_id')
+            cid = world_to_campaign.get(wid)
+            if cid is not None:
+                add_edge(f"campaign_{cid}", f"flashback_{fb['id']}",
+                         '#a855f7', width=1.5, label='ретроспектива', dashes=True)
+
+        # ---------- Flash-forward nodes ----------
+        for ff in flash_forwards:
+            payload = parse(ff)
+            name = payload.get('name') or ff['label']
+            tooltip = f"<b>Флэшфорвард: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            if payload.get('is_prophetic'):
+                tooltip += "<br><b>Пророческий</b>"
+            nodes.append({
+                'id': f"flash_forward_{ff['id']}",
+                'label': f"⏭️ {name[:22]}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},  # Pink
+                'shape': 'diamond',
+                'size': 13
+            })
+            wid = payload.get('world_id')
+            cid = world_to_campaign.get(wid)
+            if cid is not None:
+                add_edge(f"campaign_{cid}", f"flash_forward_{ff['id']}",
+                         '#ec4899', width=1.5, label='предвидение', dashes=True)
+
+        # ---------- Alternate reality nodes ----------
+        for ar in alternate_realities:
+            payload = parse(ar)
+            name = payload.get('name') or ar['label']
+            rtype = payload.get('reality_type', '')
+            is_canon = payload.get('is_canon', False)
+            tooltip = f"<b>Альт. реальность: {name}</b>"
+            if rtype:
+                tooltip += f"<br><b>Тип:</b> {rtype}"
+            tooltip += f"<br><b>Канон:</b> {'да' if is_canon else 'нет'}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"alternate_reality_{ar['id']}",
+                'label': f"🌀 {name[:22]}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},  # Amber
+                'shape': 'diamond',
+                'size': 14
+            })
+            wid = payload.get('parent_world_id')
+            cid = world_to_campaign.get(wid)
+            if cid is not None:
+                add_edge(f"campaign_{cid}", f"alternate_reality_{ar['id']}",
+                         '#f59e0b', width=1.5, label='ветвь реальности', dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building narrative graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

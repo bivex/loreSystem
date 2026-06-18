@@ -482,6 +482,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="factions">🤝 Дипломатия фракций и альянсы</option>
                             <option value="crafting">⚒️ Схемы крафта и ресурсов</option>
                             <option value="progression">🌲 Дерево прокачки и талантов</option>
+                            <option value="narrative">📖 Структура повествования</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -819,6 +820,33 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            narrative: `
+                <div class="control-group">
+                    <label>Узлы повествования</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #6366f1; border-radius: 50%;"></div> Кампания (корень)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Акт</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #0ea5e9; border: 1px solid #0369a1;"></div> Глава</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Эпизод</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857;"></div> Пролог</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Флэшбэк (ретроспектива)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Флэшфорвард (предвидение)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Альтернативная реальность</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи структуры</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> акт (Кампания ➔ Акт)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #0ea5e9;"></div> глава (Акт ➔ Глава)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4;"></div> эпизод (Глава ➔ Эпизод)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6; border-top: 2px dashed #3b82f6;"></div> далее (последовательность)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b; border-top: 2px dashed #f59e0b;"></div> требует (prerequisite эпизода)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981;"></div> пролог</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7; border-top: 2px dashed #a855f7;"></div> ретроспектива / предвидение / ветвь</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -1052,6 +1080,24 @@ HTML_CONTENT = """<!DOCTYPE html>
                         nodeSpacing: 200,
                         treeSpacing: 300,
                         levelSeparation: 200
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'narrative') {
+                // Top-down narrative hierarchy:
+                //   Campaign -> Act -> Chapter -> Episode,
+                // with prologues/flashbacks/flash_forwards/alternate realities
+                // branching off the campaign root.
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 180,
+                        treeSpacing: 260,
+                        levelSeparation: 170,
+                        blockShifting: true,
+                        edgeMinimization: true
                     }
                 };
                 options.physics = { enabled: false };
