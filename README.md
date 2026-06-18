@@ -9,9 +9,9 @@
 
 # 🧶 MythWeave Chronicles
 
-> Complete lore management system for AAA game development — 200+ entity types, AI-powered extraction, and multi-agent team coordination.
+> Complete lore management system for AAA game development — 200+ entity types, AI-powered generation, persistence, and consistency validation.
 
-**MythWeave** turns raw narrative text into structured, validated game lore. Feed it a chapter of your game's story, and a team of specialized AI agents will extract characters, locations, quests, factions, items, cinematics — everything — into a clean JSON knowledge base.
+**MythWeave** is a DDD-based framework for managing complex world lore. The primary active workflow is the **CAMEL.Bridge Rumor Pipeline**, which generates consistent game lore (rumors, characters, events, relationships, stories, and quests) directly into a SQLite database, backed by logical and domain validation scripts. The legacy multi-agent team JSON extraction system has been archived.
 
 ## 🔀 How this differs from `MiroFish` technically
 
@@ -36,6 +36,41 @@ This C4 diagram shows the preferred current generation path: `CAMEL.Bridge CLI` 
 
 ![CAMEL.Bridge continuity architecture](camel_c4_continuity_architecture_v2.png)
 
+## 🚀 CAMEL.Bridge Rumor Pipeline (Primary Workflow)
+
+The **CAMEL.Bridge** pipeline is the core mechanism for generating, validating, and persisting game lore directly into the database. It automates the generation of rumors, characters, events, relationships, stories, and quests using AI (supporting OpenAI, Anthropic, or offline models via LM Studio).
+
+### 🛠️ Execution
+
+To run the primary rumor and lore generation pipeline:
+```bash
+python CAMEL.Bridge/run_rumor_pipeline.py --tenant-id 1 --world-id 1 --theme "Dark Fantasy" --count 5
+```
+
+For configuration options and parameters:
+```bash
+python CAMEL.Bridge/run_rumor_pipeline.py --help
+```
+
+For detailed documentation, configuration, and verification steps, see the [Lore Generation Pipeline Guide](docs/LORE_GENERATION_PIPELINE.md).
+
+### 🔍 Logical Consistency Validation
+
+Lore generation is backed by a powerful validation engine to prevent contradictions and ensure logical consistency:
+```bash
+python scripts/validate_lore.py --db-path lore_system.db --format table
+```
+This script validates:
+- Character stats and attribute limits
+- Mutual relationship symmetry (e.g. A likes B <=> B likes A)
+- Quest objective dependencies and cycle detection
+- Faction hierarchy and territorial integrity
+
+Use the `--interactive` flag for a Russian terminal-based menu mode:
+```bash
+python scripts/validate_lore.py --interactive
+```
+
 ---
 
 ## ✨ Key Features
@@ -43,13 +78,12 @@ This C4 diagram shows the preferred current generation path: `CAMEL.Bridge CLI` 
 | Feature | Description |
 |---------|-------------|
 | **200+ Entity Types** | 34 categories covering every aspect of AAA game design |
-| **Agent Teams** | 5 specialist AI teams extract lore in parallel |
-| **33 Domain Skills** | Claude Code skills for entity extraction from text |
+| **CAMEL.Bridge** | Primary pipeline for rumor, story, and quest generation directly to SQLite |
+| **Validation Engine** | Logical consistency checks, relationship symmetry, cycle detection |
 | **MCP Server** | Model Context Protocol server with 22 CRUD tools |
 | **DDD Architecture** | Clean Domain → Application → Infrastructure layers |
 | **Multi-tenant** | Run multiple game projects simultaneously |
 | **Dual Storage** | In-Memory and SQLite backends, 100% repository coverage |
-| **Validation** | Invariant checks, UUID tracking, version control |
 
 ---
 
@@ -58,7 +92,7 @@ This C4 diagram shows the preferred current generation path: `CAMEL.Bridge CLI` 
 ### Prerequisites
 
 - Python 3.11+
-- [Claude Code](https://code.claude.com) (for agent team features)
+- [Claude Code](https://code.claude.com) (optional, for archived agent team features)
 
 ### Installation
 
@@ -86,8 +120,11 @@ See [DOCKER.md](DOCKER.md) for full usage instructions and CLI commands.
 # Main application
 python main.py
 
-# Preferred current AI bridge path
+# Run rumor generation (Primary AI pipeline)
 python CAMEL.Bridge/run_rumor_pipeline.py --help
+
+# Run lore validation (Primary consistency validation)
+python scripts/validate_lore.py --help
 
 # MCP server (standalone)
 python lore_mcp_server/run_server.py
@@ -148,9 +185,15 @@ python3 scripts/run_lm_studio.py --type quest --limit 3
 
 ---
 
+<details>
+<summary>📦 Архив: Legacy Agent Team System (JSON-экстракция)</summary>
+
 ## 🤖 Agent Team System
 
-The core power of MythWeave is **AI-powered lore extraction**. You give it narrative text — it gives you structured entities.
+The core power of MythWeave was **AI-powered lore extraction** into JSON files using Claude Code agent teams.
+
+> [!NOTE]
+> This system is kept for backwards compatibility but is no longer the main workflow. Use the **CAMEL.Bridge Rumor Pipeline** instead.
 
 ### Architecture
 
@@ -238,6 +281,7 @@ When a teammate finds an entity belonging to another domain, they log a cross-re
 ```
 
 The lead resolves all cross-references during the merge phase, connecting entities across domains.
+</details>
 
 ---
 

@@ -1016,24 +1016,26 @@ class NarrativePersistenceMixin:
                     self._normalize_lookup_key(reward_tier.name)
                 ] = reward_tier
 
+        # Group saved objectives by quest_node_id
+        objectives_by_node_id = {}
+        for objective in quest_objectives:
+            if objective.id and objective.quest_node_id:
+                objectives_by_node_id.setdefault(objective.quest_node_id, []).append(objective.id)
+
+        # Group saved reward tiers by quest_node_id
+        reward_tiers_by_node_id = {}
+        for reward_tier in quest_reward_tiers:
+            if reward_tier.id and reward_tier.quest_node_id:
+                reward_tiers_by_node_id.setdefault(reward_tier.quest_node_id, []).append(reward_tier.id)
+
         if self.quest_node_repository:
             for quest_node_draft in draft.quest_nodes:
                 quest_node = quest_nodes_by_name.get(
                     self._normalize_lookup_key(quest_node_draft.name)
                 )
-                if quest_node is None:
+                if quest_node is None or quest_node.id is None:
                     continue
-                objective_ids = [
-                    objective.id
-                    for objective_description in quest_node_draft.objective_descriptions
-                    if (
-                        objective := quest_objectives_by_description.get(
-                            self._normalize_lookup_key(objective_description)
-                        )
-                    )
-                    is not None
-                    and objective.id is not None
-                ]
+                objective_ids = objectives_by_node_id.get(quest_node.id, [])
                 prerequisite_ids = [
                     prerequisite.id
                     for prerequisite_description in quest_node_draft.prerequisite_descriptions
@@ -1045,19 +1047,8 @@ class NarrativePersistenceMixin:
                     is not None
                     and prerequisite.id is not None
                 ]
-                reward_tier_ids = [
-                    reward_tier.id
-                    for reward_tier_name in quest_node_draft.reward_tier_names
-                    if (
-                        reward_tier := quest_reward_tiers_by_name.get(
-                            self._normalize_lookup_key(reward_tier_name)
-                        )
-                    )
-                    is not None
-                    and reward_tier.id is not None
-                ]
-                if objective_ids:
-                    object.__setattr__(quest_node, "objective_ids", objective_ids)
+                reward_tier_ids = reward_tiers_by_node_id.get(quest_node.id, [])
+                object.__setattr__(quest_node, "objective_ids", objective_ids)
                 object.__setattr__(quest_node, "prerequisite_ids", prerequisite_ids)
                 object.__setattr__(quest_node, "reward_tier_ids", reward_tier_ids)
                 object.__setattr__(quest_node, "updated_at", Timestamp.now())
