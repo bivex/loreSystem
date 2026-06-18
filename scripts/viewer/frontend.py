@@ -928,37 +928,58 @@ HTML_CONTENT = """<!DOCTYPE html>
                 nodes: {
                     borderWidth: 2,
                     shadow: true,
+                    // Constrain wide node labels so they wrap instead of
+                    // stretching across neighbours and overlapping text.
+                    widthConstraint: { maximum: 160 },
+                    heightConstraint: { valign: 'middle' },
                     font: {
                         face: 'Inter',
+                        size: 14,
+                        multi: 'html',
                         strokeWidth: 4,
                         strokeColor: '#0b0f19'
                     }
                 },
                 edges: {
                     shadow: true,
+                    // Straight-ish edges keep label text from piling up where
+                    // several curved edges converge on a single node.
                     smooth: {
                         type: 'continuous',
-                        roundness: 0.3
+                        roundness: 0.15
+                    },
+                    font: {
+                        face: 'Inter',
+                        size: 11,
+                        strokeWidth: 4,
+                        strokeColor: '#0b0f19',
+                        align: 'middle'
                     }
+                },
+                layout: {
+                    randomSeed: 42,
+                    improvedLayout: true
                 },
                 physics: {
                     enabled: physicsEnabled,
                     barnesHut: {
-                        gravitationalConstant: -3000,
-                        centralGravity: 0.3,
-                        springLength: 120,
+                        gravitationalConstant: -4000,
+                        centralGravity: 0.25,
+                        springLength: 200,
                         springConstant: 0.04,
-                        damping: 0.09
+                        damping: 0.09,
+                        avoidOverlap: 0.65
                     },
                     stabilization: {
-                        iterations: 150,
+                        iterations: 250,
                         fit: true
                     }
                 },
                 interaction: {
                     hover: true,
                     tooltipDelay: 200,
-                    hideEdgesOnDrag: false
+                    hideEdgesOnDrag: false,
+                    zoomView: true
                 }
             };
 
@@ -972,9 +993,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 160,
-                        treeSpacing: 220,
-                        levelSeparation: 140
+                        nodeSpacing: 220,
+                        treeSpacing: 320,
+                        levelSeparation: 180
                     }
                 };
                 options.physics = { enabled: false };
@@ -984,9 +1005,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'LR',
                         sortMethod: 'directed',
-                        nodeSpacing: 100,
-                        treeSpacing: 180,
-                        levelSeparation: 150
+                        nodeSpacing: 160,
+                        treeSpacing: 260,
+                        levelSeparation: 220
                     }
                 };
                 options.physics = { enabled: false };
@@ -997,14 +1018,14 @@ HTML_CONTENT = """<!DOCTYPE html>
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -60,
-                        centralGravity: 0.01,
-                        springLength: 140,
-                        springConstant: 0.04,
+                        gravitationalConstant: -90,
+                        centralGravity: 0.008,
+                        springLength: 220,
+                        springConstant: 0.05,
                         damping: 0.5,
-                        avoidOverlap: 0.6
+                        avoidOverlap: 0.8
                     },
-                    stabilization: { iterations: 200 }
+                    stabilization: { iterations: 250 }
                 };
             } else if (currentGraphType === 'crafting') {
                 // Left-to-right flow: inputs (materials/components) on the
@@ -1014,9 +1035,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'LR',
                         sortMethod: 'directed',
-                        nodeSpacing: 90,
-                        treeSpacing: 160,
-                        levelSeparation: 180
+                        nodeSpacing: 140,
+                        treeSpacing: 240,
+                        levelSeparation: 260
                     }
                 };
                 options.physics = { enabled: false };
@@ -1028,9 +1049,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                         enabled: true,
                         direction: 'UD',
                         sortMethod: 'directed',
-                        nodeSpacing: 140,
-                        treeSpacing: 200,
-                        levelSeparation: 160
+                        nodeSpacing: 200,
+                        treeSpacing: 300,
+                        levelSeparation: 200
                     }
                 };
                 options.physics = { enabled: false };
