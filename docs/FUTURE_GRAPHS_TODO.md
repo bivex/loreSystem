@@ -7,7 +7,7 @@ keyword-матчинга по тексту — это принцип, приня
 
 ---
 
-## ✅ Реализованные графы (9)
+## ✅ Реализованные графы (11)
 
 | # | Граф | Таблицы | Эндпоинт |
 |---|------|---------|----------|
@@ -20,6 +20,8 @@ keyword-матчинга по тексту — это принцип, приня
 | 7 | ⚒️ Схемы крафта и ресурсов | `items`, `materials`, `components`, `crafting_recipes`, `blueprints` | `/api/graph/crafting` |
 | 8 | 🌲 Дерево прокачки и талантов | `skills`, `talent_trees`, `perks`, `attributes`, `level_ups` | `/api/graph/progression` |
 | 9 | 📖 Структура повествования | `acts`, `chapters`, `episodes`, `prologues`, `flashbacks`, `flash_forwards`, `alternate_realities` | `/api/graph/narrative` |
+| 10 | ⭐ Легендарные предметы и комплекты | `legendary_weapons`, `mythical_armors`, `divine_items`, `cursed_items`, `artifact_sets`, `enchantments`, `runes`, `glyphs`, `sockets`, `traits` | `/api/graph/legendary_items` |
+| 11 | 🏆 Достижения и прогресс игрока | `achievements`, `badges`, `masterys`, `titles`, `progression_events`, `progression_states`, `experiences`, `leaderboards`, `player_metrics` | `/api/graph/achievements` |
 
 > ⚠️ Графы 6 и 8 работают на **производных** связях, т.к. в БД отсутствуют
 > таблицы `factions`/`faction_memberships` и `prerequisite_id`/`talent_node_id`
@@ -36,33 +38,23 @@ keyword-матчинга по тексту — это принцип, приня
 
 ### 🥇 Высокий приоритет
 
-#### A. ⭐ Легендарные предметы и комплекты (Legendary Items & Sets)
-- **Цель**: Карта редких/мифических предметов, их зачарования, руны и комплекты.
-- **Таблицы**: `legendary_weapons` (1), `mythical_armors` (1), `divine_items` (1), `cursed_items` (1), `artifact_sets` (1), `enchantments` (2), `runes` (2), `glyphs` (2), `sockets` (2), `traits` (1).
-- **Ожидаемые связи**: `item → enchantment_id/rune_id/glyph_id`; `artifact_set → item_ids[]`; `sockets → item_id`.
-- **Польза**: Баланс редкости и зависимости сет-бонусов.
-
-#### B. 🏆 Достижения и прогресс игрока (Achievements & Player Progress)
-- **Цель**: Визуализировать метапрогресс — ачивки, бейджи, мастерство, титулы.
-- **Таблицы**: `achievements` (1), `badges` (1), `masterys` (1), `titles` (1), `progression_events` (1), `progression_states` (1), `experiences` (1), `leaderboards` (1), `player_metrics` (1).
-- **Ожидаемые связи**: `achievement → prerequisite_achievement_id`; `progression_event → character_id`; `mastery → skill_id`.
-- **Польза**: Геймдизайнерам — дерево условий разблокировки и гринда.
+*(пусто — все высокоприоритетные графы реализованы)*
 
 ### 🥈 Средний приоритет
 
-#### C. ⚔️ Боевая карта и подземелья (Combat & Encounters)
+#### A. ⚔️ Боевая карта и подземелья (Combat & Encounters)
 - **Цель**: Карта боевого контента — арены, данжи, рейды, инвазии, инстансы.
 - **Таблицы**: `arenas` (1), `dungeons` (2), `instances` (1), `raids` (1), `invasions` (1), `difficulty_curves` (1).
 - **Ожидаемые связи**: `dungeon/arena/raid → world_id/location_id`; `instance → parent_id`; `difficulty_curve → encounter_id`.
 - **Польза**: План контента для эндгейма и баланс сложности.
 
-#### D. 💰 Экономика и лут (Economy & Loot)
+#### B. 💰 Экономика и лут (Economy & Loot)
 - **Цель**: Поток добычи — лут-таблицы, дроп-рейты, награды квестов, инвентари.
 - **Таблицы**: `inventories` (2), `loot_table_weights` (1), `drop_rates` (1), `quest_reward_tiers` (2), `relic_collections` (1).
 - **Ожидаемые связи**: `loot_table → item_id`; `drop_rate → source_id/target_item_id`; `quest_reward_tier → quest_id`.
 - **Польза**: Поиск «бутылочных горлышек» в экономике, проверка дроп-чансов.
 
-#### E. 🎭 Продакшн: озвучка и моушн (Production: Voice & Mocap)
+#### C. 🎭 Продакшн: озвучка и моушн (Production: Voice & Mocap)
 - **Цель**: Карта озвучки персонажей и захвата движений — продакшн-трекинг.
 - **Таблицы**: `voice_actors` (7), `motion_captures` (7).
 - **Ожидаемые связи**: `voice_actor → character_id/scene_id`; `motion_capture → character_id/scene_id`.
@@ -70,13 +62,13 @@ keyword-матчинга по тексту — это принцип, приня
 
 ### 🥉 Низкий приоритет (sparse / niche)
 
-#### F. 🌍 Открытый мир и события (Open World & Events)
+#### D. 🌍 Открытый мир и события (Open World & Events)
 - **Таблицы**: `open_world_zones` (1), `seasonal_events` (1), `quest_givers` (3), `quest_objectives` (4), `quest_trackers` (2).
 - **Цель**: Карта зон мира → NPC-квестгиверы → цепочки заданий и трекеры прогресса.
 - **Ожидаемые связи**: `open_world_zone → location_id`; `quest_giver → npc_id/quest_id`; `quest_objective → quest_id`; `quest_tracker → quest_id/character_id`.
 - **Польза**: Видна география выдачи заданий и покрытие зон контентом.
 
-#### G. 💬 Социальные и моральные выборы (Social & Moral Choices)
+#### E. 💬 Социальные и моральные выборы (Social & Moral Choices)
 - **Таблицы**: `moral_choices` (2), `rumors` (2).
 - **Цель**: Дополнить граф сюжета моральными дилеммами и сетью слухов/репутации.
 - **Ожидаемые связи**: `moral_choice → choice_id/consequence_ids`; `rumor → character_id/faction_id/event_id`.
