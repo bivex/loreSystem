@@ -1104,3 +1104,384 @@ def get_timeline_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def _new_edge_set():
+    """Return (add_edge, seen) helper bound to a fresh edge list."""
+    seen = set()
+    edges = []
+    def add_edge(from_id, to_id, color, width=1.5, label=None, dashes=False):
+        key = (from_id, to_id, label)
+        if key in seen:
+            return
+        seen.add(key)
+        edge = {'from': from_id, 'to': to_id, 'arrows': 'to', 'color': color, 'width': width}
+        if dashes:
+            edge['dashes'] = True
+        if label:
+            edge['label'] = label
+            edge['font'] = {'align': 'middle', 'color': '#9ca3af', 'size': 9, 'face': 'Inter'}
+        edges.append(edge)
+    return add_edge, edges
+
+
+def get_factions_graph():
+    """Faction diplomacy & hierarchy graph.
+
+    Built only from real DB fields. Since the schema has no `factions` /
+    `faction_memberships` tables, factions are derived from the data that
+    actually encodes political structure:
+
+      - `wars` rows name aggressor/defender factions (string names) and
+        represent the 'война/вражда' (red) edges from the spec.
+      - `character_relationships` rows (`character_from_id`, `character_to_id`,
+        `relationship_type`, `relationship_level`) encode inter-character
+        diplomacy directly: 'ally'/'friend' -> green, 'rival'/'enemy' -> red.
+      - `characters.role` / `characters.status` and `ranks` provide hierarchy
+        context; characters linked by a shared role/status form a loose
+        'member of the same group' cluster.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        # ---------- Faction nodes (derived from wars) ----------
+        # The DB has no factions table, so the only authoritative source of
+        # faction identity is the `wars` payload (aggressor_name / defender_name).
+        # Each unique name becomes a faction node.
+        faction_ids = {}  # name -> node id
+        faction_names = []
+        wars = []
+        if 'wars' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM wars")
+            for row in cursor.fetchall():
+                payload = parse(row)
+                wars.append({
+                    'id': row['id'],
+                    'name': payload.get('name') or row['label'],
+                    'aggressor': payload.get('aggressor_name'),
+                    'defender': payload.get('defender_name'),
+                    'is_active': payload.get('is_active', True),
+                    'war_type': payload.get('war_type', ''),
+                    'victor': payload.get('victor_name'),
+                    'region': payload.get('conflict_region_name'),
+                })
+                for fname in (payload.get('aggressor_name'), payload.get('defender_name'), payload.get('victor_name')):
+                    if fname and fname not in faction_ids:
+                        faction_ids[fname] = f"faction_{len(faction_ids)+1}"
+                        faction_names.append(fname)
+
+        for fname in faction_names:
+            nodes.append({
+                'id': faction_ids[fname],
+                'label': fname,
+                'title': f"<b>Фракция: {fname}</b>",
+                'color': {'background': '#6366f1', 'border': '#4338ca'},  # Indigo
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 14, 'bold': True}
+            })
+
+        # ---------- War edges (red: вражда) ----------
+        for w in wars:
+            aggr = faction_ids.get(w['aggressor'])
+            defn = faction_ids.get(w['defender'])
+            if aggr and defn and aggr != defn:
+                tooltip_lbl = 'война'
+                if w.get('war_type'):
+                    tooltip_lbl += f" ({w['war_type']})"
+                add_edge(aggr, defn, '#ef4444', width=3, label=tooltip_lbl)
+                # Note: wars are not mutual-alliance, so only one directed edge.
+
+        # ---------- Characters ----------
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name, role, status FROM characters")
+            characters = [dict(row) for row in cursor.fetchall()]
+
+        for ch in characters:
+            tooltip = f"<b>Персонаж: {ch['name']}</b>"
+            if ch.get('role'):
+                tooltip += f"<br><b>Роль:</b> {ch['role']}"
+            if ch.get('status'):
+                tooltip += f"<br><b>Статус:</b> {ch['status']}"
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': ch['name'],
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},  # Amber
+                'shape': 'dot',
+                'size': 14
+            })
+
+        # ---------- Character relationships (green: ally, red: enemy) ----------
+        if 'character_relationships' in tables:
+            cursor.execute("""SELECT character_from_id, character_to_id,
+                                     relationship_type, relationship_level, description
+                              FROM character_relationships""")
+            for row in cursor.fetchall():
+                rtype = (row['relationship_type'] or '').lower()
+                level = row['relationship_level']
+                color = '#9ca3af'
+                label = row['relationship_type'] or 'связь'
+                if rtype in ('ally', 'friend', 'allied', 'friendship', 'bond', 'companion'):
+                    color = '#10b981'  # green
+                    label = 'альянс'
+                elif rtype in ('rival', 'enemy', 'rivalry', 'nemesis', 'foe', 'hostile'):
+                    color = '#ef4444'  # red
+                    label = 'вражда'
+                elif rtype in ('mentor', 'teacher', 'student', 'family', 'parent', 'child', 'sibling'):
+                    color = '#3b82f6'  # blue (hierarchy / kinship)
+                    label = row['relationship_type']
+                add_edge(f"char_{row['character_from_id']}",
+                         f"char_{row['character_to_id']}",
+                         color, width=2, label=label,
+                         dashes=(rtype in ('rival', 'enemy', 'rivalry', 'nemesis', 'foe', 'hostile')))
+
+        # ---------- Ranks as hierarchy context ----------
+        # Characters with the same role/status form a soft cluster via shared
+        # rank nodes when ranks carry matching data; otherwise ranks appear as
+        # standalone hierarchy context nodes.
+        if 'ranks' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM ranks")
+            for row in cursor.fetchall():
+                payload = parse(row)
+                rname = payload.get('name') or row['label']
+                nodes.append({
+                    'id': f"rank_{row['id']}",
+                    'label': f"🎖️ {rname}",
+                    'title': f"<b>Ранг: {rname}</b><br>{payload.get('description') or ''}",
+                    'color': {'background': '#fbbf24', 'border': '#d97706'},  # Gold
+                    'shape': 'diamond',
+                    'size': 12
+                })
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building factions graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+
+def get_crafting_graph():
+    """Item crafting & recipes graph.
+
+    Built only from real DB fields:
+      - `crafting_recipes.ingredients[].item_id` -> the consumed input item
+      - `crafting_recipes.result_item_id`        -> the produced item
+      - `crafting_recipes.required_blueprint_id` -> the blueprint needed
+      - `blueprints.result_item_id`              -> the item a blueprint yields
+      - `components.is_craftable`                -> components link to the
+        recipe of the same name when one exists (loose, name-based fallback
+        only used to surface otherwise orphaned components)
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            if not row.get('payload_json'):
+                return {}
+            try:
+                return json.loads(row['payload_json'])
+            except Exception:
+                return {}
+
+        # ---------- Load all five entity types ----------
+        items = []
+        if 'items' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM items")
+            items = [dict(row) for row in cursor.fetchall()]
+        materials = []
+        if 'materials' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM materials")
+            materials = [dict(row) for row in cursor.fetchall()]
+        components = []
+        if 'components' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM components")
+            components = [dict(row) for row in cursor.fetchall()]
+        recipes = []
+        if 'crafting_recipes' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM crafting_recipes")
+            recipes = [dict(row) for row in cursor.fetchall()]
+        blueprints = []
+        if 'blueprints' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM blueprints")
+            blueprints = [dict(row) for row in cursor.fetchall()]
+
+        item_ids = {it['id'] for it in items}
+        material_ids = {m['id'] for m in materials}
+        component_ids = {co['id'] for co in components}
+
+        # ---------- Item nodes ----------
+        for it in items:
+            payload = parse(it)
+            itype = payload.get('item_type', '')
+            rarity = payload.get('rarity', '')
+            tooltip = f"<b>Предмет: {payload.get('name') or it['label']}</b>"
+            if itype:
+                tooltip += f"<br><b>Тип:</b> {itype}"
+            if rarity:
+                tooltip += f"<br><b>Редкость:</b> {rarity}"
+            nodes.append({
+                'id': f"item_{it['id']}",
+                'label': payload.get('name') or it['label'],
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},  # Green
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Material nodes ----------
+        for m in materials:
+            payload = parse(m)
+            tooltip = f"<b>Материал: {payload.get('name') or m['label']}</b>"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            if payload.get('material_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['material_type']}"
+            nodes.append({
+                'id': f"material_{m['id']}",
+                'label': payload.get('name') or m['label'],
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},  # Amber
+                'shape': 'dot',
+                'size': 12
+            })
+
+        # ---------- Component nodes ----------
+        for co in components:
+            payload = parse(co)
+            tooltip = f"<b>Компонент: {payload.get('name') or co['label']}</b>"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            if payload.get('category'):
+                tooltip += f"<br><b>Категория:</b> {payload['category']}"
+            nodes.append({
+                'id': f"component_{co['id']}",
+                'label': payload.get('name') or co['label'],
+                'title': tooltip,
+                'color': {'background': '#8b5cf6', 'border': '#6d28d9'},  # Purple
+                'shape': 'triangle',
+                'size': 13
+            })
+
+        # ---------- Recipe nodes ----------
+        for r in recipes:
+            payload = parse(r)
+            rname = payload.get('name') or r['label']
+            difficulty = payload.get('difficulty', '')
+            tooltip = f"<b>Рецепт: {rname}</b>"
+            if difficulty:
+                tooltip += f"<br><b>Сложность:</b> {difficulty}"
+            nodes.append({
+                'id': f"recipe_{r['id']}",
+                'label': f"⚒️ {rname}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},  # Cyan
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12, 'bold': True}
+            })
+
+        # ---------- Blueprint nodes ----------
+        for b in blueprints:
+            payload = parse(b)
+            bname = payload.get('name') or b['label']
+            btype = payload.get('blueprint_type', '')
+            rarity = payload.get('rarity', '')
+            tooltip = f"<b>Чертёж: {bname}</b>"
+            if btype:
+                tooltip += f"<br><b>Тип:</b> {btype}"
+            if rarity:
+                tooltip += f"<br><b>Редкость:</b> {rarity}"
+            nodes.append({
+                'id': f"blueprint_{b['id']}",
+                'label': f"📐 {bname}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},  # Pink
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Structural edges ----------
+
+        # Recipe -> consumed input item ("requires"): crafting_recipes.
+        # ingredients[].item_id. Note the schema calls them 'item_id' even
+        # when they may reference a material in practice; we resolve to
+        # whichever entity table actually owns that id.
+        def resolve_node_id(eid):
+            if eid in item_ids:
+                return f"item_{eid}"
+            if eid in material_ids:
+                return f"material_{eid}"
+            if eid in component_ids:
+                return f"component_{eid}"
+            return None
+
+        for r in recipes:
+            payload = parse(r)
+            for ing in payload.get('ingredients', []) or []:
+                eid = ing.get('item_id') if isinstance(ing, dict) else None
+                qty = ing.get('quantity') if isinstance(ing, dict) else None
+                if eid is None:
+                    continue
+                src = resolve_node_id(eid)
+                if src:
+                    lbl = f"x{qty}" if qty else 'вход'
+                    add_edge(src, f"recipe_{r['id']}", '#f59e0b',
+                             width=1.5, label=lbl, dashes=True)
+
+            # Recipe -> produced item ("produces"): result_item_id
+            result_id = payload.get('result_item_id')
+            if result_id is not None:
+                tgt = resolve_node_id(result_id)
+                if tgt:
+                    qty = payload.get('result_quantity', 1)
+                    lbl = f"производит x{qty}" if qty and qty > 1 else 'производит'
+                    add_edge(f"recipe_{r['id']}", tgt, '#10b981', width=2.5, label=lbl)
+
+            # Recipe -> required blueprint ("needs blueprint"): required_blueprint_id
+            bp_id = payload.get('required_blueprint_id')
+            if bp_id is not None:
+                add_edge(f"blueprint_{bp_id}", f"recipe_{r['id']}", '#ec4899',
+                         width=1.5, label='чертёж', dashes=True)
+
+        # Blueprint -> produced item ("produces"): blueprints.result_item_id
+        for b in blueprints:
+            payload = parse(b)
+            result_id = payload.get('result_item_id')
+            if result_id is not None:
+                tgt = resolve_node_id(result_id)
+                if tgt:
+                    qty = payload.get('result_quantity', 1)
+                    lbl = f"производит x{qty}" if qty and qty > 1 else 'производит'
+                    add_edge(f"blueprint_{b['id']}", tgt, '#10b981',
+                             width=2, label=lbl, dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building crafting graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

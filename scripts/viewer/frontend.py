@@ -479,6 +479,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="locations">🗺️ Карта локаций мира</option>
                             <option value="story_branches">🔀 Развилки сюжета и концовок</option>
                             <option value="timeline">⏳ Хронология исторических эпох</option>
+                            <option value="factions">🤝 Дипломатия фракций и альянсы</option>
+                            <option value="crafting">⚒️ Схемы крафта и ресурсов</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -755,6 +757,45 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            factions: `
+                <div class="control-group">
+                    <label>Узлы политики</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Фракция</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> Персонаж</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #fbbf24; border: 1px solid #d97706; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Ранг / Иерархия</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Дипломатические связи</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 3px; background-color: #10b981;"></div> альянс / дружба</div>
+                        <div class="legend-item"><div style="width: 20px; height: 3px; background-color: #ef4444; border-top: 3px dashed #ef4444;"></div> война / вражда</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> родство / иерархия</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #9ca3af;"></div> прочая связь</div>
+                    </div>
+                </div>
+            `,
+            crafting: `
+                <div class="control-group">
+                    <label>Узлы производства</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2;"></div> Рецепт крафта</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d;"></div> Чертёж (Blueprint)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857;"></div> Предмет (финал)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> Материал</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #8b5cf6; border: 1px solid #6d28d9; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Компонент</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Цепочки крафта</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b; border-top: 2px dashed #f59e0b;"></div> входной ресурс (требуется)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 3px; background-color: #10b981;"></div> производит предмет</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899; border-top: 2px dashed #ec4899;"></div> требует чертёж</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -768,8 +809,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         Данные парсятся напрямую из проектной документации <code style="color: #a78bfa;">FUTURE_GRAPHS_TODO.md</code>.
                     </p>
                 </div>
-            `
-        };
+            `,
 
         async function loadGraphData() {
             const type = document.getElementById('graphTypeSelect').value;
@@ -923,6 +963,36 @@ HTML_CONTENT = """<!DOCTYPE html>
                         nodeSpacing: 100,
                         treeSpacing: 180,
                         levelSeparation: 150
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'factions') {
+                // Force-directed for a political map: clusters of allies vs
+                // opposed factions spread naturally.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -60,
+                        centralGravity: 0.01,
+                        springLength: 140,
+                        springConstant: 0.04,
+                        damping: 0.5,
+                        avoidOverlap: 0.6
+                    },
+                    stabilization: { iterations: 200 }
+                };
+            } else if (currentGraphType === 'crafting') {
+                // Left-to-right flow: inputs (materials/components) on the
+                // left, recipes in the middle, produced items on the right.
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'LR',
+                        sortMethod: 'directed',
+                        nodeSpacing: 90,
+                        treeSpacing: 160,
+                        levelSeparation: 180
                     }
                 };
                 options.physics = { enabled: false };

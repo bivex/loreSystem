@@ -13,7 +13,8 @@ import webbrowser
 from .database import (
     get_tables, get_table_data, get_characters_graph,
     get_locations_graph, get_quests_graph, get_future_graphs_todo,
-    get_story_branches_graph, get_timeline_graph
+    get_story_branches_graph, get_timeline_graph,
+    get_factions_graph, get_crafting_graph
 )
 from .frontend import HTML_CONTENT
 
@@ -107,6 +108,26 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             
             graph_data = get_timeline_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Factions Diplomacy Graph
+        elif parsed_url.path == "/api/graph/factions":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_factions_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Crafting & Recipes Graph
+        elif parsed_url.path == "/api/graph/crafting":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_crafting_graph()
             self.wfile.write(json.dumps(graph_data).encode('utf-8'))
             
         # Frontend index html page
