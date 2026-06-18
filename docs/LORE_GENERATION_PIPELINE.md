@@ -111,3 +111,43 @@ graph TD
 3.  **Резервные копии (Fallbacks)**: Если LLM ломается, возвращает некорректный JSON или превышает таймаут, система:
     *   При `allow_fallback = True` автоматически генерирует дефолтные сущности на основе шаблонов (например, создает дефолтный квест *"Событие в Гавани"*), чтобы конвейер не падал и продолжал работу.
     *   При `allow_fallback = False` генерирует исключение `RuntimeError` для прерывания процесса.
+
+---
+
+## Запуск первого прохода (Core Pass) с памятью Qdrant
+
+Для обеспечения непрерывности контекста генерации (Continuity Memory) через векторную БД Qdrant выполните следующие шаги:
+
+### 1. Запуск контейнера Qdrant
+Убедитесь, что Qdrant запущен и слушает порт `6333`:
+```bash
+docker-compose up -d qdrant
+```
+
+### 2. Настройка окружения (`.env`)
+Добавьте в ваш `.env` файл переменные для подключения к Qdrant:
+```ini
+# Параметры подключения к векторной БД
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333
+CAMEL_MEMORY_EMBED_BACKEND=local
+CAMEL_MEMORY_EMBED_DIMENSION=384
+CAMEL_MEMORY_QDRANT_COLLECTION=camel_bridge_memory
+```
+
+### 3. Запуск команды генерации
+Используйте флаг `--with-memory` для активации Qdrant-памяти. Не указывайте `--with-campaign-story` и `--with-systems`, чтобы запустить только первый проход (Core Pass):
+
+```bash
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 \
+./venv/bin/python3 CAMEL.Bridge/run_rumor_pipeline.py \
+  --tenant-id 1 \
+  --world-id 1 \
+  --theme "Темные фэнтези силы" \
+  --context "Древние культы призывают силы тьмы." \
+  --count 1 \
+  --db-path lore_system.db \
+  --output-language ru \
+  --env-file .env \
+  --with-memory
+```
+
