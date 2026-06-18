@@ -568,36 +568,36 @@ def get_story_branches_graph():
             cursor.execute("SELECT id, label, payload_json FROM storylines")
             storylines = [dict(row) for row in cursor.fetchall()]
 
-        campaigns = []
-        if 'campaigns' in tables:
-            cursor.execute("SELECT id, title, description FROM campaigns")
-            campaigns = [dict(row) for row in cursor.fetchall()]
-
         choices = []
         if 'choices' in tables:
             cursor.execute("SELECT id, label, payload_json FROM choices")
             choices = [dict(row) for row in cursor.fetchall()]
-            
+
         consequences = []
         if 'consequences' in tables:
             cursor.execute("SELECT id, label, payload_json FROM consequences")
             consequences = [dict(row) for row in cursor.fetchall()]
-            
+
         plot_branches = []
         if 'plot_branches' in tables:
             cursor.execute("SELECT id, label, payload_json FROM plot_branches")
             plot_branches = [dict(row) for row in cursor.fetchall()]
-            
+
         endings = []
         if 'endings' in tables:
             cursor.execute("SELECT id, label, payload_json FROM endings")
             endings = [dict(row) for row in cursor.fetchall()]
-            
+
         branch_points = []
         if 'branch_points' in tables:
             cursor.execute("SELECT id, label, payload_json FROM branch_points")
             branch_points = [dict(row) for row in cursor.fetchall()]
-            
+
+        epilogues = []
+        if 'epilogues' in tables:
+            cursor.execute("SELECT id, title, description, epilogue_type, trigger_condition FROM epilogues")
+            epilogues = [dict(row) for row in cursor.fetchall()]
+
         conn.close()
 
         # Helper to parse a payload_json blob.
@@ -608,10 +608,7 @@ def get_story_branches_graph():
                 return json.loads(row['payload_json'])
             except Exception:
                 return {}
-        
-        # Pre-compute campaign id -> title for tooltip enrichment.
-        campaign_titles = {c['id']: c['title'] for c in campaigns}
-        
+
         # ---------- Story nodes ----------
         for s in stories:
             nodes.append({
@@ -628,7 +625,6 @@ def get_story_branches_graph():
 
         # ---------- Storyline (Сюжетный шаг) nodes ----------
         # Storylines are the high-level narrative beats that "provide choices".
-        storyline_ids = set()
         for sl in storylines:
             payload = parse_payload(sl)
             name = payload.get('name') or sl['label']
@@ -639,7 +635,6 @@ def get_story_branches_graph():
                 tooltip += f" ({sl_type})"
             tooltip += f"<br>{desc}"
 
-            storyline_ids.add(sl['id'])
             nodes.append({
                 'id': f"storyline_{sl['id']}",
                 'label': name,
@@ -654,7 +649,6 @@ def get_story_branches_graph():
 
         # ---------- Choice nodes ----------
         # "Сюжетный шаг ➔ предоставляет выбор ➔ Choice Node"
-        choice_story = {}  # choice_id -> story_id
         for c in choices:
             payload = parse_payload(c)
             prompt = payload.get('prompt') or c['label']
@@ -677,7 +671,6 @@ def get_story_branches_graph():
             # Story -> Choice ("Story offers this choice").
             story_id = payload.get('story_id')
             if story_id:
-                choice_story[c['id']] = story_id
                 add_edge(f"story_{story_id}", f"choice_{c['id']}", '#f59e0b',
                          width=1.5, label='выбор')
 
@@ -719,7 +712,6 @@ def get_story_branches_graph():
         # Each plot branch carries an origin_branch_point_id pointing at the
         # branch_point that spawned it; the branch_point in turn carries the
         # choice_id. We use that chain for Consequence -> Plot Branch links.
-        branch_origin_choice = {}  # branch_id -> choice_id (via branch_point)
         for pb in plot_branches:
             payload = parse_payload(pb)
             name = payload.get('name') or pb['label']
@@ -744,6 +736,7 @@ def get_story_branches_graph():
 
         # ---------- Ending nodes ----------
         # Endings appear as star nodes; type drives color.
+        ending_epilogue = {}  # ending_id -> epilogue_id (real FK)
         for e in endings:
             payload = parse_payload(e)
             title = payload.get('title') or e['label']
@@ -773,70 +766,91 @@ def get_story_branches_graph():
                 'size': 20
             })
 
-        # ---------- Structural edges ----------
+            # Remember the real epilogue FK for later edge creation.
+            epi_id = payload.get('epilogue_id')
+            if epi_id is not None:
+                ending_epilogue[e['id']] = epi_id
 
-        # Storyline -> Story: a storyline belongs to a story/campaign. We link
-        # storylines to the matching story via campaign_id (== story id by
-        # convention) when available, otherwise to the first story as a hub.
+        # ---------- Epilogue nodes ----------
+        # Endings reference epilogues via a real payload FK (epilogue_id).
+        epilogue_ids = {ep['id'] for ep in epilogues}
+        for ep in epilogues:
+            epi_type = ep.get('epilogue_type', '')
+            tooltip = f"<b>Эпилог: {ep['title']}</b>"
+            if epi_type:
+                tooltip += f" ({epi_type})"
+            tooltip += f"<br>{ep.get('description') or ''}"
+
+            nodes.append({
+                'id': f"epilogue_{ep['id']}",
+                'label': ep['title'],
+                'title': tooltip,
+                'color': {
+                    'background': '#14b8a6', # Teal — distinct from endings
+                    'border': '#0f766e'
+                },
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Structural edges (real DB fields only, no text matching) ----------
+
         story_ids = [s['id'] for s in stories]
+
+        # Storyline -> Story: storylines live in the same world as a story.
+        # There is no direct storyline->story FK, so we attach a storyline to a
+        # story sharing its world_id; if none, to the first story as a hub.
+        story_by_world = {}
+        for s in stories:
+            story_by_world.setdefault(s.get('world_id'), s['id'])
         for sl in storylines:
             payload = parse_payload(sl)
-            sl_story_id = None
-            campaign_id = payload.get('campaign_id')
-            if campaign_id in story_ids:
-                sl_story_id = campaign_id
-            elif story_ids:
-                sl_story_id = story_ids[0]
+            sl_story_id = story_by_world.get(payload.get('world_id')) or (story_ids[0] if story_ids else None)
             if sl_story_id:
                 add_edge(f"storyline_{sl['id']}", f"story_{sl_story_id}",
                          '#0ea5e9', width=1.5, dashes=True, label='часть')
 
-        # Branch points bridge Plot Branch <-> Choice. branch_points carry a
-        # choice_id and a list of branch_ids; the same (branch, choice) pair
-        # may be referenced by several branch_points, so we dedup via add_edge.
-        # This realises "Сюжетный шаг ➔ предоставляет выбор ➔ Choice Node" and
-        # its inverse "Consequence ➔ разветвляет ➔ Plot Branch".
-        branch_to_choice = {}  # branch_id -> [choice_id, ...]
+        # Story -> Choice ("story offers this choice") is emitted inline in the
+        # Choice loop above via choices.story_id.
+
+        # Choice -> Consequence is emitted inline in the Consequence loop above
+        # via consequences.trigger_choice_id.
+
+        # Choice <-> Plot Branch via branch_points (choice_id + branch_ids).
+        # The same (branch, choice) pair may be referenced by several
+        # branch_points, so add_edge dedups.
+        branch_to_choices = {}  # branch_id -> [choice_id, ...]
         for bp in branch_points:
             payload = parse_payload(bp)
             choice_id = payload.get('choice_id')
             branch_ids = payload.get('branch_ids', [])
             if choice_id and isinstance(branch_ids, list):
                 for bid in branch_ids:
-                    branch_to_choice.setdefault(bid, []).append(choice_id)
-                    branch_origin_choice.setdefault(bid, choice_id)
+                    branch_to_choices.setdefault(bid, []).append(choice_id)
                     # Choice -> Plot Branch ("this choice opens a branch").
                     add_edge(f"choice_{choice_id}", f"branch_{bid}",
                              '#d97706', width=1.5, label='открывает')
 
-        # Consequence -> Plot Branch: link a consequence back to the branches
-        # spawned by the same choice that triggered the consequence. This is
-        # the "разветвляет историю" step from the spec.
+        # Consequence -> Plot Branch: link a consequence to the branches opened
+        # by the same choice that triggered it. Walks the real FK chain:
+        # consequence.trigger_choice_id -> branch_point.choice_id -> branch_ids.
         for con_id, trig_choice_id in consequence_choice.items():
-            for bid in branch_to_choice:
-                if trig_choice_id in branch_to_choice[bid]:
+            for bid, choice_ids in branch_to_choices.items():
+                if trig_choice_id in choice_ids:
                     add_edge(f"consequence_{con_id}", f"branch_{bid}",
                              '#8b5cf6', width=2, dashes=True, label='разветвляет')
 
-        # Consequence -> Ending: prefer explicit field matches; fall back to a
-        # conservative keyword match on conditions/descriptions. We only draw
-        # a link when the consequence description and an ending condition share
-        # a concrete story token (character/object/faction name).
-        keywords = ["мара", "ивен", "ивон", "валон", "амулет", "культ"]
-        for con in consequences:
-            payload_con = parse_payload(con)
-            con_desc = (payload_con.get('description') or con['label'] or '').lower()
-            con_conds = [str(x).lower() for x in payload_con.get('conditions', [])]
-            con_text = con_desc + ' ' + ' '.join(con_conds)
+        # Ending -> Epilogue via endings.epilogue_id (real payload FK).
+        for e_id, epi_id in ending_epilogue.items():
+            if epi_id in epilogue_ids:
+                add_edge(f"ending_{e_id}", f"epilogue_{epi_id}",
+                         '#14b8a6', width=1.5, dashes=True, label='эпилог')
 
-            for e in endings:
-                payload_e = parse_payload(e)
-                e_conds = [str(x).lower() for x in payload_e.get('conditions', [])]
-                e_text = ' '.join(e_conds)
-                matched = any(kw in con_text and kw in e_text for kw in keywords)
-                if matched:
-                    add_edge(f"consequence_{con['id']}", f"ending_{e['id']}",
-                             '#10b981', width=2, dashes=True, label='ведет к')
+        # Note: there is NO structural consequence->ending link in the schema.
+        # The only place endings relate to choices/branches is the free-text
+        # `conditions` array, which is not a reliable id reference. We therefore
+        # do not synthesise that edge — endings hang off their epilogue and the
+        # campaign instead, which are the real relationships the data encodes.
 
         # Backbone sequence of plot branches ordered by id — gives the tree a
         # readable spine when no explicit ordering field exists.

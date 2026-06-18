@@ -720,6 +720,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> Финал: хороший</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #ef4444; border: 1px solid #b91c1c; border-radius: 5px;"></div> Финал: плохой</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #9ca3af; border: 1px solid #4b5563; border-radius: 5px;"></div> Финал: нейтральный</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #14b8a6; border: 1px solid #0f766e;"></div> Эпилог (Epilogue)</div>
                     </div>
                 </div>
                 <div class="control-group">
@@ -729,7 +730,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> приводит к последствию</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #d97706;"></div> открывает ветку</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #8b5cf6; border-top: 2px dashed #8b5cf6;"></div> разветвляет историю</div>
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981; border-top: 2px dashed #10b981;"></div> ведет к финалу</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #14b8a6; border-top: 2px dashed #14b8a6;"></div> эпилог (Финал ➔ Эпилог)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #0ea5e9; border-top: 2px dashed #0ea5e9;"></div> часть сюжета</div>
                     </div>
                 </div>
