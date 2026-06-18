@@ -457,71 +457,107 @@ def get_quests_graph():
 
 def get_future_graphs_todo():
     """
-    Parses docs/FUTURE_GRAPHS_TODO.md and returns a structured list of dictionaries
-    representing the planned graph visualizations.
+    Parses docs/FUTURE_GRAPHS_TODO.md and returns a structured list of
+    dictionaries representing the PLANNED (not yet implemented) graph
+    visualizations.
+
+    Supports two document layouts:
+      - Legacy: top-level `## N. Title` sections.
+      - Current: a single `## 📋 Планируемые графы (кандидаты)` section whose
+        subsections use `### A. Title` / `### B. Title` headings, optionally
+        grouped under `### 🥇/🥈/🥉 Priority` markers.
+    The "Реализованные графы" and "Принципы реализации" sections are skipped.
     """
     todo_path = os.path.join("docs", "FUTURE_GRAPHS_TODO.md")
     if not os.path.exists(todo_path):
         return []
-        
+
     try:
         with open(todo_path, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
         print(f"Error reading {todo_path}: {e}")
         return []
-        
+
     import re
-    sections = re.split(r'\n##\s+', content)
-    todo_items = []
-    
-    for section in sections:
-        # Ignore intro text
-        if not section.strip() or section.startswith("#"):
-            continue
-            
-        lines = section.strip().split("\n")
-        title_line = lines[0]
-        # Match title: e.g. "1. 🌲 Дерево прокачки и талантов (Progression & Skill Trees)"
-        title_match = re.match(r'^\d+\.\s*(.*)', title_line)
-        title = title_match.group(1) if title_match else title_line
-        
-        goal = ""
-        tables = ""
+
+    # Sections that are NOT planned graphs.
+    skip_prefixes = (
+        "Реализованные графы",
+        "Принципы реализации",
+        "Планируемые графы",  # wrapper section; its real items live in ###
+    )
+
+    def parse_block(block):
+        """Parse a heading + bullet block into a todo item dict."""
+        lines = block.strip().split("\n")
+        title_line = lines[0].strip()
+        # Strip any leading 'A. ' / '1. ' prefix and leading emoji group.
+        title_match = re.match(r'^(?:[A-Z\d]+\.|###\s+)?\s*(.*)', title_line)
+        title = title_match.group(1).strip() if title_match else title_line
+        title = title.lstrip('#').strip()
+
+        goal, tables, benefit = "", "", ""
         connections = []
-        benefit = ""
-        
         in_connections = False
-        
+
         for line in lines[1:]:
-            line_str = line.strip()
-            if not line_str:
+            s = line.strip()
+            if not s:
                 continue
-            if line_str.startswith("- **Цель**:") or line_str.startswith("- **Цель**"):
-                goal = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+            if s.startswith("- **Цель**"):
+                goal = s.split(":", 1)[1].strip() if ":" in s else s
                 in_connections = False
-            elif line_str.startswith("- **Таблицы**:") or line_str.startswith("- **Таблицы**"):
-                tables = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+            elif s.startswith("- **Таблицы**"):
+                tables = s.split(":", 1)[1].strip() if ":" in s else s
                 in_connections = False
-            elif line_str.startswith("- **Связи**:") or line_str.startswith("- **Связи**"):
+            elif s.startswith("- **Связи**"):
                 in_connections = True
-            elif line_str.startswith("- **Польза**:") or line_str.startswith("- **Польза**"):
-                benefit = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+            elif s.startswith("- **Польза**"):
+                benefit = s.split(":", 1)[1].strip() if ":" in s else s
                 in_connections = False
-            elif in_connections and (line_str.startswith("-") or line_str.startswith("*")):
-                conn_item = line_str.lstrip("-* ").strip()
-                connections.append(conn_item)
-            elif in_connections and line.startswith("  "):
-                conn_item = line_str.lstrip("-* ").strip()
-                connections.append(conn_item)
-        todo_items.append({
+            elif in_connections and (s.startswith("-") or s.startswith("*") or line.startswith("  ")):
+                connections.append(s.lstrip("-* ").strip())
+        return {
             'title': title,
             'goal': goal,
             'tables': tables,
             'connections': connections,
             'benefit': benefit
-        })
-        
+        }
+
+    todo_items = []
+
+    # Try the current layout first: #### candidate subsections inside the
+    # planned section. Priority group markers use ###, candidates use ####.
+    planned_match = re.search(
+        r'##\s+📋?\s*Планируемые графы.*?(?=\n##\s+|\Z)',
+        content, flags=re.S
+    )
+    if planned_match:
+        planned_body = planned_match.group(0)
+        # Split on #### headings (the A./B./C... candidates).
+        sub_blocks = re.split(r'\n####\s+', planned_body)
+        for block in sub_blocks:
+            block = block.strip()
+            if not block:
+                continue
+            # A real candidate has a "- **Цель**" or "- **Таблицы**" line.
+            if "**Цель**" in block or "**Таблицы**" in block:
+                todo_items.append(parse_block(block))
+
+    # Fallback / supplement: legacy top-level ## sections that look like graphs.
+    if not todo_items:
+        sections = re.split(r'\n##\s+', content)
+        for section in sections:
+            if not section.strip() or section.startswith("#"):
+                continue
+            title_line = section.split("\n", 1)[0].strip()
+            if any(title_line.startswith(p) for p in skip_prefixes):
+                continue
+            if "**Цель**" in section or "**Таблицы**" in section:
+                todo_items.append(parse_block(section))
+
     return todo_items
 
 def get_story_branches_graph():
