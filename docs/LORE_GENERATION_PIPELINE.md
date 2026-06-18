@@ -219,5 +219,35 @@ CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 ./venv/bin/python3 CAMEL.Bridge/ru
 * **Логическая связность**: Персонажи помнят свои прошлые действия, болезни и статус отношений.
 * **Динамичность**: Возможность развивать мир эпизод за эпизодом, подобно настольной ролевой игре.
 
+---
+
+## Исправление доменных ограничений (Bugfix: CursedItem Invariants)
+
+Во время полной генерации (Full Pass) ИИ может возвращать значения редкости (`rarity`) или степени риска (`risk_level`) проклятых предметов, выходящие за рамки строгих валидаторов домена `CursedItem`:
+* `VALID_CURSED_ITEM_RARITIES = {"rare", "epic", "legendary", "cursed", "forbidden"}`
+* `VALID_CURSED_ITEM_RISKS = {"low", "medium", "high", "extreme"}`
+
+### Решение
+В класс `CoerceParserMixin` (файл [parsers_coerce_utils.py](file:///Volumes/External/Code/loreSystem/src/application/integration/camel_bridge/mixins/parsers_coerce_utils.py)) добавлены следующие хэндлеры коэрции:
+1. `_coerce_cursed_item_rarity(value)`: Маппит нестандартные значения (например, `mythical` $\to$ `legendary`, `common` $\to$ `rare`) в допустимый список, дефолт — `cursed`.
+2. `_coerce_cursed_item_risk(value)`: Маппит синонимы (например, `moderate` $\to$ `medium`, `critical` $\to$ `extreme`), дефолт — `high`.
+
+Методы применены в [parsers_items.py](file:///Volumes/External/Code/loreSystem/src/application/integration/camel_bridge/mixins/parsers_items.py) при сборке объекта `CursedItemDraft`. Это гарантирует отсутствие прерываний выполнения из-за `InvariantViolation`.
+
+---
+
+## Верификация Full Pass (Сюжет + Системы)
+
+При запуске полной инициализации с флагами `--with-campaign-story --with-systems` система успешно генерирует и сохраняет в SQLite/Qdrant следующие категории сущностей:
+
+* **Сюжет (Narrative)**: Кампания (`campaign`), история (`story`), 3 акта, 3 главы, 3 эпизода, нелинейные развилки сюжета (`plot_branch`, `moral_choice`, `consequence`), концовки (`ending`), квестовые цепочки (`quest_chain`, `quest_node`, `quest_objective`, `quest_reward_tier`).
+* **Игровые предметы (Items)**: Клинок Тёмного Сокровища, Талисман Пламени Тени, материалы (`material`), компоненты (`component`), слоты под руны (`socket`).
+* **Крафт и Чертежи**: Рецепты крафта (`crafting_recipe`), чертежи построек/предметов (`blueprint`), эффекты зачарования (`enchantment`).
+* **Прогрессия**: Деревья талантов (`talent_tree`), навыки (`skill`), пассивные перки (`perk`), врожденные черты характера (`trait`), числовые атрибуты (`attribute`), уровни и опыт (`level_up`, `experience`).
+* **Игровой мир**: Подземелья (`dungeon`), рейды (`raid`), мировые и сезонные события (`world_event`, `seasonal_event`), локации (`open_world_zone`).
+* **Элитарный контент**: Уникальное оружие/броня (`legendary_weapon`, `mythical_armor`), божественные артефакты (`divine_item`), проклятые предметы (`cursed_item`).
+* **Интеграция с памятью**: В Qdrant успешно добавляется **25 проиндексированных документов** за один проход.
+
+
 
 
