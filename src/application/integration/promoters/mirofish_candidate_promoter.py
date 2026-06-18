@@ -37,13 +37,6 @@ from .mirofish_resolution import MiroFishResolutionMixin
 from .mirofish_utils import MiroFishUtilsMixin
 
 
-from .mirofish_mapping import MiroFishMappingMixin
-from .mirofish_validation import MiroFishValidationMixin
-from .mirofish_lookup import MiroFishLookupMixin
-from .mirofish_resolution import MiroFishResolutionMixin
-from .mirofish_utils import MiroFishUtilsMixin
-
-
 class MiroFishCandidatePromoter(
     MiroFishMappingMixin,
     MiroFishValidationMixin,
