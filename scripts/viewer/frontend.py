@@ -1142,11 +1142,16 @@ HTML_CONTENT = """<!DOCTYPE html>
 
         function renderGraph(graphData) {
             const container = document.getElementById('network');
-            
+
+            // Adaptive performance: large graphs (> 40 nodes) disable the
+            // expensive visual options (shadows, smooth curved edges, html
+            // multi-font) that make vis-network crawl on big datasets.
+            const isLargeGraph = graphData.nodes.length > 40;
+
             const options = {
                 nodes: {
                     borderWidth: 2,
-                    shadow: true,
+                    shadow: !isLargeGraph,
                     // Constrain wide node labels so they wrap instead of
                     // stretching across neighbours and overlapping text.
                     widthConstraint: { maximum: 220 },
@@ -1154,19 +1159,18 @@ HTML_CONTENT = """<!DOCTYPE html>
                     font: {
                         face: 'Inter',
                         size: 14,
-                        multi: 'html',
+                        multi: isLargeGraph ? false : 'html',
                         strokeWidth: 4,
                         strokeColor: '#0b0f19'
                     }
                 },
                 edges: {
-                    shadow: true,
-                    // Straight-ish edges keep label text from piling up where
-                    // several curved edges converge on a single node.
-                    smooth: {
-                        type: 'continuous',
-                        roundness: 0.15
-                    },
+                    shadow: !isLargeGraph,
+                    // Straight edges on large graphs (curves are expensive to
+                    // redraw every frame); keep gentle curves for small ones.
+                    smooth: isLargeGraph
+                        ? { enabled: true, type: 'continuous', roundness: 0 }
+                        : { type: 'continuous', roundness: 0.15 },
                     font: {
                         face: 'Inter',
                         size: 11,
@@ -1177,7 +1181,9 @@ HTML_CONTENT = """<!DOCTYPE html>
                 },
                 layout: {
                     randomSeed: 42,
-                    improvedLayout: true
+                    // improvedLayout does an O(n^2) swap-pass; disable for
+                    // large graphs to avoid the initial freeze.
+                    improvedLayout: !isLargeGraph
                 },
                 physics: {
                     enabled: physicsEnabled,
@@ -1215,7 +1221,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         treeSpacing: 480,
                         levelSeparation: 280,
                         blockShifting: true,
-                        edgeMinimization: true
+                        edgeMinimization: false
                     }
                 };
                 options.physics = { enabled: false };
@@ -1304,7 +1310,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         treeSpacing: 520,
                         levelSeparation: 340,
                         blockShifting: true,
-                        edgeMinimization: true
+                        edgeMinimization: false
                     }
                 };
                 options.physics = { enabled: false };

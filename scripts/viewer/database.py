@@ -385,12 +385,15 @@ def get_quests_graph():
                          '#d97706', width=1.5, dashes=True, label='шаг')
 
         # ---------- Quest objective nodes (linked to steps) ----------
-        referenced_obj_ids = set()
+        # Build a reverse index objective_id -> node_id once, so we don't do
+        # an O(nodes * objectives) scan for every objective.
+        obj_to_node = {}
         for qn in quest_nodes:
             payload = parse(qn)
             for oid in _parse_id_list(payload.get('objective_ids')):
                 if oid in obj_ids:
-                    referenced_obj_ids.add(oid)
+                    obj_to_node[oid] = qn['id']
+        referenced_obj_ids = set(obj_to_node.keys())
         for qo in quest_objectives:
             if qo['id'] not in referenced_obj_ids:
                 continue
@@ -413,13 +416,11 @@ def get_quests_graph():
                 'size': 12,
                 'color': {'background': '#eab308', 'border': '#a16207'}
             })
-            # Objective -> step (via quest_node.objective_ids).
-            # Find which node references this objective.
-            for qn in quest_nodes:
-                payload_n = parse(qn)
-                if qo['id'] in _parse_id_list(payload_n.get('objective_ids')):
-                    add_edge(f"node_{qn['id']}", f"objective_{qo['id']}",
-                             '#eab308', width=1.5, label='цель')
+            # Objective -> step (via reverse index, O(1)).
+            parent_nid = obj_to_node.get(qo['id'])
+            if parent_nid is not None:
+                add_edge(f"node_{parent_nid}", f"objective_{qo['id']}",
+                         '#eab308', width=1.5, label='цель')
 
         # ---------- Reward tier nodes (linked to steps) ----------
         for rt in quest_reward_tiers:
