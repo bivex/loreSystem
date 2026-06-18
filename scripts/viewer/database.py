@@ -787,7 +787,7 @@ def get_timeline_graph():
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='eras'")
         if not cursor.fetchone():
             cursor.execute("""
-                CREATE TABLE eras (
+                CREATE TABLE IF NOT EXISTS eras (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     tenant_id INTEGER NOT NULL,
                     world_id INTEGER NOT NULL,
@@ -800,6 +800,9 @@ def get_timeline_graph():
                     updated_at TEXT NOT NULL
                 )
             """)
+        # Seed if empty (handles partial creation from a failed earlier run)
+        cursor.execute("SELECT COUNT(*) FROM eras")
+        if cursor.fetchone()[0] == 0:
             now = datetime.now().isoformat()
             cursor.execute("""
                 INSERT INTO eras (tenant_id, world_id, name, description, start_date, end_date, color_code, created_at, updated_at)
@@ -812,7 +815,7 @@ def get_timeline_graph():
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='era_transitions'")
         if not cursor.fetchone():
             cursor.execute("""
-                CREATE TABLE era_transitions (
+                CREATE TABLE IF NOT EXISTS era_transitions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     tenant_id INTEGER NOT NULL,
                     world_id INTEGER NOT NULL,
@@ -825,13 +828,16 @@ def get_timeline_graph():
                     updated_at TEXT NOT NULL
                 )
             """)
+        # Seed if empty
+        cursor.execute("SELECT COUNT(*) FROM era_transitions")
+        if cursor.fetchone()[0] == 0:
             now = datetime.now().isoformat()
             cursor.execute("""
                 INSERT INTO era_transitions (tenant_id, world_id, name, description, from_era_id, to_era_id, transition_type, created_at, updated_at)
                 VALUES 
                 (1, 1, 'Великий Катаклизм', 'Переход от Эпохи Творения к Расцвету Королевств из-за нестабильности Горнила.', 1, 2, 'catastrophic', ?, ?),
                 (1, 1, 'Затмение Светила', 'Тёмный ритуал, положивший начало нашествию Тьмы.', 2, 3, 'magical', ?, ?)
-            """, (now, now, now))
+            """, (now, now, now, now))
             
         conn.commit()
         
