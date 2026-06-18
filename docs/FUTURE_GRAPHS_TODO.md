@@ -7,7 +7,7 @@ keyword-матчинга по тексту — это принцип, приня
 
 ---
 
-## ✅ Реализованные графы (13)
+## ✅ Реализованные графы (14)
 
 | # | Граф | Таблицы | Эндпоинт |
 |---|------|---------|----------|
@@ -24,6 +24,7 @@ keyword-матчинга по тексту — это принцип, приня
 | 11 | 🏆 Достижения и прогресс игрока | `achievements`, `badges`, `masterys`, `titles`, `progression_events`, `progression_states`, `experiences`, `leaderboards`, `player_metrics` | `/api/graph/achievements` |
 | 12 | ⚔️ Боевая карта и подземелья | `arenas`, `dungeons`, `instances`, `raids`, `invasions`, `difficulty_curves`, `characters` (bosses), `wars` (factions) | `/api/graph/combat` |
 | 13 | 💰 Экономика и лут | `inventories`, `loot_table_weights`, `drop_rates`, `quest_reward_tiers`, `relic_collections`, `characters` (owners), `items`, `quest_nodes` | `/api/graph/economy` |
+| 14 | 🌍 Открытый мир и события | `open_world_zones`, `seasonal_events`, `quest_givers`, `quest_objectives`, `quest_trackers`, `locations`, `quest_chains`, `quest_nodes`, `characters` | `/api/graph/open_world` |
 
 > ⚠️ Графы 6 и 8 работают на **производных** связях, т.к. в БД отсутствуют
 > таблицы `factions`/`faction_memberships` и `prerequisite_id`/`talent_node_id`
@@ -52,13 +53,7 @@ keyword-матчинга по тексту — это принцип, приня
 
 ### 🥉 Низкий приоритет (sparse / niche)
 
-#### B. 🌍 Открытый мир и события (Open World & Events)
-- **Таблицы**: `open_world_zones` (1), `seasonal_events` (1), `quest_givers` (3), `quest_objectives` (4), `quest_trackers` (2).
-- **Цель**: Карта зон мира → NPC-квестгиверы → цепочки заданий и трекеры прогресса.
-- **Ожидаемые связи**: `open_world_zone → location_id`; `quest_giver → npc_id/quest_id`; `quest_objective → quest_id`; `quest_tracker → quest_id/character_id`.
-- **Польза**: Видна география выдачи заданий и покрытие зон контентом.
-
-#### C. 💬 Социальные и моральные выборы (Social & Moral Choices)
+#### B. 💬 Социальные и моральные выборы (Social & Moral Choices)
 - **Таблицы**: `moral_choices` (2), `rumors` (2).
 - **Цель**: Дополнить граф сюжета моральными дилеммами и сетью слухов/репутации.
 - **Ожидаемые связи**: `moral_choice → choice_id/consequence_ids`; `rumor → character_id/faction_id/event_id`.
