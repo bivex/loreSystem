@@ -146,84 +146,100 @@ def get_locations_graph():
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = {r[0] for r in cursor.fetchall()}
         
-        worlds = []
-        if 'worlds' in tables:
-            cursor.execute("SELECT id, name, description FROM worlds")
-            worlds = [dict(row) for row in cursor.fetchall()]
-            
-        locations = []
-        if 'locations' in tables:
-            cursor.execute("SELECT id, name, world_id, parent_location_id, location_type, description FROM locations")
-            locations = [dict(row) for row in cursor.fetchall()]
-            
-        conn.close()
+        # Determine World/Campaign Title
+        world_name = "Основной мир"
+        world_desc = "Генерируемый игровой мир лора"
+        if 'campaigns' in tables:
+            cursor.execute("SELECT title, description FROM campaigns LIMIT 1")
+            campaign = cursor.fetchone()
+            if campaign:
+                world_name = campaign['title']
+                world_desc = campaign['description'] or world_desc
+                
+        # Add root World node
+        nodes.append({
+            'id': 'world_1',
+            'label': world_name,
+            'title': f"<b>Мир: {world_name}</b><br>{world_desc}",
+            'color': {
+                'background': '#10b981', # emerald green
+                'border': '#065f46'
+            },
+            'shape': 'box',
+            'font': {'color': '#ffffff', 'size': 16, 'bold': True}
+        })
         
-        # Add worlds as root nodes
-        for w in worlds:
-            desc = w.get('description', '')
-            if desc and desc.startswith('{'):
-                try:
-                    desc = json.loads(desc).get('value', desc)
-                except Exception:
-                    pass
-            tooltip = f"<b>Мир: {w['name']}</b><br>Описание: {desc}"
-            nodes.append({
-                'id': f"world_{w['id']}",
-                'label': w['name'],
-                'title': tooltip,
-                'color': {
-                    'background': '#10b981',
-                    'border': '#065f46'
-                },
-                'shape': 'box',
-                'font': {'color': '#ffffff', 'size': 14, 'bold': True}
-            })
+        # Location tables to scan
+        loc_tables = {
+            'open_world_zones': {'name': 'Зона', 'color': '#06b6d4', 'border': '#0891b2'},      # Cyan
+            'dungeons': {'name': 'Подземелье', 'color': '#f43f5e', 'border': '#be123c'},          # Crimson
+            'raids': {'name': 'Рейд', 'color': '#8b5cf6', 'border': '#6d28d9'},                 # Purple
+            'arenas': {'name': 'Арена', 'color': '#f59e0b', 'border': '#b45309'},               # Amber
+            'instances': {'name': 'Инстанс', 'color': '#3b82f6', 'border': '#1d4ed8'}            # Blue
+        }
+        
+        for t_name, info in loc_tables.items():
+            if t_name not in tables:
+                continue
+                
+            cursor.execute(f"SELECT id, label, payload_json FROM {t_name}")
+            rows = cursor.fetchall()
             
-        # Add locations
-        for loc in locations:
-            l_type = loc.get('location_type', 'N/A')
-            desc = loc.get('description', '')
-            if desc and desc.startswith('{'):
-                try:
-                    desc = json.loads(desc).get('value', desc)
-                except Exception:
-                    pass
-            tooltip = f"<b>Локация: {loc['name']}</b><br>Тип: {l_type}<br>Описание: {desc}"
-            
-            nodes.append({
-                'id': f"loc_{loc['id']}",
-                'label': loc['name'],
-                'title': tooltip,
-                'color': {
-                    'background': '#3b82f6',
-                    'border': '#1e3a8a'
-                },
-                'shape': 'dot',
-                'size': 15
-            })
-            
-            parent_id = loc.get('parent_location_id')
-            world_id = loc.get('world_id')
-            
-            if parent_id:
-                edges.append({
-                    'from': f"loc_{parent_id}",
-                    'to': f"loc_{loc['id']}",
-                    'arrows': 'to',
-                    'color': '#3b82f6',
-                    'width': 2
+            for row in rows:
+                payload = {}
+                if row['payload_json']:
+                    try:
+                        payload = json.loads(row['payload_json'])
+                    except Exception:
+                        pass
+                
+                # Fetch name and description from payload, fallback to label
+                name = payload.get('name') or row['label'] or f"{info['name']} #{row['id']}"
+                desc = payload.get('description', '')
+                
+                # Dynamic tooltip based on available payload fields
+                tooltip = f"<b>Тип:</b> {info['name']}<br>" \
+                          f"<b>Название:</b> {name}<br>"
+                
+                if desc:
+                    tooltip += f"<b>Описание:</b> {desc}<br>"
+                    
+                if 'difficulty' in payload:
+                    tooltip += f"<b>Сложность:</b> {payload['difficulty']}<br>"
+                if 'min_level' in payload:
+                    tooltip += f"<b>Уровень:</b> {payload['min_level']}"
+                    if 'max_level' in payload:
+                        tooltip += f"-{payload['max_level']}"
+                    tooltip += "<br>"
+                if 'max_players' in payload:
+                    tooltip += f"<b>Игроков:</b> {payload['max_players']}<br>"
+                    
+                node_id = f"loc_{t_name}_{row['id']}"
+                
+                nodes.append({
+                    'id': node_id,
+                    'label': name,
+                    'title': tooltip,
+                    'color': {
+                        'background': info['color'],
+                        'border': info['border']
+                    },
+                    'shape': 'dot',
+                    'size': 15
                 })
-            elif world_id:
+                
+                # Connect to root World node
                 edges.append({
-                    'from': f"world_{world_id}",
-                    'to': f"loc_{loc['id']}",
+                    'from': 'world_1',
+                    'to': node_id,
                     'arrows': 'to',
-                    'color': '#10b981',
+                    'color': info['color'],
                     'width': 2
                 })
                 
+        conn.close()
     except Exception as e:
-        print(f"Error building location graph: {e}")
+        print(f"Error building locations graph: {e}")
         
     return {'nodes': nodes, 'edges': edges}
 
