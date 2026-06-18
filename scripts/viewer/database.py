@@ -2779,3 +2779,575 @@ def get_achievements_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_combat_graph():
+    """Combat & encounters graph.
+
+    Built only from real DB fields. Real structural links:
+      - dungeons.boss_ids / raids.boss_ids -> characters (boss enemies)
+      - invasions.invader_name / target_name -> faction names (matched
+        against the wars table, the only place faction identity is
+        encoded in the schema; mirrors the approach in factions graph)
+      - world_id shared by all combat entities -> world hub
+    difficulty_curves attach to the world as context; there is no direct
+    FK from a curve to a specific encounter.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        arenas = load_table('arenas')
+        dungeons = load_table('dungeons')
+        instances = load_table('instances')
+        raids = load_table('raids')
+        invasions = load_table('invasions')
+        difficulty_curves = load_table('difficulty_curves')
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        char_ids = {c['id'] for c in characters}
+
+        # Build the set of faction names from wars (same logic as factions
+        # graph) so invasions can resolve their invader/target strings to
+        # real nodes.
+        faction_name_to_id = {}
+        wars_rows = load_table('wars')
+        for w in wars_rows:
+            payload = parse(w)
+            for fname in (payload.get('aggressor_name'), payload.get('defender_name'), payload.get('victor_name')):
+                if fname and fname not in faction_name_to_id:
+                    faction_name_to_id[fname] = f"faction_{len(faction_name_to_id)+1}"
+
+        # ---------- World hub node ----------
+        world_id = None
+        for ents in (arenas, dungeons, instances, raids, invasions, difficulty_curves):
+            for e in ents:
+                payload = parse(e)
+                if payload.get('world_id') is not None:
+                    world_id = payload['world_id']
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб боевого контента",
+                'color': {'background': '#64748b', 'border': '#334155'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Faction nodes (referenced by invasions) ----------
+        invasion_faction_names = set()
+        for inv in invasions:
+            payload = parse(inv)
+            for key in ('invader_name', 'target_name'):
+                fn = payload.get(key)
+                if fn:
+                    invasion_faction_names.add(fn)
+        # Register any invasion faction not already in faction_name_to_id.
+        for fn in invasion_faction_names:
+            if fn not in faction_name_to_id:
+                faction_name_to_id[fn] = f"faction_{len(faction_name_to_id)+1}"
+        for fn in invasion_faction_names:
+            nodes.append({
+                'id': faction_name_to_id[fn],
+                'label': f"🏛️ {fn}",
+                'title': f"<b>Фракция: {fn}</b><br>Участник нашествия",
+                'color': {'background': '#6366f1', 'border': '#4338ca'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Boss character nodes (referenced by dungeons/raids) ----------
+        boss_ids = set()
+        for ents in (dungeons, raids):
+            for e in ents:
+                payload = parse(e)
+                for bid in _parse_id_list(payload.get('boss_ids')):
+                    if bid in char_ids:
+                        boss_ids.add(bid)
+        for ch in characters:
+            if ch['id'] not in boss_ids:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"👹 {ch['name']}",
+                'title': f"<b>Босс: {ch['name']}</b><br>ID: {ch['id']}",
+                'color': {'background': '#dc2626', 'border': '#991b1b'},
+                'shape': 'diamond',
+                'size': 16
+            })
+
+        # ---------- Arena nodes ----------
+        for ar in arenas:
+            payload = parse(ar)
+            name = payload.get('name') or ar['label']
+            tooltip = f"<b>⚔️ Арена: {name}</b>"
+            if payload.get('match_type'):
+                tooltip += f"<br><b>Тип матча:</b> {payload['match_type']}"
+            tooltip += f"<br><b>Команд:</b> до {payload.get('max_teams', '?')}"
+            tooltip += f"<br><b>Мин. уровень:</b> {payload.get('min_level', '?')}"
+            nodes.append({
+                'id': f"arena_{ar['id']}",
+                'label': f"⚔️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"arena_{ar['id']}",
+                         '#f59e0b', width=1.5, label='арена')
+
+        # ---------- Dungeon nodes (linked to boss) ----------
+        for dg in dungeons:
+            payload = parse(dg)
+            name = payload.get('name') or dg['label']
+            tooltip = f"<b>🏰 Подземелье: {name}</b>"
+            if payload.get('difficulty'):
+                tooltip += f"<br><b>Сложность:</b> {payload['difficulty']}"
+            tooltip += f"<br><b>Игроков:</b> до {payload.get('max_players', '?')}"
+            tooltip += f"<br><b>Мин. уровень:</b> {payload.get('min_level', '?')}"
+            nodes.append({
+                'id': f"dungeon_{dg['id']}",
+                'label': f"🏰 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"dungeon_{dg['id']}",
+                         '#3b82f6', width=1.5, label='данж')
+            # Dungeon -> boss (real FK boss_ids).
+            for bid in _parse_id_list(payload.get('boss_ids')):
+                if bid in char_ids:
+                    add_edge(f"dungeon_{dg['id']}", f"char_{bid}",
+                             '#dc2626', width=2, label='босс')
+
+        # ---------- Instance nodes ----------
+        for ins in instances:
+            payload = parse(ins)
+            name = payload.get('name') or ins['label']
+            tooltip = f"<b>🌀 Инстанс: {name}</b>"
+            if payload.get('difficulty'):
+                tooltip += f"<br><b>Сложность:</b> {payload['difficulty']}"
+            tooltip += f"<br><b>Игроков:</b> до {payload.get('max_players', '?')}"
+            if payload.get('recommended_level'):
+                tooltip += f"<br><b>Реком. уровень:</b> {payload['recommended_level']}"
+            nodes.append({
+                'id': f"instance_{ins['id']}",
+                'label': f"🌀 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"instance_{ins['id']}",
+                         '#06b6d4', width=1.5, label='инстанс')
+
+        # ---------- Raid nodes (linked to boss) ----------
+        for rd in raids:
+            payload = parse(rd)
+            name = payload.get('name') or rd['label']
+            tooltip = f"<b>🐉 Рейд: {name}</b>"
+            if payload.get('difficulty'):
+                tooltip += f"<br><b>Сложность:</b> {payload['difficulty']}"
+            tooltip += f"<br><b>Игроков:</b> {payload.get('min_players', '?')}–{payload.get('max_players', '?')}"
+            tooltip += f"<br><b>Мин. уровень:</b> {payload.get('min_level', '?')}"
+            nodes.append({
+                'id': f"raid_{rd['id']}",
+                'label': f"🐉 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12, 'bold': True}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"raid_{rd['id']}",
+                         '#a855f7', width=2, label='рейд')
+            for bid in _parse_id_list(payload.get('boss_ids')):
+                if bid in char_ids:
+                    add_edge(f"raid_{rd['id']}", f"char_{bid}",
+                             '#dc2626', width=2, label='босс')
+
+        # ---------- Invasion nodes (linked to factions) ----------
+        for inv in invasions:
+            payload = parse(inv)
+            name = payload.get('name') or inv['label']
+            itype = payload.get('invasion_type', '')
+            tooltip = f"<b>💀 Нашествие: {name}</b>"
+            if itype:
+                tooltip += f"<br><b>Тип:</b> {itype}"
+            if payload.get('invader_name'):
+                tooltip += f"<br><b>Агрессор:</b> {payload['invader_name']}"
+            if payload.get('target_name'):
+                tooltip += f"<br><b>Цель:</b> {payload['target_name']}"
+            tooltip += f"<br><b>Сила:</b> {payload.get('force_size', '?')}"
+            tooltip += f"<br><b>Прогресс:</b> {payload.get('conquest_progress', '?')}%"
+            nodes.append({
+                'id': f"invasion_{inv['id']}",
+                'label': f"💀 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#dc2626', 'border': '#991b1b'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"invasion_{inv['id']}",
+                         '#dc2626', width=2, label='нашествие')
+            # Invasion -> aggressor faction.
+            aggr = payload.get('invader_name')
+            if aggr and aggr in faction_name_to_id:
+                add_edge(faction_name_to_id[aggr], f"invasion_{inv['id']}",
+                         '#6366f1', width=2, label='нападает')
+            # Target faction <- invasion.
+            tgt = payload.get('target_name')
+            if tgt and tgt in faction_name_to_id:
+                add_edge(f"invasion_{inv['id']}", faction_name_to_id[tgt],
+                         '#6366f1', width=2, label='на цель')
+
+        # ---------- Difficulty curve nodes ----------
+        for dc in difficulty_curves:
+            payload = parse(dc)
+            name = payload.get('name') or dc['label']
+            tooltip = f"<b>📈 Кривая сложности: {name}</b>"
+            if payload.get('curve_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['curve_type']}"
+            tooltip += f"<br><b>Макс. уровень:</b> {payload.get('max_level', '?')}"
+            tooltip += f"<br><b>Множитель:</b> {payload.get('scaling_factor', '?')}"
+            nodes.append({
+                'id': f"difficulty_curve_{dc['id']}",
+                'label': f"📈 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},
+                'shape': 'dot',
+                'size': 12
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"difficulty_curve_{dc['id']}",
+                         '#10b981', width=1, label='сложность', dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building combat graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+
+def get_economy_graph():
+    """Economy & loot graph.
+
+    Built only from real DB fields. Real structural links:
+      - inventories.owner_id -> characters (the bag's owner)
+      - inventories.slots[<n>].item_id -> items (contents of the bag)
+      - quest_reward_tiers.quest_node_id -> quest_nodes (which quest step
+        grants the reward)
+      - loot_table_weights.loot_table_id -> a logical loot table id (we
+        surface it as a hub node since no loot_tables table exists)
+      - world_id shared by all economy entities -> world hub
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        inventories = load_table('inventories')
+        loot_table_weights = load_table('loot_table_weights')
+        drop_rates = load_table('drop_rates')
+        quest_reward_tiers = load_table('quest_reward_tiers')
+        relic_collections = load_table('relic_collections')
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        items = load_table('items')
+        quest_nodes = load_table('quest_nodes')
+        char_ids = {c['id'] for c in characters}
+        item_ids = {it['id'] for it in items}
+        qnode_ids = {qn['id'] for qn in quest_nodes}
+
+        # ---------- World hub node ----------
+        world_id = None
+        for ents in (loot_table_weights, drop_rates, quest_reward_tiers, relic_collections):
+            for e in ents:
+                payload = parse(e)
+                if payload.get('world_id') is not None:
+                    world_id = payload['world_id']
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб экономики и лута",
+                'color': {'background': '#64748b', 'border': '#334155'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Owner character nodes (referenced by inventories) ----------
+        owner_ids = set()
+        for inv in inventories:
+            payload = parse(inv)
+            oid = payload.get('owner_id')
+            if oid in char_ids:
+                owner_ids.add(oid)
+        for ch in characters:
+            if ch['id'] not in owner_ids:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"🧝 {ch['name']}",
+                'title': f"<b>Владелец: {ch['name']}</b>",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},
+                'shape': 'star',
+                'size': 16
+            })
+
+        # ---------- Item nodes (referenced by inventories) ----------
+        referenced_item_ids = set()
+        for inv in inventories:
+            payload = parse(inv)
+            slots = payload.get('slots')
+            if isinstance(slots, dict):
+                for slot in slots.values():
+                    if isinstance(slot, dict):
+                        iid = slot.get('item_id')
+                        if iid in item_ids:
+                            referenced_item_ids.add(iid)
+        for it in items:
+            if it['id'] not in referenced_item_ids:
+                continue
+            payload = parse(it)
+            name = payload.get('name') or it['label']
+            nodes.append({
+                'id': f"item_{it['id']}",
+                'label': f"🎒 {name[:20]}",
+                'title': f"<b>Предмет: {name}</b>",
+                'color': {'background': '#14b8a6', 'border': '#0f766e'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Quest node nodes (referenced by reward tiers) ----------
+        referenced_qnode_ids = set()
+        for qt in quest_reward_tiers:
+            payload = parse(qt)
+            qid = payload.get('quest_node_id')
+            if qid in qnode_ids:
+                referenced_qnode_ids.add(qid)
+        for qn in quest_nodes:
+            if qn['id'] not in referenced_qnode_ids:
+                continue
+            payload = parse(qn)
+            name = payload.get('name') or qn['label']
+            nodes.append({
+                'id': f"quest_node_{qn['id']}",
+                'label': f"📜 {name[:20]}",
+                'title': f"<b>Шаг квеста: {name}</b>",
+                'color': {'background': '#0ea5e9', 'border': '#0369a1'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Inventory nodes (linked to owner + items) ----------
+        for inv in inventories:
+            payload = parse(inv)
+            oid = payload.get('owner_id')
+            tooltip = f"<b>🎒 Инвентарь #{inv['id']}</b>"
+            if oid in char_ids:
+                oname = next((c['name'] for c in characters if c['id'] == oid), oid)
+                tooltip += f"<br><b>Владелец:</b> {oname}"
+            tooltip += f"<br><b>Вместимость:</b> {payload.get('capacity', '?')}"
+            tooltip += f"<br><b>Золото:</b> {payload.get('gold', '?')}"
+            slots = payload.get('slots')
+            if isinstance(slots, dict) and slots:
+                tooltip += f"<br><b>Слотов занято:</b> {len(slots)}"
+            nodes.append({
+                'id': f"inventory_{inv['id']}",
+                'label': f"🎒 Инв. #{inv['id']}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            # Inventory -> owner character (real FK owner_id).
+            if oid in char_ids:
+                add_edge(f"char_{oid}", f"inventory_{inv['id']}",
+                         '#fbbf24', width=2, label='инвентарь')
+            # Inventory -> contained items (real FK slots[].item_id).
+            if isinstance(slots, dict):
+                for slot in slots.values():
+                    if isinstance(slot, dict):
+                        iid = slot.get('item_id')
+                        if iid in item_ids:
+                            add_edge(f"inventory_{inv['id']}", f"item_{iid}",
+                                     '#14b8a6', width=1.5, label='содержит', dashes=True)
+
+        # ---------- Loot table hub + weight nodes ----------
+        # loot_table_weights reference a loot_table_id; since there is no
+        # loot_tables table, surface each distinct loot_table_id as a hub.
+        loot_table_hub_ids = set()
+        for lw in loot_table_weights:
+            payload = parse(lw)
+            ltid = payload.get('loot_table_id')
+            if ltid is not None:
+                loot_table_hub_ids.add(ltid)
+        for ltid in loot_table_hub_ids:
+            nodes.append({
+                'id': f"loot_table_{ltid}",
+                'label': f"📦 Лут-таблица {ltid}",
+                'title': f"<b>Лут-таблица #{ltid}</b><br>Группирует дроп-веса",
+                'color': {'background': '#ec4899', 'border': '#be185d'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12, 'bold': True}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"loot_table_{ltid}",
+                         '#ec4899', width=1.5, label='лут')
+        for lw in loot_table_weights:
+            payload = parse(lw)
+            name = payload.get('name') or lw['label']
+            tooltip = f"<b>⚖️ Вес лута: {name}</b>"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            tooltip += f"<br><b>Вес:</b> {payload.get('weight', '?')}"
+            tooltip += f"<br><b>Мин. уровень:</b> {payload.get('min_level', '?')}"
+            nodes.append({
+                'id': f"loot_weight_{lw['id']}",
+                'label': f"⚖️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#f472b6', 'border': '#be185d'},
+                'shape': 'dot',
+                'size': 12
+            })
+            ltid = payload.get('loot_table_id')
+            if ltid is not None:
+                add_edge(f"loot_table_{ltid}", f"loot_weight_{lw['id']}",
+                         '#ec4899', width=1.5, label='вес')
+
+        # ---------- Drop rate nodes ----------
+        for dr in drop_rates:
+            payload = parse(dr)
+            name = payload.get('name') or dr['label']
+            tooltip = f"<b>🎰 Дроп-рейт: {name}</b>"
+            if payload.get('category'):
+                tooltip += f"<br><b>Категория:</b> {payload['category']}"
+            tooltip += f"<br><b>Шанс:</b> {payload.get('drop_rate', '?')}"
+            if payload.get('is_event_boosted'):
+                tooltip += "<br><b>Буст-множитель:</b> " + str(payload.get('boost_multiplier', '?'))
+            nodes.append({
+                'id': f"drop_rate_{dr['id']}",
+                'label': f"🎰 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#22c55e', 'border': '#15803d'},
+                'shape': 'dot',
+                'size': 12
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"drop_rate_{dr['id']}",
+                         '#22c55e', width=1.5, label='дроп', dashes=True)
+
+        # ---------- Quest reward tier nodes (linked to quest_node) ----------
+        for qt in quest_reward_tiers:
+            payload = parse(qt)
+            name = payload.get('name') or qt['label']
+            tooltip = f"<b>🎁 Награда: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            tooltip += f"<br><b>Тир:</b> {payload.get('tier_level', '?')}"
+            if payload.get('is_guaranteed'):
+                tooltip += "<br>(гарантированная)"
+            nodes.append({
+                'id': f"reward_tier_{qt['id']}",
+                'label': f"🎁 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#eab308', 'border': '#a16207'},
+                'shape': 'diamond',
+                'size': 13
+            })
+            qid = payload.get('quest_node_id')
+            if qid in qnode_ids:
+                add_edge(f"quest_node_{qid}", f"reward_tier_{qt['id']}",
+                         '#0ea5e9', width=2, label='награда')
+            elif world_id is not None:
+                add_edge(f"world_{world_id}", f"reward_tier_{qt['id']}",
+                         '#eab308', width=1, label='награда', dashes=True)
+
+        # ---------- Relic collection nodes ----------
+        for rc in relic_collections:
+            payload = parse(rc)
+            name = payload.get('name') or rc['label']
+            tooltip = f"<b>🏺 Коллекция реликвий: {name}</b>"
+            if payload.get('collection_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['collection_type']}"
+            tooltip += f"<br><b>Всего реликвий:</b> {payload.get('total_relics', '?')}"
+            if payload.get('completion_reward'):
+                tooltip += f"<br><b>Награда за комплект:</b> {payload['completion_reward']}"
+            nodes.append({
+                'id': f"relic_collection_{rc['id']}",
+                'label': f"🏺 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"relic_collection_{rc['id']}",
+                         '#a855f7', width=1.5, label='коллекция')
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building economy graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

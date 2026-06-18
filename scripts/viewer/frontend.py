@@ -485,6 +485,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="narrative">📖 Структура повествования</option>
                             <option value="legendary_items">⭐ Легендарные предметы и комплекты</option>
                             <option value="achievements">🏆 Достижения и прогресс игрока</option>
+                            <option value="combat">⚔️ Боевая карта и подземелья</option>
+                            <option value="economy">💰 Экономика и лут</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -904,6 +906,58 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            combat: `
+                <div class="control-group">
+                    <label>Узлы боевого контента</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Арена</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Подземелье</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2;"></div> Инстанс</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Рейд</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #dc2626; border: 1px solid #991b1b;"></div> Нашествие</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #10b981;"></div> Кривая сложности</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #dc2626; border: 1px solid #991b1b; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Босс (персонаж)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Фракция</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи боёв</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #dc2626;"></div> босс (данж/рейд ➔ персонаж)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #6366f1;"></div> нападает / на цель (фракция ➔ нашествие)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981; border-top: 2px dashed #10b981;"></div> кривая сложности</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #64748b;"></div> относится к миру</div>
+                    </div>
+                </div>
+            `,
+            economy: `
+                <div class="control-group">
+                    <label>Узлы экономики</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24; border-radius: 50%;"></div> Владелец (персонаж)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Инвентарь</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #14b8a6; border: 1px solid #0f766e;"></div> Предмет (в инвентаре)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d;"></div> Лут-таблица</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f472b6;"></div> Вес лута</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #22c55e;"></div> Дроп-рейт</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #eab308; border: 1px solid #a16207; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Награда квеста</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #0ea5e9; border: 1px solid #0369a1;"></div> Шаг квеста</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Коллекция реликвий</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи экономики</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24;"></div> инвентарь (персонаж ➔ инвентарь)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #14b8a6; border-top: 2px dashed #14b8a6;"></div> содержит (инвентарь ➔ предмет)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> лут / вес (мир ➔ таблица ➔ вес)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #22c55e; border-top: 2px dashed #22c55e;"></div> дроп</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #0ea5e9;"></div> награда (шаг квеста ➔ награда)</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -1162,19 +1216,19 @@ HTML_CONTENT = """<!DOCTYPE html>
                 // Radial cluster: world hub at the centre, item categories
                 // (weapons/armor/sets/enchantments/runes/glyphs) radiating
                 // outward; sockets hang off their host items and traits off
-                // their characters.
+                // their characters. Wide spacing so labels don't overlap.
                 options.physics = {
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -80,
-                        centralGravity: 0.4,
-                        springLength: 160,
-                        springConstant: 0.05,
+                        gravitationalConstant: -180,
+                        centralGravity: 0.15,
+                        springLength: 320,
+                        springConstant: 0.03,
                         damping: 0.5,
-                        avoidOverlap: 0.75
+                        avoidOverlap: 0.95
                     },
-                    stabilization: { iterations: 250 }
+                    stabilization: { iterations: 300 }
                 };
             } else if (currentGraphType === 'achievements') {
                 // Top-down tree: character at the root, progression meta
@@ -1192,6 +1246,41 @@ HTML_CONTENT = """<!DOCTYPE html>
                     }
                 };
                 options.physics = { enabled: false };
+            } else if (currentGraphType === 'combat') {
+                // Radial cluster: world hub at centre, encounter types
+                // (arenas/dungeons/instances/raids/invasions) radiating out,
+                // bosses hanging off dungeons/raids, factions flanking
+                // invasions. Wide spacing for readability.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -180,
+                        centralGravity: 0.15,
+                        springLength: 300,
+                        springConstant: 0.03,
+                        damping: 0.5,
+                        avoidOverlap: 0.95
+                    },
+                    stabilization: { iterations: 300 }
+                };
+            } else if (currentGraphType === 'economy') {
+                // Mixed: inventories flow owner -> inventory -> items (LR
+                // hierarchy), while loot/drop/reward nodes cluster around the
+                // world hub. Force-directed with strong overlap avoidance.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -150,
+                        centralGravity: 0.2,
+                        springLength: 260,
+                        springConstant: 0.035,
+                        damping: 0.5,
+                        avoidOverlap: 0.9
+                    },
+                    stabilization: { iterations: 300 }
+                };
             }
 
             network = new vis.Network(container, graphData, options);
