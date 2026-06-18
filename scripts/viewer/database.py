@@ -411,3 +411,74 @@ def get_quests_graph():
         print(f"Error building quest graph: {e}")
         
     return {'nodes': nodes, 'edges': edges}
+
+def get_future_graphs_todo():
+    """
+    Parses docs/FUTURE_GRAPHS_TODO.md and returns a structured list of dictionaries
+    representing the planned graph visualizations.
+    """
+    todo_path = os.path.join("docs", "FUTURE_GRAPHS_TODO.md")
+    if not os.path.exists(todo_path):
+        return []
+        
+    try:
+        with open(todo_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as e:
+        print(f"Error reading {todo_path}: {e}")
+        return []
+        
+    import re
+    sections = re.split(r'\n##\s+', content)
+    todo_items = []
+    
+    for section in sections:
+        # Ignore intro text
+        if not section.strip() or section.startswith("#"):
+            continue
+            
+        lines = section.strip().split("\n")
+        title_line = lines[0]
+        # Match title: e.g. "1. 🌲 Дерево прокачки и талантов (Progression & Skill Trees)"
+        title_match = re.match(r'^\d+\.\s*(.*)', title_line)
+        title = title_match.group(1) if title_match else title_line
+        
+        goal = ""
+        tables = ""
+        connections = []
+        benefit = ""
+        
+        in_connections = False
+        
+        for line in lines[1:]:
+            line_str = line.strip()
+            if not line_str:
+                continue
+            if line_str.startswith("- **Цель**:") or line_str.startswith("- **Цель**"):
+                goal = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+                in_connections = False
+            elif line_str.startswith("- **Таблицы**:") or line_str.startswith("- **Таблицы**"):
+                tables = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+                in_connections = False
+            elif line_str.startswith("- **Связи**:") or line_str.startswith("- **Связи**"):
+                in_connections = True
+            elif line_str.startswith("- **Польза**:") or line_str.startswith("- **Польза**"):
+                benefit = line_str.split(":", 1)[1].strip() if ":" in line_str else line_str
+                in_connections = False
+            elif in_connections and (line_str.startswith("-") or line_str.startswith("*")):
+                conn_item = line_str.lstrip("-* ").strip()
+                connections.append(conn_item)
+            elif in_connections and line.startswith("  "):
+                conn_item = line_str.lstrip("-* ").strip()
+                connections.append(conn_item)
+                
+        todo_items.append({
+            'title': title,
+            'goal': goal,
+            'tables': tables,
+            'connections': connections,
+            'benefit': benefit
+        })
+        
+    return todo_items
+

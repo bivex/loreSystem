@@ -363,6 +363,66 @@ HTML_CONTENT = """<!DOCTYPE html>
             border-radius: 6px !important;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
         }
+
+        /* TODO View Styles */
+        .todo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .todo-card {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s, border-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .todo-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+        }
+
+        .todo-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .todo-card-tables {
+            font-size: 11px;
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px dashed var(--border-color);
+            color: #a78bfa;
+            font-family: monospace;
+            margin-top: auto;
+        }
+
+        .todo-card-benefits {
+            font-size: 12px;
+            color: var(--text-primary);
+            background-color: rgba(99, 102, 241, 0.05);
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
     </style>
 </head>
 <body>
@@ -417,6 +477,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="characters">🕸️ Отношения героев</option>
                             <option value="quests">⚔️ Дерево квестов</option>
                             <option value="locations">🗺️ Карта локаций мира</option>
+                            <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
 
@@ -437,6 +498,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 
                 <div class="graph-canvas-container">
                     <div id="network"></div>
+                    <div id="todo-view" style="display: none; padding: 24px; overflow-y: auto; height: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -643,6 +705,20 @@ HTML_CONTENT = """<!DOCTYPE html>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> Дочерняя связь</div>
                     </div>
                 </div>
+            `,
+            todo: `
+                <div class="control-group">
+                    <label>О бэклоге</label>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; margin-top: 4px;">
+                        Здесь представлены типы графов, планируемые к реализации в следующих обновлениях MythWeave.
+                    </p>
+                </div>
+                <div class="control-group">
+                    <label>Источники данных</label>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; margin-top: 4px;">
+                        Данные парсятся напрямую из проектной документации <code style="color: #a78bfa;">FUTURE_GRAPHS_TODO.md</code>.
+                    </p>
+                </div>
             `
         };
 
@@ -652,16 +728,84 @@ HTML_CONTENT = """<!DOCTYPE html>
             
             // Inject legend html
             document.getElementById('legendSection').innerHTML = legends[type] || '';
-            document.getElementById('nodeDetails').innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Кликните на узел для просмотра деталей</p>';
             
-            try {
-                const response = await fetch(`/api/graph/${type}`);
-                const graphData = await response.json();
-                renderGraph(graphData);
-            } catch (err) {
-                console.error("Failed to load graph data", err);
-                document.getElementById('network').innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Ошибка построения графа "${type}". Проверьте структуру SQLite.</div>`;
+            const networkEl = document.getElementById('network');
+            const todoEl = document.getElementById('todo-view');
+            
+            if (type === 'todo') {
+                networkEl.style.display = 'none';
+                todoEl.style.display = 'block';
+                document.getElementById('nodeDetails').innerHTML = `
+                    <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--accent-color);">📋 Бэклог графов</div>
+                    <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.4;">
+                        Выберите граф в списке справа, чтобы изучить требования, связи и целевые таблицы.
+                    </div>
+                `;
+                
+                try {
+                    todoEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Загрузка бэклога...</div>';
+                    const response = await fetch('/api/todo');
+                    const todoData = await response.json();
+                    renderTodoCards(todoData);
+                } catch (err) {
+                    console.error("Failed to load todo data", err);
+                    todoEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary); color: #ef4444;">Ошибка загрузки бэклога.</div>';
+                }
+            } else {
+                networkEl.style.display = 'block';
+                todoEl.style.display = 'none';
+                document.getElementById('nodeDetails').innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Кликните на узел для просмотра деталей</p>';
+                
+                try {
+                    const response = await fetch(`/api/graph/${type}`);
+                    const graphData = await response.json();
+                    renderGraph(graphData);
+                } catch (err) {
+                    console.error("Failed to load graph data", err);
+                    networkEl.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Ошибка построения графа "${type}". Проверьте структуру SQLite.</div>`;
+                }
             }
+        }
+
+        function renderTodoCards(todoData) {
+            const todoEl = document.getElementById('todo-view');
+            if (todoData.length === 0) {
+                todoEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет запланированных графов</div>';
+                return;
+            }
+            
+            let html = '<div class="todo-grid">';
+            todoData.forEach(item => {
+                let connList = '';
+                if (item.connections && item.connections.length > 0) {
+                    connList = '<div style="font-size: 12px; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; color: var(--text-secondary);">';
+                    item.connections.forEach(conn => {
+                        connList += `<div style="display:flex; align-items:flex-start; gap: 6px;"><span>➔</span><span>${conn}</span></div>`;
+                    });
+                    connList += '</div>';
+                }
+                
+                html += `
+                    <div class="todo-card" onclick="selectTodoCard('${item.title.replace(/'/g, "\\'")}', '${item.goal.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                        <h4>${item.title}</h4>
+                        <p style="margin-top: 4px;"><strong>Цель:</strong> ${item.goal}</p>
+                        ${connList ? `<div style="margin-top: 6px;"><strong>Связи:</strong>${connList}</div>` : ''}
+                        ${item.benefit ? `<div class="todo-card-benefits" style="margin-top: 8px;"><strong>Польза:</strong> ${item.benefit}</div>` : ''}
+                        <div class="todo-card-tables" style="margin-top: 10px;"><strong>Таблицы:</strong> ${item.tables}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            todoEl.innerHTML = html;
+        }
+
+        function selectTodoCard(title, goal) {
+            document.getElementById('nodeDetails').innerHTML = `
+                <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent-color);">${title}</div>
+                <div style="line-height: 1.4; color: var(--text-secondary); font-size: 12px;">
+                    <strong>Детали цели:</strong> ${goal}
+                </div>
+            `;
         }
 
         function renderGraph(graphData) {

@@ -12,7 +12,7 @@ import sys
 import webbrowser
 from .database import (
     get_tables, get_table_data, get_characters_graph,
-    get_locations_graph, get_quests_graph
+    get_locations_graph, get_quests_graph, get_future_graphs_todo
 )
 from .frontend import HTML_CONTENT
 
@@ -77,6 +77,16 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
             
             graph_data = get_quests_graph()
             self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+            
+        # API: Future Graphs Todo
+        elif parsed_url.path == "/api/todo":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            
+            todo_data = get_future_graphs_todo()
+            self.wfile.write(json.dumps(todo_data).encode('utf-8'))
             
         # Frontend index html page
         elif parsed_url.path in ["/", "/index.html"]:
