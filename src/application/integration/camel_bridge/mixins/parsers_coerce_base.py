@@ -256,9 +256,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 
-class CoerceParserMixin:
-    """low-level payload coercion utilities (text/tuple/dict coercion, enum coercion, lookup/normalize helpers)."""
-
+class CoerceParserBaseMixin:
     def _coerce_narrative_items(self, value: object) -> list[object]:
         if isinstance(value, dict):
             return self._coerce_mapping_narrative_items(value)
@@ -473,435 +471,83 @@ class CoerceParserMixin:
         return candidate or fallback
 
 
-    def _coerce_event_outcome(self, value: str) -> EventOutcome:
+    def _coerce_enum(
+        self, value: str, enum_cls, default, aliases: dict[str, str] | None = None
+    ):
+        normalized = (
+            str(value or default.value)
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        if aliases and normalized in aliases:
+            normalized = aliases[normalized]
         try:
-            return EventOutcome(value.lower())
+            return enum_cls(normalized)
         except Exception:
-            return EventOutcome.ONGOING
+            return default
 
 
-    def _coerce_relationship_type(self, value: str) -> RelationshipType:
+    def _coerce_positive_int(self, value: object, default: int) -> int:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None or parsed < 1:
+            return default
+        return parsed
+
+
+    def _coerce_optional_int(self, value: object) -> int | None:
+        if value is None or value == "":
+            return None
         try:
-            return RelationshipType(value.lower())
+            return int(value)
         except Exception:
-            return RelationshipType.COMPLICATED
-
-
-    def _coerce_campaign_type(self, value: str) -> CampaignType:
-        return self._coerce_enum(value, CampaignType, CampaignType.MAIN_STORY)
-
-
-    def _coerce_story_type(self, value: str) -> StoryType:
-        return self._coerce_enum(value, StoryType, StoryType.LINEAR)
-
-
-    def _coerce_storyline_type(self, value: str) -> StorylineType:
-        return self._coerce_enum(value, StorylineType, StorylineType.MAIN)
-
-
-    def _coerce_evolution_type(self, value: str) -> EvolutionType:
-        aliases = {
-            "level": "level_up",
-            "quest": "quest_completed",
-            "story": "story_unlocked",
-        }
-        return self._coerce_enum(value, EvolutionType, EvolutionType.LEVEL_UP, aliases)
-
-
-    def _coerce_evolution_stage(self, value: str) -> EvolutionStage:
-        aliases = {"starter": "basic", "expert": "advanced", "ultimate": "legendary"}
-        return self._coerce_enum(value, EvolutionStage, EvolutionStage.BASIC, aliases)
-
-
-    def _coerce_optional_evolution_stage(
-        self, value: str | None
-    ) -> EvolutionStage | None:
-        if not value:
             return None
-        return self._coerce_evolution_stage(value)
 
 
-    def _coerce_variant_type(self, value: str) -> VariantType:
-        aliases = {"alt": "alternate", "seasonal": "event", "skin": "costume"}
-        return self._coerce_enum(value, VariantType, VariantType.COSTUME, aliases)
-
-
-    def _coerce_variant_rarity(self, value: str) -> VariantRarity:
-        return self._coerce_enum(value, VariantRarity, VariantRarity.COMMON)
-
-
-    def _coerce_animation_type(self, value: str) -> AnimationType:
-        aliases = {"spell": "cast", "conversation": "social", "custom_loop": "custom"}
-        return self._coerce_enum(value, AnimationType, AnimationType.CUSTOM, aliases)
-
-
-    def _coerce_capture_status(self, value: str) -> CaptureStatus:
-        aliases = {"done": "completed", "reviewed": "approved"}
-        return self._coerce_enum(value, CaptureStatus, CaptureStatus.PENDING, aliases)
-
-
-    def _coerce_voice_actor_status(self, value: str) -> VoiceActorStatus:
-        aliases = {"busy": "unavailable"}
-        return self._coerce_enum(
-            value, VoiceActorStatus, VoiceActorStatus.ACTIVE, aliases
-        )
-
-
-    def _coerce_quest_status(self, value: str) -> QuestStatus:
-        aliases = {"in_progress": "active", "open": "active"}
-        return self._coerce_enum(value, QuestStatus, QuestStatus.ACTIVE, aliases)
-
-
-    def _coerce_objective_type(self, value: str) -> ObjectiveType:
-        aliases = {"speak": "talk", "meet": "talk", "discover": "explore"}
-        return self._coerce_enum(value, ObjectiveType, ObjectiveType.INTERACT, aliases)
-
-
-    def _coerce_prerequisite_type(self, value: str) -> PrerequisiteType:
-        aliases = {"mission": "quest", "rank": "reputation"}
-        return self._coerce_enum(
-            value, PrerequisiteType, PrerequisiteType.QUEST, aliases
-        )
-
-
-    def _coerce_disposition_attitude(self, value: str) -> str:
-        normalized = (
-            str(value or "neutral").strip().lower().replace("-", "_").replace(" ", "_")
-        )
-        aliases = {
-            "suspicious": "unfriendly",
-            "wary": "unfriendly",
-            "distrustful": "unfriendly",
-            "supportive": "friendly",
-            "loyal": "friendly",
-            "antagonistic": "hostile",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized in {"hostile", "unfriendly", "neutral", "friendly", "helpful"}
-            else "neutral"
-        )
-
-
-    def _coerce_consequence_severity_text(self, value: object) -> str:
-        if isinstance(value, (int, float)):
-            numeric = float(value)
-            if numeric >= 75:
-                return "major"
-            if numeric >= 40:
-                return "moderate"
-            return "minor"
-        text = self._coerce_optional_text(value)
-        return text or "minor"
-
-
-    def _coerce_flash_forward_clarity(self, value: object) -> str:
-        if isinstance(value, (int, float)):
-            numeric = int(value)
-            if numeric >= 3:
-                return "vivid"
-            if numeric == 2:
-                return "clear"
-            return "symbolic"
-        text = self._coerce_optional_text(value)
-        return text or "symbolic"
-
-
-    def _coerce_season_value(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "winter")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "fall": "autumn",
-            "autumnal": "autumn",
-            "springtime": "spring",
-            "summertime": "summer",
-            "wintertime": "winter",
-            "all_seasons": "none",
-            "year_round": "none",
-            "evergreen": "none",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized in {"spring", "summer", "autumn", "winter", "none"}
-            else "none"
-        )
-
-
-    def _coerce_invasion_type_text(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "military")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "pirate": "naval",
-            "pirate_raid": "naval",
-            "sea_raid": "naval",
-            "fleet": "naval",
-            "airborne": "aerial",
-            "dragon": "aerial",
-            "infernal": "demonic",
-            "demon": "demonic",
-            "rift": "extradimensional",
-            "void": "extradimensional",
-            "arcane": "magical",
-            "siege": "military",
-            "rebellion": "military",
-            "uprising": "military",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized
-            in {"aerial", "demonic", "extradimensional", "magical", "military", "naval"}
-            else "military"
-        )
-
-
-    def _coerce_war_type_text(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "territorial")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "border": "territorial",
-            "border_war": "territorial",
-            "independence": "civil",
-            "insurrection": "civil",
-            "rebellion": "civil",
-            "uprising": "civil",
-            "holy": "religious",
-            "faith": "religious",
-            "proxy": "ideological",
-            "cold": "ideological",
-            "imperial": "colonial",
-            "annexation": "territorial",
-            "world": "total",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized
-            in {
-                "civil",
-                "colonial",
-                "ideological",
-                "interstate",
-                "religious",
-                "territorial",
-                "total",
-            }
-            else "territorial"
-        )
-
-
-    def _coerce_high_tier_rarity(self, value: object, *, default: str) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or default)
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "mythical": "mythic",
-            "godly": "divine",
-            "artifact": "legendary",
-            "unique": "legendary",
-            "uncommon": "rare",
-            "common": "rare",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized in {"rare", "epic", "legendary", "mythic", "divine"}
-            else default
-        )
-
-
-    def _coerce_artifact_set_type_text(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "mixed")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "weapon": "weapons",
-            "armor_set": "armor",
-            "armour": "armor",
-            "armour_set": "armor",
-            "jewelry": "accessories",
-            "jewellery": "accessories",
-            "trinkets": "accessories",
-            "relics": "mixed",
-            "artifact": "mixed",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized in {"armor", "weapons", "accessories", "mixed"}
-            else "mixed"
-        )
-
-
-    def _coerce_artifact_set_rarity(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "legendary")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "mythic": "mythical",
-            "godly": "divine",
-            "artifact": "legendary",
-            "unique": "legendary",
-            "common": "epic",
-            "rare": "epic",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized in {"epic", "legendary", "mythical", "divine"}
-            else "legendary"
-        )
-
-
-    def _coerce_relic_collection_type_text(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "ancient")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "historic": "historical",
-            "history": "historical",
-            "mythic": "mythological",
-            "myths": "mythological",
-            "holy": "divine",
-            "sacred": "divine",
-            "damned": "cursed",
-            "taboo": "forbidden",
-            "relic": "ancient",
-            "artifact": "ancient",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized
-            in {
-                "historical",
-                "mythological",
-                "divine",
-                "cursed",
-                "forbidden",
-                "ancient",
-            }
-            else "ancient"
-        )
-
-
-    def _coerce_relic_collection_rarity(self, value: object) -> str:
-        normalized = (
-            (self._coerce_optional_text(value) or "legendary")
-            .strip()
-            .lower()
-            .replace("-", "_")
-            .replace(" ", "_")
-        )
-        aliases = {
-            "mythic": "mythical",
-            "godly": "divine",
-            "artifact": "legendary",
-            "common": "rare",
-        }
-        normalized = aliases.get(normalized, normalized)
-        return (
-            normalized
-            if normalized
-            in {"rare", "epic", "legendary", "mythical", "divine", "unique"}
-            else "legendary"
-        )
-
-
-    def _coerce_choice_type(self, value: str) -> ChoiceType:
-        return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)
-
-
-    def _coerce_consequence_type(self, value: str) -> ConsequenceType:
-        return self._coerce_enum(value, ConsequenceType, ConsequenceType.STORY)
-
-
-    def _coerce_consequence_severity(self, value: str) -> ConsequenceSeverity:
-        return self._coerce_enum(value, ConsequenceSeverity, ConsequenceSeverity.MINOR)
-
-
-    def _coerce_moral_alignment(self, value: str) -> MoralAlignment:
-        return self._coerce_enum(value, MoralAlignment, MoralAlignment.NEUTRAL)
-
-
-    def _coerce_choice_urgency(self, value: str) -> ChoiceUrgency:
-        return self._coerce_enum(value, ChoiceUrgency, ChoiceUrgency.LOW)
-
-
-    def _coerce_branch_type(self, value: str) -> BranchType:
-        return self._coerce_enum(value, BranchType, BranchType.MINOR)
-
-
-    def _coerce_branch_status(self, value: str) -> BranchStatus:
-        return self._coerce_enum(value, BranchStatus, BranchStatus.LOCKED)
-
-
-    def _coerce_branch_point_type(self, value: str) -> BranchPointType:
-        aliases = {"decision": "choice", "event": "trigger"}
-        return self._coerce_enum(
-            value, BranchPointType, BranchPointType.CHOICE, aliases
-        )
-
-
-    def _coerce_reality_type(self, value: str) -> RealityType:
-        aliases = {"parallel": "parallel_universe", "timeline": "time_divergence"}
-        return self._coerce_enum(
-            value, RealityType, RealityType.PARALLEL_UNIVERSE, aliases
-        )
-
-
-    def _coerce_reality_access(self, value: str | None) -> RealityAccess | None:
-        if not value:
+    def _coerce_optional_float(self, value: object) -> float | None:
+        if value is None or value == "":
             return None
-        aliases = {"story": "story_event"}
-        return self._coerce_enum(
-            value, RealityAccess, RealityAccess.STORY_EVENT, aliases
-        )
+        try:
+            return float(value)
+        except Exception:
+            return None
 
 
-    def _coerce_act_type(self, value: str) -> ActType:
-        return self._coerce_enum(value, ActType, ActType.SETUP)
+    def _coerce_positive_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        return parsed if parsed is not None and parsed > 0 else None
 
 
-    def _coerce_act_structure(self, value: str) -> ActStructure:
-        return self._coerce_enum(value, ActStructure, ActStructure.THREE_ACT)
+    def _coerce_non_negative_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        return parsed if parsed is not None and parsed >= 0 else None
 
 
-    def _coerce_chapter_type(self, value: str) -> ChapterType:
-        aliases = {"opening": "introduction", "story": "rising_action"}
-        return self._coerce_enum(value, ChapterType, ChapterType.RISING_ACTION, aliases)
+    def _coerce_percent_optional_int(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None:
+            return None
+        return max(0, min(parsed, 100))
+
+
+    def _coerce_optional_datetime(self, value: object) -> datetime | None:
+        if value is None or value == "":
+            return None
+        if isinstance(value, datetime):
+            return value
+        try:
+            return datetime.fromisoformat(str(value).strip().replace("Z", "+00:00"))
+        except Exception:
+            return None
+
+
+    def _coerce_bool(self, value: object) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        normalized = str(value).strip().lower()
+        return normalized in {"true", "1", "yes", "y", "on", "mutual"}
 
 

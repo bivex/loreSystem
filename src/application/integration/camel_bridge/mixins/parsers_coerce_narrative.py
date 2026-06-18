@@ -1,7 +1,6 @@
-"""Fallback mixin: deterministic fallback drafts when the LLM output is unusable.
+"""low-level payload coercion utilities (text/tuple/dict coercion, enum coercion, lookup/normalize helpers).
 
-Extracted from ``rumor_agents.py``. Holds ``_fallback_narrative_structure_draft``
-and ``_fallback_rumor_draft``. Stateless, kept as methods for composition.
+Auto-split from ``mixins/parsers.py`` during the second-pass decomposition.
 """
 
 from __future__ import annotations
@@ -256,12 +255,195 @@ from src.application.integration.camel_bridge.persistence.stores import *  # noq
 LOGGER = logging.getLogger(__name__)
 
 
-from .fallbacks_narrative import FallbacksNarrativeMixin
-from .fallbacks_rumor import FallbacksRumorMixin
+
+class CoerceParserNarrativeMixin:
+    def _coerce_event_outcome(self, value: str) -> EventOutcome:
+        try:
+            return EventOutcome(value.lower())
+        except Exception:
+            return EventOutcome.ONGOING
 
 
-class FallbacksMixin(
-    FallbacksNarrativeMixin,
-    FallbacksRumorMixin,
-):
-    pass
+    def _coerce_relationship_type(self, value: str) -> RelationshipType:
+        try:
+            return RelationshipType(value.lower())
+        except Exception:
+            return RelationshipType.COMPLICATED
+
+
+    def _coerce_campaign_type(self, value: str) -> CampaignType:
+        return self._coerce_enum(value, CampaignType, CampaignType.MAIN_STORY)
+
+
+    def _coerce_story_type(self, value: str) -> StoryType:
+        return self._coerce_enum(value, StoryType, StoryType.LINEAR)
+
+
+    def _coerce_storyline_type(self, value: str) -> StorylineType:
+        return self._coerce_enum(value, StorylineType, StorylineType.MAIN)
+
+
+    def _coerce_flash_forward_clarity(self, value: object) -> str:
+        if isinstance(value, (int, float)):
+            numeric = int(value)
+            if numeric >= 3:
+                return "vivid"
+            if numeric == 2:
+                return "clear"
+            return "symbolic"
+        text = self._coerce_optional_text(value)
+        return text or "symbolic"
+
+
+    def _coerce_act_type(self, value: str) -> ActType:
+        return self._coerce_enum(value, ActType, ActType.SETUP)
+
+
+    def _coerce_act_structure(self, value: str) -> ActStructure:
+        return self._coerce_enum(value, ActStructure, ActStructure.THREE_ACT)
+
+
+    def _coerce_chapter_type(self, value: str) -> ChapterType:
+        aliases = {"opening": "introduction", "story": "rising_action"}
+        return self._coerce_enum(value, ChapterType, ChapterType.RISING_ACTION, aliases)
+
+
+    def _coerce_episode_type(self, value: str) -> EpisodeType:
+        aliases = {"story": "narrative", "story_beat": "narrative"}
+        return self._coerce_enum(value, EpisodeType, EpisodeType.NARRATIVE, aliases)
+
+
+    def _coerce_prologue_type(self, value: str) -> PrologueType:
+        aliases = {"world_building": "backstory", "setup": "backstory"}
+        return self._coerce_enum(value, PrologueType, PrologueType.BACKSTORY, aliases)
+
+
+    def _coerce_epilogue_type(self, value: str) -> EpilogueType:
+        aliases = {"closing_narrative": "outcome", "ending": "outcome"}
+        return self._coerce_enum(value, EpilogueType, EpilogueType.AFTERMATH, aliases)
+
+
+    def _coerce_epilogue_condition(self, value: str) -> EpilogueCondition:
+        aliases = {"any_ending": "always", "default": "always"}
+        return self._coerce_enum(
+            value, EpilogueCondition, EpilogueCondition.ALWAYS, aliases
+        )
+
+
+    def _coerce_ending_type(self, value: str) -> EndingType:
+        return self._coerce_enum(value, EndingType, EndingType.NEUTRAL)
+
+
+    def _coerce_ending_rarity(self, value: str) -> EndingRarity:
+        return self._coerce_enum(value, EndingRarity, EndingRarity.COMMON)
+
+
+    def _coerce_truth_level(self, value: object) -> str:
+        if value is None or value == "":
+            return "Unverified"
+        normalized = str(value).strip().lower()
+        aliases = {
+            "false": "False",
+            "fake": "False",
+            "debunked": "False",
+            "unverified": "Unverified",
+            "unknown": "Unverified",
+            "rumor": "Unverified",
+            "partially true": "Partially True",
+            "partial": "Partially True",
+            "mixed": "Partially True",
+            "mostly true": "Partially True",
+            "true": "True",
+            "confirmed": "True",
+            "verified": "True",
+        }
+        if normalized in aliases:
+            return aliases[normalized]
+        numeric = self._coerce_optional_float(value)
+        if numeric is None:
+            return "Unverified"
+        score = numeric / 10 if numeric > 1 else numeric
+        if score <= 0.15:
+            return "False"
+        if score <= 0.6:
+            return "Unverified"
+        if score <= 0.85:
+            return "Partially True"
+        return "True"
+
+
+    def _coerce_spread_speed(self, value: object) -> str:
+        if value is None or value == "":
+            return "Moderate"
+        normalized = str(value).strip().lower()
+        aliases = {
+            "slow": "Slow",
+            "low": "Slow",
+            "moderate": "Moderate",
+            "medium": "Moderate",
+            "steady": "Moderate",
+            "rapid": "Rapid",
+            "fast": "Rapid",
+            "high": "Rapid",
+            "viral": "Explosive",
+            "explosive": "Explosive",
+        }
+        if normalized in aliases:
+            return aliases[normalized]
+        numeric = self._coerce_optional_float(value)
+        if numeric is None:
+            return "Moderate"
+        score = numeric / 10 if numeric > 1 else numeric
+        if score <= 0.2:
+            return "Slow"
+        if score <= 0.55:
+            return "Moderate"
+        if score <= 0.8:
+            return "Rapid"
+        return "Explosive"
+
+
+    def _coerce_credibility_score(self, value: object) -> int | None:
+        parsed = self._coerce_optional_int(value)
+        if parsed is None:
+            return None
+        return max(1, min(10, parsed))
+
+
+    def _coerce_relationship_level(self, value: object) -> int:
+        if value is None or value == "":
+            return 10
+        try:
+            return int(value)
+        except Exception:
+            pass
+        normalized = str(value).strip().lower()
+        mapping = {
+            "hostile": -40,
+            "enemy": -35,
+            "rival": -20,
+            "strained": -10,
+            "neutral": 0,
+            "tentative": 10,
+            "ally": 20,
+            "friendly": 25,
+            "strong": 35,
+            "close": 40,
+            "devoted": 50,
+        }
+        return mapping.get(normalized, 10)
+
+
+    def _coerce_flashback_filter(self, value: object) -> str:
+        normalized = str(value or "grayscale").strip().lower().replace(" ", "_")
+        valid = {
+            "none",
+            "grayscale",
+            "sepia",
+            "desaturated",
+            "vignette",
+            "blur",
+            "dream",
+            "nightmare",
+        }
+        return normalized if normalized in valid else "grayscale"

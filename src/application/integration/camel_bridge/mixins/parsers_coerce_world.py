@@ -1,7 +1,6 @@
-"""Fallback mixin: deterministic fallback drafts when the LLM output is unusable.
+"""low-level payload coercion utilities (text/tuple/dict coercion, enum coercion, lookup/normalize helpers).
 
-Extracted from ``rumor_agents.py``. Holds ``_fallback_narrative_structure_draft``
-and ``_fallback_rumor_draft``. Stateless, kept as methods for composition.
+Auto-split from ``mixins/parsers.py`` during the second-pass decomposition.
 """
 
 from __future__ import annotations
@@ -256,12 +255,187 @@ from src.application.integration.camel_bridge.persistence.stores import *  # noq
 LOGGER = logging.getLogger(__name__)
 
 
-from .fallbacks_narrative import FallbacksNarrativeMixin
-from .fallbacks_rumor import FallbacksRumorMixin
+
+class CoerceParserWorldMixin:
+    def _coerce_disposition_attitude(self, value: str) -> str:
+        normalized = (
+            str(value or "neutral").strip().lower().replace("-", "_").replace(" ", "_")
+        )
+        aliases = {
+            "suspicious": "unfriendly",
+            "wary": "unfriendly",
+            "distrustful": "unfriendly",
+            "supportive": "friendly",
+            "loyal": "friendly",
+            "antagonistic": "hostile",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized in {"hostile", "unfriendly", "neutral", "friendly", "helpful"}
+            else "neutral"
+        )
 
 
-class FallbacksMixin(
-    FallbacksNarrativeMixin,
-    FallbacksRumorMixin,
-):
-    pass
+    def _coerce_consequence_severity_text(self, value: object) -> str:
+        if isinstance(value, (int, float)):
+            numeric = float(value)
+            if numeric >= 75:
+                return "major"
+            if numeric >= 40:
+                return "moderate"
+            return "minor"
+        text = self._coerce_optional_text(value)
+        return text or "minor"
+
+
+    def _coerce_season_value(self, value: object) -> str:
+        normalized = (
+            (self._coerce_optional_text(value) or "winter")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        aliases = {
+            "fall": "autumn",
+            "autumnal": "autumn",
+            "springtime": "spring",
+            "summertime": "summer",
+            "wintertime": "winter",
+            "all_seasons": "none",
+            "year_round": "none",
+            "evergreen": "none",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized in {"spring", "summer", "autumn", "winter", "none"}
+            else "none"
+        )
+
+
+    def _coerce_invasion_type_text(self, value: object) -> str:
+        normalized = (
+            (self._coerce_optional_text(value) or "military")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        aliases = {
+            "pirate": "naval",
+            "pirate_raid": "naval",
+            "sea_raid": "naval",
+            "fleet": "naval",
+            "airborne": "aerial",
+            "dragon": "aerial",
+            "infernal": "demonic",
+            "demon": "demonic",
+            "rift": "extradimensional",
+            "void": "extradimensional",
+            "arcane": "magical",
+            "siege": "military",
+            "rebellion": "military",
+            "uprising": "military",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized
+            in {"aerial", "demonic", "extradimensional", "magical", "military", "naval"}
+            else "military"
+        )
+
+
+    def _coerce_war_type_text(self, value: object) -> str:
+        normalized = (
+            (self._coerce_optional_text(value) or "territorial")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        aliases = {
+            "border": "territorial",
+            "border_war": "territorial",
+            "independence": "civil",
+            "insurrection": "civil",
+            "rebellion": "civil",
+            "uprising": "civil",
+            "holy": "religious",
+            "faith": "religious",
+            "proxy": "ideological",
+            "cold": "ideological",
+            "imperial": "colonial",
+            "annexation": "territorial",
+            "world": "total",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized
+            in {
+                "civil",
+                "colonial",
+                "ideological",
+                "interstate",
+                "religious",
+                "territorial",
+                "total",
+            }
+            else "territorial"
+        )
+
+
+    def _coerce_choice_type(self, value: str) -> ChoiceType:
+        return self._coerce_enum(value, ChoiceType, ChoiceType.DECISION)
+
+
+    def _coerce_consequence_type(self, value: str) -> ConsequenceType:
+        return self._coerce_enum(value, ConsequenceType, ConsequenceType.STORY)
+
+
+    def _coerce_consequence_severity(self, value: str) -> ConsequenceSeverity:
+        return self._coerce_enum(value, ConsequenceSeverity, ConsequenceSeverity.MINOR)
+
+
+    def _coerce_moral_alignment(self, value: str) -> MoralAlignment:
+        return self._coerce_enum(value, MoralAlignment, MoralAlignment.NEUTRAL)
+
+
+    def _coerce_choice_urgency(self, value: str) -> ChoiceUrgency:
+        return self._coerce_enum(value, ChoiceUrgency, ChoiceUrgency.LOW)
+
+
+    def _coerce_branch_type(self, value: str) -> BranchType:
+        return self._coerce_enum(value, BranchType, BranchType.MINOR)
+
+
+    def _coerce_branch_status(self, value: str) -> BranchStatus:
+        return self._coerce_enum(value, BranchStatus, BranchStatus.LOCKED)
+
+
+    def _coerce_branch_point_type(self, value: str) -> BranchPointType:
+        aliases = {"decision": "choice", "event": "trigger"}
+        return self._coerce_enum(
+            value, BranchPointType, BranchPointType.CHOICE, aliases
+        )
+
+
+    def _coerce_reality_type(self, value: str) -> RealityType:
+        aliases = {"parallel": "parallel_universe", "timeline": "time_divergence"}
+        return self._coerce_enum(
+            value, RealityType, RealityType.PARALLEL_UNIVERSE, aliases
+        )
+
+
+    def _coerce_reality_access(self, value: str | None) -> RealityAccess | None:
+        if not value:
+            return None
+        aliases = {"story": "story_event"}
+        return self._coerce_enum(
+            value, RealityAccess, RealityAccess.STORY_EVENT, aliases
+        )
+
+
