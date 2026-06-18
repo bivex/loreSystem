@@ -302,7 +302,11 @@ def get_quests_graph():
             })
             quest_map[q['id']] = q_name
             
-        node_to_quest_map = {}
+        # Build quest <-> chain linkage.
+        # Prefer an explicit `quest_id` in the chain payload, but fall back to
+        # matching by id (quest.id == quest_chains.id) since the schema uses
+        # shared identifiers and many chains don't carry a quest_id field.
+        chain_to_quest = {}
         for qc in quest_chains:
             payload = {}
             if qc.get('payload_json'):
@@ -310,14 +314,41 @@ def get_quests_graph():
                     payload = json.loads(qc['payload_json'])
                 except Exception:
                     pass
-            quest_id = payload.get('quest_id')
+            quest_id = payload.get('quest_id') or qc['id']
+            chain_to_quest[qc['id']] = quest_id
+
+        # Map each quest node to its parent quest via quest_chain_id (authoritative,
+        # present on every node) -> chain -> quest. Fall back to the chain's
+        # quest_node_ids list for nodes that don't carry quest_chain_id.
+        node_to_quest_map = {}
+        for qn in quest_nodes:
+            payload = {}
+            if qn.get('payload_json'):
+                try:
+                    payload = json.loads(qn['payload_json'])
+                except Exception:
+                    pass
+            chain_id = payload.get('quest_chain_id')
+            if chain_id is not None and chain_id in chain_to_quest:
+                node_to_quest_map[qn['id']] = chain_to_quest[chain_id]
+        for qc in quest_chains:
+            payload = {}
+            if qc.get('payload_json'):
+                try:
+                    payload = json.loads(qc['payload_json'])
+                except Exception:
+                    pass
+            quest_id = chain_to_quest.get(qc['id'])
             node_ids = payload.get('quest_node_ids', [])
-            
             if quest_id and isinstance(node_ids, list):
                 for nid in node_ids:
-                    node_to_quest_map[nid] = quest_id
-                    
+                    node_to_quest_map.setdefault(nid, quest_id)
+
         node_id_list = set()
+        # Remember each node's chain and position so we can sequence nodes
+        # within a chain even when quest_node_ids is incomplete.
+        node_chain = {}
+        node_position = {}
         for qn in quest_nodes:
             nid = qn['id']
             node_id_list.add(nid)
@@ -329,7 +360,7 @@ def get_quests_graph():
                     pass
             obj_ids = payload.get('objective_ids', [])
             tooltip = f"<b>Шаг: {qn['label']}</b><br>ID: {nid}<br>Цели: {obj_ids}"
-            
+
             nodes.append({
                 'id': f"node_{nid}",
                 'label': qn['label'],
@@ -341,7 +372,10 @@ def get_quests_graph():
                     'border': '#0891b2'
                 }
             })
-            
+
+            node_chain[nid] = payload.get('quest_chain_id')
+            node_position[nid] = payload.get('position')
+
             parent_quest_id = node_to_quest_map.get(nid)
             if parent_quest_id:
                 edges.append({
@@ -352,7 +386,10 @@ def get_quests_graph():
                     'dashes': True,
                     'width': 1.5
                 })
-                
+
+        # Sequence nodes within a chain. Prefer the explicit quest_node_ids
+        # order from the chain payload; otherwise fall back to ordering nodes
+        # that share the same quest_chain_id by their id.
         for qc in quest_chains:
             payload = {}
             if qc.get('payload_json'):
@@ -361,7 +398,13 @@ def get_quests_graph():
                 except Exception:
                     pass
             node_ids = payload.get('quest_node_ids', [])
-            if isinstance(node_ids, list) and len(node_ids) > 1:
+            if not isinstance(node_ids, list) or len(node_ids) < 2:
+                # Reconstruct the chain from nodes that reference it directly.
+                chain_id = qc['id']
+                node_ids = sorted(
+                    [nid for nid, cid in node_chain.items() if cid == chain_id and nid in node_id_list]
+                )
+            if len(node_ids) > 1:
                 for i in range(len(node_ids) - 1):
                     n_from = node_ids[i]
                     n_to = node_ids[i+1]
