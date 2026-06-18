@@ -256,13 +256,16 @@ from src.application.integration.camel_bridge.persistence.stores import *  # noq
 LOGGER = logging.getLogger(__name__)
 
 
-from .fallbacks_narrative import FallbacksNarrativeMixin
-from .fallbacks_rumor import FallbacksRumorMixin
-
-
-class FallbacksMixin(
-    FallbacksNarrativeMixin,
-    FallbacksRumorMixin,
-):
-    """Aggregate mixin for deterministic fallbacks."""
-    pass
+class FallbacksRumorMixin:
+    def _fallback_rumor_draft(
+        self, request: RumorGenerationRequest, index: int, agent_name: str
+    ) -> RumorDraft:
+        theme = request.theme.strip().title() or "Rumor"
+        return RumorDraft(
+            name=f"{theme} Rumor {index}",
+            description=f"Слух о {theme.lower()} распространяется по городу через уличные разговоры.",
+            source_name=agent_name,
+            truth_level="Unverified",
+            spread_speed="Moderate",
+            credibility_score=4 + min(index, 4),
+        )
