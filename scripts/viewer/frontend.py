@@ -477,6 +477,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="characters">🕸️ Отношения героев</option>
                             <option value="quests">⚔️ Дерево квестов</option>
                             <option value="locations">🗺️ Карта локаций мира</option>
+                            <option value="story_branches">🔀 Развилки сюжета и концовок</option>
+                            <option value="timeline">⏳ Хронология исторических эпох</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -706,6 +708,46 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            story_branches: `
+                <div class="control-group">
+                    <label>Типы узлов сюжета</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Сюжет (Story)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #8b5cf6; border: 1px solid #6d28d9;"></div> Ветка (Plot Branch)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> Выбор (Choice)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #ec4899;"></div> Последствие</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> Финал (Ending)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи переходов</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b;"></div> Выбор игрока</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> Результат выбора</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #8b5cf6; border-top: 2px dashed #8b5cf6;"></div> Открытие ветки / финала</div>
+                    </div>
+                </div>
+            `,
+            timeline: `
+                <div class="control-group">
+                    <label>Хронология (Узлы)</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #1e293b;"></div> Эпоха Творения</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1e293b;"></div> Королевства</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ef4444; border: 1px solid #1e293b;"></div> Нашествие Тьмы</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #8b5cf6; transform: rotate(45deg); width: 10px; height: 10px; margin-left: 1px;"></div> Переход (Transition)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b;"></div> Событие (Event)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Мировое событие</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи времени</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #8b5cf6;"></div> Смена эпох</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #9ca3af; border-top: 2px dashed #9ca3af;"></div> Датирование события</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -849,10 +891,34 @@ HTML_CONTENT = """<!DOCTYPE html>
                 }
             };
 
-            // Custom adjustments for hierarchical look in locations
+            // Custom adjustments for graph layouts
             if (currentGraphType === 'locations') {
                 options.physics.barnesHut.springLength = 80;
                 options.physics.barnesHut.gravitationalConstant = -2000;
+            } else if (currentGraphType === 'story_branches') {
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 160,
+                        treeSpacing: 220,
+                        levelSeparation: 140
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'timeline') {
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'LR',
+                        sortMethod: 'directed',
+                        nodeSpacing: 100,
+                        treeSpacing: 180,
+                        levelSeparation: 150
+                    }
+                };
+                options.physics = { enabled: false };
             }
 
             network = new vis.Network(container, graphData, options);

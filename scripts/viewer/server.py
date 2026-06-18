@@ -12,7 +12,8 @@ import sys
 import webbrowser
 from .database import (
     get_tables, get_table_data, get_characters_graph,
-    get_locations_graph, get_quests_graph, get_future_graphs_todo
+    get_locations_graph, get_quests_graph, get_future_graphs_todo,
+    get_story_branches_graph, get_timeline_graph
 )
 from .frontend import HTML_CONTENT
 
@@ -87,6 +88,26 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
             
             todo_data = get_future_graphs_todo()
             self.wfile.write(json.dumps(todo_data).encode('utf-8'))
+            
+        # API: Story Branches Graph
+        elif parsed_url.path == "/api/graph/story_branches":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            
+            graph_data = get_story_branches_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+            
+        # API: Timeline Graph
+        elif parsed_url.path == "/api/graph/timeline":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            
+            graph_data = get_timeline_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
             
         # Frontend index html page
         elif parsed_url.path in ["/", "/index.html"]:
