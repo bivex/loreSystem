@@ -260,6 +260,10 @@ from .fallbacks_narrative import FallbacksNarrativeMixin
 from .fallbacks_rumor import FallbacksRumorMixin
 
 
+from .fallbacks_narrative import FallbacksNarrativeMixin
+from .fallbacks_rumor import FallbacksRumorMixin
+
+
 class FallbacksMixin(
     FallbacksNarrativeMixin,
     FallbacksRumorMixin,

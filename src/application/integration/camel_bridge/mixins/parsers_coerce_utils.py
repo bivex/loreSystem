@@ -262,10 +262,12 @@ from .parsers_coerce_gameplay import CoerceParserGameplayMixin
 from .parsers_coerce_world import CoerceParserWorldMixin
 
 
+from .parsers_coerce_base import CoerceParserBaseMixin
+from .parsers_coerce_specialized import CoerceParserSpecializedMixin
+
+
 class CoerceParserMixin(
     CoerceParserBaseMixin,
-    CoerceParserNarrativeMixin,
-    CoerceParserGameplayMixin,
-    CoerceParserWorldMixin,
+    CoerceParserSpecializedMixin,
 ):
     pass

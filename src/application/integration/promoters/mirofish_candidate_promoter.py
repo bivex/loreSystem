@@ -43,9 +43,13 @@ class MiroFishCandidatePromoter(
     MiroFishLookupMixin,
     MiroFishResolutionMixin,
     MiroFishUtilsMixin,
-):
-    SAFE_EVENT_ONLY_POLICY = "safe_event_only"
-    SAFE_CROSS_RUN_EVENT_ONLY_POLICY = "safe_cross_run_event_only"
+from .mirofish_mapping import MiroFishMappingMixin
+from .mirofish_validation import MiroFishValidationMixin
+from .mirofish_lookup import MiroFishLookupMixin
+from .mirofish_utils import MiroFishUtilsMixin
+
+
+class MiroFishCandidatePromoter(MiroFishMappingMixin, MiroFishValidationMixin, MiroFishLookupMixin, MiroFishUtilsMixin):
     SAFE_RUMOR_ONLY_POLICY = "safe_rumor_only"
     SAFE_CROSS_RUN_RUMOR_ONLY_POLICY = "safe_cross_run_rumor_only"
     SAFE_RELATIONSHIP_ONLY_POLICY = "safe_relationship_only"
@@ -284,14 +288,3 @@ class MiroFishCandidatePromoter(
         updated_candidate = candidate
         if candidate_status != "merged" or self._candidate_canonical_link_is_stale(candidate, canonical_entity):
             updated_candidate = self.store.mark_candidate_merged(
-                candidate_id,
-                canonical_type=canonical_entity["canonical_type"],
-                canonical_id=canonical_entity["canonical_id"],
-            )
-        return {
-            "candidate_id": candidate_id,
-            "canonical_entity": canonical_entity,
-            "run_link": run_link,
-            "candidate": updated_candidate,
-        }
-
