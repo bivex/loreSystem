@@ -89,7 +89,7 @@ from src.domain.entities.crafting_recipe import (
     RecipeDifficulty,
     RecipeIngredient,
 )
-from src.domain.entities.cursed_item import CursedItem
+from src.domain.entities.cursed_item import CursedItem, VALID_CURSED_ITEM_RARITIES, VALID_CURSED_ITEM_RISKS
 from src.domain.entities.disposition import Disposition
 from src.domain.entities.divine_item import DivineItem
 from src.domain.entities.dungeon import Dungeon
@@ -729,6 +729,53 @@ class CoerceParserMixin:
             if normalized in {"rare", "epic", "legendary", "mythic", "divine"}
             else default
         )
+
+
+    def _coerce_cursed_item_rarity(self, value: object) -> str:
+        normalized = (
+            (self._coerce_optional_text(value) or "cursed")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
+        aliases = {
+            "mythical": "legendary",
+            "mythic": "legendary",
+            "divine": "legendary",
+            "godly": "legendary",
+            "artifact": "legendary",
+            "unique": "legendary",
+            "uncommon": "rare",
+            "common": "rare",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized in VALID_CURSED_ITEM_RARITIES
+            else "cursed"
+        )
+
+
+    def _coerce_cursed_item_risk(self, value: object) -> str:
+        normalized = (
+            (self._coerce_optional_text(value) or "high")
+            .strip()
+            .lower()
+        )
+        aliases = {
+            "moderate": "medium",
+            "critical": "extreme",
+            "normal": "medium",
+        }
+        normalized = aliases.get(normalized, normalized)
+        return (
+            normalized
+            if normalized in VALID_CURSED_ITEM_RISKS
+            else "high"
+        )
+
+
 
 
     def _coerce_artifact_set_type_text(self, value: object) -> str:

@@ -1030,15 +1030,11 @@ class ItemParserMixin:
             curse_type=(
                 self._coerce_optional_text(payload.get("curse_type")) or "corruption"
             ).lower(),
-            rarity=(
-                self._coerce_optional_text(payload.get("rarity")) or "cursed"
-            ).lower(),
+            rarity=self._coerce_cursed_item_rarity(payload.get("rarity")),
             benefit=self._coerce_optional_text(payload.get("benefit")) or "",
             curse_effect=self._coerce_optional_text(
                 payload.get("curse_effect") or payload.get("effect")
             )
             or "",
-            risk_level=(
-                self._coerce_optional_text(payload.get("risk_level")) or "high"
-            ).lower(),
+            risk_level=self._coerce_cursed_item_risk(payload.get("risk_level")),
         )
