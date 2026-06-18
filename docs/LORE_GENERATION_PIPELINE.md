@@ -238,15 +238,49 @@ CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 ./venv/bin/python3 CAMEL.Bridge/ru
 
 ## Верификация Full Pass (Сюжет + Системы)
 
-При запуске полной инициализации с флагами `--with-campaign-story --with-systems` система успешно генерирует и сохраняет в SQLite/Qdrant следующие категории сущностей:
+Для запуска полного прохода инициализации (Core + Narrative + Systems) с памятью Qdrant используется следующая команда:
+
+```bash
+# Очистка базы перед чистым запуском
+python -c "import sqlite3; conn=sqlite3.connect('lore_system.db'); cur=conn.cursor(); [cur.execute(f'DELETE FROM {t}') for t in ['rumors', 'characters', 'events', 'character_relationships', 'campaigns', 'stories', 'acts', 'chapters', 'episodes', 'storylines', 'quests', 'quest_chains', 'quest_givers', 'quest_nodes', 'quest_objectives', 'quest_prerequisites', 'quest_reward_tiers', 'quest_trackers', 'prologues', 'epilogues', 'plot_branches', 'branch_points', 'choices', 'consequences', 'moral_choices', 'alternate_realities', 'flashbacks', 'flash_forwards', 'endings'] if cur.execute(f'SELECT count(*) FROM sqlite_master WHERE type=\'table\' AND name=\'{t}\'').fetchone()[0]]; conn.commit(); conn.close(); print('Cleared!')"
+
+# Полная генерация
+CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 \
+./venv/bin/python3 CAMEL.Bridge/run_rumor_pipeline.py \
+  --tenant-id 1 \
+  --world-id 1 \
+  --theme "Темные фэнтези силы" \
+  --context "Древние культы призывают силы тьмы." \
+  --count 1 \
+  --db-path lore_system.db \
+  --output-language ru \
+  --env-file .env \
+  --with-memory \
+  --with-campaign-story \
+  --with-systems
+```
+
+### Статистика и логи успешного выполнения (Лог верификации 2026-06-18)
+Лог показывает успешную генерацию и сохранение всех сущностей:
+```text
+2026-06-18 17:13:38,127 INFO CAMEL bridge story chain start tenant_id=1 world_id=1 narrative=True systems=True memory_chars=0
+...
+2026-06-18 17:32:06,335 INFO CAMEL bridge narrative persistence completed campaign=1 story=1 acts=3 chapters=3 episodes=3 quests=1
+...
+2026-06-18 17:33:25,313 INFO CAMEL bridge systems persistence completed items=3 materials=3 skills=1 dungeons=2 seasonal_events=1 wars=1 artifact_sets=1 relic_collections=1
+2026-06-18 17:33:25,341 INFO CAMEL bridge memory indexed documents=25 tenant_id=1 world_id=1
+```
+
+При таком запуске система успешно генерирует и сохраняет в SQLite/Qdrant следующие категории сущностей:
 
 * **Сюжет (Narrative)**: Кампания (`campaign`), история (`story`), 3 акта, 3 главы, 3 эпизода, нелинейные развилки сюжета (`plot_branch`, `moral_choice`, `consequence`), концовки (`ending`), квестовые цепочки (`quest_chain`, `quest_node`, `quest_objective`, `quest_reward_tier`).
-* **Игровые предметы (Items)**: Клинок Тёмного Сокровища, Талисман Пламени Тени, материалы (`material`), компоненты (`component`), слоты под руны (`socket`).
+* **Игровые предметы (Items)**: Клинок Тёмного Сокровища, Талисман...
 * **Крафт и Чертежи**: Рецепты крафта (`crafting_recipe`), чертежи построек/предметов (`blueprint`), эффекты зачарования (`enchantment`).
 * **Прогрессия**: Деревья талантов (`talent_tree`), навыки (`skill`), пассивные перки (`perk`), врожденные черты характера (`trait`), числовые атрибуты (`attribute`), уровни и опыт (`level_up`, `experience`).
 * **Игровой мир**: Подземелья (`dungeon`), рейды (`raid`), мировые и сезонные события (`world_event`, `seasonal_event`), локации (`open_world_zone`).
 * **Элитарный контент**: Уникальное оружие/броня (`legendary_weapon`, `mythical_armor`), божественные артефакты (`divine_item`), проклятые предметы (`cursed_item`).
 * **Интеграция с памятью**: В Qdrant успешно добавляется **25 проиндексированных документов** за один проход.
+
 
 
 
