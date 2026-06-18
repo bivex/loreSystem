@@ -1485,3 +1485,270 @@ def get_crafting_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_progression_graph():
+    """Progression & skill trees graph.
+
+    Built only from real DB fields. All five progression tables (skills,
+    talent_trees, perks, attributes, level_ups) share a single structural
+    link: `character_id` -> characters. There are no prerequisite_id /
+    talent_node_id FKs in the schema, so the spec's 'ability requires base
+    skill' edges do not exist in the data and are not synthesised.
+
+    Real edges used:
+      - <entity>.character_id -> character ('принадлежит')
+      - skills.minimum_level / talent_trees.required_level -> level_up
+        ('требует ур. N') when the character's reached level satisfies it.
+      - level_ups.notes.major_stat_increases mentioning an attribute by
+        display_name -> attribute ('повысил') — the only cross-entity link
+        the data encodes, resolved by name match on the attribute's
+        display_name/name.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        # ---------- Load entities ----------
+        skills, talent_trees, perks, attributes, level_ups = [], [], [], [], []
+        if 'skills' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM skills")
+            skills = [dict(r) for r in cursor.fetchall()]
+        if 'talent_trees' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM talent_trees")
+            talent_trees = [dict(r) for r in cursor.fetchall()]
+        if 'perks' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM perks")
+            perks = [dict(r) for r in cursor.fetchall()]
+        if 'attributes' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM attributes")
+            attributes = [dict(r) for r in cursor.fetchall()]
+        if 'level_ups' in tables:
+            cursor.execute("SELECT id, label, payload_json FROM level_ups")
+            level_ups = [dict(r) for r in cursor.fetchall()]
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name, role, status FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+
+        char_ids = {c['id'] for c in characters}
+
+        # ---------- Character (root) nodes ----------
+        # Only render characters that are actually referenced by progression
+        # entities, so the graph stays focused.
+        referenced_chars = set()
+        for ents in (skills, talent_trees, perks, attributes, level_ups):
+            for ent in ents:
+                payload = parse(ent)
+                cid = payload.get('character_id')
+                if cid is not None:
+                    referenced_chars.add(cid)
+        for ch in characters:
+            if ch['id'] not in referenced_chars:
+                continue
+            tooltip = f"<b>Персонаж: {ch['name']}</b>"
+            if ch.get('role'):
+                tooltip += f"<br><b>Роль:</b> {ch['role']}"
+            if ch.get('status'):
+                tooltip += f"<br><b>Статус:</b> {ch['status']}"
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': ch['name'],
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},  # Amber
+                'shape': 'star',
+                'size': 22
+            })
+
+        # ---------- Attribute nodes ----------
+        attr_name_to_id = {}  # display_name/lower(name) -> node id (for level_up link)
+        for a in attributes:
+            payload = parse(a)
+            name = payload.get('display_name') or payload.get('name') or a['label']
+            atype = payload.get('attribute_type', '')
+            tooltip = f"<b>Характеристика: {name}</b>"
+            if atype:
+                tooltip += f"<br><b>Тип:</b> {atype}"
+            tooltip += f"<br><b>Значение:</b> {payload.get('current_value', '?')} / {payload.get('maximum_value', '?')}"
+            nodes.append({
+                'id': f"attribute_{a['id']}",
+                'label': name,
+                'title': tooltip,
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},  # Blue
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            attr_name_to_id[name.lower()] = f"attribute_{a['id']}"
+            # attribute -> character
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"attribute_{a['id']}", f"char_{cid}",
+                         '#3b82f6', width=1.5, label='принадлежит', dashes=True)
+
+        # ---------- Skill nodes ----------
+        for s in skills:
+            payload = parse(s)
+            name = payload.get('name') or s['label']
+            stype = payload.get('skill_type', '')
+            tooltip = f"<b>Способность: {name}</b>"
+            if stype:
+                tooltip += f"<br><b>Тип:</b> {stype}"
+            tooltip += f"<br><b>Уровень:</b> {payload.get('level', '?')} / {payload.get('max_level', '?')}"
+            if payload.get('minimum_level') is not None:
+                tooltip += f"<br><b>Требует ур.:</b> {payload['minimum_level']}"
+            nodes.append({
+                'id': f"skill_{s['id']}",
+                'label': f"⚡ {name}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},  # Cyan
+                'shape': 'dot',
+                'size': 16
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"skill_{s['id']}", f"char_{cid}",
+                         '#06b6d4', width=1.5, label='принадлежит', dashes=True)
+
+        # ---------- Talent tree nodes ----------
+        for tt in talent_trees:
+            payload = parse(tt)
+            name = payload.get('name') or tt['label']
+            ttype = payload.get('talent_tree_type', '')
+            tooltip = f"<b>Дерево талантов: {name}</b>"
+            if ttype:
+                tooltip += f"<br><b>Тип:</b> {ttype}"
+            if payload.get('required_level') is not None:
+                tooltip += f"<br><b>Требует ур.:</b> {payload['required_level']}"
+            tooltip += f"<br><b>Очки:</b> {payload.get('points_spent', 0)} / {payload.get('total_points', '?')}"
+            nodes.append({
+                'id': f"talent_tree_{tt['id']}",
+                'label': f"🌲 {name}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},  # Green
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 13, 'bold': True}
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"talent_tree_{tt['id']}", f"char_{cid}",
+                         '#10b981', width=2, label='принадлежит')
+
+        # ---------- Perk nodes ----------
+        for p in perks:
+            payload = parse(p)
+            name = payload.get('name') or p['label']
+            ptype = payload.get('perk_type', '')
+            source = payload.get('source', '')
+            tooltip = f"<b>Перк: {name}</b>"
+            if ptype:
+                tooltip += f"<br><b>Тип:</b> {ptype}"
+            if source:
+                tooltip += f"<br><b>Источник:</b> {source}"
+            nodes.append({
+                'id': f"perk_{p['id']}",
+                'label': f"🏅 {name}",
+                'title': tooltip,
+                'color': {'background': '#fbbf24', 'border': '#d97706'},  # Gold
+                'shape': 'diamond',
+                'size': 14
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"perk_{p['id']}", f"char_{cid}",
+                         '#fbbf24', width=1.5, label='принадлежит', dashes=True)
+
+        # ---------- Level-up nodes ----------
+        # Each level_up is the character reaching a new level. It can satisfy
+        # the minimum_level / required_level gates on skills and talent_trees,
+        # and it references attributes by name in major_stat_increases.
+        for lu in level_ups:
+            payload = parse(lu)
+            new_lvl = payload.get('new_level')
+            old_lvl = payload.get('old_level')
+            lu_type = payload.get('level_up_type', '')
+            tooltip = f"<b>Повышение уровня: {old_lvl} ➔ {new_lvl}</b>"
+            if lu_type:
+                tooltip += f"<br><b>Тип:</b> {lu_type}"
+            notes = payload.get('notes')
+            # `notes` may be a dict, a JSON string, or a Python-literal string
+            # ("{'k': 'v'}" with single quotes). Normalise to a dict.
+            if isinstance(notes, str):
+                try:
+                    notes = json.loads(notes)
+                except Exception:
+                    try:
+                        import ast
+                        notes = ast.literal_eval(notes)
+                    except Exception:
+                        notes = {}
+            if isinstance(notes, dict):
+                increases = notes.get('major_stat_increases', [])
+                if increases:
+                    tooltip += f"<br><b>Рост статов:</b> {', '.join(map(str, increases))}"
+            nodes.append({
+                'id': f"level_up_{lu['id']}",
+                'label': f"⬆️ ур. {new_lvl}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},  # Purple
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"level_up_{lu['id']}",
+                         '#a855f7', width=2, label=f'достиг ур. {new_lvl}')
+
+            # level_up -> skill/talent_tree: 'requires' is satisfied by this
+            # level. Draw the edge from the requirement to the level_up that
+            # fulfils it, so the spec's 'prerequisite' concept shows up using
+            # the only level-based linkage the schema provides.
+            if new_lvl is not None:
+                for s in skills:
+                    sp = parse(s)
+                    min_lvl = sp.get('minimum_level')
+                    if min_lvl is not None and new_lvl >= min_lvl:
+                        add_edge(f"skill_{s['id']}", f"level_up_{lu['id']}",
+                                 '#06b6d4', width=1, label=f'требует ур. {min_lvl}',
+                                 dashes=True)
+                for tt in talent_trees:
+                    tp = parse(tt)
+                    req_lvl = tp.get('required_level')
+                    if req_lvl is not None and new_lvl >= req_lvl:
+                        add_edge(f"talent_tree_{tt['id']}", f"level_up_{lu['id']}",
+                                 '#10b981', width=1, label=f'требует ур. {req_lvl}',
+                                 dashes=True)
+
+            # level_up -> attribute: 'raised' — the only cross-entity link in
+            # the data, encoded as text in major_stat_increases. Resolve by
+            # matching the attribute's display_name inside the increase text.
+            notes_for_match = notes
+            if isinstance(notes_for_match, dict):
+                for inc in notes_for_match.get('major_stat_increases', []) or []:
+                    inc_lower = str(inc).lower()
+                    for aname, aid in attr_name_to_id.items():
+                        if aname in inc_lower:
+                            add_edge(f"level_up_{lu['id']}", aid,
+                                     '#3b82f6', width=1.5, label='повысил')
+                            break
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building progression graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

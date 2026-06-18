@@ -481,6 +481,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="timeline">⏳ Хронология исторических эпох</option>
                             <option value="factions">🤝 Дипломатия фракций и альянсы</option>
                             <option value="crafting">⚒️ Схемы крафта и ресурсов</option>
+                            <option value="progression">🌲 Дерево прокачки и талантов</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -796,6 +797,28 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            progression: `
+                <div class="control-group">
+                    <label>Узлы развития</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f59e0b; border-radius: 50%;"></div> Персонаж (корень)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Способность (Skill)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857;"></div> Дерево талантов</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #fbbf24; border: 1px solid #d97706; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Перк</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Характеристика</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Повышение уровня</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи прокачки</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4; border-top: 2px dashed #06b6d4;"></div> принадлежит персонажу</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981;"></div> требует уровень (выполнено)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7;"></div> достиг уровня</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> повысил характеристику</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -809,7 +832,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                         Данные парсятся напрямую из проектной документации <code style="color: #a78bfa;">FUTURE_GRAPHS_TODO.md</code>.
                     </p>
                 </div>
-            `,
+            `
+        };
 
         async function loadGraphData() {
             const type = document.getElementById('graphTypeSelect').value;
@@ -993,6 +1017,20 @@ HTML_CONTENT = """<!DOCTYPE html>
                         nodeSpacing: 90,
                         treeSpacing: 160,
                         levelSeparation: 180
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'progression') {
+                // Top-down tree: character at the root, progression entities
+                // branching beneath, level-ups as the leaf milestone tier.
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 140,
+                        treeSpacing: 200,
+                        levelSeparation: 160
                     }
                 };
                 options.physics = { enabled: false };
