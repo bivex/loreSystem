@@ -244,215 +244,256 @@ def get_locations_graph():
     return {'nodes': nodes, 'edges': edges}
 
 def get_quests_graph():
+    """Quest tree graph.
+
+    Built only from real DB fields. Uses the full quest domain:
+      - quests -> quest_chains (via shared id / quest_id in chain payload)
+      - quest_chains -> quest_nodes (via quest_node_ids + nodes' quest_chain_id)
+      - quest_nodes -> quest_objectives (via objective_ids)
+      - quest_nodes -> quest_reward_tiers (via reward_tier.quest_node_id)
+      - quest_chains -> quest_givers (via givers' quest_chain_ids)
+      - intra-chain node sequencing (by id when positions tie)
+    """
     nodes = []
-    edges = []
-    
+    add_edge, edges = _new_edge_set()
+
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
+
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = {r[0] for r in cursor.fetchall()}
-        
-        quests = []
-        if 'quests' in tables:
-            cursor.execute("SELECT id, label, payload_json FROM quests")
-            quests = [dict(row) for row in cursor.fetchall()]
-            
-        quest_chains = []
-        if 'quest_chains' in tables:
-            cursor.execute("SELECT id, label, payload_json FROM quest_chains")
-            quest_chains = [dict(row) for row in cursor.fetchall()]
-            
-        quest_nodes = []
-        if 'quest_nodes' in tables:
-            cursor.execute("SELECT id, label, payload_json FROM quest_nodes")
-            quest_nodes = [dict(row) for row in cursor.fetchall()]
-            
-        prereqs = []
-        if 'quest_prerequisites' in tables:
-            cursor.execute("SELECT id, payload_json FROM quest_prerequisites")
-            prereqs = [dict(row) for row in cursor.fetchall()]
-            
-        conn.close()
-        
-        quest_map = {}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load(t, cols="id, label, payload_json"):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT {cols} FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        quests = load('quests')
+        quest_chains = load('quest_chains')
+        quest_nodes = load('quest_nodes')
+        prereqs = load('quest_prerequisites', "id, payload_json")
+        quest_objectives = load('quest_objectives')
+        quest_reward_tiers = load('quest_reward_tiers')
+        quest_givers = load('quest_givers')
+
+        chain_ids = {c['id'] for c in quest_chains}
+        node_ids = {n['id'] for n in quest_nodes}
+        obj_ids = {o['id'] for o in quest_objectives}
+        reward_ids = {r['id'] for r in quest_reward_tiers}
+
+        # ---------- Quest nodes ----------
         for q in quests:
-            payload = {}
-            if q.get('payload_json'):
-                try:
-                    payload = json.loads(q['payload_json'])
-                except Exception:
-                    pass
+            payload = parse(q)
             q_name = payload.get('name', q['label'])
             status = payload.get('status', 'not_started')
-            tooltip = f"<b>Квест: {q_name}</b><br>Статус: {status}"
-            
+            tooltip = f"<b>⚔️ Квест: {q_name}</b>"
+            tooltip += f"<br><b>Статус:</b> {status}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
             nodes.append({
                 'id': f"quest_{q['id']}",
-                'label': q_name,
+                'label': f"⚔️ {q_name}",
                 'title': tooltip,
                 'shape': 'box',
-                'color': {
-                    'background': '#f59e0b',
-                    'border': '#b45309'
-                },
+                'color': {'background': '#f59e0b', 'border': '#b45309'},
                 'font': {'color': '#111827', 'size': 14, 'bold': True}
             })
-            quest_map[q['id']] = q_name
-            
-        # Build quest <-> chain linkage.
-        # Prefer an explicit `quest_id` in the chain payload, but fall back to
-        # matching by id (quest.id == quest_chains.id) since the schema uses
-        # shared identifiers and many chains don't carry a quest_id field.
+
+        # ---------- Quest chain -> quest linkage ----------
         chain_to_quest = {}
         for qc in quest_chains:
-            payload = {}
-            if qc.get('payload_json'):
-                try:
-                    payload = json.loads(qc['payload_json'])
-                except Exception:
-                    pass
-            quest_id = payload.get('quest_id') or qc['id']
-            chain_to_quest[qc['id']] = quest_id
+            payload = parse(qc)
+            chain_to_quest[qc['id']] = payload.get('quest_id') or qc['id']
 
-        # Map each quest node to its parent quest via quest_chain_id (authoritative,
-        # present on every node) -> chain -> quest. Fall back to the chain's
-        # quest_node_ids list for nodes that don't carry quest_chain_id.
-        node_to_quest_map = {}
-        for qn in quest_nodes:
-            payload = {}
-            if qn.get('payload_json'):
-                try:
-                    payload = json.loads(qn['payload_json'])
-                except Exception:
-                    pass
-            chain_id = payload.get('quest_chain_id')
-            if chain_id is not None and chain_id in chain_to_quest:
-                node_to_quest_map[qn['id']] = chain_to_quest[chain_id]
-        for qc in quest_chains:
-            payload = {}
-            if qc.get('payload_json'):
-                try:
-                    payload = json.loads(qc['payload_json'])
-                except Exception:
-                    pass
-            quest_id = chain_to_quest.get(qc['id'])
-            node_ids = payload.get('quest_node_ids', [])
-            if quest_id and isinstance(node_ids, list):
-                for nid in node_ids:
-                    node_to_quest_map.setdefault(nid, quest_id)
+        # ---------- Quest giver nodes (linked to chains) ----------
+        referenced_chain_ids = set()
+        referenced_giver_chains = {}  # chain_id -> [giver ids]
+        for qg in quest_givers:
+            payload = parse(qg)
+            for cid in _parse_id_list(payload.get('quest_chain_ids')):
+                if cid in chain_ids:
+                    referenced_chain_ids.add(cid)
+                    referenced_giver_chains.setdefault(cid, []).append(qg['id'])
+        for qg in quest_givers:
+            payload = parse(qg)
+            name = payload.get('name') or qg['label']
+            tooltip = f"<b>💬 Квестгивер: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            if payload.get('greeting_message'):
+                tooltip += f"<br><i>«{payload['greeting_message']}»</i>"
+            nodes.append({
+                'id': f"giver_{qg['id']}",
+                'label': f"💬 {name[:18]}",
+                'title': tooltip,
+                'shape': 'box',
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},
+                'font': {'color': '#ffffff', 'size': 11}
+            })
 
-        node_id_list = set()
-        # Remember each node's chain and position so we can sequence nodes
-        # within a chain even when quest_node_ids is incomplete.
+        # ---------- Quest node (step) nodes ----------
         node_chain = {}
         node_position = {}
+        node_to_quest_map = {}
         for qn in quest_nodes:
+            payload = parse(qn)
             nid = qn['id']
-            node_id_list.add(nid)
-            payload = {}
-            if qn.get('payload_json'):
-                try:
-                    payload = json.loads(qn['payload_json'])
-                except Exception:
-                    pass
-            obj_ids = payload.get('objective_ids', [])
-            tooltip = f"<b>Шаг: {qn['label']}</b><br>ID: {nid}<br>Цели: {obj_ids}"
+            name = payload.get('name') or qn['label']
+            chain_id = payload.get('quest_chain_id')
+            node_chain[nid] = chain_id
+            node_position[nid] = payload.get('position')
+            if chain_id in chain_to_quest:
+                node_to_quest_map[nid] = chain_to_quest[chain_id]
+
+            status = payload.get('status', 'active')
+            optional = payload.get('is_optional')
+            tooltip = f"<b>📋 Шаг: {name}</b>"
+            tooltip += f"<br><b>Статус:</b> {status}"
+            if optional:
+                tooltip += "<br><i>(опциональный)</i>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            obj_ids_ref = _parse_id_list(payload.get('objective_ids'))
+            if obj_ids_ref:
+                tooltip += f"<br><b>Цели:</b> {obj_ids_ref}"
 
             nodes.append({
                 'id': f"node_{nid}",
-                'label': qn['label'],
+                'label': f"📋 {name[:18]}",
                 'title': tooltip,
                 'shape': 'dot',
                 'size': 15,
-                'color': {
-                    'background': '#06b6d4',
-                    'border': '#0891b2'
-                }
+                'color': {'background': '#06b6d4', 'border': '#0891b2'}
             })
 
-            node_chain[nid] = payload.get('quest_chain_id')
-            node_position[nid] = payload.get('position')
+            # Step -> quest.
+            parent_qid = node_to_quest_map.get(nid)
+            if parent_qid is not None:
+                add_edge(f"quest_{parent_qid}", f"node_{nid}",
+                         '#d97706', width=1.5, dashes=True, label='шаг')
 
-            parent_quest_id = node_to_quest_map.get(nid)
-            if parent_quest_id:
-                edges.append({
-                    'from': f"quest_{parent_quest_id}",
-                    'to': f"node_{nid}",
-                    'arrows': 'to',
-                    'color': '#d97706',
-                    'dashes': True,
-                    'width': 1.5
-                })
-
-        # Sequence nodes within a chain. Prefer the explicit quest_node_ids
-        # order from the chain payload; otherwise fall back to ordering nodes
-        # that share the same quest_chain_id by their id.
-        for qc in quest_chains:
-            payload = {}
-            if qc.get('payload_json'):
-                try:
-                    payload = json.loads(qc['payload_json'])
-                except Exception:
-                    pass
-            node_ids = payload.get('quest_node_ids', [])
-            if not isinstance(node_ids, list) or len(node_ids) < 2:
-                # Reconstruct the chain from nodes that reference it directly.
-                chain_id = qc['id']
-                node_ids = sorted(
-                    [nid for nid, cid in node_chain.items() if cid == chain_id and nid in node_id_list]
-                )
-            if len(node_ids) > 1:
-                for i in range(len(node_ids) - 1):
-                    n_from = node_ids[i]
-                    n_to = node_ids[i+1]
-                    if n_from in node_id_list and n_to in node_id_list:
-                        edges.append({
-                            'from': f"node_{n_from}",
-                            'to': f"node_{n_to}",
-                            'arrows': 'to',
-                            'color': '#06b6d4',
-                            'width': 2.5
-                        })
-                        
-        prereqs_map = {}
-        for pr in prereqs:
-            try:
-                payload = json.loads(pr['payload_json'])
-                reqs = payload.get('required_quest_ids', [])
-                if isinstance(reqs, list):
-                    prereqs_map[pr['id']] = reqs
-            except Exception:
-                pass
-                
+        # ---------- Quest objective nodes (linked to steps) ----------
+        referenced_obj_ids = set()
         for qn in quest_nodes:
-            nid = qn['id']
-            payload = {}
-            if qn.get('payload_json'):
-                try:
-                    payload = json.loads(qn['payload_json'])
-                except Exception:
-                    pass
-            pr_ids = payload.get('prerequisite_ids', [])
-            if isinstance(pr_ids, list):
-                for prid in pr_ids:
-                    req_quests = prereqs_map.get(prid, [])
-                    for req_qid in req_quests:
-                        edges.append({
-                            'from': f"quest_{req_qid}",
-                            'to': f"node_{nid}",
-                            'arrows': 'to',
-                            'color': '#ef4444',
-                            'dashes': [5, 5],
-                            'width': 1.5,
-                            'label': 'требует'
-                        })
-                        
+            payload = parse(qn)
+            for oid in _parse_id_list(payload.get('objective_ids')):
+                if oid in obj_ids:
+                    referenced_obj_ids.add(oid)
+        for qo in quest_objectives:
+            if qo['id'] not in referenced_obj_ids:
+                continue
+            payload = parse(qo)
+            desc = payload.get('description') or qo['label']
+            otype = payload.get('objective_type', '')
+            tooltip = f"<b>🎯 Цель: {desc}</b>"
+            if otype:
+                tooltip += f"<br><b>Тип:</b> {otype}"
+            tooltip += f"<br><b>Прогресс:</b> {payload.get('current_progress', 0)} / {payload.get('target_quantity', '?')}"
+            if payload.get('status'):
+                tooltip += f"<br><b>Статус:</b> {payload['status']}"
+            if payload.get('objective_hint'):
+                tooltip += f"<br><i>{payload['objective_hint']}</i>"
+            nodes.append({
+                'id': f"objective_{qo['id']}",
+                'label': f"🎯 {desc[:18]}",
+                'title': tooltip,
+                'shape': 'diamond',
+                'size': 12,
+                'color': {'background': '#eab308', 'border': '#a16207'}
+            })
+            # Objective -> step (via quest_node.objective_ids).
+            # Find which node references this objective.
+            for qn in quest_nodes:
+                payload_n = parse(qn)
+                if qo['id'] in _parse_id_list(payload_n.get('objective_ids')):
+                    add_edge(f"node_{qn['id']}", f"objective_{qo['id']}",
+                             '#eab308', width=1.5, label='цель')
+
+        # ---------- Reward tier nodes (linked to steps) ----------
+        for rt in quest_reward_tiers:
+            payload = parse(rt)
+            name = payload.get('name') or rt['label']
+            qnode_id = payload.get('quest_node_id')
+            tooltip = f"<b>🎁 Награда: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            tooltip += f"<br><b>Тир:</b> {payload.get('tier_level', '?')}"
+            if payload.get('is_guaranteed'):
+                tooltip += "<br>(гарантированная)"
+            nodes.append({
+                'id': f"reward_{rt['id']}",
+                'label': f"🎁 {name[:18]}",
+                'title': tooltip,
+                'shape': 'diamond',
+                'size': 13,
+                'color': {'background': '#22c55e', 'border': '#15803d'}
+            })
+            if qnode_id in node_ids:
+                add_edge(f"node_{qnode_id}", f"reward_{rt['id']}",
+                         '#22c55e', width=1.5, label='награда')
+
+        # ---------- Chain -> givers ----------
+        for cid, giver_ids in referenced_giver_chains.items():
+            for gid in giver_ids:
+                add_edge(f"giver_{gid}", f"node_chain_{cid}",
+                         '#3b82f6', width=1.5, label='выдаёт')
+        # Render referenced chains as helper nodes so givers have a target.
+        for cid in referenced_chain_ids:
+            payload = next((parse(c) for c in quest_chains if c['id'] == cid), {})
+            cname = payload.get('name') or f"Цепочка {cid}"
+            nodes.append({
+                'id': f"node_chain_{cid}",
+                'label': f"🔗 {cname[:18]}",
+                'title': f"<b>Цепочка квестов: {cname}</b>",
+                'shape': 'box',
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            # Chain -> quest (it belongs to).
+            qid = chain_to_quest.get(cid)
+            if qid is not None:
+                add_edge(f"node_chain_{cid}", f"quest_{qid}",
+                         '#a855f7', width=1, label='часть', dashes=True)
+
+        # ---------- Intra-chain node sequencing ----------
+        for qc in quest_chains:
+            payload = parse(qc)
+            seq = _parse_id_list(payload.get('quest_node_ids'))
+            if len(seq) < 2:
+                # Reconstruct from nodes referencing this chain, ordered by id.
+                cid = qc['id']
+                seq = sorted([nid for nid, ccid in node_chain.items()
+                              if ccid == cid and nid in node_ids])
+            for i in range(len(seq) - 1):
+                if seq[i] in node_ids and seq[i+1] in node_ids:
+                    add_edge(f"node_{seq[i]}", f"node_{seq[i+1]}",
+                             '#06b6d4', width=2.5, label='далее')
+
+        # ---------- Prerequisites (if any target a real quest id) ----------
+        for pr in prereqs:
+            payload = parse(pr)
+            req_ids = _parse_id_list(payload.get('required_quest_ids'))
+            target_node = payload.get('quest_node_id')
+            for req_qid in req_ids:
+                if target_node in node_ids:
+                    add_edge(f"quest_{req_qid}", f"node_{target_node}",
+                             '#ef4444', width=1.5, dashes=True, label='требует')
+
     except Exception as e:
         print(f"Error building quest graph: {e}")
-        
+
     return {'nodes': nodes, 'edges': edges}
 
 def get_future_graphs_todo():

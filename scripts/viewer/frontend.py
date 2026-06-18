@@ -689,18 +689,26 @@ HTML_CONTENT = """<!DOCTYPE html>
             `,
             quests: `
                 <div class="control-group">
-                    <label>Типы узлов квестов</label>
+                    <label>Узлы квестов</label>
                     <div style="margin-top: 4px;">
-                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Root Квест</div>
-                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Шаг (Quest Node)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Квест (корень)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Цепочка квестов</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Квестгивер (NPC)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Шаг квеста (Node)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #eab308; border: 1px solid #a16207; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Цель (Objective)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Награда (Reward)</div>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label>Связи переходов</label>
+                    <label>Связи квестов</label>
                     <div style="margin-top: 4px;">
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4;"></div> Последовательность шагов</div>
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #d97706; border-top: 2px dashed #d97706;"></div> Владелец квеста</div>
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ef4444; border-top: 2px dashed #ef4444;"></div> Требование (Prerequisite)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #d97706; border-top: 2px dashed #d97706;"></div> шаг (квест ➔ узел)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4;"></div> далее (последовательность шагов)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #eab308;"></div> цель (шаг ➔ objective)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #22c55e;"></div> награда (шаг ➔ tier)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> выдаёт (NPC ➔ цепочка)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7; border-top: 2px dashed #a855f7;"></div> часть (цепочка ➔ квест)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ef4444; border-top: 2px dashed #ef4444;"></div> требует (prerequisite)</div>
                     </div>
                 </div>
             `,
@@ -1195,7 +1203,23 @@ HTML_CONTENT = """<!DOCTYPE html>
             };
 
             // Custom adjustments for graph layouts
-            if (currentGraphType === 'locations') {
+            if (currentGraphType === 'quests') {
+                // Top-down quest tree: givers/chain at the top, quest -> steps,
+                // steps -> objectives/rewards at the leaves.
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 320,
+                        treeSpacing: 480,
+                        levelSeparation: 280,
+                        blockShifting: true,
+                        edgeMinimization: true
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'locations') {
                 options.physics.barnesHut.springLength = 160;
                 options.physics.barnesHut.gravitationalConstant = -4000;
             } else if (currentGraphType === 'story_branches') {
