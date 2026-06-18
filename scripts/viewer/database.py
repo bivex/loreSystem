@@ -2125,3 +2125,657 @@ def get_narrative_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_legendary_items_graph():
+    """Legendary items & sets graph.
+
+    Built only from real DB fields. The legendary item tables are mostly
+    flat entities with no cross-table FKs — only `world_id` is shared.
+    The two real structural links are:
+      - sockets.item_id -> items (the host item that the socket is cut into)
+      - traits.character_id -> characters (a trait belongs to a character)
+    Everything else hangs off the shared world. We surface that honestly:
+    items/totems are clustered by their rarity tier where the data supports
+    it (set pieces via artifact_sets.total_pieces), and the world node acts
+    as the hub.
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t, cols="id, label, payload_json"):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT {cols} FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        legendary_weapons = load_table('legendary_weapons')
+        mythical_armors = load_table('mythical_armors')
+        divine_items = load_table('divine_items')
+        cursed_items = load_table('cursed_items')
+        artifact_sets = load_table('artifact_sets')
+        enchantments = load_table('enchantments')
+        runes = load_table('runes')
+        glyphs = load_table('glyphs')
+        sockets = load_table('sockets')
+        traits = load_table('traits')
+        items = load_table('items')           # host items for sockets
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+
+        item_ids = {it['id'] for it in items}
+        char_ids = {c['id'] for c in characters}
+
+        # ---------- World hub node ----------
+        # All legendary entities share world_id=1; render it once as the hub.
+        world_id = None
+        for ents in (legendary_weapons, mythical_armors, divine_items,
+                     cursed_items, artifact_sets, enchantments, runes, glyphs):
+            for e in ents:
+                payload = parse(e)
+                if payload.get('world_id') is not None:
+                    world_id = payload['world_id']
+                    break
+            if world_id is not None:
+                break
+        if world_id is not None:
+            nodes.append({
+                'id': f"world_{world_id}",
+                'label': f"🌍 Мир {world_id}",
+                'title': f"<b>Мир {world_id}</b><br>Хаб редких предметов",
+                'color': {'background': '#64748b', 'border': '#334155'},  # Slate
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Legendary weapon nodes ----------
+        for w in legendary_weapons:
+            payload = parse(w)
+            name = payload.get('name') or w['label']
+            tooltip = f"<b>⚔️ Легендарное оружие: {name}</b>"
+            if payload.get('weapon_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['weapon_type']}"
+            tooltip += f"<br><b>Урон:</b> {payload.get('damage', '?')}"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            if payload.get('special_ability'):
+                tooltip += f"<br><b>Способность:</b> {payload['special_ability']}"
+            nodes.append({
+                'id': f"legendary_weapon_{w['id']}",
+                'label': f"⚔️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},  # Amber
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"legendary_weapon_{w['id']}",
+                         '#f59e0b', width=1.5, label='оружие')
+
+        # ---------- Mythical armor nodes ----------
+        for a in mythical_armors:
+            payload = parse(a)
+            name = payload.get('name') or a['label']
+            tooltip = f"<b>🛡️ Мифическая броня: {name}</b>"
+            if payload.get('armor_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['armor_type']}"
+            tooltip += f"<br><b>Защита:</b> {payload.get('defense', '?')}"
+            if payload.get('special_protection'):
+                tooltip += f"<br><b>Особая защита:</b> {payload['special_protection']}"
+            nodes.append({
+                'id': f"mythical_armor_{a['id']}",
+                'label': f"🛡️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},  # Blue
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"mythical_armor_{a['id']}",
+                         '#3b82f6', width=1.5, label='броня')
+
+        # ---------- Divine item nodes ----------
+        for d in divine_items:
+            payload = parse(d)
+            name = payload.get('name') or d['label']
+            tooltip = f"<b>✨ Божественный предмет: {name}</b>"
+            if payload.get('item_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['item_type']}"
+            if payload.get('divine_ability'):
+                tooltip += f"<br><b>Способность:</b> {payload['divine_ability']}"
+            nodes.append({
+                'id': f"divine_item_{d['id']}",
+                'label': f"✨ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#eab308', 'border': '#a16207'},  # Yellow
+                'shape': 'diamond',
+                'size': 14
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"divine_item_{d['id']}",
+                         '#eab308', width=1.5, label='артефакт')
+
+        # ---------- Cursed item nodes ----------
+        for cu in cursed_items:
+            payload = parse(cu)
+            name = payload.get('name') or cu['label']
+            tooltip = f"<b>💀 Проклятый предмет: {name}</b>"
+            if payload.get('item_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['item_type']}"
+            if payload.get('curse_effect'):
+                tooltip += f"<br><b>Проклятие:</b> {payload['curse_effect']}"
+            if payload.get('risk_level'):
+                tooltip += f"<br><b>Риск:</b> {payload['risk_level']}"
+            nodes.append({
+                'id': f"cursed_item_{cu['id']}",
+                'label': f"💀 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#dc2626', 'border': '#991b1b'},  # Red
+                'shape': 'diamond',
+                'size': 14
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"cursed_item_{cu['id']}",
+                         '#dc2626', width=1.5, label='проклят')
+
+        # ---------- Artifact set nodes ----------
+        for s in artifact_sets:
+            payload = parse(s)
+            name = payload.get('name') or s['label']
+            tooltip = f"<b>🔱 Набор артефактов: {name}</b>"
+            tooltip += f"<br><b>Всего предметов:</b> {payload.get('total_pieces', '?')}"
+            if payload.get('set_bonus'):
+                tooltip += f"<br><b>Бонус сета:</b> {payload['set_bonus']}"
+            nodes.append({
+                'id': f"artifact_set_{s['id']}",
+                'label': f"🔱 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},  # Purple
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12, 'bold': True}
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"artifact_set_{s['id']}",
+                         '#a855f7', width=2, label='сет')
+
+        # ---------- Enchantment nodes ----------
+        for en in enchantments:
+            payload = parse(en)
+            name = payload.get('name') or en['label']
+            tooltip = f"<b>🔷 Зачарование: {name}</b>"
+            if payload.get('enchantment_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['enchantment_type']}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"enchantment_{en['id']}",
+                'label': f"🔷 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},  # Cyan
+                'shape': 'dot',
+                'size': 12
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"enchantment_{en['id']}",
+                         '#06b6d4', width=1, label='зачарование', dashes=True)
+
+        # ---------- Rune nodes ----------
+        for rn in runes:
+            payload = parse(rn)
+            name = payload.get('name') or rn['label']
+            tooltip = f"<b>🔺 Руна: {name}</b>"
+            if payload.get('rune_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['rune_type']}"
+            tooltip += f"<br><b>Уровень:</b> {payload.get('level', '?')} / {payload.get('max_level', '?')}"
+            nodes.append({
+                'id': f"rune_{rn['id']}",
+                'label': f"🔺 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},  # Green
+                'shape': 'dot',
+                'size': 12
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"rune_{rn['id']}",
+                         '#10b981', width=1, label='руна', dashes=True)
+
+        # ---------- Glyph nodes ----------
+        for gl in glyphs:
+            payload = parse(gl)
+            name = payload.get('name') or gl['label']
+            tooltip = f"<b>🔻 Глиф: {name}</b>"
+            if payload.get('glyph_school'):
+                tooltip += f"<br><b>Школа:</b> {payload['glyph_school']}"
+            if payload.get('category'):
+                tooltip += f"<br><b>Категория:</b> {payload['category']}"
+            nodes.append({
+                'id': f"glyph_{gl['id']}",
+                'label': f"🔻 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},  # Pink
+                'shape': 'dot',
+                'size': 12
+            })
+            if world_id is not None:
+                add_edge(f"world_{world_id}", f"glyph_{gl['id']}",
+                         '#ec4899', width=1, label='глиф', dashes=True)
+
+        # ---------- Socket nodes (linked to host items) ----------
+        # The only real cross-table FK in this domain: sockets.item_id.
+        for sk in sockets:
+            payload = parse(sk)
+            host_item_id = payload.get('item_id')
+            slot_index = payload.get('slot_index', '?')
+            stype = payload.get('socket_type', '')
+            tooltip = f"<b>⬡ Слот {slot_index}</b>"
+            if stype:
+                tooltip += f"<br><b>Тип:</b> {stype}"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            if host_item_id is not None:
+                tooltip += f"<br><b>В предмете:</b> item_{host_item_id}"
+            nodes.append({
+                'id': f"socket_{sk['id']}",
+                'label': f"⬡ слот {slot_index}",
+                'title': tooltip,
+                'color': {'background': '#64748b', 'border': '#334155'},  # Slate
+                'shape': 'diamond',
+                'size': 10
+            })
+            # Socket -> host item (real FK sockets.item_id -> items.id).
+            if host_item_id in item_ids:
+                add_edge(f"item_{host_item_id}", f"socket_{sk['id']}",
+                         '#64748b', width=1.5, label='слот', dashes=True)
+
+        # ---------- Host item nodes (only those that own a socket) ----------
+        socketed_item_ids = set()
+        for sk in sockets:
+            payload = parse(sk)
+            iid = payload.get('item_id')
+            if iid in item_ids:
+                socketed_item_ids.add(iid)
+        for it in items:
+            if it['id'] not in socketed_item_ids:
+                continue
+            payload = parse(it)
+            name = payload.get('name') or it['label']
+            nodes.append({
+                'id': f"item_{it['id']}",
+                'label': f"🎒 {name[:20]}",
+                'title': f"<b>Предмет-носитель: {name}</b>",
+                'color': {'background': '#14b8a6', 'border': '#0f766e'},  # Teal
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Trait nodes (linked to characters) ----------
+        # Traits belong to characters via character_id, not to items; we
+        # surface them here because they describe item-related effects.
+        for tr in traits:
+            payload = parse(tr)
+            name = payload.get('name') or tr['label']
+            tooltip = f"<b>🧬 Трейт: {name}</b>"
+            if payload.get('category'):
+                tooltip += f"<br><b>Категория:</b> {payload['category']}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"trait_{tr['id']}",
+                'label': f"🧬 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#f97316', 'border': '#c2410c'},  # Orange
+                'shape': 'diamond',
+                'size': 12
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"trait_{tr['id']}",
+                         '#f97316', width=1.5, label='трейт', dashes=True)
+
+        # ---------- Character nodes (only those that carry a trait) ----------
+        trait_char_ids = set()
+        for tr in traits:
+            payload = parse(tr)
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                trait_char_ids.add(cid)
+        for ch in characters:
+            if ch['id'] not in trait_char_ids:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': ch['name'],
+                'title': f"<b>Персонаж: {ch['name']}</b>",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},  # Gold
+                'shape': 'dot',
+                'size': 14
+            })
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building legendary items graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+
+def get_achievements_graph():
+    """Achievements & player progress graph.
+
+    Built only from real DB fields. The progression-meta tables cluster
+    around `character_id` (Mara Voss, id=14):
+      - masterys.character_id
+      - progression_events.character_id
+      - experiences.character_id
+      - player_metrics.player_id (acts as character_id)
+      - progression_states.character_states[<id>]
+    Achievements, badges, titles and leaderboards carry only world_id and
+    attach to the shared world hub. Quest-completion events link onward to
+    the quests table via event_type='quest_complete' (event label matches a
+    quest label, but we only draw this when both ids are structural).
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        def load_table(t):
+            if t not in tables:
+                return []
+            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
+            return [dict(r) for r in cursor.fetchall()]
+
+        achievements = load_table('achievements')
+        badges = load_table('badges')
+        masterys = load_table('masterys')
+        titles = load_table('titles')
+        progression_events = load_table('progression_events')
+        progression_states = load_table('progression_states')
+        experiences = load_table('experiences')
+        leaderboards = load_table('leaderboards')
+        player_metrics = load_table('player_metrics')
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        char_ids = {c['id'] for c in characters}
+
+        # ---------- Character (root) nodes ----------
+        # Only render characters that progression entities reference.
+        referenced = set()
+        for ents, key in ((masterys, 'character_id'),
+                          (progression_events, 'character_id'),
+                          (experiences, 'character_id'),
+                          (player_metrics, 'player_id')):
+            for e in ents:
+                payload = parse(e)
+                cid = payload.get(key)
+                if cid is not None:
+                    try:
+                        referenced.add(int(cid))
+                    except (TypeError, ValueError):
+                        pass
+        for st in progression_states:
+            payload = parse(st)
+            cs = payload.get('character_states')
+            if isinstance(cs, dict):
+                for k in cs.keys():
+                    try:
+                        referenced.add(int(k))
+                    except (TypeError, ValueError):
+                        pass
+        for ch in characters:
+            if ch['id'] not in referenced:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"🧝 {ch['name']}",
+                'title': f"<b>Персонаж: {ch['name']}</b><br>ID: {ch['id']}",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},  # Gold
+                'shape': 'star',
+                'size': 22
+            })
+
+        # ---------- Achievement nodes ----------
+        for a in achievements:
+            payload = parse(a)
+            name = payload.get('name') or a['label']
+            tooltip = f"<b>🏆 Достижение: {name}</b>"
+            if payload.get('achievement_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['achievement_type']}"
+            if payload.get('difficulty'):
+                tooltip += f"<br><b>Сложность:</b> {payload['difficulty']}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            hidden = payload.get('is_hidden')
+            if hidden:
+                tooltip += "<br><i>(скрытое)</i>"
+            nodes.append({
+                'id': f"achievement_{a['id']}",
+                'label': f"🏆 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#eab308', 'border': '#a16207'},  # Yellow
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        # ---------- Badge nodes ----------
+        for b in badges:
+            payload = parse(b)
+            name = payload.get('name') or b['label']
+            tooltip = f"<b>🎖️ Бейдж: {name}</b>"
+            if payload.get('badge_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['badge_type']}"
+            if payload.get('rarity'):
+                tooltip += f"<br><b>Редкость:</b> {payload['rarity']}"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"badge_{b['id']}",
+                'label': f"🎖️ {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},  # Purple
+                'shape': 'diamond',
+                'size': 13
+            })
+
+        # ---------- Mastery nodes (linked to character) ----------
+        for m in masterys:
+            payload = parse(m)
+            name = payload.get('name') or m['label']
+            tooltip = f"<b>🌟 Мастерство: {name}</b>"
+            if payload.get('category'):
+                tooltip += f"<br><b>Категория:</b> {payload['category']}"
+            tooltip += f"<br><b>Уровень:</b> {payload.get('level', '?')} / {payload.get('max_level', '?')}"
+            if payload.get('current_rank'):
+                tooltip += f"<br><b>Ранг:</b> {payload['current_rank']}"
+            nodes.append({
+                'id': f"mastery_{m['id']}",
+                'label': f"🌟 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#06b6d4', 'border': '#0891b2'},  # Cyan
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"mastery_{m['id']}",
+                         '#06b6d4', width=2, label='мастерство')
+
+        # ---------- Title nodes ----------
+        for ti in titles:
+            payload = parse(ti)
+            name = payload.get('name') or ti['label']
+            tooltip = f"<b>👑 Титул: {name}</b>"
+            if payload.get('description'):
+                tooltip += f"<br>{payload['description']}"
+            nodes.append({
+                'id': f"title_{ti['id']}",
+                'label': f"👑 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},  # Blue
+                'shape': 'diamond',
+                'size': 13
+            })
+
+        # ---------- Progression event nodes (linked to character) ----------
+        for pe in progression_events:
+            payload = parse(pe)
+            etype = payload.get('event_type', '')
+            label = pe['label'] or payload.get('description', f'event {pe["id"]}')
+            tooltip = f"<b>⚡ Событие прогрессии: {label[:50]}</b>"
+            if etype:
+                tooltip += f"<br><b>Тип:</b> {etype}"
+            reasons = payload.get('reasons')
+            if isinstance(reasons, list) and reasons:
+                tooltip += f"<br><b>Причины:</b> " + '; '.join(
+                    str(r.get('description', r)) if isinstance(r, dict) else str(r)
+                    for r in reasons[:3])
+            nodes.append({
+                'id': f"progression_event_{pe['id']}",
+                'label': f"⚡ {etype or 'event'} {pe['id']}",
+                'title': tooltip,
+                'color': {'background': '#f97316', 'border': '#c2410c'},  # Orange
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"progression_event_{pe['id']}",
+                         '#f97316', width=1.5, label=etype or 'событие', dashes=True)
+
+        # ---------- Progression state nodes (linked to character via states map) ----------
+        for ps in progression_states:
+            payload = parse(ps)
+            name = payload.get('name') or ps['label'] or f"State {ps['id']}"
+            tp = payload.get('time_point')
+            cs = payload.get('character_states')
+            tooltip = f"<b>📊 Состояние: {name}</b>"
+            if tp is not None:
+                tooltip += f"<br><b>Точка времени:</b> t{tp}"
+            if isinstance(cs, dict):
+                for cid_str, cdata in cs.items():
+                    if isinstance(cdata, dict):
+                        tooltip += f"<br><b>Персонаж {cid_str}:</b> ур.{cdata.get('level','?')}, xp {cdata.get('experience','?')}"
+            nodes.append({
+                'id': f"progression_state_{ps['id']}",
+                'label': f"📊 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#10b981', 'border': '#047857'},  # Green
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            if isinstance(cs, dict):
+                for cid_str in cs.keys():
+                    try:
+                        cid = int(cid_str)
+                    except (TypeError, ValueError):
+                        continue
+                    if cid in char_ids:
+                        add_edge(f"char_{cid}", f"progression_state_{ps['id']}",
+                                 '#10b981', width=1.5, label='состояние', dashes=True)
+
+        # ---------- Experience nodes (linked to character) ----------
+        for ex in experiences:
+            payload = parse(ex)
+            etype = payload.get('experience_type', '')
+            tooltip = f"<b>📈 Опыт: {etype}</b>"
+            tooltip += f"<br><b>Уровень:</b> {payload.get('current_level', '?')}"
+            tooltip += f"<br><b>Текущий XP:</b> {payload.get('current_xp', '?')}"
+            tooltip += f"<br><b>Всего XP:</b> {payload.get('total_experience', '?')}"
+            tooltip += f"<br><b>До следующего:</b> {payload.get('xp_to_next_level', '?')}"
+            nodes.append({
+                'id': f"experience_{ex['id']}",
+                'label': f"📈 ур.{payload.get('current_level', '?')}",
+                'title': tooltip,
+                'color': {'background': '#22c55e', 'border': '#15803d'},  # Bright green
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"experience_{ex['id']}",
+                         '#22c55e', width=2, label='опыт')
+
+        # ---------- Leaderboard nodes ----------
+        for lb in leaderboards:
+            payload = parse(lb)
+            name = payload.get('name') or lb['label']
+            tooltip = f"<b>🏅 Таблица лидеров: {name}</b>"
+            if payload.get('board_type'):
+                tooltip += f"<br><b>Тип:</b> {payload['board_type']}"
+            if payload.get('sort_criterion'):
+                tooltip += f"<br><b>Сортировка:</b> {payload['sort_criterion']}"
+            tooltip += f"<br><b>Лимит:</b> {payload.get('size_limit', '?')}"
+            nodes.append({
+                'id': f"leaderboard_{lb['id']}",
+                'label': f"🏅 {name[:20]}",
+                'title': tooltip,
+                'color': {'background': '#dc2626', 'border': '#991b1b'},  # Red
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Player metric nodes (linked to character) ----------
+        for pm in player_metrics:
+            payload = parse(pm)
+            name = payload.get('name') or pm['label']
+            mtype = payload.get('metric_type', '')
+            value = payload.get('value')
+            unit = payload.get('unit', '')
+            tooltip = f"<b>📊 Метрика: {name}</b>"
+            if mtype:
+                tooltip += f"<br><b>Тип:</b> {mtype}"
+            if value is not None:
+                tooltip += f"<br><b>Значение:</b> {value} {unit}"
+            nodes.append({
+                'id': f"player_metric_{pm['id']}",
+                'label': f"📊 {mtype or 'metric'}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},  # Pink
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+            pid = payload.get('player_id')
+            if pid in char_ids:
+                add_edge(f"char_{pid}", f"player_metric_{pm['id']}",
+                         '#ec4899', width=1.5, label='метрика', dashes=True)
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building achievements graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

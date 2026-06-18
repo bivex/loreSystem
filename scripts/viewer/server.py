@@ -15,7 +15,7 @@ from .database import (
     get_locations_graph, get_quests_graph, get_future_graphs_todo,
     get_story_branches_graph, get_timeline_graph,
     get_factions_graph, get_crafting_graph, get_progression_graph,
-    get_narrative_graph
+    get_narrative_graph, get_legendary_items_graph, get_achievements_graph
 )
 from .frontend import HTML_CONTENT
 
@@ -149,6 +149,26 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
 
             graph_data = get_narrative_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Legendary Items & Sets Graph
+        elif parsed_url.path == "/api/graph/legendary_items":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_legendary_items_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
+        # API: Achievements & Player Progress Graph
+        elif parsed_url.path == "/api/graph/achievements":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_achievements_graph()
             self.wfile.write(json.dumps(graph_data).encode('utf-8'))
             
         # Frontend index html page

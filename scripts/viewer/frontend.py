@@ -483,6 +483,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="crafting">⚒️ Схемы крафта и ресурсов</option>
                             <option value="progression">🌲 Дерево прокачки и талантов</option>
                             <option value="narrative">📖 Структура повествования</option>
+                            <option value="legendary_items">⭐ Легендарные предметы и комплекты</option>
+                            <option value="achievements">🏆 Достижения и прогресс игрока</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -847,6 +849,61 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
                 </div>
             `,
+            legendary_items: `
+                <div class="control-group">
+                    <label>Узлы редких предметов</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b; border-radius: 50%;"></div> Мир (хаб)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309;"></div> Легендарное оружие</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Мифическая броня</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #eab308; border: 1px solid #a16207; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Божественный предмет</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #dc2626; border: 1px solid #991b1b; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Проклятый предмет</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Набор артефактов</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #06b6d4;"></div> Зачарование</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #10b981;"></div> Руна</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #ec4899;"></div> Глиф</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #64748b;"></div> Слот (в предмете)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #f97316;"></div> Трейт (на персонаже)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи предметов</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b;"></div> оружие / броня / артефакт (мир ➔ предмет)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7;"></div> сет</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4; border-top: 2px dashed #06b6d4;"></div> зачарование / руна / глиф</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #64748b; border-top: 2px dashed #64748b;"></div> слот (предмет ➔ сокет)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f97316; border-top: 2px dashed #f97316;"></div> трейт (персонаж ➔ трейт)</div>
+                    </div>
+                </div>
+            `,
+            achievements: `
+                <div class="control-group">
+                    <label>Узлы прогресса</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24; border-radius: 50%;"></div> Персонаж (корень)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #eab308; border: 1px solid #a16207;"></div> Достижение</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Бейдж</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2;"></div> Мастерство</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> Титул</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f97316; border: 1px solid #c2410c;"></div> Событие прогрессии</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857;"></div> Состояние (state)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d;"></div> Опыт (XP)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #dc2626; border: 1px solid #991b1b;"></div> Таблица лидеров</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d;"></div> Метрика игрока</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи прогрессии</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #06b6d4;"></div> мастерство (Персонаж ➔ Мастерство)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f97316; border-top: 2px dashed #f97316;"></div> событие прогрессии</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #10b981; border-top: 2px dashed #10b981;"></div> состояние</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #22c55e;"></div> опыт (XP)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899; border-top: 2px dashed #ec4899;"></div> метрика</div>
+                    </div>
+                </div>
+            `,
             todo: `
                 <div class="control-group">
                     <label>О бэклоге</label>
@@ -1098,6 +1155,40 @@ HTML_CONTENT = """<!DOCTYPE html>
                         levelSeparation: 170,
                         blockShifting: true,
                         edgeMinimization: true
+                    }
+                };
+                options.physics = { enabled: false };
+            } else if (currentGraphType === 'legendary_items') {
+                // Radial cluster: world hub at the centre, item categories
+                // (weapons/armor/sets/enchantments/runes/glyphs) radiating
+                // outward; sockets hang off their host items and traits off
+                // their characters.
+                options.physics = {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -80,
+                        centralGravity: 0.4,
+                        springLength: 160,
+                        springConstant: 0.05,
+                        damping: 0.5,
+                        avoidOverlap: 0.75
+                    },
+                    stabilization: { iterations: 250 }
+                };
+            } else if (currentGraphType === 'achievements') {
+                // Top-down tree: character at the root, progression meta
+                // (mastery/events/states/experience/metrics) branching below;
+                // achievements/badges/titles/leaderboards hang as free leaves.
+                options.layout = {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 170,
+                        treeSpacing: 240,
+                        levelSeparation: 160,
+                        blockShifting: true
                     }
                 };
                 options.physics = { enabled: false };
