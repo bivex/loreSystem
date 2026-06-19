@@ -1201,6 +1201,62 @@ def _new_edge_set():
     return add_edge, edges
 
 
+def _load_entities(cursor, table, tables):
+    """Load rows from a table, adapting to whichever schema it has.
+
+    The DB can be created by either the main app (label + payload_json) or
+    the Camel lore pipeline (name/description/real columns). This helper:
+      - probes the table's columns once
+      - builds a SELECT that pulls `id`, a label-like field, and either the
+        JSON payload blob OR synthesises one from the real columns
+      - returns a list of dicts shaped like the rest of the code expects:
+        {'id', 'label', 'payload_json', 'payload'}
+    """
+    if table not in tables:
+        return []
+    cursor.execute(f"PRAGMA table_info({table})")
+    cols = [r[1] for r in cursor.fetchall()]
+    colset = set(cols)
+
+    # Choose the label-like column.
+    label_col = 'label' if 'label' in colset else ('name' if 'name' in colset else 'title')
+    # Choose the payload column.
+    payload_col = 'payload_json' if 'payload_json' in colset else None
+
+    if payload_col:
+        cursor.execute(f"SELECT id, {label_col} AS label, {payload_col} AS payload_json FROM {table}")
+        rows = []
+        for r in cursor.fetchall():
+            d = dict(r)
+            pj = d.get('payload_json')
+            try:
+                d['payload'] = json.loads(pj) if pj else {}
+            except Exception:
+                d['payload'] = {}
+            rows.append(d)
+        return rows
+
+    # No payload_json: synthesise a payload from the real columns so the
+    # downstream graph code can read entity fields uniformly.
+    select_cols = ['id'] + [c for c in cols if c not in ('id', 'tenant_id', 'created_at', 'updated_at', 'version')]
+    select_sql = ', '.join(f'"{c}"' for c in select_cols)
+    cursor.execute(f"SELECT {select_sql} FROM {table}")
+    rows = []
+    for r in cursor.fetchall():
+        d = dict(r)
+        payload = {k: v for k, v in d.items() if k != 'id'}
+        # Ensure there's a 'name' for display.
+        if 'name' not in payload and label_col in payload:
+            payload['name'] = payload[label_col]
+        rows.append({
+            'id': d['id'],
+            'label': d.get(label_col) or d.get('name') or d.get('title') or f"#{d['id']}",
+            'payload_json': json.dumps(payload, default=str, ensure_ascii=False),
+            'payload': payload,
+        })
+    return rows
+
+
 def get_factions_graph():
     """Faction diplomacy & hierarchy graph.
 
@@ -3426,10 +3482,7 @@ def get_open_world_graph():
                 return {}
 
         def load_table(t):
-            if t not in tables:
-                return []
-            cursor.execute(f"SELECT id, label, payload_json FROM {t}")
-            return [dict(r) for r in cursor.fetchall()]
+            return _load_entities(cursor, t, tables)
 
         open_world_zones = load_table('open_world_zones')
         seasonal_events = load_table('seasonal_events')
@@ -3848,16 +3901,20 @@ def get_social_graph():
             except Exception:
                 return {}
 
-        moral_choices = []
-        if 'moral_choices' in tables:
-            cursor.execute("SELECT id, label, payload_json FROM moral_choices")
-            moral_choices = [dict(r) for r in cursor.fetchall()]
+        moral_choices = _load_entities(cursor, 'moral_choices', tables)
 
         rumors = []
         if 'rumors' in tables:
-            cursor.execute("SELECT id, name, description, location_id, source_name, "
-                           "truth_level, spread_speed, credibility_score, is_active, world_id "
-                           "FROM rumors")
+            # rumours has real columns; adapt to schema.
+            cursor.execute("PRAGMA table_info(rumors)")
+            rum_cols = {r[1] for r in cursor.fetchall()}
+            if 'location_id' in rum_cols and 'source_name' in rum_cols:
+                cursor.execute("SELECT id, name, description, location_id, source_name, "
+                               "truth_level, spread_speed, credibility_score, is_active, world_id "
+                               "FROM rumors")
+            else:
+                # Fallback: pick whatever columns exist.
+                cursor.execute("SELECT * FROM rumors")
             rumors = [dict(r) for r in cursor.fetchall()]
 
         characters = []
@@ -3868,10 +3925,7 @@ def get_social_graph():
         if 'campaigns' in tables:
             cursor.execute("SELECT id, title FROM campaigns")
             campaigns = [dict(r) for r in cursor.fetchall()]
-        locations = []
-        if 'locations' in tables:
-            cursor.execute("SELECT id, label, payload_json FROM locations")
-            locations = [dict(r) for r in cursor.fetchall()]
+        locations = _load_entities(cursor, 'locations', tables)
 
         char_ids = {c['id'] for c in characters}
         campaign_ids = {c['id'] for c in campaigns}

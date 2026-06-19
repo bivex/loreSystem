@@ -1143,67 +1143,68 @@ HTML_CONTENT = """<!DOCTYPE html>
         function renderGraph(graphData) {
             const container = document.getElementById('network');
 
-            // Adaptive performance: large graphs (> 40 nodes) disable the
-            // expensive visual options (shadows, smooth curved edges, html
-            // multi-font) that make vis-network crawl on big datasets.
-            const isLargeGraph = graphData.nodes.length > 40;
+            // Adaptive performance: disable expensive visual options on
+            // anything but small graphs. vis-network's shadows, smooth
+            // curves, html multi-font and per-frame hover all add up and
+            // cause noticeable lag past ~25 nodes.
+            const n = graphData.nodes.length;
+            const isLargeGraph = n > 25;
+            const isHugeGraph = n > 50;
 
             const options = {
                 nodes: {
                     borderWidth: 2,
                     shadow: !isLargeGraph,
-                    // Constrain wide node labels so they wrap instead of
-                    // stretching across neighbours and overlapping text.
-                    widthConstraint: { maximum: 220 },
+                    widthConstraint: { maximum: 200 },
                     heightConstraint: { valign: 'middle' },
                     font: {
                         face: 'Inter',
-                        size: 14,
+                        size: isHugeGraph ? 12 : 14,
                         multi: isLargeGraph ? false : 'html',
-                        strokeWidth: 4,
+                        strokeWidth: 3,
                         strokeColor: '#0b0f19'
                     }
                 },
                 edges: {
                     shadow: !isLargeGraph,
-                    // Straight edges on large graphs (curves are expensive to
-                    // redraw every frame); keep gentle curves for small ones.
-                    smooth: isLargeGraph
-                        ? { enabled: true, type: 'continuous', roundness: 0 }
-                        : { type: 'continuous', roundness: 0.15 },
+                    // Straight edges everywhere — curves redraw every frame.
+                    smooth: { enabled: true, type: 'continuous', roundness: 0 },
                     font: {
                         face: 'Inter',
-                        size: 11,
-                        strokeWidth: 4,
+                        size: isHugeGraph ? 10 : 11,
+                        strokeWidth: 3,
                         strokeColor: '#0b0f19',
                         align: 'middle'
                     }
                 },
                 layout: {
                     randomSeed: 42,
-                    // improvedLayout does an O(n^2) swap-pass; disable for
-                    // large graphs to avoid the initial freeze.
+                    // improvedLayout is an O(n^2) swap pass — skip on large.
                     improvedLayout: !isLargeGraph
                 },
                 physics: {
                     enabled: physicsEnabled,
                     barnesHut: {
-                        gravitationalConstant: -8000,
-                        centralGravity: 0.12,
-                        springLength: 400,
+                        gravitationalConstant: -6000,
+                        centralGravity: 0.15,
+                        springLength: 250,
                         springConstant: 0.02,
-                        damping: 0.09,
-                        avoidOverlap: 0.9
+                        damping: 0.15,
+                        avoidOverlap: 0.85
                     },
                     stabilization: {
-                        iterations: 400,
-                        fit: true
+                        // Fewer iterations = faster settle; enough for layout.
+                        iterations: isHugeGraph ? 120 : (isLargeGraph ? 200 : 300),
+                        fit: true,
+                        updateInterval: 25
                     }
                 },
                 interaction: {
-                    hover: true,
-                    tooltipDelay: 200,
-                    hideEdgesOnDrag: false,
+                    // Hover re-renders the whole graph; disable on large.
+                    hover: !isLargeGraph,
+                    tooltipDelay: 300,
+                    hideEdgesOnDrag: isLargeGraph,
+                    hideNodesOnDrag: false,
                     zoomView: true
                 }
             };
@@ -1266,7 +1267,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.96
                     },
-                    stabilization: { iterations: 500 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'crafting') {
                 // Left-to-right flow: inputs (materials/components) on the
@@ -1330,7 +1331,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'achievements') {
                 // Top-down tree: character at the root, progression meta
@@ -1364,7 +1365,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'economy') {
                 // Mixed: inventories flow owner -> inventory -> items (LR
@@ -1381,7 +1382,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.96
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'open_world') {
                 // Mixed: world hub anchors zones/events; quest chains branch
@@ -1403,7 +1404,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'production') {
                 // Radial cluster: world hub at centre, voice actors and mocap
@@ -1419,7 +1420,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.98
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             } else if (currentGraphType === 'social') {
                 // Mixed: campaigns branch to moral dilemmas -> options/chars,
@@ -1437,7 +1438,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                         damping: 0.5,
                         avoidOverlap: 0.96
                     },
-                    stabilization: { iterations: 600 }
+                    stabilization: { iterations: 200, updateInterval: 25 }
                 };
             }
 
