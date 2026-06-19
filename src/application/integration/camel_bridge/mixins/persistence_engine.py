@@ -376,17 +376,21 @@ class EnginePersistenceMixin:
         limit: int = 50,
         include_worldless: bool = False,
     ) -> list[tuple[Any, dict[str, object]]]:
-        return [
-            (row, _row_payload_json(row))
-            for row in self._list_table_rows(
-                repository,
-                table_name,
-                tenant_id,
-                world_id,
-                limit=limit,
-                include_worldless=include_worldless,
-            )
-        ]
+        result = []
+        for row in self._list_table_rows(
+            repository,
+            table_name,
+            tenant_id,
+            world_id,
+            limit=limit,
+            include_worldless=include_worldless,
+        ):
+            payload = _row_payload_json(row)
+            d = dict(row)
+            if "label" not in d:
+                d["label"] = d.get("name") or d.get("title") or payload.get("name") or payload.get("title") or d.get("description") or ""
+            result.append((d, payload))
+        return result
 
 
     def _persist_systems_slice_unbatched(

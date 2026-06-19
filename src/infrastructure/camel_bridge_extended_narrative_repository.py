@@ -96,8 +96,20 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            self.table_name,
+            {
+                "world_id": "INTEGER",
+                "label": "TEXT",
+                "payload_json": "TEXT DEFAULT '{}'",
+                "created_at": "TEXT",
+                "updated_at": "TEXT",
+                "version": "INTEGER",
+            },
+        )
 
     def _payload_for(self, entity) -> dict[str, object]:
+        import os
         serialized = _to_primitive(entity.__dict__)
         name_val = None
         for field_name in ("name", "title", "prompt"):
@@ -105,11 +117,18 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
             if val is not None:
                 name_val = _to_primitive(val)
                 break
+        name_val = name_val or _label_for(entity) or entity.__class__.__name__
         desc_val = getattr(entity, "description", None)
         desc_str = _to_primitive(desc_val) if desc_val is not None else None
+        
+        world_id_val = _to_primitive(getattr(entity, "world_id", None))
+        if world_id_val is None:
+            env_val = os.getenv("CAMEL_BRIDGE_WORLD_ID")
+            world_id_val = int(env_val) if env_val and env_val.isdigit() else 1
+            
         return {
             "tenant_id": _to_primitive(getattr(entity, "tenant_id", None)),
-            "world_id": _to_primitive(getattr(entity, "world_id", None)),
+            "world_id": world_id_val,
             "name": name_val,
             "description": desc_str,
             "label": _label_for(entity),

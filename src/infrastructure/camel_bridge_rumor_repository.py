@@ -145,6 +145,13 @@ class _BridgeSQLiteRepository:
                 cls._schema_cache.pop(key, None)
                 cls._table_columns_cache.pop(key, None)
 
+    def _ensure_columns(self, table_name: str, expected_columns: dict[str, str]) -> None:
+        with self._connection() as conn:
+            existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
+            for col_name, ddl in expected_columns.items():
+                if col_name not in existing:
+                    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {ddl}")
+
     def _ensure_schema_cached(self, table_name: str, ensure_schema: Callable[[], None]) -> None:
         if not self._can_use_shared_cache():
             ensure_schema()
@@ -377,6 +384,23 @@ class CamelBridgeCharacterRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+            for name, ddl in {
+                "status": "TEXT NOT NULL DEFAULT 'active'",
+                "abilities": "TEXT NOT NULL DEFAULT '[]'",
+                "parent_id": "INTEGER",
+                "location_id": "INTEGER",
+                "rarity": "TEXT",
+                "element": "TEXT",
+                "role": "TEXT",
+                "base_hp": "INTEGER NOT NULL DEFAULT 100",
+                "base_atk": "INTEGER NOT NULL DEFAULT 50",
+                "base_def": "INTEGER NOT NULL DEFAULT 50",
+                "base_speed": "INTEGER NOT NULL DEFAULT 50",
+                "energy_cost": "INTEGER NOT NULL DEFAULT 0",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            }.items():
+                if name not in {row[1] for row in conn.execute("PRAGMA table_info(characters)").fetchall()}:
+                    conn.execute(f"ALTER TABLE characters ADD COLUMN {name} {ddl}")
 
     def _payload_for(self, entity: Character) -> dict[str, object]:
         return {
@@ -479,6 +503,17 @@ class CamelBridgeEventRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+            for name, ddl in {
+                "start_date": "TEXT NOT NULL DEFAULT '2026-06-20'",
+                "end_date": "TEXT",
+                "outcome": "TEXT NOT NULL DEFAULT 'ongoing'",
+                "participant_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "location_id": "INTEGER",
+                "updated_at": "TEXT NOT NULL DEFAULT '2026-06-20'",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            }.items():
+                if name not in {row[1] for row in conn.execute("PRAGMA table_info(events)").fetchall()}:
+                    conn.execute(f"ALTER TABLE events ADD COLUMN {name} {ddl}")
 
     def _payload_for(self, entity: Event) -> dict[str, object]:
         return {

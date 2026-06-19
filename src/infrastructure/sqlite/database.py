@@ -202,8 +202,21 @@ class SQLiteDatabase:
                     backstory TEXT,
                     power_level INTEGER DEFAULT 1,
                     image_url TEXT,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    abilities TEXT NOT NULL DEFAULT '[]',
+                    parent_id INTEGER,
+                    location_id INTEGER,
+                    rarity TEXT,
+                    element TEXT,
+                    role TEXT,
+                    base_hp INTEGER NOT NULL DEFAULT 100,
+                    base_atk INTEGER NOT NULL DEFAULT 50,
+                    base_def INTEGER NOT NULL DEFAULT 50,
+                    base_speed INTEGER NOT NULL DEFAULT 50,
+                    energy_cost INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
+                    version INTEGER NOT NULL DEFAULT 1,
                     FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
                 )
             """)
@@ -487,7 +500,14 @@ class SQLiteDatabase:
                     name TEXT NOT NULL,
                     description TEXT,
                     timeline_position INTEGER,
+                    start_date TEXT NOT NULL DEFAULT '2026-06-20',
+                    end_date TEXT,
+                    outcome TEXT NOT NULL DEFAULT 'ongoing',
+                    participant_ids TEXT NOT NULL DEFAULT '[]',
+                    location_id INTEGER,
                     created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL DEFAULT '2026-06-20',
+                    version INTEGER NOT NULL DEFAULT 1,
                     FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
                 )
             """)

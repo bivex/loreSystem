@@ -67,6 +67,21 @@ class CamelBridgeCampaignRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "campaigns",
+            {
+                "campaign_type": "TEXT NOT NULL DEFAULT 'Main'",
+                "status": "TEXT NOT NULL DEFAULT 'active'",
+                "chapter_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "recommended_level": "INTEGER",
+                "estimated_hours": "INTEGER",
+                "start_date": "TEXT",
+                "end_date": "TEXT",
+                "is_replayable": "INTEGER NOT NULL DEFAULT 0",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Campaign) -> dict[str, object]:
         return {
@@ -129,6 +144,18 @@ class CamelBridgeStoryRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "stories",
+            {
+                "story_type": "TEXT NOT NULL DEFAULT 'Main'",
+                "content": "TEXT NOT NULL DEFAULT ''",
+                "choice_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "connected_world_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "is_active": "INTEGER NOT NULL DEFAULT 1",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Story) -> dict[str, object]:
         return {
@@ -191,6 +218,21 @@ class CamelBridgeActRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "acts",
+            {
+                "campaign_id": "INTEGER NOT NULL DEFAULT 1",
+                "act_type": "TEXT NOT NULL DEFAULT 'Main'",
+                "status": "TEXT NOT NULL DEFAULT 'active'",
+                "act_number": "INTEGER NOT NULL DEFAULT 1",
+                "structure": "TEXT NOT NULL DEFAULT 'ThreeAct'",
+                "chapter_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "key_events": "TEXT NOT NULL DEFAULT '[]'",
+                "estimated_minutes": "INTEGER",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Act) -> dict[str, object]:
         return {
@@ -257,6 +299,22 @@ class CamelBridgeChapterRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "chapters",
+            {
+                "campaign_id": "INTEGER NOT NULL DEFAULT 1",
+                "chapter_type": "TEXT NOT NULL DEFAULT 'Standard'",
+                "status": "TEXT NOT NULL DEFAULT 'active'",
+                "sequence_number": "INTEGER NOT NULL DEFAULT 1",
+                "episode_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "act_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "required_level": "INTEGER",
+                "estimated_minutes": "INTEGER",
+                "unlocks_at_level": "INTEGER",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Chapter) -> dict[str, object]:
         return {
@@ -322,6 +380,20 @@ class CamelBridgeEpisodeRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "episodes",
+            {
+                "chapter_id": "INTEGER NOT NULL DEFAULT 1",
+                "episode_type": "TEXT NOT NULL DEFAULT 'Standard'",
+                "status": "TEXT NOT NULL DEFAULT 'active'",
+                "sequence_number": "INTEGER NOT NULL DEFAULT 1",
+                "scene_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "estimated_minutes": "INTEGER",
+                "required_previous_episodes": "TEXT NOT NULL DEFAULT '[]'",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Episode) -> dict[str, object]:
         return {
@@ -386,6 +458,21 @@ class CamelBridgePrologueRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "prologues",
+            {
+                "campaign_id": "INTEGER NOT NULL DEFAULT 1",
+                "prologue_type": "TEXT NOT NULL DEFAULT 'Standard'",
+                "is_skippable": "INTEGER NOT NULL DEFAULT 0",
+                "is_required": "INTEGER NOT NULL DEFAULT 1",
+                "content": "TEXT NOT NULL DEFAULT ''",
+                "scene_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "character_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "estimated_minutes": "INTEGER",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Prologue) -> dict[str, object]:
         return {
@@ -453,6 +540,23 @@ class CamelBridgeEpilogueRepository(_BridgeSQLiteRepository):
                 )
                 """
             )
+        self._ensure_columns(
+            "epilogues",
+            {
+                "campaign_id": "INTEGER NOT NULL DEFAULT 1",
+                "epilogue_type": "TEXT NOT NULL DEFAULT 'Standard'",
+                "trigger_condition": "TEXT NOT NULL DEFAULT 'Success'",
+                "is_skippable": "INTEGER NOT NULL DEFAULT 0",
+                "content": "TEXT NOT NULL DEFAULT ''",
+                "scene_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "character_ids": "TEXT NOT NULL DEFAULT '[]'",
+                "required_ending_id": "INTEGER",
+                "required_achievement_id": "INTEGER",
+                "estimated_minutes": "INTEGER",
+                "updated_at": "TEXT",
+                "version": "INTEGER NOT NULL DEFAULT 1",
+            },
+        )
 
     def _payload_for(self, entity: Epilogue) -> dict[str, object]:
         return {

@@ -643,7 +643,9 @@ class SQLiteLoreMemoryReader:
             )
             if requested and related_names and not any(name.lower() in requested for name in related_names):
                 continue
-            label = str(row["label"] or payload.get("name") or payload.get("title") or entity_type.title()).strip()
+            row_keys = row.keys() if hasattr(row, "keys") else []
+            row_label = row["label"] if "label" in row_keys else (row["name"] if "name" in row_keys else (row["title"] if "title" in row_keys else ""))
+            label = str(row_label or payload.get("name") or payload.get("title") or entity_type.title()).strip()
             body = str(payload.get("description") or label).strip()
             extras = ", ".join(f"{field}={payload.get(field)}" for field in extra_fields if payload.get(field) not in (None, ""))
             subject = ", ".join(related_names) if related_names else "world state"
