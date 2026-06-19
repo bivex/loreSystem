@@ -99,9 +99,19 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
 
     def _payload_for(self, entity) -> dict[str, object]:
         serialized = _to_primitive(entity.__dict__)
+        name_val = None
+        for field_name in ("name", "title", "prompt"):
+            val = getattr(entity, field_name, None)
+            if val is not None:
+                name_val = _to_primitive(val)
+                break
+        desc_val = getattr(entity, "description", None)
+        desc_str = _to_primitive(desc_val) if desc_val is not None else None
         return {
             "tenant_id": _to_primitive(getattr(entity, "tenant_id", None)),
             "world_id": _to_primitive(getattr(entity, "world_id", None)),
+            "name": name_val,
+            "description": desc_str,
             "label": _label_for(entity),
             "payload_json": json.dumps(serialized, sort_keys=True),
             "created_at": _to_primitive(getattr(entity, "created_at", None)),
