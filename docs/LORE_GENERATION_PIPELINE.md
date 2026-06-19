@@ -309,8 +309,60 @@ CAMEL_MEMORY_QDRANT_URL=http://localhost:6333 \
 * **Игровой мир**: Подземелья (`dungeon`), рейды (`raid`), мировые и сезонные события (`world_event`, `seasonal_event`), локации (`open_world_zone`).
 * **Элитарный контент**: Уникальное оружие/броня (`legendary_weapon`, `mythical_armor`), божественные артефакты (`divine_item`), проклятые предметы (`cursed_item`).
 * **Интеграция с памятью**: В Qdrant успешно добавляется **25 проиндексированных документов** за один проход.
+---
 
+## 🛠️ Динамическое выравнивание схем SQLite (Dynamic Schema Migration)
 
+При первом запуске генерации лора на существующей базе данных (которая была инициализирована основным приложением через `SQLiteDatabase.initialize_schema()`) может возникнуть расхождение между урезанными схемами таблиц приложения и расширенными схемами репозиториев моста `Camel.Bridge`. 
 
+Это расхождение приводило к ошибкам вида `IndexError: No item with that key` (например, при обращении к отсутствующему полю `story_type` в таблице `stories`) или к полной потере метаданных из-за отсутствия колонки `payload_json` в универсальных таблицах (`quest_prerequisites`, `items` и др.).
 
+### Решение и механизм работы:
+1. В базовый класс репозитория `_BridgeSQLiteRepository` был интегрирован метод `_ensure_columns(table_name, expected_columns)`:
+   ```python
+   def _ensure_columns(self, table_name: str, expected_columns: dict[str, str]) -> None:
+       with self._connection() as conn:
+           existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
+           for col_name, ddl in expected_columns.items():
+               if col_name not in existing:
+                   conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {ddl}")
+   ```
+2. Каждый репозиторий при инициализации таблицы (в методе `_ensure_schema`) автоматически проверяет наличие расширенных полей через `PRAGMA table_info` и выполняет `ALTER TABLE ADD COLUMN`, если поля отсутствуют.
+3. Это гарантирует **абсолютную обратную совместимость** и бесконфликтную генерацию лора прямо в существующую базу данных `lore_system.db` без необходимости ручного обновления схемы.
 
+---
+
+## 🧹 Сброс базы данных и Qdrant памяти (Reset/Wipe Workflow)
+
+Для полной очистки вселенной перед чистым запуском нового генеративного цикла используйте скрипт сброса. Он удаляет записи из всех таблиц SQLite (сохраняя структуру и колонки) и пересоздает пустую коллекцию в Qdrant.
+
+Скрипт сброса (`reset_db_and_qdrant.py`):
+```python
+import sqlite3
+import urllib.request
+import json
+
+def clear_db():
+    conn = sqlite3.connect("lore_system.db")
+    cursor = conn.cursor()
+    tables = [row[0] for row in cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    for table in tables:
+        if table != "sqlite_sequence":
+            cursor.execute(f"DELETE FROM {table}")
+    conn.commit()
+    conn.close()
+
+def clear_qdrant():
+    # DELETE collection
+    req = urllib.request.Request("http://localhost:6333/collections/camel_bridge_memory", method="DELETE")
+    urllib.request.urlopen(req)
+    # PUT (recreate) collection
+    config = {"vectors": {"size": 1536, "distance": "Cosine"}}
+    req2 = urllib.request.Request(
+        "http://localhost:6333/collections/camel_bridge_memory",
+        data=json.dumps(config).encode("utf-8"),
+        method="PUT",
+        headers={"Content-Type": "application/json"}
+    )
+    urllib.request.urlopen(req2)
+```
