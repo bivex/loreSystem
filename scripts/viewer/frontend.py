@@ -20,8 +20,9 @@ HTML_CONTENT = """<!DOCTYPE html>
     <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_midnight.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-    <!-- Vis Network JS for Graph Visualizations -->
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Cytoscape.js for Graph Visualizations (WebGL-ish performance, far
+         smoother than vis-network on labelled graphs) -->
+    <script type="text/javascript" src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
 
     <style>
         :root {
@@ -352,16 +353,12 @@ HTML_CONTENT = """<!DOCTYPE html>
             border-radius: 2px;
         }
 
-        /* Vis network tooltips customization */
-        div.vis-network div.vis-tooltip {
-            background-color: #1e293b !important;
-            border: 1px solid var(--border-color) !important;
-            color: var(--text-primary) !important;
-            font-family: inherit !important;
-            font-size: 12px !important;
-            padding: 8px 12px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+        /* Cytoscape graph container styling */
+        #network {
+            background-color: #0f1423;
+        }
+        #network > canvas {
+            left: 0 !important;
         }
 
         /* TODO View Styles */
@@ -1140,353 +1137,215 @@ HTML_CONTENT = """<!DOCTYPE html>
             `;
         }
 
-        function renderGraph(graphData) {
-            const container = document.getElementById('network');
-
-            // Adaptive performance: disable expensive visual options on
-            // anything but small graphs. vis-network's shadows, smooth
-            // curves, html multi-font and per-frame hover all add up and
-            // cause noticeable lag past ~25 nodes.
-            const n = graphData.nodes.length;
-            const isLargeGraph = n > 25;
-            const isHugeGraph = n > 50;
-
-            const options = {
-                nodes: {
-                    borderWidth: 2,
-                    shadow: !isLargeGraph,
-                    widthConstraint: { maximum: 200 },
-                    heightConstraint: { valign: 'middle' },
-                    font: {
-                        face: 'Inter',
-                        size: isHugeGraph ? 12 : 14,
-                        multi: isLargeGraph ? false : 'html',
-                        strokeWidth: 3,
-                        strokeColor: '#0b0f19'
-                    }
-                },
-                edges: {
-                    shadow: !isLargeGraph,
-                    // Straight edges everywhere — curves redraw every frame.
-                    smooth: { enabled: true, type: 'continuous', roundness: 0 },
-                    font: {
-                        face: 'Inter',
-                        size: isHugeGraph ? 10 : 11,
-                        strokeWidth: 3,
-                        strokeColor: '#0b0f19',
-                        align: 'middle'
-                    }
-                },
-                layout: {
-                    randomSeed: 42,
-                    // improvedLayout is an O(n^2) swap pass — skip on large.
-                    improvedLayout: !isLargeGraph
-                },
-                physics: {
-                    enabled: physicsEnabled,
-                    barnesHut: {
-                        gravitationalConstant: -6000,
-                        centralGravity: 0.15,
-                        springLength: 250,
-                        springConstant: 0.02,
-                        damping: 0.15,
-                        avoidOverlap: 0.85
-                    },
-                    stabilization: {
-                        // Fewer iterations = faster settle; enough for layout.
-                        iterations: isHugeGraph ? 120 : (isLargeGraph ? 200 : 300),
-                        fit: true,
-                        updateInterval: 25
-                    }
-                },
-                interaction: {
-                    // Hover re-renders the whole graph; disable on large.
-                    hover: !isLargeGraph,
-                    tooltipDelay: 300,
-                    hideEdgesOnDrag: isLargeGraph,
-                    hideNodesOnDrag: false,
-                    zoomView: true
-                }
+        // Map vis-network node shapes to Cytoscape shapes.
+        function visShapeToCy(shape) {
+            const map = {
+                dot: 'ellipse', ellipse: 'ellipse', circle: 'ellipse',
+                box: 'round-rectangle', database: 'round-rectangle',
+                star: 'star', triangle: 'triangle', diamond: 'diamond',
+                triangleDown: 'triangle'
             };
+            return map[shape] || 'ellipse';
+        }
 
-            // Custom adjustments for graph layouts
-            if (currentGraphType === 'quests') {
-                // Top-down quest tree: givers/chain at the top, quest -> steps,
-                // steps -> objectives/rewards at the leaves.
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 320,
-                        treeSpacing: 480,
-                        levelSeparation: 280,
-                        blockShifting: true,
-                        edgeMinimization: false
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'locations') {
-                options.physics.barnesHut.springLength = 160;
-                options.physics.barnesHut.gravitationalConstant = -4000;
-            } else if (currentGraphType === 'story_branches') {
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 440,
-                        treeSpacing: 640,
-                        levelSeparation: 360
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'timeline') {
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'LR',
-                        sortMethod: 'directed',
-                        nodeSpacing: 320,
-                        treeSpacing: 520,
-                        levelSeparation: 440
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'factions') {
-                // Force-directed for a political map: clusters of allies vs
-                // opposed factions spread naturally.
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -180,
-                        centralGravity: 0.004,
-                        springLength: 440,
-                        springConstant: 0.025,
-                        damping: 0.5,
-                        avoidOverlap: 0.96
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'crafting') {
-                // Left-to-right flow: inputs (materials/components) on the
-                // left, recipes in the middle, produced items on the right.
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'LR',
-                        sortMethod: 'directed',
-                        nodeSpacing: 280,
-                        treeSpacing: 480,
-                        levelSeparation: 520
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'progression') {
-                // Top-down tree: character at the root, progression entities
-                // branching beneath, level-ups as the leaf milestone tier.
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 400,
-                        treeSpacing: 600,
-                        levelSeparation: 400
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'narrative') {
-                // Top-down narrative hierarchy:
-                //   Campaign -> Act -> Chapter -> Episode,
-                // with prologues/flashbacks/flash_forwards/alternate realities
-                // branching off the campaign root.
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 360,
-                        treeSpacing: 520,
-                        levelSeparation: 340,
-                        blockShifting: true,
-                        edgeMinimization: false
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'legendary_items') {
-                // Radial cluster: world hub at the centre, item categories
-                // (weapons/armor/sets/enchantments/runes/glyphs) radiating
-                // outward; sockets hang off their host items and traits off
-                // their characters. Wide spacing so labels don't overlap.
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -360,
-                        centralGravity: 0.06,
-                        springLength: 640,
-                        springConstant: 0.015,
-                        damping: 0.5,
-                        avoidOverlap: 0.98
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'achievements') {
-                // Top-down tree: character at the root, progression meta
-                // (mastery/events/states/experience/metrics) branching below;
-                // achievements/badges/titles/leaderboards hang as free leaves.
-                options.layout = {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 340,
-                        treeSpacing: 480,
-                        levelSeparation: 320,
-                        blockShifting: true
-                    }
-                };
-                options.physics = { enabled: false };
-            } else if (currentGraphType === 'combat') {
-                // Radial cluster: world hub at centre, encounter types
-                // (arenas/dungeons/instances/raids/invasions) radiating out,
-                // bosses hanging off dungeons/raids, factions flanking
-                // invasions. Wide spacing for readability.
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -360,
-                        centralGravity: 0.06,
-                        springLength: 600,
-                        springConstant: 0.015,
-                        damping: 0.5,
-                        avoidOverlap: 0.98
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'economy') {
-                // Mixed: inventories flow owner -> inventory -> items (LR
-                // hierarchy), while loot/drop/reward nodes cluster around the
-                // world hub. Force-directed with strong overlap avoidance.
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -300,
-                        centralGravity: 0.08,
-                        springLength: 520,
-                        springConstant: 0.017,
-                        damping: 0.5,
-                        avoidOverlap: 0.96
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'open_world') {
-                // Mixed: world hub anchors zones/events; quest chains branch
-                // out (giver -> chain -> node -> objective -> target).
-                // Force-directed with wide spacing for cross-domain labels.
-                // Allow wider node labels for this dense cross-domain graph.
-                options.nodes = options.nodes || {};
-                options.nodes.widthConstraint = { maximum: 320 };
-                options.nodes.font = options.nodes.font || {};
-                options.nodes.font.size = 13;
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -520,
-                        centralGravity: 0.04,
-                        springLength: 800,
-                        springConstant: 0.012,
-                        damping: 0.5,
-                        avoidOverlap: 0.98
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'production') {
-                // Radial cluster: world hub at centre, voice actors and mocap
-                // clips radiating outward. Wide spacing for producer labels.
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -360,
-                        centralGravity: 0.06,
-                        springLength: 600,
-                        springConstant: 0.015,
-                        damping: 0.5,
-                        avoidOverlap: 0.98
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
-                };
-            } else if (currentGraphType === 'social') {
-                // Mixed: campaigns branch to moral dilemmas -> options/chars,
-                // rumors hang off the world hub. Wide spacing for dilemma text.
-                options.nodes = options.nodes || {};
-                options.nodes.widthConstraint = { maximum: 280 };
-                options.physics = {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -360,
-                        centralGravity: 0.08,
-                        springLength: 600,
-                        springConstant: 0.015,
-                        damping: 0.5,
-                        avoidOverlap: 0.96
-                    },
-                    stabilization: { iterations: 200, updateInterval: 25 }
+        // Pick a layout per graph type. Cytoscape layouts are far faster
+        // than vis-network's physics — no per-frame recompute, no lag.
+        function layoutFor(type, isLarge) {
+            // Hierarchical trees: breadthfirst (top-down by default).
+            if (['quests', 'story_branches', 'progression', 'narrative',
+                 'achievements', 'timeline'].includes(type)) {
+                const lr = type === 'timeline';
+                return {
+                    name: 'breadthfirst',
+                    directed: true,
+                    spacingFactor: isLarge ? 1.25 : 1.5,
+                    padding: 20,
+                    circle: false,
+                    // Left-to-right for timelines, top-down otherwise.
+                    // breadthfirst goes TD by default; we rotate via transform
+                    // for LR by spacing the grid horizontally below.
+                    maximalAdjustments: !isLarge
                 };
             }
+            // Flow graphs (left-to-right): crafting, economy.
+            if (['crafting', 'economy'].includes(type)) {
+                return {
+                    name: 'breadthfirst',
+                    directed: true,
+                    spacingFactor: 1.4,
+                    padding: 20,
+                    circle: false,
+                    maximalAdjustments: false
+                };
+            }
+            // Cluster / hub graphs: cose (force-directed, but fast).
+            return {
+                name: 'cose',
+                animate: false,
+                randomize: true,
+                nodeRepulsion: () => 8000,
+                idealEdgeLength: () => isLarge ? 140 : 100,
+                edgeElasticity: () => 80,
+                gravity: 0.25,
+                numIter: isLarge ? 800 : 1500,
+                padding: 20,
+                fit: true
+            };
+        }
 
-            network = new vis.Network(container, graphData, options);
+        function renderGraph(graphData) {
+            const container = document.getElementById('network');
+            const isLarge = graphData.nodes.length > 25;
 
-            // Click node event
-            network.on("click", function (params) {
-                if (params.nodes.length > 0) {
-                    const nodeId = params.nodes[0];
-                    const selectedNode = graphData.nodes.find(n => n.id === nodeId);
-                    
-                    if (selectedNode) {
-                        const div = document.getElementById('nodeDetails');
-                        let nodeColor = '#6366f1';
-                        if (selectedNode.color) {
-                            nodeColor = typeof selectedNode.color === 'string' ? selectedNode.color : selectedNode.color.background;
-                        }
-                        
-                        div.innerHTML = `
-                            <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: ${nodeColor};">${selectedNode.label}</div>
-                            <div style="max-height: 180px; overflow-y: auto; line-height: 1.4; color: var(--text-secondary); font-size: 12px;">${selectedNode.title || 'Подробности отсутствуют.'}</div>
-                        `;
+            // Tear down the previous instance (vis or cy).
+            if (network) {
+                try { network.destroy(); } catch (e) {}
+                network = null;
+            }
+
+            // Convert vis-network elements to Cytoscape elements.
+            const cyElements = graphData.nodes.map(n => {
+                let bg = '#6366f1', border = '#4338ca', fontColor = '#ffffff';
+                if (n.color) {
+                    if (typeof n.color === 'string') { bg = n.color; }
+                    else {
+                        bg = n.color.background || bg;
+                        border = n.color.border || border;
                     }
-                } else {
-                    document.getElementById('nodeDetails').innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Кликните на узел для просмотра деталей</p>';
+                    if (n.font && typeof n.font === 'object' && n.font.color) {
+                        fontColor = n.font.color;
+                    }
+                }
+                const shape = visShapeToCy(n.shape);
+                return {
+                    group: 'nodes',
+                    data: {
+                        id: n.id,
+                        label: n.label || '',
+                        title: n.title || '',
+                        bgColor: bg,
+                        borderColor: border,
+                        fontColor: fontColor,
+                        shape: shape,
+                        nodeSize: n.size || 18,
+                    }
+                };
+            });
+
+            const cyEdges = graphData.edges.map((e, i) => ({
+                group: 'edges',
+                data: {
+                    id: 'e' + i,
+                    source: e.from,
+                    target: e.to,
+                    label: e.label || '',
+                    lineColor: typeof e.color === 'string' ? e.color : '#9ca3af',
+                    dashed: e.dashes ? true : false,
+                    width: e.width || 1.5,
+                }
+            }));
+
+            // Cytoscape stylesheet — much faster than per-node options.
+            const style = [
+                { selector: 'node', style: {
+                    'background-color': 'data(bgColor)',
+                    'border-color': 'data(borderColor)',
+                    'border-width': 2,
+                    'shape': 'data(shape)',
+                    'width': 'data(nodeSize)',
+                    'height': 'data(nodeSize)',
+                    'label': 'data(label)',
+                    'color': 'data(fontColor)',
+                    'text-valign': 'bottom',
+                    'text-halign': 'center',
+                    'text-margin-y': 6,
+                    'font-family': 'Inter, sans-serif',
+                    'font-size': 11,
+                    'font-weight': 600,
+                    'text-wrap': 'wrap',
+                    'text-max-width': '120px',
+                    'text-outline-width': 3,
+                    'text-outline-color': '#0f1423',
+                    'overlay-opacity': 0,
+                }},
+                { selector: 'node:selected', style: {
+                    'border-width': 4,
+                    'border-color': '#f472b6',
+                }},
+                { selector: 'edge', style: {
+                    'width': 'data(width)',
+                    'line-color': 'data(lineColor)',
+                    'target-arrow-color': 'data(lineColor)',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier',
+                    'label': 'data(label)',
+                    'font-family': 'Inter, sans-serif',
+                    'font-size': 9,
+                    'color': '#cbd5e1',
+                    'text-background-color': '#0f1423',
+                    'text-background-padding': '2px',
+                    'text-background-opacity': 0.85,
+                    'text-background-shape': 'round-rectangle',
+                    'line-style': 'data(dashed)' === 'true' ? 'dashed' : 'solid',
+                    'text-rotation': 'autorotate',
+                    'arrow-scale': 1.0,
+                    'overlay-opacity': 0,
+                }},
+            ];
+
+            network = cytoscape({
+                container: container,
+                elements: cyElements.concat(cyEdges),
+                style: style,
+                layout: layoutFor(currentGraphType, isLarge),
+                wheelSensitivity: 0.2,
+                minZoom: 0.15,
+                maxZoom: 3.0,
+            });
+
+            // Click node -> show details in the side panel.
+            network.on('tap', 'node', function (evt) {
+                const n = evt.target;
+                const bgColor = n.data('bgColor') || '#6366f1';
+                document.getElementById('nodeDetails').innerHTML =
+                    '<div style="font-weight: 700; font-size: 15px; margin-bottom: 8px; color: ' + bgColor + ';">' +
+                    (n.data('label') || '') + '</div>' +
+                    '<div style="max-height: 180px; overflow-y: auto; line-height: 1.4; color: var(--text-secondary); font-size: 12px;">' +
+                    (n.data('title') || 'Подробности отсутствуют.') + '</div>';
+            });
+            network.on('tap', function (evt) {
+                if (evt.target === network) {
+                    document.getElementById('nodeDetails').innerHTML =
+                        '<p style="color: var(--text-secondary); text-align: center;">Кликните на узел для просмотра деталей</p>';
                 }
             });
         }
 
         function stabilizeGraph() {
             if (network) {
-                network.stabilize();
+                // Re-run the current layout (cheaper than physics restabilise).
+                network.layout(network.layoutOptions || { name: 'cose', animate: false }).run();
             }
         }
 
         function togglePhysics(btn) {
             physicsEnabled = !physicsEnabled;
             if (physicsEnabled) {
-                btn.textContent = "⏸️ Выключить физику";
+                btn.textContent = "🔄 Сбросить симуляцию";
                 btn.classList.remove('btn-secondary');
             } else {
-                btn.textContent = "▶️ Включить физику";
+                btn.textContent = "▶️ Запустить симуляцию";
                 btn.classList.add('btn-secondary');
             }
             if (network) {
-                network.setOptions({ physics: { enabled: physicsEnabled } });
+                // Cytoscape layouts are non-incremental; "physics toggle" here
+                // re-runs the force-directed layout for cose-based graphs.
+                if (physicsEnabled) {
+                    network.layout({ name: 'cose', animate: false, randomize: false, fit: true }).run();
+                }
             }
         }
+
 
         // Graph type select binding
         document.getElementById('graphTypeSelect').addEventListener('change', loadGraphData);
