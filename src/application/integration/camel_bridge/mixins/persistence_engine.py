@@ -2145,6 +2145,7 @@ class EnginePersistenceMixin:
             character_profile_entries=chain_result.character_profile_entries,
             motion_captures=chain_result.motion_captures,
             voice_actors=chain_result.voice_actors,
+            subtitles=chain_result.subtitles,
             affinities=chain_result.affinities,
             dispositions=chain_result.dispositions,
             quests=chain_result.quests,

@@ -300,6 +300,7 @@ class RumorBridgeService(
         character_profile_entry_repository: CharacterProfileEntryStore | None = None,
         motion_capture_repository: MotionCaptureStore | None = None,
         voice_actor_repository: VoiceActorStore | None = None,
+        subtitle_repository: SubtitleStore | None = None,
         affinity_repository: AffinityStore | None = None,
         disposition_repository: DispositionStore | None = None,
         quest_repository: QuestStore | None = None,
@@ -385,6 +386,7 @@ class RumorBridgeService(
         self.character_profile_entry_repository = character_profile_entry_repository
         self.motion_capture_repository = motion_capture_repository
         self.voice_actor_repository = voice_actor_repository
+        self.subtitle_repository = subtitle_repository
         self.affinity_repository = affinity_repository
         self.disposition_repository = disposition_repository
         self.quest_repository = quest_repository

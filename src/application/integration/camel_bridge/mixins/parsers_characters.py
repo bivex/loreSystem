@@ -235,6 +235,7 @@ from src.application.integration.camel_bridge.drafts import (  # noqa: F401
     RecipeIngredientDraft, RelicCollectionDraft, RumorChainResult, RumorDraft,
     RumorGenerationRequest, RuneDraft, RuneBonusDraft, RuneEffectDraft,
     SeasonalEventDraft, SkillDraft, SocketDraft, StoryDraft, StorylineDraft,
+    SubtitleDraft,
     TalentNodeDraft, TalentTreeDraft, TitleDraft, TraitDraft, TrophyDraft,
     VoiceActorDraft, WarDraft, WorldEventDraft,
 )
@@ -394,6 +395,29 @@ class CharacterParserMixin:
             contact_info=self._coerce_optional_text(payload.get("contact_info")),
             hourly_rate=self._coerce_optional_float(payload.get("hourly_rate")),
         )
+
+
+    def _build_subtitle_draft(self, item: object, index: int) -> SubtitleDraft:
+        payload = item if isinstance(item, dict) else {}
+        scalar_text = self._coerce_optional_text(item)
+        return SubtitleDraft(
+            text=self._first_non_empty_text(
+                payload.get("text") or scalar_text,
+                f"Subtitle Line {index}",
+            ),
+            start_time_ms=self._coerce_optional_int(payload.get("start_time_ms") or payload.get("start_time")) or 0,
+            end_time_ms=self._coerce_optional_int(payload.get("end_time_ms") or payload.get("end_time")) or 1000,
+            description=self._coerce_optional_text(payload.get("description")),
+            voice_over_id=self._coerce_optional_text(payload.get("voice_over_id") or payload.get("voice_over")),
+            character_name=self._coerce_optional_text(
+                payload.get("character_name") or payload.get("character") or payload.get("speaker")
+            ),
+            language=self._first_non_empty_text(payload.get("language"), "en"),
+            position=str(payload.get("position") or "bottom"),
+            style=str(payload.get("style") or "default"),
+            metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {},
+        )
+
 
 
     def _build_affinity_draft(self, item: object, index: int) -> AffinityDraft:

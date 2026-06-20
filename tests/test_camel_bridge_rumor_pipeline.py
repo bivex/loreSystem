@@ -114,6 +114,7 @@ from src.infrastructure.camel_bridge_extended_narrative_repository import (
     CamelBridgeTraitRepository,
     CamelBridgeTrophyRepository,
     CamelBridgeVoiceActorRepository,
+    CamelBridgeSubtitleRepository,
     CamelBridgeInstanceRepository,
     CamelBridgeLootTableWeightRepository,
     CamelBridgeWarRepository,
@@ -623,6 +624,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         "character_profile_entries": [{"character_name": "Mara Voss", "field_name": "fear", "field_value": "The harbor bells at low tide."}],
         "motion_captures": [{"name": "Harbor Warning Gesture", "file_path": "captures/harbor_warning.fbx", "character_name": "Mara Voss", "actor_name": "Talan Reed", "animation_type": "social", "status": "completed"}],
         "voice_actors": [{"name": "Talan Reed", "language": "Common", "character_names": ["Mara Voss"], "status": "active"}],
+        "subtitles": [{"text": "Мара, опусти оружие, это ловушка!", "start_time_ms": 1200, "end_time_ms": 3400, "character_name": "Iven Hale", "language": "ru"}],
         "affinities": [{"source_name": "Mara Voss", "target_name": "Iven Hale", "category": "trust", "value": 0.8}],
         "dispositions": [{"entity_name": "Mara Voss", "target_type": "faction", "target_value": "Harbor Guard", "attitude": "suspicious", "intensity": 6}],
         "quests": [{"name": "Silence Before the Bell", "description": "Carry the warning through the harbor.", "objectives": ["Speak to the dockworkers", "Light the signal pyre"], "participant_names": ["Mara Voss", "Iven Hale"], "reward_tier_names": ["Bellkeeper's Reward"], "status": "active", "player_briefing": "Dockmaster Elra needs a runner who can beat the bells to the waterfront.", "journal_summary": "Warn the harbor before fear becomes riot.", "acceptance_text": "Carry Elra's warning to the dockworkers and light the signal pyre before curfew.", "completion_text": "The harbor answers the bells with preparation, not panic.", "failure_text": "The warning comes too late and panic claims the piers.", "reward_summary": "Bellkeeper's Reward: silver, experience, and dockside trust."}],
@@ -677,6 +679,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         character_profile_entry_repository=CamelBridgeCharacterProfileEntryRepository(db_path),
         motion_capture_repository=CamelBridgeMotionCaptureRepository(db_path),
         voice_actor_repository=CamelBridgeVoiceActorRepository(db_path),
+        subtitle_repository=CamelBridgeSubtitleRepository(db_path),
         affinity_repository=CamelBridgeAffinityRepository(db_path),
         disposition_repository=CamelBridgeDispositionRepository(db_path),
         quest_repository=CamelBridgeQuestRepository(db_path),
@@ -726,6 +729,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
     assert len(result.character_profile_entries) == 1
     assert len(result.motion_captures) == 1
     assert len(result.voice_actors) == 1
+    assert len(result.subtitles) == 1
     assert len(result.affinities) == 1
     assert len(result.dispositions) == 1
     assert len(result.quests) == 1
@@ -768,6 +772,7 @@ def test_camel_bridge_generates_campaign_story_structure(tmp_path):
         assert conn.execute("SELECT COUNT(*) FROM character_profile_entries").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM motion_captures").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM voice_actors").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM subtitles").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM affinities").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM dispositions").fetchone()[0] == 1
         assert conn.execute("SELECT COUNT(*) FROM quests").fetchone()[0] == 1

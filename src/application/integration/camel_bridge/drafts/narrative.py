@@ -308,6 +308,21 @@ class VoiceActorDraft:
 
 
 @dataclass(frozen=True)
+class SubtitleDraft:
+    text: str
+    start_time_ms: int = 0
+    end_time_ms: int = 1000
+    description: str | None = None
+    voice_over_id: str | None = None
+    character_name: str | None = None
+    language: str = "en"
+    position: str = "bottom"
+    style: str = "default"
+    metadata: dict = field(default_factory=dict)
+
+
+
+@dataclass(frozen=True)
 class AffinityDraft:
     source_name: str
     target_name: str
@@ -578,4 +593,6 @@ class NarrativeStructureDraft:
     endings: tuple[EndingDraft, ...] = field(default_factory=tuple)
     prologue: PrologueDraft | None = None
     epilogue: EpilogueDraft | None = None
+    subtitles: tuple[SubtitleDraft, ...] = field(default_factory=tuple)
+
 

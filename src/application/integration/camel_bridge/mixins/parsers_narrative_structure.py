@@ -365,6 +365,9 @@ class NarrativeParserMixin:
             payload.get("motion_captures")
         )
         voice_actors_payload = self._coerce_narrative_items(payload.get("voice_actors"))
+        subtitles_payload = self._coerce_narrative_items(
+            payload.get("subtitles") or payload.get("dialogues") or payload.get("dialogue_lines")
+        )
         affinities_payload = self._coerce_narrative_items(payload.get("affinities"))
         dispositions_payload = self._coerce_narrative_items(payload.get("dispositions"))
         quests_payload = self._coerce_narrative_items(payload.get("quests"))
@@ -617,6 +620,10 @@ class NarrativeParserMixin:
             voice_actors=tuple(
                 self._build_voice_actor_draft(item, index)
                 for index, item in enumerate(voice_actors_payload, start=1)
+            ),
+            subtitles=tuple(
+                self._build_subtitle_draft(item, index)
+                for index, item in enumerate(subtitles_payload, start=1)
             ),
             affinities=tuple(
                 self._build_affinity_draft(item, index)

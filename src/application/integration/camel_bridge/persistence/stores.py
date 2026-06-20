@@ -86,6 +86,7 @@ from src.domain.entities.skill import Skill
 from src.domain.entities.socket import Socket
 from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
+from src.domain.entities.subtitle import Subtitle
 from src.domain.entities.talent_tree import TalentTree
 from src.domain.entities.title import Title
 from src.domain.entities.trait import Trait
@@ -211,6 +212,10 @@ class MotionCaptureStore(Protocol):
 
 class VoiceActorStore(Protocol):
     def save(self, entity: VoiceActor) -> VoiceActor: ...
+
+
+class SubtitleStore(Protocol):
+    def save(self, entity: Subtitle) -> Subtitle: ...
 
 
 class AffinityStore(Protocol):

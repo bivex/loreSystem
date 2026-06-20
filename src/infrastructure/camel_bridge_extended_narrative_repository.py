@@ -29,7 +29,7 @@ def _to_primitive(value: Any) -> Any:
 
 
 def _label_for(entity: Any) -> str | None:
-    for field_name in ("name", "title", "prompt"):
+    for field_name in ("name", "title", "prompt", "text"):
         value = getattr(entity, field_name, None)
         text = str(_to_primitive(value)).strip() if value is not None else ""
         if text:
@@ -112,7 +112,7 @@ class _GenericBridgeRepository(_BridgeSQLiteRepository):
         import os
         serialized = _to_primitive(entity.__dict__)
         name_val = None
-        for field_name in ("name", "title", "prompt"):
+        for field_name in ("name", "title", "prompt", "text"):
             val = getattr(entity, field_name, None)
             if val is not None:
                 name_val = _to_primitive(val)
@@ -417,3 +417,7 @@ class CamelBridgeFlashForwardRepository(_GenericBridgeRepository):
 
 class CamelBridgeEndingRepository(_GenericBridgeRepository):
     table_name = "endings"
+
+
+class CamelBridgeSubtitleRepository(_GenericBridgeRepository):
+    table_name = "subtitles"

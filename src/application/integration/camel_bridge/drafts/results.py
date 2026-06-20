@@ -91,6 +91,7 @@ from src.domain.entities.skill import Skill
 from src.domain.entities.socket import Socket
 from src.domain.entities.story import Story
 from src.domain.entities.storyline import Storyline
+from src.domain.entities.subtitle import Subtitle
 from src.domain.entities.talent_tree import TalentTree
 from src.domain.entities.title import Title
 from src.domain.entities.trait import Trait
@@ -124,6 +125,7 @@ class RumorChainResult:
     character_profile_entries: list[CharacterProfileEntry] = field(default_factory=list)
     motion_captures: list[MotionCapture] = field(default_factory=list)
     voice_actors: list[VoiceActor] = field(default_factory=list)
+    subtitles: list[Subtitle] = field(default_factory=list)
     affinities: list[Affinity] = field(default_factory=list)
     dispositions: list[Disposition] = field(default_factory=list)
     quests: list[Quest] = field(default_factory=list)

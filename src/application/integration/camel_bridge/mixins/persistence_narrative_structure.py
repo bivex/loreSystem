@@ -169,6 +169,7 @@ from src.domain.entities.talent_tree import (
 from src.domain.entities.title import Title
 from src.domain.entities.trait import Trait, TraitCategory, TraitNature
 from src.domain.entities.trophy import Trophy
+from src.domain.entities.subtitle import Subtitle
 from src.domain.entities.voice_actor import VoiceActor, VoiceActorStatus
 from src.domain.entities.invasion import Invasion
 from src.domain.entities.war import War
@@ -276,6 +277,7 @@ class NarrativePersistenceMixin:
             self.epilogue_repository,
             self.storyline_repository,
             self.voice_actor_repository,
+            self.subtitle_repository,
             self.character_variant_repository,
             self.character_profile_entry_repository,
             self.motion_capture_repository,
@@ -572,6 +574,27 @@ class NarrativePersistenceMixin:
                     voice_actor_ids_by_name[
                         self._normalize_lookup_key(voice_actor.name)
                     ] = voice_actor.id
+
+        subtitles: list[Subtitle] = []
+        if getattr(self, "subtitle_repository", None) is not None:
+            for subtitle_draft in draft.subtitles:
+                character_id = ensure_character_id(subtitle_draft.character_name) if subtitle_draft.character_name else None
+                sub = self.subtitle_repository.save(
+                    Subtitle.create(
+                        tenant_id=str(tenant_id.value),
+                        text=subtitle_draft.text,
+                        start_time_ms=subtitle_draft.start_time_ms,
+                        end_time_ms=subtitle_draft.end_time_ms,
+                        description=subtitle_draft.description,
+                        voice_over_id=subtitle_draft.voice_over_id,
+                        character_id=str(character_id.value) if character_id else None,
+                        language=subtitle_draft.language,
+                        position=subtitle_draft.position,
+                        style=subtitle_draft.style,
+                        metadata=subtitle_draft.metadata,
+                    )
+                )
+                subtitles.append(sub)
 
         character_variants: list[CharacterVariant] = []
         variant_ids_by_name: dict[str, EntityId] = {}
@@ -1625,6 +1648,7 @@ class NarrativePersistenceMixin:
             character_profile_entries=character_profile_entries,
             motion_captures=motion_captures,
             voice_actors=voice_actors,
+            subtitles=subtitles,
             affinities=affinities,
             dispositions=dispositions,
             quests=list(quests_by_name.values()),

@@ -40,7 +40,7 @@ DEFAULT_RELATIONSHIP_AGENT_PROMPT = (
 )
 
 NARRATIVE_STRUCTURE_KEYS = (
-    "campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, "
+    "campaign, story, storylines, character_evolutions, character_variants, character_profile_entries, motion_captures, voice_actors, subtitles, "
     "affinities, dispositions, quests, quest_chains, quest_givers, quest_nodes, quest_objectives, quest_prerequisites, "
     "quest_reward_tiers, quest_trackers, plot_branches, branch_points, choices, consequences, moral_choices, "
     "alternate_realities, flashbacks, prologue, acts, chapters, episodes, flash_forwards, epilogue, endings"
@@ -87,10 +87,11 @@ NARRATIVE_BATCH_SPECS = (
             "character_profile_entries",
             "motion_captures",
             "voice_actors",
+            "subtitles",
             "affinities",
             "dispositions",
         ),
-        "Focus on character progression, voice production, and relationship metadata. CRITICAL: ALL text must be in output language. Examples for Russian: 'Mara Voss' → 'Мара Восс', 'Dockmaster' → 'Гаваньмастер', 'Harbor Watch' → 'Гаваньская стража'. NEVER use English for character content. Keep outputs compact and canon-consistent.",
+        "Focus on character progression, voice production, subtitles (spoken dialogue lines), and relationship metadata. CRITICAL: ALL text must be in output language. Examples for Russian: 'Mara Voss' → 'Мара Восс', 'Dockmaster' → 'Гаваньмастер', 'Harbor Watch' → 'Гаваньская стража'. NEVER use English for character content. Keep outputs compact and canon-consistent.",
     ),
     (
         "quest_meta",

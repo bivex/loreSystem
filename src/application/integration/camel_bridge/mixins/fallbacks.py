@@ -236,6 +236,7 @@ from src.application.integration.camel_bridge.drafts import (  # noqa: F401
     RecipeIngredientDraft, RelicCollectionDraft, RumorChainResult, RumorDraft,
     RumorGenerationRequest, RuneDraft, RuneBonusDraft, RuneEffectDraft,
     SeasonalEventDraft, SkillDraft, SocketDraft, StoryDraft, StorylineDraft,
+    SubtitleDraft,
     TalentNodeDraft, TalentTreeDraft, TitleDraft, TraitDraft, TrophyDraft,
     VoiceActorDraft, WarDraft, WorldEventDraft,
 )
@@ -644,6 +645,14 @@ class FallbacksMixin:
                     language="Common",
                     character_names=(primary_character,),
                     status="active",
+                ),
+            ),
+            subtitles=(
+                SubtitleDraft(
+                    text="Мы должны действовать быстро, пока они не подняли тревогу.",
+                    character_name=primary_character,
+                    start_time_ms=0,
+                    end_time_ms=2000,
                 ),
             ),
             affinities=(
