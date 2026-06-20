@@ -1040,14 +1040,22 @@ HTML_CONTENT = """<!DOCTYPE html>
             `,
             dialogues: `
                 <div class="control-group">
-                    <label>Узлы диалогов</label>
+                    <label>Говорящие (по роли)</label>
                     <div style="margin-top: 4px;">
-                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24; border-radius: 50%;"></div> Говорящий (персонаж)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #10b981; border-radius: 50%;"></div> 🟢 Протагонист (герой)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #3b82f6; border-radius: 50%;"></div> 🔵 Союзник</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #ef4444; border-radius: 50%;"></div> 🔴 Антагонист (злодей)</div>
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24; border-radius: 50%;"></div> 🟡 NPC (нейтрал)</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Контекст и реплики</label>
+                    <div style="margin-top: 4px;">
                         <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Кампания</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Сюжет</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Цепочка квестов</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d; border-radius: 5px;"></div> 💬 Приветствие NPC</div>
-                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2; border-radius: 5px;"></div> 📝 Реплика квеста (принятие)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2; border-radius: 5px;"></div> 📝 Принятие квеста</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> 📝 Завершение квеста</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309; border-radius: 5px;"></div> 📝 Брифинг игрока</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; border-radius: 5px;"></div> 📝 Запись в журнале</div>

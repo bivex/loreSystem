@@ -1257,6 +1257,104 @@ def _load_entities(cursor, table, tables):
     return rows
 
 
+def _character_roles(cursor, tables):
+    """Infer each character's narrative role from structural signals.
+
+    The `characters.role` column exists but is empty in the current data,
+    so we derive a role from real signals:
+      - character.role column (authoritative when present)
+      - character_relationships: enemy/rival -> antagonist; ally/friend ->
+        ally; 'complicated' counts as ally (tense alliance)
+      - wars: a faction name matching a character name on the aggressor
+        side marks that character as an antagonist
+      - quest_givers.description: keywords like 'вождь'/'поработитель'/
+        'культист'/'тёмный' hint antagonist; 'пленник'/'спасти'/'союз'/
+        'герой' hint protagonist/ally
+      - invasions.invader_name matching a character name -> antagonist
+
+    Returns: dict {character_id: role} where role is one of
+      'protagonist', 'ally', 'antagonist', 'npc'.
+    """
+    roles = {}
+
+    # 1. Direct role column if populated.
+    if 'characters' in tables:
+        cursor.execute("PRAGMA table_info(characters)")
+        char_cols = {r[1] for r in cursor.fetchall()}
+        if 'role' in char_cols:
+            cursor.execute("SELECT id, name, role, description FROM characters")
+            for r in cursor.fetchall():
+                d = dict(r)
+                role = (d.get('role') or '').strip().lower()
+                if role in ('protagonist', 'hero', 'player'):
+                    roles[d['id']] = 'protagonist'
+                elif role in ('antagonist', 'villain', 'boss', 'enemy'):
+                    roles[d['id']] = 'antagonist'
+                elif role in ('ally', 'companion', 'friend', 'support'):
+                    roles[d['id']] = 'ally'
+
+    # 2. character_relationships.
+    if 'character_relationships' in tables:
+        cursor.execute("SELECT character_from_id, character_to_id, relationship_type FROM character_relationships")
+        for r in cursor.fetchall():
+            d = dict(r)
+            rtype = (d.get('relationship_type') or '').lower()
+            if rtype in ('enemy', 'rival', 'nemesis', 'hostile', 'foe'):
+                roles[d['character_from_id']] = 'antagonist'
+                roles[d['character_to_id']] = 'antagonist'
+            elif rtype in ('ally', 'friend', 'companion', 'bond', 'family', 'mentor', 'complicated'):
+                roles.setdefault(d['character_from_id'], 'ally')
+                roles.setdefault(d['character_to_id'], 'ally')
+
+    # 3. quest_givers description keywords.
+    antagonist_kw = ('вождь', 'поработитель', 'культист', 'тёмный власт', 'тиран', 'захватчик', 'рейдер')
+    protagonist_kw = ('пленник', 'спасти', 'союзник', 'герой', 'спасител', 'путник', 'беглец')
+    givers = _load_entities(cursor, 'quest_givers', tables)
+    char_by_name = {}
+    if 'characters' in tables:
+        cursor.execute("SELECT id, name FROM characters")
+        for r in cursor.fetchall():
+            char_by_name[dict(r)['name'].lower()] = dict(r)['id']
+    for qg in givers:
+        p = qg.get('payload') or {}
+        name = (p.get('name') or '').lower()
+        desc = (p.get('description') or '').lower()
+        cid = p.get('character_id')
+        text = name + ' ' + desc
+        # Try to match the giver's name to a character.
+        matched_cid = cid
+        if matched_cid is None:
+            for cname, ccid in char_by_name.items():
+                if cname and cname in name:
+                    matched_cid = ccid
+                    break
+        if matched_cid is not None and matched_cid not in roles:
+            if any(kw in text for kw in antagonist_kw):
+                roles[matched_cid] = 'antagonist'
+            elif any(kw in text for kw in protagonist_kw):
+                roles[matched_cid] = 'protagonist'
+
+    # 4. invasions: aggressor name matching a character name.
+    invasions = _load_entities(cursor, 'invasions', tables)
+    for inv in invasions:
+        p = inv.get('payload') or {}
+        invader = (p.get('invader_name') or p.get('name') or '').lower()
+        for cname, ccid in char_by_name.items():
+            if cname and len(cname) > 3 and cname in invader:
+                roles[ccid] = 'antagonist'
+
+    return roles
+
+
+# Visual style per character role, used by graph builders.
+CHAR_ROLE_STYLE = {
+    'protagonist': {'background': '#10b981', 'border': '#047857'},   # green
+    'ally':        {'background': '#3b82f6', 'border': '#1d4ed8'},    # blue
+    'antagonist':  {'background': '#ef4444', 'border': '#b91c1c'},    # red
+    'npc':         {'background': '#fbbf24', 'border': '#d97706'},    # gold
+}
+
+
 def get_factions_graph():
     """Faction diplomacy & hierarchy graph.
 
@@ -3954,7 +4052,8 @@ def get_social_graph():
                 'size': 18
             })
 
-        # ---------- Referenced character nodes ----------
+        # ---------- Referenced character nodes (color-coded by narrative role) ----------
+        char_roles = _character_roles(cursor, tables)
         referenced_chars = set()
         for mc in moral_choices:
             payload = parse(mc)
@@ -3964,13 +4063,18 @@ def get_social_graph():
         for ch in characters:
             if ch['id'] not in referenced_chars:
                 continue
+            role = char_roles.get(ch['id'], 'npc')
+            style = CHAR_ROLE_STYLE[role]
+            role_ru = {'protagonist': 'Протагонист', 'ally': 'Союзник',
+                       'antagonist': 'Антагонист', 'npc': 'NPC'}[role]
+            tooltip = f"<b>{ch['name']}</b><br><b>Роль:</b> {role_ru}"
             nodes.append({
                 'id': f"char_{ch['id']}",
-                'label': f"🧝 {ch['name']}",
-                'title': f"<b>Персонаж: {ch['name']}</b>",
-                'color': {'background': '#fbbf24', 'border': '#d97706'},
-                'shape': 'dot',
-                'size': 14
+                'label': f"{ch['name']}",
+                'title': tooltip,
+                'color': style,
+                'shape': 'star' if role in ('protagonist', 'antagonist') else 'dot',
+                'size': 20 if role == 'protagonist' else (16 if role == 'antagonist' else 12)
             })
 
         # ---------- Referenced campaign nodes ----------
@@ -4164,7 +4268,8 @@ def get_dialogues_graph():
             s = (s or '').strip()
             return s if len(s) <= n else s[:n - 1] + '…'
 
-        # ---------- Character nodes (referenced by givers/moral_choices) ----------
+        # ---------- Character nodes (color-coded by narrative role) ----------
+        char_roles = _character_roles(cursor, tables)
         referenced_chars = set()
         for qg in quest_givers:
             payload = parse(qg)
@@ -4179,13 +4284,18 @@ def get_dialogues_graph():
         for ch in characters:
             if ch['id'] not in referenced_chars:
                 continue
+            role = char_roles.get(ch['id'], 'npc')
+            style = CHAR_ROLE_STYLE[role]
+            role_ru = {'protagonist': 'Протагонист', 'ally': 'Союзник',
+                       'antagonist': 'Антагонист', 'npc': 'NPC'}[role]
+            tooltip = f"<b>{ch['name']}</b><br><b>Роль:</b> {role_ru}"
             nodes.append({
                 'id': f"char_{ch['id']}",
-                'label': f"🧝 {ch['name']}",
-                'title': f"<b>Говорящий: {ch['name']}</b>",
-                'color': {'background': '#fbbf24', 'border': '#d97706'},
-                'shape': 'star',
-                'size': 18
+                'label': ch['name'],
+                'title': tooltip,
+                'color': style,
+                'shape': 'star' if role in ('protagonist', 'antagonist') else 'dot',
+                'size': 20 if role == 'protagonist' else (16 if role == 'antagonist' else 12)
             })
 
         # ---------- Story / campaign / chain context nodes ----------
