@@ -497,8 +497,11 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-                        <button class="btn btn-secondary" onclick="stabilizeGraph()">🔄 Сбросить симуляцию</button>
-                        <button class="btn btn-secondary" onclick="togglePhysics(this)">⏸️ Выключить физику</button>
+                        <button class="btn" onclick="autoLayoutGraph('auto')">🧭 Авто-раскладка</button>
+                        <button class="btn btn-secondary" onclick="autoLayoutGraph('tree')">🌳 Дерево (сверху вниз)</button>
+                        <button class="btn btn-secondary" onclick="autoLayoutGraph('circle')">⭕ Круг</button>
+                        <button class="btn btn-secondary" onclick="autoLayoutGraph('force')">🌀 Силовая</button>
+                        <button class="btn btn-secondary" onclick="fitGraph()">🔍 Уместить в экран</button>
                     </div>
 
                     <div class="graph-node-details" id="nodeDetails">
@@ -517,7 +520,6 @@ HTML_CONTENT = """<!DOCTYPE html>
     <script>
         let table = null;
         let network = null;
-        let physicsEnabled = true;
         let currentGraphType = 'characters';
 
         // Switch View Tabs
@@ -1321,28 +1323,49 @@ HTML_CONTENT = """<!DOCTYPE html>
             });
         }
 
-        function stabilizeGraph() {
-            if (network) {
-                // Re-run the current layout (cheaper than physics restabilise).
-                network.layout(network.layoutOptions || { name: 'cose', animate: false }).run();
+        // Re-run a layout on the current graph. mode:
+        //   'auto'   -> pick the best layout for this graph type
+        //   'tree'   -> breadthfirst (top-down hierarchy)
+        //   'circle' -> circle layout
+        //   'force'  -> cose (force-directed)
+        function autoLayoutGraph(mode) {
+            if (!network) return;
+            const isLarge = network.nodes().length > 25;
+            let layoutOpts;
+            if (mode === 'tree') {
+                layoutOpts = {
+                    name: 'breadthfirst', directed: true, circle: false,
+                    spacingFactor: isLarge ? 1.3 : 1.6, padding: 20,
+                    maximalAdjustments: !isLarge, animate: true,
+                    animationDuration: 300, fit: true
+                };
+            } else if (mode === 'circle') {
+                layoutOpts = {
+                    name: 'circle', radius: isLarge ? 280 : 180,
+                    padding: 20, animate: true, animationDuration: 300, fit: true
+                };
+            } else if (mode === 'force') {
+                layoutOpts = {
+                    name: 'cose', animate: true, animationDuration: 400,
+                    randomize: true, nodeRepulsion: () => 9000,
+                    idealEdgeLength: () => isLarge ? 160 : 110,
+                    edgeElasticity: () => 80, gravity: 0.25,
+                    numIter: isLarge ? 1000 : 1800, padding: 20, fit: true
+                };
+            } else {
+                // 'auto' — reuse the per-type picker from renderGraph.
+                layoutOpts = layoutFor(currentGraphType, isLarge);
+                layoutOpts.animate = true;
+                layoutOpts.animationDuration = 300;
+                layoutOpts.fit = true;
             }
+            network.layout(layoutOpts).run();
         }
 
-        function togglePhysics(btn) {
-            physicsEnabled = !physicsEnabled;
-            if (physicsEnabled) {
-                btn.textContent = "🔄 Сбросить симуляцию";
-                btn.classList.remove('btn-secondary');
-            } else {
-                btn.textContent = "▶️ Запустить симуляцию";
-                btn.classList.add('btn-secondary');
-            }
+        function fitGraph() {
             if (network) {
-                // Cytoscape layouts are non-incremental; "physics toggle" here
-                // re-runs the force-directed layout for cose-based graphs.
-                if (physicsEnabled) {
-                    network.layout({ name: 'cose', animate: false, randomize: false, fit: true }).run();
-                }
+                network.animate({ fit: { eles: network.elements(), padding: 30 } },
+                                { duration: 300 });
             }
         }
 
