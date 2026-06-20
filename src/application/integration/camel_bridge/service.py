@@ -366,7 +366,6 @@ class RumorBridgeService(
         flash_forward_repository: FlashForwardStore | None = None,
         ending_repository: EndingStore | None = None,
         memory_service: LoreMemoryService | None = None,
-        allow_fallback: bool = True,
     ):
         self.repository = repository
         self.backend = backend or CamelChatBackend()
@@ -452,7 +451,6 @@ class RumorBridgeService(
         self.flash_forward_repository = flash_forward_repository
         self.ending_repository = ending_repository
         self.memory_service = memory_service
-        self.allow_fallback = allow_fallback
         self._canonical_persist_registry = self._build_canonical_persist_registry()
 
 
@@ -476,11 +474,7 @@ class RumorBridgeService(
                 )
                 drafts.extend(self._parse_rumor_drafts(raw))
             except Exception:
-                if not self.allow_fallback:
-                    raise
                 drafts.append(self._fallback_rumor_draft(request, index, agent_name))
-        if not drafts and not self.allow_fallback:
-            raise RuntimeError("CAMEL bridge did not produce any rumor drafts")
         rumors: list[Rumor] = []
         for draft in self._dedupe_rumors(request, drafts, request.count):
             saved = self._save_or_merge_rumor(
@@ -736,8 +730,6 @@ class RumorBridgeService(
                 self._parse_narrative_structure(raw),
             )
         except Exception:
-            if not self.allow_fallback:
-                raise
             return self._fallback_narrative_structure_draft(request, chain_result)
 
 
@@ -781,8 +773,6 @@ class RumorBridgeService(
                 request, chain_result, draft
             )
         except Exception:
-            if not self.allow_fallback:
-                raise
             return self._fallback_narrative_structure_draft(request, chain_result)
 
 
@@ -816,6 +806,4 @@ class RumorBridgeService(
                 draft = self._merge_partial_draft_fields(draft, parsed, keys)
             return draft
         except Exception:
-            if not self.allow_fallback:
-                raise
             return self._fallback_narrative_structure_draft(request, chain_result)

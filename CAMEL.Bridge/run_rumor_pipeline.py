@@ -14,7 +14,6 @@ from runner_args import build_parser
 from runner_output import print_chain_result
 from runner_service import build_service
 from src.application.integration.camel_bridge import RumorGenerationRequest, load_env_file
-from src.application.integration.camel_bridge.rumor_agents import _env_flag
 
 
 def main() -> int:
@@ -24,14 +23,13 @@ def main() -> int:
     )
     args = build_parser().parse_args()
     loaded_env = load_env_file(args.env_file)
-    strict_model = args.strict_model or _env_flag("CAMEL_BRIDGE_STRICT_MODEL", default=False)
-    service, memory_service = build_service(args.db_path, strict_model=strict_model, with_memory=args.with_memory)
+    service, memory_service = build_service(args.db_path, with_memory=args.with_memory)
     if loaded_env:
         print(f"Loaded env from {loaded_env}")
     print(
         "Using CAMEL backend "
         f"platform={service.backend.model_platform} model={service.backend.model_type} "
-        f"strict_model={'on' if strict_model else 'off'} memory={'on' if memory_service else 'off'}"
+        f"memory={'on' if memory_service else 'off'}"
     )
     result = service.generate_story_chain(
         RumorGenerationRequest(

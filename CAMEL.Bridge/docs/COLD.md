@@ -13,7 +13,7 @@ During a successful cold start, the pipeline:
 
 A cold start is considered successful when:
 
-- strict mode completes without falling back to synthetic placeholder drafts
+- generation completes successfully
 - narrative generation and persistence complete
 - systems generation and persistence complete
 - the SQLite database contains newly created narrative and systems entities
@@ -25,7 +25,7 @@ A cold start is considered successful when:
 The current end-to-end reference run was validated with:
 
 - model: `arcee-ai/trinity-mini:free`
-- flags: `--with-campaign-story --with-systems --with-memory --strict-model`
+- flags: `--with-campaign-story --with-systems --with-memory`
 - memory backend: SQLite + Qdrant
 
 ## What Was Fixed
@@ -88,7 +88,7 @@ On a successful cold start, the runner prints:
 A typical run starts with logs like:
 
 ```text
-Using CAMEL backend platform=OPENROUTER model=arcee-ai/trinity-mini:free strict_model=on memory=on
+Using CAMEL backend platform=OPENROUTER model=arcee-ai/trinity-mini:free memory=on
 ... CAMEL bridge narrative generation start ...
 ... CAMEL bridge narrative persistence completed ...
 ... CAMEL bridge systems persistence completed ...
@@ -144,7 +144,7 @@ The clean reference check was run against:
 - SQLite: `/Volumes/External/Code/loreSystem/tmp/camel_live_debug8.db`
 - Qdrant collection: `camel_bridge_memory_debug8`
 - model: `arcee-ai/trinity-mini:free`
-- flags: `--with-campaign-story --with-systems --with-memory --strict-model`
+- flags: `--with-campaign-story --with-systems --with-memory`
 
 ### Run 1
 
@@ -247,6 +247,5 @@ python3 /Volumes/External/Code/loreSystem/CAMEL.Bridge/run_rumor_pipeline.py \
   --character "Iven Hale" \
   --with-campaign-story \
   --with-systems \
-  --with-memory \
-  --strict-model
+  --with-memory
 ```

@@ -17,7 +17,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--character", action="append", default=[])
     parser.add_argument("--db-path", default="lore_system.db")
     parser.add_argument("--env-file", default=None, help="Path to a .env file containing model credentials/config")
-    parser.add_argument("--strict-model", action="store_true", help="Disable all fallback generation and fail if the model call or JSON output is invalid")
     parser.add_argument("--with-campaign-story", action="store_true", help="Also generate Campaign/Story plus branching, Character, and Quest entities such as Storyline, PlotBranch, CharacterEvolution, VoiceActor, QuestChain, QuestNode, QuestTracker, Flashback, FlashForward, and Ending")
     parser.add_argument("--with-systems", action="store_true", help="Also generate and persist Item, Inventory, Material, Component, Socket, CraftingRecipe, Blueprint, Enchantment, Rune, Glyph, Title, Rank, Leaderboard, Trophy, Badge, Mastery, Skill, Perk, Trait, Attribute, TalentTree, Achievement, LevelUp, Experience, ProgressionState, ProgressionEvent, PlayerMetric, DropRate, LootTableWeight, DifficultyCurve, Dungeon, Raid, WorldEvent, Arena, Instance, OpenWorldZone, SeasonalEvent, Invasion, War, LegendaryWeapon, MythicalArmor, DivineItem, CursedItem, ArtifactSet, and RelicCollection entities")
     parser.add_argument("--with-memory", action="store_true", help="Enable SQLite + Qdrant continuity memory using CAMEL_MEMORY_QDRANT_* env settings")

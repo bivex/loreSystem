@@ -137,7 +137,6 @@ Bridge автоматически пытается загрузить `.env` и�
 - `CAMEL_MODEL_TEMPERATURE` (например, `0.7`)
 - `CAMEL_MODEL_MAX_TOKENS`
 - `CAMEL_MODEL_REASONING_EFFORT` — optional reasoning level для OpenRouter-compatible reasoning models
-- `CAMEL_BRIDGE_STRICT_MODEL=true` — полностью выключает fallback
 - `OPENROUTER_HTTP_REFERER` / `OPENROUTER_X_TITLE` — optional OpenRouter leaderboard headers
 
 Для optional memory v1:
@@ -159,7 +158,6 @@ OPENAI_API_KEY=sk-...
 CAMEL_MODEL_PLATFORM=OPENAI
 CAMEL_MODEL_TYPE=openai/gpt-oss-20b
 CAMEL_MODEL_BASE_URL=https://api.groq.com/openai/v1
-CAMEL_BRIDGE_STRICT_MODEL=true
 
 # optional memory v1
 CAMEL_MEMORY_QDRANT_URL=http://localhost:6333
@@ -189,7 +187,6 @@ CAMEL_MODEL_PLATFORM=OPENROUTER
 CAMEL_MODEL_TYPE=arcee-ai/trinity-mini:free
 CAMEL_MODEL_BASE_URL=https://openrouter.ai/api/v1
 CAMEL_MODEL_REASONING_EFFORT=low
-CAMEL_BRIDGE_STRICT_MODEL=true
 
 # optional leaderboard headers
 OPENROUTER_HTTP_REFERER=https://your-app.example
@@ -217,16 +214,9 @@ python CAMEL.Bridge/run_rumor_pipeline.py \
   --context "The harbor is tense after three disappearances." \
   --character "Mara Voss" \
   --character "Iven Hale" \
-  --with-memory \
-  --strict-model
+  --with-memory
 ```
 
-Если `--strict-model` или `CAMEL_BRIDGE_STRICT_MODEL=true` включены, bridge **не использует fallback** и упадёт, если:
-
-- нет API key,
-- CAMEL/model call сломался,
-- модель вернула невалидный JSON.
-
-Без strict-mode мост всё ещё умеет создавать fallback-записи.
+По умолчанию мост работает в отказоустойчивом режиме и умеет создавать fallback-записи в случае сбоев или невалидного ответа модели.
 
 Если включён `--with-memory`, bridge перед generation собирает continuity packet из SQLite и optional Qdrant recall, а после persistence переиндексирует текущий world snapshot.

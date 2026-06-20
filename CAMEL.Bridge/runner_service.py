@@ -93,7 +93,7 @@ from src.infrastructure.camel_bridge_story_repository import (
 )
 
 
-def build_service(db_path: str, *, strict_model: bool, with_memory: bool) -> tuple[RumorBridgeService, object | None]:
+def build_service(db_path: str, *, with_memory: bool) -> tuple[RumorBridgeService, object | None]:
     memory_service = build_memory_service_from_env(db_path) if with_memory else None
     service = RumorBridgeService(
         repository=CamelBridgeRumorRepository(db_path),
@@ -180,6 +180,5 @@ def build_service(db_path: str, *, strict_model: bool, with_memory: bool) -> tup
         flash_forward_repository=CamelBridgeFlashForwardRepository(db_path),
         ending_repository=CamelBridgeEndingRepository(db_path),
         memory_service=memory_service,
-        allow_fallback=not strict_model,
     )
     return service, memory_service

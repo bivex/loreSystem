@@ -1807,10 +1807,10 @@ def test_narrative_parser_accepts_groq_gpt_oss_live_shape():
 def test_load_env_file_populates_model_settings(tmp_path, monkeypatch):
     env_path = tmp_path / ".env"
     env_path.write_text(
-        "OPENAI_API_KEY=test-key\nCAMEL_MODEL_PLATFORM=OPENAI\nCAMEL_MODEL_TYPE=GPT_4O\nCAMEL_MODEL_TEMPERATURE=0.3\nCAMEL_BRIDGE_STRICT_MODEL=true\n",
+        "OPENAI_API_KEY=test-key\nCAMEL_MODEL_PLATFORM=OPENAI\nCAMEL_MODEL_TYPE=GPT_4O\nCAMEL_MODEL_TEMPERATURE=0.3\n",
         encoding="utf-8",
     )
-    for key in ["OPENAI_API_KEY", "CAMEL_MODEL_PLATFORM", "CAMEL_MODEL_TYPE", "CAMEL_MODEL_TEMPERATURE", "CAMEL_BRIDGE_STRICT_MODEL"]:
+    for key in ["OPENAI_API_KEY", "CAMEL_MODEL_PLATFORM", "CAMEL_MODEL_TYPE", "CAMEL_MODEL_TEMPERATURE"]:
         monkeypatch.delenv(key, raising=False)
 
     loaded = load_env_file(str(env_path))
@@ -2135,82 +2135,6 @@ def test_rumor_parser_normalizes_truth_and_spread_schema_values():
     assert drafts[2].spread_speed == "Rapid"
 
 
-def test_strict_mode_disables_rumor_fallbacks(tmp_path):
-    db_path = str(tmp_path / "strict.db")
-    _seed_world(db_path)
-    service = RumorBridgeService(
-        CamelBridgeRumorRepository(db_path),
-        backend=DeterministicRumorBackend(["not json", "still bad"]),
-        allow_fallback=False,
-    )
-
-    with pytest.raises(Exception):
-        service.generate_and_persist(RumorGenerationRequest(tenant_id=1, world_id=1, theme="ember court"))
-
-
-def test_strict_mode_disables_chain_fallbacks(tmp_path):
-    db_path = str(tmp_path / "strict_chain.db")
-    _seed_world(db_path)
-    _seed_characters(db_path)
-    service = RumorBridgeService(
-        CamelBridgeRumorRepository(db_path),
-        backend=DeterministicRumorBackend([
-            '[{"name":"Ember Court Whisper","description":"A whisper spreads through the court.","source_name":"Whisper Broker"}]',
-            '[{"name":"Ashen Proclamation","description":"A crier amplifies the rumor.","source_name":"Town Crier"}]',
-            'bad event json',
-        ]),
-        character_repository=CamelBridgeCharacterRepository(db_path),
-        event_repository=CamelBridgeEventRepository(db_path),
-        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
-        allow_fallback=False,
-    )
-
-    with pytest.raises(Exception):
-        service.generate_story_chain(RumorGenerationRequest(
-            tenant_id=1,
-            world_id=1,
-            theme="ember court",
-            character_names=("Tarin", "Mira"),
-        ))
-
-
-def test_strict_mode_disables_narrative_structure_fallbacks(tmp_path):
-    db_path = str(tmp_path / "strict_narrative.db")
-    _seed_world(db_path)
-    service = RumorBridgeService(
-        CamelBridgeRumorRepository(db_path),
-        backend=DeterministicRumorBackend([
-            '[{"name":"Ember Court Whisper","description":"A whisper spreads through the court.","source_name":"Whisper Broker"}]',
-            '[{"name":"Ashen Proclamation","description":"A crier amplifies the rumor.","source_name":"Town Crier"}]',
-            '[{"name":"Cinder Procession","description":"The court erupts into motion.","participant_names":["Tarin","Mira"],"outcome":"mixed"}]',
-            '[{"character_from_name":"Tarin","character_to_name":"Mira","description":"They survive the court\'s purge together.","relationship_type":"ally","relationship_level":20,"is_mutual":true}]',
-            'bad narrative json',
-        ]),
-        character_repository=CamelBridgeCharacterRepository(db_path),
-        event_repository=CamelBridgeEventRepository(db_path),
-        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
-        campaign_repository=CamelBridgeCampaignRepository(db_path),
-        story_repository=CamelBridgeStoryRepository(db_path),
-        act_repository=CamelBridgeActRepository(db_path),
-        chapter_repository=CamelBridgeChapterRepository(db_path),
-        episode_repository=CamelBridgeEpisodeRepository(db_path),
-        prologue_repository=CamelBridgePrologueRepository(db_path),
-        epilogue_repository=CamelBridgeEpilogueRepository(db_path),
-        allow_fallback=False,
-    )
-
-    with pytest.raises(Exception):
-        service.generate_story_chain(
-            RumorGenerationRequest(
-                tenant_id=1,
-                world_id=1,
-                theme="ember court",
-                count=2,
-                character_names=("Tarin", "Mira"),
-            ),
-            include_narrative_structure=True,
-        )
-
 
 def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch):
     class RecordingBackend:
@@ -2239,7 +2163,6 @@ def test_camel_bridge_splits_narrative_and_system_batches(tmp_path, monkeypatch)
         character_repository=CamelBridgeCharacterRepository(db_path),
         event_repository=CamelBridgeEventRepository(db_path),
         relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
-        allow_fallback=False,
     )
     monkeypatch.setattr(service, "_persist_narrative_structure", lambda request, result, draft: result)
     monkeypatch.setattr(service, "_persist_systems_slice", lambda request, result, draft: result)
@@ -2646,69 +2569,6 @@ def test_camel_bridge_generates_systems_slice(tmp_path):
     finally:
         conn.close()
 
-
-def test_strict_mode_disables_systems_slice_fallbacks(tmp_path):
-    db_path = str(tmp_path / "strict_systems.db")
-    _seed_world(db_path)
-    service = RumorBridgeService(
-        CamelBridgeRumorRepository(db_path),
-        backend=DeterministicRumorBackend([
-            '[{"name":"Ember Court Whisper","description":"A whisper spreads through the court.","source_name":"Whisper Broker"}]',
-            '[{"name":"Ashen Proclamation","description":"A crier amplifies the rumor.","source_name":"Town Crier"}]',
-            '[{"name":"Cinder Procession","description":"The court erupts into motion.","participant_names":["Tarin","Mira"],"outcome":"mixed"}]',
-            '[{"character_from_name":"Tarin","character_to_name":"Mira","description":"They survive the court purge together.","relationship_type":"ally","relationship_level":20,"is_mutual":true}]',
-            'bad systems json',
-        ]),
-        character_repository=CamelBridgeCharacterRepository(db_path),
-        event_repository=CamelBridgeEventRepository(db_path),
-        relationship_repository=CamelBridgeCharacterRelationshipRepository(db_path),
-        item_repository=CamelBridgeItemRepository(db_path),
-        inventory_repository=CamelBridgeInventoryRepository(db_path),
-        material_repository=CamelBridgeMaterialRepository(db_path),
-        component_repository=CamelBridgeComponentRepository(db_path),
-        socket_repository=CamelBridgeSocketRepository(db_path),
-        crafting_recipe_repository=CamelBridgeCraftingRecipeRepository(db_path),
-        blueprint_repository=CamelBridgeBlueprintRepository(db_path),
-        enchantment_repository=CamelBridgeEnchantmentRepository(db_path),
-        rune_repository=CamelBridgeRuneRepository(db_path),
-        glyph_repository=CamelBridgeGlyphRepository(db_path),
-        title_repository=CamelBridgeTitleRepository(db_path),
-        rank_repository=CamelBridgeRankRepository(db_path),
-        leaderboard_repository=CamelBridgeLeaderboardRepository(db_path),
-        trophy_repository=CamelBridgeTrophyRepository(db_path),
-        badge_repository=CamelBridgeBadgeRepository(db_path),
-        mastery_repository=CamelBridgeMasteryRepository(db_path),
-        skill_repository=CamelBridgeSkillRepository(db_path),
-        perk_repository=CamelBridgePerkRepository(db_path),
-        trait_repository=CamelBridgeTraitRepository(db_path),
-        attribute_repository=CamelBridgeAttributeRepository(db_path),
-        talent_tree_repository=CamelBridgeTalentTreeRepository(db_path),
-        achievement_repository=CamelBridgeAchievementRepository(db_path),
-        level_up_repository=CamelBridgeLevelUpRepository(db_path),
-        experience_repository=CamelBridgeExperienceRepository(db_path),
-        progression_state_repository=CamelBridgeProgressionStateRepository(db_path),
-        progression_event_repository=CamelBridgeProgressionEventRepository(db_path),
-        player_metric_repository=CamelBridgePlayerMetricRepository(db_path),
-        drop_rate_repository=CamelBridgeDropRateRepository(db_path),
-        loot_table_weight_repository=CamelBridgeLootTableWeightRepository(db_path),
-        difficulty_curve_repository=CamelBridgeDifficultyCurveRepository(db_path),
-        dungeon_repository=CamelBridgeDungeonRepository(db_path),
-        raid_repository=CamelBridgeRaidRepository(db_path),
-        world_event_repository=CamelBridgeWorldEventRepository(db_path),
-        allow_fallback=False,
-    )
-
-    with pytest.raises(Exception):
-        service.generate_story_chain(
-            RumorGenerationRequest(
-                tenant_id=1,
-                world_id=1,
-                theme="ember court",
-                count=2,
-                character_names=("Tarin", "Mira"),
-            ),
-            include_systems_slice=True,
-        )
 
 
 def test_dungeon_create_requires_boss_ids():

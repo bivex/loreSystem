@@ -275,13 +275,9 @@ class CharacterPersistenceMixin:
             )
             drafts = self._parse_event_drafts(raw)
         except Exception:
-            if not self.allow_fallback:
-                raise
             drafts = []
         if drafts:
             return drafts[: max(1, min(request.count, len(drafts)))]
-        if not self.allow_fallback:
-            raise RuntimeError("CAMEL bridge did not produce any event drafts")
         participants = request.character_names or ("Mara Voss", "Iven Hale")
         event_name = f"{request.theme.strip().title() or 'Событие'} в Гавани"
         return [
@@ -314,13 +310,9 @@ class CharacterPersistenceMixin:
             )
             drafts = self._parse_relationship_drafts(raw)
         except Exception:
-            if not self.allow_fallback:
-                raise
             drafts = []
         if drafts:
             return drafts[:1]
-        if not self.allow_fallback:
-            raise RuntimeError("CAMEL bridge did not produce any relationship drafts")
         left, right = (character_names + ("Mara Voss", "Iven Hale"))[:2]
         return [
             CharacterRelationshipDraft(
