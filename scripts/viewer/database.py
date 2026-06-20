@@ -4247,6 +4247,7 @@ def get_dialogues_graph():
         quests = _load_entities(cursor, 'quests', tables)
         choices = _load_entities(cursor, 'choices', tables)
         moral_choices = _load_entities(cursor, 'moral_choices', tables)
+        subtitles = _load_entities(cursor, 'subtitles', tables)
         characters = []
         if 'characters' in tables:
             cursor.execute("SELECT id, name FROM characters")
@@ -4281,6 +4282,16 @@ def get_dialogues_graph():
             for cid in _parse_id_list(payload.get('character_ids')):
                 if cid in char_ids:
                     referenced_chars.add(cid)
+        for sub in subtitles:
+            payload = parse(sub)
+            cid = payload.get('character_id')
+            if cid is not None:
+                try:
+                    cid_int = int(cid)
+                    if cid_int in char_ids:
+                        referenced_chars.add(cid_int)
+                except (ValueError, TypeError):
+                    pass
         for ch in characters:
             if ch['id'] not in referenced_chars:
                 continue
@@ -4491,6 +4502,51 @@ def get_dialogues_graph():
                 })
                 add_edge(f"moral_{mc['id']}", opt_id,
                          '#ec4899', width=1.5, label='вариант')
+
+        # ---------- Subtitle (spoken dialogue) nodes (subtitles) ----------
+        for sub in subtitles:
+            payload = parse(sub)
+            text = payload.get('text') or sub.get('label') or f"Реплика #{sub['id']}"
+            if not text:
+                continue
+            
+            char_name = ""
+            cid = payload.get('character_id')
+            if cid is not None:
+                try:
+                    cid_int = int(cid)
+                    for ch in characters:
+                        if ch['id'] == cid_int:
+                            char_name = ch['name']
+                            break
+                except (ValueError, TypeError):
+                    pass
+            if not char_name:
+                char_name = payload.get('character_name') or 'Неизвестный'
+
+            start = payload.get('start_time_ms') or 0
+            end = payload.get('end_time_ms') or 0
+            lang = payload.get('language') or 'ru'
+            
+            tooltip = f"<b>🗣️ Реплика ({lang})</b><br><b>Персонаж:</b> {char_name}<br><i>«{text}»</i><br><b>Время:</b> {start}ms - {end}ms"
+            
+            nodes.append({
+                'id': f"sub_{sub['id']}",
+                'label': f"🗣️ {truncate(text, 22)}",
+                'title': tooltip,
+                'color': {'background': '#818cf8', 'border': '#4f46e5'},
+                'shape': 'round-rectangle',
+            })
+            
+            # Subtitle -> character
+            if cid is not None:
+                try:
+                    cid_int = int(cid)
+                    if cid_int in char_ids:
+                        add_edge(f"char_{cid_int}", f"sub_{sub['id']}",
+                                 '#fbbf24', width=2, label='произносит')
+                except (ValueError, TypeError):
+                    pass
 
         conn.close()
     except Exception as e:

@@ -1062,12 +1062,13 @@ HTML_CONTENT = """<!DOCTYPE html>
                         <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> 🔀 Сюжетный выбор</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> ⚖️ Моральная дилемма</div>
                         <div class="legend-item"><div class="legend-box" style="background-color: #fbbf24; border: 1px solid #d97706; border-radius: 5px;"></div> • Вариант ответа</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #818cf8; border: 1px solid #4f46e5; border-radius: 5px;"></div> 🗣️ Реплика (субтитр)</div>
                     </div>
                 </div>
                 <div class="control-group">
                     <label>Связи диалогов</label>
                     <div style="margin-top: 4px;">
-                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24;"></div> говорит (персонаж ➔ реплика)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24;"></div> говорит / произносит (персонаж ➔ реплика)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7; border-top: 2px dashed #a855f7;"></div> приветствие (реплика ➔ цепочка)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> диалог (сюжет ➔ выбор)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #6366f1;"></div> дилемма (кампания ➔ моральный выбор)</div>
