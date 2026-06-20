@@ -4099,3 +4099,293 @@ def get_social_graph():
     return {'nodes': nodes, 'edges': edges}
 
 
+def get_dialogues_graph():
+    """Dialogues & speech lines graph.
+
+    The schema has no dedicated dialogues table, so spoken lines are
+    scattered across four sources. This graph unifies them:
+
+      - quest_givers.greeting_message       -> greeting line nodes
+      - quests.acceptance_text / completion_text / player_briefing
+                                            -> quest beat line nodes
+      - choices.prompt + options[]          -> story dialog choice nodes
+      - moral_choices.prompt + options[]    -> moral dilemma line nodes
+
+    Real structural links used:
+      - quest_givers.character_id           -> characters (when present)
+      - quest_givers.quest_chain_ids        -> quest_chains (greeting context)
+      - quests.id                           -> quests (the beat belongs here)
+      - choices.story_id                    -> stories (the choice belongs here)
+      - moral_choices.character_ids         -> characters (who's involved)
+      - moral_choices.campaign_id           -> campaigns (the dilemma's campaign)
+    """
+    nodes = []
+    add_edge, edges = _new_edge_set()
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {r[0] for r in cursor.fetchall()}
+
+        def parse(row):
+            pj = row.get('payload_json') if isinstance(row, dict) else row['payload_json']
+            if not pj:
+                return {}
+            try:
+                return json.loads(pj)
+            except Exception:
+                return {}
+
+        quest_givers = _load_entities(cursor, 'quest_givers', tables)
+        quests = _load_entities(cursor, 'quests', tables)
+        choices = _load_entities(cursor, 'choices', tables)
+        moral_choices = _load_entities(cursor, 'moral_choices', tables)
+        characters = []
+        if 'characters' in tables:
+            cursor.execute("SELECT id, name FROM characters")
+            characters = [dict(r) for r in cursor.fetchall()]
+        campaigns = []
+        if 'campaigns' in tables:
+            cursor.execute("SELECT id, title FROM campaigns")
+            campaigns = [dict(r) for r in cursor.fetchall()]
+        stories = _load_entities(cursor, 'stories', tables)
+        quest_chains = _load_entities(cursor, 'quest_chains', tables)
+
+        char_ids = {c['id'] for c in characters}
+        campaign_ids = {c['id'] for c in campaigns}
+        story_ids = {s['id'] for s in stories}
+        chain_ids = {c['id'] for c in quest_chains}
+        quest_ids = {q['id'] for q in quests}
+
+        def truncate(s, n=80):
+            s = (s or '').strip()
+            return s if len(s) <= n else s[:n - 1] + '…'
+
+        # ---------- Character nodes (referenced by givers/moral_choices) ----------
+        referenced_chars = set()
+        for qg in quest_givers:
+            payload = parse(qg)
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                referenced_chars.add(cid)
+        for mc in moral_choices:
+            payload = parse(mc)
+            for cid in _parse_id_list(payload.get('character_ids')):
+                if cid in char_ids:
+                    referenced_chars.add(cid)
+        for ch in characters:
+            if ch['id'] not in referenced_chars:
+                continue
+            nodes.append({
+                'id': f"char_{ch['id']}",
+                'label': f"🧝 {ch['name']}",
+                'title': f"<b>Говорящий: {ch['name']}</b>",
+                'color': {'background': '#fbbf24', 'border': '#d97706'},
+                'shape': 'star',
+                'size': 18
+            })
+
+        # ---------- Story / campaign / chain context nodes ----------
+        referenced_stories = set()
+        for ch in choices:
+            payload = parse(ch)
+            sid = payload.get('story_id')
+            if sid in story_ids:
+                referenced_stories.add(sid)
+        for s in stories:
+            if s['id'] not in referenced_stories:
+                continue
+            payload = parse(s)
+            name = payload.get('name') or s['label']
+            nodes.append({
+                'id': f"story_{s['id']}",
+                'label': f"📖 {name[:18]}",
+                'title': f"<b>Сюжет: {name}</b>",
+                'color': {'background': '#3b82f6', 'border': '#1d4ed8'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        referenced_campaigns = set()
+        for mc in moral_choices:
+            payload = parse(mc)
+            cid = payload.get('campaign_id')
+            if cid in campaign_ids:
+                referenced_campaigns.add(cid)
+        for cm in campaigns:
+            if cm['id'] not in referenced_campaigns:
+                continue
+            nodes.append({
+                'id': f"campaign_{cm['id']}",
+                'label': f"🎭 {cm['title'][:18]}",
+                'title': f"<b>Кампания: {cm['title']}</b>",
+                'color': {'background': '#6366f1', 'border': '#4338ca'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 12}
+            })
+
+        referenced_chains = set()
+        for qg in quest_givers:
+            payload = parse(qg)
+            for cid in _parse_id_list(payload.get('quest_chain_ids')):
+                if cid in chain_ids:
+                    referenced_chains.add(cid)
+        for qc in quest_chains:
+            if qc['id'] not in referenced_chains:
+                continue
+            payload = parse(qc)
+            name = payload.get('name') or qc['label']
+            nodes.append({
+                'id': f"quest_chain_{qc['id']}",
+                'label': f"🔗 {name[:18]}",
+                'title': f"<b>Цепочка квестов: {name}</b>",
+                'color': {'background': '#a855f7', 'border': '#7e22ce'},
+                'shape': 'box',
+                'font': {'color': '#ffffff', 'size': 11}
+            })
+
+        # ---------- Greeting line nodes (quest_givers.greeting_message) ----------
+        for qg in quest_givers:
+            payload = parse(qg)
+            greeting = payload.get('greeting_message')
+            if not greeting:
+                continue
+            name = payload.get('name') or qg['label']
+            tooltip = f"<b>💬 Приветствие от {name}</b><br><i>«{greeting}»</i>"
+            nodes.append({
+                'id': f"greeting_{qg['id']}",
+                'label': f"💬 {truncate(greeting, 24)}",
+                'title': tooltip,
+                'color': {'background': '#22c55e', 'border': '#15803d'},
+                'shape': 'round-rectangle',
+            })
+            # Greeting -> character (if giver has character_id).
+            cid = payload.get('character_id')
+            if cid in char_ids:
+                add_edge(f"char_{cid}", f"greeting_{qg['id']}",
+                         '#fbbf24', width=2, label='говорит')
+            # Greeting -> quest_chain (the greeting is for this chain).
+            for chid in _parse_id_list(payload.get('quest_chain_ids')):
+                if chid in chain_ids:
+                    add_edge(f"greeting_{qg['id']}", f"quest_chain_{chid}",
+                             '#a855f7', width=1.5, label='приветствие', dashes=True)
+
+        # ---------- Quest beat line nodes (acceptance/completion/briefing) ----------
+        for q in quests:
+            payload = parse(q)
+            qid = q['id']
+            qname = payload.get('name') or q['label']
+            for field, lbl, color in [
+                ('acceptance_text', 'принятие', '#06b6d4'),
+                ('completion_text', 'завершение', '#10b981'),
+                ('player_briefing', 'брифинг', '#f59e0b'),
+                ('journal_summary', 'журнал', '#ec4899'),
+            ]:
+                text = payload.get(field)
+                if not text:
+                    continue
+                tooltip = f"<b>📝 {lbl.capitalize()} квеста «{qname}»</b><br><i>«{text}»</i>"
+                nodes.append({
+                    'id': f"qline_{qid}_{field}",
+                    'label': f"📝 {lbl}: {truncate(text, 22)}",
+                    'title': tooltip,
+                    'color': {'background': color, 'border': color},
+                    'shape': 'round-rectangle',
+                })
+                # Line -> quest (anchor as a quest-shaped node so it's not orphan).
+                # We reuse quest_<id> only if it exists; otherwise attach to chain.
+                if qid in quest_ids:
+                    # Don't add the quest node twice; attach to the chain if any.
+                    pass
+
+        # ---------- Story choice dialog nodes (choices.prompt + options) ----------
+        for ch in choices:
+            payload = parse(ch)
+            prompt = payload.get('prompt')
+            if not prompt:
+                continue
+            tooltip = f"<b>🔀 Выбор: {prompt}</b>"
+            nodes.append({
+                'id': f"choice_{ch['id']}",
+                'label': f"🔀 {truncate(prompt, 22)}",
+                'title': tooltip,
+                'color': {'background': '#f59e0b', 'border': '#b45309'},
+                'shape': 'diamond',
+                'size': 14
+            })
+            sid = payload.get('story_id')
+            if sid in story_ids:
+                add_edge(f"story_{sid}", f"choice_{ch['id']}",
+                         '#3b82f6', width=2, label='диалог')
+            # Inline option lines.
+            options = payload.get('options') or []
+            for idx, opt in enumerate(options):
+                if not opt:
+                    continue
+                opt_id = f"copt_{ch['id']}_{idx}"
+                nodes.append({
+                    'id': opt_id,
+                    'label': f"• {truncate(str(opt), 22)}",
+                    'title': f"<b>Вариант ответа</b><br><i>«{opt}»</i>",
+                    'color': {'background': '#fbbf24', 'border': '#d97706'},
+                    'shape': 'round-rectangle',
+                })
+                add_edge(f"choice_{ch['id']}", opt_id,
+                         '#f59e0b', width=1.5, label='вариант')
+
+        # ---------- Moral dilemma dialog nodes ----------
+        for mc in moral_choices:
+            payload = parse(mc)
+            prompt = payload.get('prompt')
+            if not prompt:
+                continue
+            tooltip = f"<b>⚖️ Моральная дилемма: {prompt}</b>"
+            nodes.append({
+                'id': f"moral_{mc['id']}",
+                'label': f"⚖️ {truncate(prompt, 22)}",
+                'title': tooltip,
+                'color': {'background': '#ec4899', 'border': '#be185d'},
+                'shape': 'diamond',
+                'size': 14
+            })
+            # Moral -> campaign.
+            cid = payload.get('campaign_id')
+            if cid in campaign_ids:
+                add_edge(f"campaign_{cid}", f"moral_{mc['id']}",
+                         '#6366f1', width=2, label='дилемма')
+            # Moral -> characters involved.
+            for chid in _parse_id_list(payload.get('character_ids')):
+                if chid in char_ids:
+                    add_edge(f"moral_{mc['id']}", f"char_{chid}",
+                             '#fbbf24', width=1.5, label='участвует', dashes=True)
+            # Inline option lines with outcomes.
+            options = payload.get('options') or []
+            for idx, opt in enumerate(options):
+                if not isinstance(opt, dict):
+                    continue
+                opt_label = opt.get('label') or f'Опция {idx+1}'
+                opt_outcome = opt.get('outcome') or ''
+                opt_id = f"mopt_{mc['id']}_{idx}"
+                tooltip = f"<b>Вариант: {opt_label}</b>"
+                if opt_outcome:
+                    tooltip += f"<br><i>→ {opt_outcome}</i>"
+                nodes.append({
+                    'id': opt_id,
+                    'label': f"• {truncate(opt_label, 22)}",
+                    'title': tooltip,
+                    'color': {'background': '#f472b6', 'border': '#be185d'},
+                    'shape': 'round-rectangle',
+                })
+                add_edge(f"moral_{mc['id']}", opt_id,
+                         '#ec4899', width=1.5, label='вариант')
+
+        conn.close()
+    except Exception as e:
+        print(f"Error building dialogues graph: {e}")
+
+    return {'nodes': nodes, 'edges': edges}
+
+

@@ -17,7 +17,7 @@ from .database import (
     get_factions_graph, get_crafting_graph, get_progression_graph,
     get_narrative_graph, get_legendary_items_graph, get_achievements_graph,
     get_combat_graph, get_economy_graph, get_open_world_graph,
-    get_production_graph, get_social_graph
+    get_production_graph, get_social_graph, get_dialogues_graph
 )
 from .frontend import HTML_CONTENT
 
@@ -222,7 +222,17 @@ class ViewerHandler(http.server.SimpleHTTPRequestHandler):
 
             graph_data = get_social_graph()
             self.wfile.write(json.dumps(graph_data).encode('utf-8'))
-            
+
+        # API: Dialogues & Speech Lines Graph
+        elif parsed_url.path == "/api/graph/dialogues":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            graph_data = get_dialogues_graph()
+            self.wfile.write(json.dumps(graph_data).encode('utf-8'))
+
         # Frontend index html page
         elif parsed_url.path in ["/", "/index.html"]:
             self.send_response(200)

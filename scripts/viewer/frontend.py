@@ -487,6 +487,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                             <option value="open_world">🌍 Открытый мир и события</option>
                             <option value="production">🎭 Продакшн: озвучка и моушн</option>
                             <option value="social">💬 Социальные и моральные выборы</option>
+                            <option value="dialogues">🗣️ Диалоги и реплики</option>
                             <option value="todo">📋 Планируемые графы (TODO)</option>
                         </select>
                     </div>
@@ -1034,6 +1035,36 @@ HTML_CONTENT = """<!DOCTYPE html>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24; border-top: 2px dashed #fbbf24;"></div> затрагивает (выбор ➔ персонаж)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7;"></div> вариант (выбор ➔ опция)</div>
                         <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #f59e0b; border-top: 2px dashed #f59e0b;"></div> слух (мир ➔ слух)</div>
+                    </div>
+                </div>
+            `,
+            dialogues: `
+                <div class="control-group">
+                    <label>Узлы диалогов</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div class="legend-color" style="background-color: #fbbf24; border-radius: 50%;"></div> Говорящий (персонаж)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #6366f1; border: 1px solid #4338ca;"></div> Кампания</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #3b82f6; border: 1px solid #1d4ed8;"></div> Сюжет</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #a855f7; border: 1px solid #7e22ce;"></div> Цепочка квестов</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #22c55e; border: 1px solid #15803d; border-radius: 5px;"></div> 💬 Приветствие NPC</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #06b6d4; border: 1px solid #0891b2; border-radius: 5px;"></div> 📝 Реплика квеста (принятие)</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #10b981; border: 1px solid #047857; border-radius: 5px;"></div> 📝 Завершение квеста</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309; border-radius: 5px;"></div> 📝 Брифинг игрока</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; border-radius: 5px;"></div> 📝 Запись в журнале</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #f59e0b; border: 1px solid #b45309; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> 🔀 Сюжетный выбор</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #ec4899; border: 1px solid #be185d; transform: rotate(45deg); width: 12px; height: 12px; margin-left: 0;"></div> ⚖️ Моральная дилемма</div>
+                        <div class="legend-item"><div class="legend-box" style="background-color: #fbbf24; border: 1px solid #d97706; border-radius: 5px;"></div> • Вариант ответа</div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Связи диалогов</label>
+                    <div style="margin-top: 4px;">
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24;"></div> говорит (персонаж ➔ реплика)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #a855f7; border-top: 2px dashed #a855f7;"></div> приветствие (реплика ➔ цепочка)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #3b82f6;"></div> диалог (сюжет ➔ выбор)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #6366f1;"></div> дилемма (кампания ➔ моральный выбор)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #fbbf24; border-top: 2px dashed #fbbf24;"></div> участвует (дилемма ➔ персонаж)</div>
+                        <div class="legend-item"><div style="width: 20px; height: 2px; background-color: #ec4899;"></div> вариант (выбор ➔ опция)</div>
                     </div>
                 </div>
             `,
