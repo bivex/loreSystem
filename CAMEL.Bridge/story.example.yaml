@@ -1,0 +1,32 @@
+# run_full_story.py — story config example
+# Usage: python3 CAMEL.Bridge/run_full_story.py --config CAMEL.Bridge/story.example.yaml
+#
+# CLI flags override any value set here.
+# Example override: --chapters 5 --no-reset
+
+# --- Required ---
+tenant_id: 1
+world_id: 1
+theme: "Тёмное фэнтези: герой просыпается в бочке в пещере орков"
+
+# --- Narrative ---
+chapters: 15
+output_language: ru          # ru | en | uk
+
+# Seed characters (LLM will weave them into the story)
+characters:
+  - Мара Восс
+  - Ивен Хейл
+
+# --- Storage ---
+db_path: lore_system.db
+env_file: .env               # path to .env with CAMEL_MODEL_* / OPENAI_API_KEY / etc.
+
+# --- Memory ---
+# Requires CAMEL_MEMORY_QDRANT_URL in .env
+with_memory: true
+
+# --- Run control ---
+# reset: true   → wipe lore tables + Qdrant collection before starting (safe default)
+# reset: false  → continue from existing data (use --no-reset on CLI)
+reset: true

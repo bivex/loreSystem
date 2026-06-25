@@ -94,24 +94,95 @@ LORE_TABLES = [
 ]
 
 
+def _load_yaml_config(path: str) -> dict:
+    """Load story config from a YAML file. Returns a flat dict of field values."""
+    import importlib.util
+    if importlib.util.find_spec("yaml") is None:
+        raise ImportError(
+            "PyYAML is required for --config support: pip install pyyaml"
+        )
+    import yaml  # type: ignore[import]
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    if not isinstance(data, dict):
+        raise ValueError(f"YAML config must be a mapping, got {type(data).__name__}")
+    return data
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Generate a full multi-chapter story sequentially."
+        description="Generate a full multi-chapter story sequentially.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "YAML config example (--config story.yaml):\n"
+            "  tenant_id: 1\n"
+            "  world_id: 1\n"
+            "  theme: \"Тёмное фэнтези\"\n"
+            "  chapters: 15\n"
+            "  characters:\n"
+            "    - Мара Восс\n"
+            "    - Ивен Хейл\n"
+            "  with_memory: true\n"
+            "  reset: true\n"
+            "  output_language: ru\n"
+            "  env_file: .env\n"
+            "  db_path: lore_system.db\n"
+        ),
     )
-    p.add_argument("--tenant-id", type=int, required=True)
-    p.add_argument("--world-id", type=int, required=True)
-    p.add_argument("--theme", required=True, help="Base story theme")
-    p.add_argument("--chapters", type=int, default=15, help="Number of chapters to generate (default 15)")
-    p.add_argument("--output-language", default="ru", help="Output language code (ru, en, uk)")
-    p.add_argument("--db-path", default="lore_system.db")
+    p.add_argument("--config", default=None, help="Path to YAML story config file")
+    p.add_argument("--tenant-id", type=int, default=None)
+    p.add_argument("--world-id", type=int, default=None)
+    p.add_argument("--theme", default=None, help="Base story theme")
+    p.add_argument("--chapters", type=int, default=None, help="Number of chapters to generate (default 15)")
+    p.add_argument("--output-language", default=None, help="Output language code (ru, en, uk)")
+    p.add_argument("--db-path", default=None)
     p.add_argument("--env-file", default=None, help="Path to .env file with model credentials")
-    p.add_argument("--with-memory", action="store_true", help="Enable Qdrant+SQLite continuity memory")
-    p.add_argument("--character", action="append", default=[], help="Seed character name (repeatable)")
-    p.add_argument("--reset", action="store_true", default=True,
+    p.add_argument("--with-memory", action="store_true", default=None, help="Enable Qdrant+SQLite continuity memory")
+    p.add_argument("--character", action="append", default=None, help="Seed character name (repeatable)")
+    p.add_argument("--reset", action="store_true", default=None,
                    help="Clear lore tables before starting (default: on)")
     p.add_argument("--no-reset", dest="reset", action="store_false",
                    help="Do NOT clear; continue from existing data")
-    return p.parse_args()
+    args = p.parse_args()
+
+    # Merge YAML config under CLI flags (CLI wins over YAML, YAML wins over defaults).
+    yaml_cfg: dict = {}
+    if args.config:
+        yaml_cfg = _load_yaml_config(args.config)
+
+    def _yaml(key: str, default):
+        return yaml_cfg.get(key, default)
+
+    if args.tenant_id is None:
+        args.tenant_id = _yaml("tenant_id", None)
+    if args.world_id is None:
+        args.world_id = _yaml("world_id", None)
+    if args.theme is None:
+        args.theme = _yaml("theme", None)
+    if args.chapters is None:
+        args.chapters = _yaml("chapters", 15)
+    if args.output_language is None:
+        args.output_language = _yaml("output_language", "ru")
+    if args.db_path is None:
+        args.db_path = _yaml("db_path", "lore_system.db")
+    if args.env_file is None:
+        args.env_file = _yaml("env_file", None)
+    if not args.with_memory:
+        args.with_memory = bool(_yaml("with_memory", False))
+    if args.character is None:
+        yaml_chars = _yaml("characters", [])
+        args.character = list(yaml_chars) if yaml_chars else []
+    if args.reset is None:
+        args.reset = bool(_yaml("reset", True))
+
+    # Validate required fields.
+    missing = [f for f, v in [("--tenant-id / tenant_id", args.tenant_id),
+                               ("--world-id / world_id", args.world_id),
+                               ("--theme / theme", args.theme)] if v is None]
+    if missing:
+        p.error("Missing required fields: " + ", ".join(missing))
+
+    return args
 
 
 def reset_lore_tables(db_path: str, tenant_id: int, world_id: int) -> int:
