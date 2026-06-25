@@ -23,6 +23,7 @@ import argparse
 import logging
 import sqlite3
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +34,47 @@ from runner_service import build_service
 from src.application.integration.camel_bridge import RumorGenerationRequest, load_env_file
 
 LOG = logging.getLogger("run_full_story")
+
+
+class _CountingBackend:
+    """Wraps a CAMEL backend and counts every LLM call with a live progress line."""
+
+    def __init__(self, backend, total_chapters: int, calls_per_chapter: int = 7) -> None:
+        self._backend = backend
+        self._call_count = 0
+        self._chapter_call_count = 0
+        self._current_chapter = 0
+        self._total_chapters = total_chapters
+        self._calls_per_chapter = calls_per_chapter
+        self._chapter_start: float = 0.0
+        self._total_start: float = time.monotonic()
+
+    def set_chapter(self, chapter_num: int) -> None:
+        self._current_chapter = chapter_num
+        self._chapter_call_count = 0
+        self._chapter_start = time.monotonic()
+
+    def generate(self, system_message: str, user_message: str) -> str:
+        self._call_count += 1
+        self._chapter_call_count += 1
+        total_expected = self._total_chapters * self._calls_per_chapter
+        elapsed = time.monotonic() - self._total_start
+        avg_per_call = elapsed / self._call_count if self._call_count > 1 else 0
+        eta = avg_per_call * (total_expected - self._call_count) if avg_per_call else 0
+        print(
+            f"   🤖 LLM call #{self._call_count:3d}"
+            f" | ch {self._current_chapter}/{self._total_chapters}"
+            f" call {self._chapter_call_count}/{self._calls_per_chapter}"
+            f" | total {self._call_count}/{total_expected}"
+            f" | elapsed {elapsed:5.0f}s"
+            f" | ETA ~{eta:5.0f}s",
+            flush=True,
+        )
+        return self._backend.generate(system_message, user_message)
+
+    # Proxy all other attributes to the real backend.
+    def __getattr__(self, name: str):
+        return getattr(self._backend, name)
 
 # Lore tables to clear on reset. Mirrors scripts/run_generation.py but adds
 # the extended narrative/systems tables so the slate is truly clean.
@@ -237,11 +279,16 @@ def main() -> int:
         f"memory={'on' if memory_service else 'off'}"
     )
 
+    # Wrap backend with call counter for live progress output.
+    counting_backend = _CountingBackend(service.backend, total_chapters=args.chapters)
+    service.backend = counting_backend
+
     # 3. Sequential chapter generation loop.
     for chapter_num in range(1, args.chapters + 1):
         print(f"\n{'='*60}")
         print(f"📖 Generating Chapter {chapter_num} of {args.chapters}...")
         print(f"{'='*60}")
+        counting_backend.set_chapter(chapter_num)
 
         # 3a. Load summaries of all previously generated chapters.
         prev_summaries = load_chapter_summaries(
