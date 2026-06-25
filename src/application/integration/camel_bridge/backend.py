@@ -6,7 +6,6 @@ import http.client
 import json
 import logging
 import os
-import re
 import socket
 import ssl
 import time
@@ -202,11 +201,19 @@ class CamelChatBackend:
             "content"
         )
         if isinstance(content, str) and content.strip():
-            # Extract JSON from markdown blocks or messy text
-            json_match = re.search(r"(\{.*\}|\[.*\])", content, re.DOTALL)
-            if json_match:
-                return json_match.group(0)
-            return content.strip()
+            # Extract JSON from markdown blocks or messy text.
+            # Use raw_decode to find the first valid JSON object/array
+            # by scanning for '{' or '[' — handles nested objects correctly.
+            text = content.strip()
+            decoder = json.JSONDecoder()
+            for start, ch in enumerate(text):
+                if ch in ('{', '['):
+                    try:
+                        obj, _ = decoder.raw_decode(text, start)
+                        return json.dumps(obj, ensure_ascii=False)
+                    except json.JSONDecodeError:
+                        continue
+            return text
         if isinstance(content, list):
             fragments = [
                 part.get("text", "")

@@ -748,8 +748,8 @@ class RumorBridgeService(
         memory_context: str = "",
     ) -> NarrativeStructureDraft:
         draft = self._fallback_narrative_structure_draft(request, chain_result)
-        try:
-            for batch_name, keys, guidance in NARRATIVE_BATCH_SPECS:
+        for batch_name, keys, guidance in NARRATIVE_BATCH_SPECS:
+            try:
                 system_msg = self._narrative_batch_system_message(keys)
                 localized_system = self._localize_system_prompt(system_msg, request)
                 raw = self._generate_with_logging(
@@ -769,11 +769,17 @@ class RumorBridgeService(
                 )
                 parsed = self._parse_narrative_structure(raw)
                 draft = self._merge_partial_narrative_fields(draft, parsed, keys)
-            return self._stabilize_narrative_structure_draft(
-                request, chain_result, draft
-            )
-        except Exception:
-            return self._fallback_narrative_structure_draft(request, chain_result)
+            except Exception as exc:
+                LOGGER.warning(
+                    "CAMEL bridge narrative_batch:%s failed, keeping prior draft fields: %s",
+                    batch_name,
+                    exc,
+                )
+        try:
+            return self._stabilize_narrative_structure_draft(request, chain_result, draft)
+        except Exception as exc:
+            LOGGER.warning("CAMEL bridge stabilize failed, returning partial draft: %s", exc)
+            return draft
 
 
     def _generate_systems_slice_draft(
@@ -783,8 +789,8 @@ class RumorBridgeService(
         memory_context: str = "",
     ) -> NarrativeStructureDraft:
         draft = self._fallback_narrative_structure_draft(request, chain_result)
-        try:
-            for batch_name, keys, guidance in SYSTEMS_BATCH_SPECS:
+        for batch_name, keys, guidance in SYSTEMS_BATCH_SPECS:
+            try:
                 system_msg = self._systems_batch_system_message(keys)
                 localized_system = self._localize_system_prompt(system_msg, request)
                 raw = self._generate_with_logging(
@@ -804,6 +810,10 @@ class RumorBridgeService(
                 )
                 parsed = self._parse_narrative_structure(raw)
                 draft = self._merge_partial_draft_fields(draft, parsed, keys)
-            return draft
-        except Exception:
-            return self._fallback_narrative_structure_draft(request, chain_result)
+            except Exception as exc:
+                LOGGER.warning(
+                    "CAMEL bridge systems_batch:%s failed, keeping prior draft fields: %s",
+                    batch_name,
+                    exc,
+                )
+        return draft
