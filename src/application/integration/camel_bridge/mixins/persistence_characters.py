@@ -416,28 +416,63 @@ class CharacterPersistenceMixin:
         return frozenset(t for t in re.split(r"[\s\-_]+", joined) if len(t) >= 2)
 
     @classmethod
+    def _levenshtein(cls, a: str, b: str) -> int:
+        """Pure-Python Levenshtein distance (no external deps)."""
+        if a == b:
+            return 0
+        if len(a) < len(b):
+            a, b = b, a
+        prev = list(range(len(b) + 1))
+        for i, ca in enumerate(a, 1):
+            curr = [i]
+            for j, cb in enumerate(b, 1):
+                curr.append(min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + (ca != cb)))
+            prev = curr
+        return prev[-1]
+
+    @classmethod
+    def _tokens_similar(cls, t1: str, t2: str) -> bool:
+        """True if two Latin tokens are similar enough (edit distance ≤ 2 or one contains the other)."""
+        if t1 == t2:
+            return True
+        if t1 in t2 or t2 in t1:
+            return True
+        max_dist = 1 if max(len(t1), len(t2)) <= 5 else 2
+        return cls._levenshtein(t1, t2) <= max_dist
+
+    @classmethod
     def _names_are_equivalent(cls, a: str, b: str) -> bool:
         """Return True if two character names refer to the same person across scripts."""
         if a.strip().lower() == b.strip().lower():
             return True
+        # Skip multi-name strings like "Ивен Хейл, Мара Восс" — these are
+        # comma-separated lists that the model sometimes puts in a single field.
+        # They cannot match a single canonical name.
+        if "," in a or "," in b:
+            return False
         tokens_a = cls._name_to_latin_tokens(a)
         tokens_b = cls._name_to_latin_tokens(b)
         if not tokens_a or not tokens_b:
             return False
-        # All tokens of the shorter name must appear in the longer.
+        # Exact subset match (e.g. "Mara" ⊆ "mara voss").
         shorter, longer = (tokens_a, tokens_b) if len(tokens_a) <= len(tokens_b) else (tokens_b, tokens_a)
         if shorter.issubset(longer):
             return True
-        # Fallback: first-token match for "Firstname Lastname" pairs where
-        # lastname transliterates differently (e.g. "Hale" vs "Хейл" → "kheyl").
-        # If both names have the same token count and the first tokens match,
-        # treat as the same person.
-        tokens_a_list = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(a)) if len(t) >= 2]
-        tokens_b_list = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(b)) if len(t) >= 2]
+        # Fuzzy token match: same token count, each token pair is similar.
+        # Handles "Iven Hale" vs "Ивен Хейл" → ("iven","hale") vs ("iven","kheyl").
+        la = sorted(tokens_a)
+        lb = sorted(tokens_b)
+        if len(la) == len(lb) and all(cls._tokens_similar(ta, tb) for ta, tb in zip(la, lb)):
+            return True
+        # First-token (firstname) exact match with same token count.
+        # If the first names match exactly and both are multi-token, treat as same person
+        # even if the surname transliterates very differently (e.g. "hale" vs "kheyl").
+        la_ord = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(a)) if len(t) >= 2]
+        lb_ord = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(b)) if len(t) >= 2]
         if (
-            len(tokens_a_list) >= 2
-            and len(tokens_a_list) == len(tokens_b_list)
-            and tokens_a_list[0] == tokens_b_list[0]
+            len(la_ord) >= 2
+            and len(la_ord) == len(lb_ord)
+            and la_ord[0] == lb_ord[0]
         ):
             return True
         return False
@@ -476,6 +511,12 @@ class CharacterPersistenceMixin:
         text = self._coerce_optional_text(name)
         if not text:
             return None
+        # If the model emitted a comma-separated list in a single name field
+        # (e.g. "Ивен Хейл, Мара Восс"), resolve only the first name.
+        if "," in text:
+            first = text.split(",")[0].strip()
+            if first:
+                text = first
         key = text.strip().lower()
         if key in characters:
             return characters[key]
