@@ -30,3 +30,14 @@ with_memory: true
 # reset: true   → wipe lore tables + Qdrant collection before starting (safe default)
 # reset: false  → continue from existing data (use --no-reset on CLI)
 reset: true
+
+# --- Per-chapter outlines (optional) ---
+# Define story beats for specific chapters. Chapters without an entry are generated freely.
+# Keys are chapter numbers (integers). Values are plain text plot descriptions.
+# The LLM will treat these as hard requirements ("follow exactly").
+#
+# chapter_outlines:
+#   1: "Герой просыпается в бочке. Орки устраивают допрос. Побег через канализацию."
+#   2: "Герой выходит в город. Встречает Мару Восс у рынка. Узнаёт о пропавшем артефакте."
+#   7: "Середина пути. Предательство союзника. Герой остаётся один."
+#   15: "Финальная схватка в башне. Выбор: уничтожить артефакт или использовать его."

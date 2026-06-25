@@ -175,6 +175,13 @@ def parse_args() -> argparse.Namespace:
     if args.reset is None:
         args.reset = bool(_yaml("reset", True))
 
+    # chapter_outlines: dict[int, str] — optional per-chapter story beats.
+    # YAML key: chapter_outlines, value: mapping of chapter number -> outline text.
+    raw_outlines = _yaml("chapter_outlines", {}) or {}
+    args.chapter_outlines = {
+        int(k): str(v) for k, v in raw_outlines.items() if v
+    }
+
     # Validate required fields.
     missing = [f for f, v in [("--tenant-id / tenant_id", args.tenant_id),
                                ("--world-id / world_id", args.world_id),
@@ -239,11 +246,13 @@ def build_chapter_context(
     total: int,
     prev_summaries: list[dict],
     theme: str,
+    outline: str | None = None,
 ) -> str:
     """Build the context string for chapter N, summarising prior chapters.
 
     The pipeline injects request.context into every LLM prompt, so stuffing
     the previous-chapters canon here makes the model continue the story.
+    If outline is provided it is injected as a hard requirement the LLM must follow.
     """
     lines = [
         f"Последовательная генерация сюжета. Сейчас пишется Глава {chapter_num} из {total}.",
@@ -256,11 +265,23 @@ def build_chapter_context(
             desc = s["description"]
             lines.append(f"  Глава {s['sequence_number']}: «{s['title']}» — {desc}")
         lines.append("")
-    lines.append(
-        f"Продолжи сюжет. Сгенерируй ОДНУ новую главу (sequence_number={chapter_num}) "
-        f"с 1-2 эпизодами, которые логически следуют из последней главы. "
-        f"Сохраняй канон персонажей, событий и локаций."
-    )
+    if outline:
+        lines.append(
+            f"ОБЯЗАТЕЛЬНЫЙ ПЛАН ГЛАВЫ {chapter_num} (следуй точно, не отступай):"
+        )
+        lines.append(f"  {outline}")
+        lines.append("")
+        lines.append(
+            f"Сгенерируй ОДНУ новую главу (sequence_number={chapter_num}) "
+            f"с 1-2 эпизодами строго по плану выше. "
+            f"Сохраняй канон персонажей, событий и локаций."
+        )
+    else:
+        lines.append(
+            f"Продолжи сюжет. Сгенерируй ОДНУ новую главу (sequence_number={chapter_num}) "
+            f"с 1-2 эпизодами, которые логически следуют из последней главы. "
+            f"Сохраняй канон персонажей, событий и локаций."
+        )
     return "\n".join(lines)
 
 
@@ -369,8 +390,11 @@ def main() -> int:
             print(f"   📚 Loaded {len(prev_summaries)} previous chapter summaries for context")
 
         # 3b. Build continuation context.
+        outline = getattr(args, "chapter_outlines", {}).get(chapter_num)
+        if outline:
+            print(f"   📋 Using outline for chapter {chapter_num}: {outline[:80]}{'...' if len(outline) > 80 else ''}")
         context = build_chapter_context(
-            chapter_num, args.chapters, prev_summaries, args.theme
+            chapter_num, args.chapters, prev_summaries, args.theme, outline=outline
         )
 
         # 3c. Build request.
