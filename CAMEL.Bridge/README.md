@@ -220,3 +220,84 @@ python CAMEL.Bridge/run_rumor_pipeline.py \
 По умолчанию мост работает в отказоустойчивом режиме и умеет создавать fallback-записи в случае сбоев или невалидного ответа модели.
 
 Если включён `--with-memory`, bridge перед generation собирает continuity packet из SQLite и optional Qdrant recall, а после persistence переиндексирует текущий world snapshot.
+
+## Многоглавная генерация: run_full_story.py
+
+`run_full_story.py` — оркестратор для последовательной генерации полного сюжета из N глав.
+
+```bash
+python3 CAMEL.Bridge/run_full_story.py \
+  --tenant-id 1 --world-id 1 \
+  --theme "Тёмное фэнтези: герой просыпается в бочке в пещере орков" \
+  --chapters 15 \
+  --output-language ru \
+  --with-memory \
+  --env-file .env \
+  --character "Мара Восс" --character "Ивен Хейл"
+```
+
+### Как это работает
+
+Каждая глава генерируется отдельным LLM-вызовом. После каждой итерации саммари сохраняется в SQLite и передаётся в контекст следующей главы — так LLM продолжает канон вместо того чтобы перезапускать историю.
+
+Алгоритм на каждую главу:
+
+1. Загружает саммари всех предыдущих глав из SQLite
+2. Строит строку контекста с каноном и инструкцией "ПРОДОЛЖАЙ с того места"
+3. Запускает `generate_story_chain()` — один полный цикл генерации
+4. Принудительно выставляет `sequence_number` в БД (LLM может сбросить нумерацию)
+
+### Количество LLM-вызовов на главу
+
+При `--with-memory` и narrative structure (по умолчанию) на каждую главу идёт 7 последовательных вызовов:
+
+| # | Шаг | Агент |
+|---|-----|-------|
+| 1 | Слухи (rumors) | Whisper Broker / Town Crier / ... |
+| 2 | События (events) | Chronicle Weaver |
+| 3 | Отношения (relationships) | Bond Archivist |
+| 4 | Narrative batch: story_spine | campaign, story, acts, chapters, episodes, prologue, epilogue |
+| 5 | Narrative batch: character_meta | evolutions, variants, profile_entries, voice_actors, subtitles |
+| 6 | Narrative batch: quest_meta | quests, quest_chains, quest_nodes, objectives, rewards |
+| 7 | Narrative batch: narrative_branching | plot_branches, choices, consequences, endings |
+
+Для 15 глав: **105 вызовов** итого. Все вызовы идут строго последовательно — каждый батч видит результат предыдущего в промпте.
+
+### Живой прогресс в stdout
+
+Оркестратор выводит строку прогресса после каждого LLM-вызова:
+
+```
+🤖 LLM call # 15 | ch 3/15 call 2/7 | total  15/105 | elapsed   142s | ETA ~  808s
+```
+
+ETA пересчитывается после каждого вызова на основе среднего времени.
+
+### Память и контекст между главами
+
+Два слоя памяти (при `--with-memory`):
+
+- **SQLite exact recall** — персонажи, события, отношения, квесты из прошлых глав. До 6 документов каждого типа.
+- **Qdrant semantic recall** — векторный поиск по сущностям. До 4 документов. Бюджет контекста ~1400 символов.
+
+По умолчанию используется `LocalNgramTextEmbedder` (384-мерный хэш). Для лучшего семантического поиска по русскому тексту рекомендуется переключить на OpenAI-compatible эмбеддер:
+
+```bash
+CAMEL_MEMORY_EMBED_BACKEND=openai
+CAMEL_MEMORY_EMBED_API_KEY=sk-...
+# опционально, если эндпоинт отличается от CAMEL_MODEL_BASE_URL:
+# CAMEL_MEMORY_EMBED_BASE_URL=https://api.openai.com/v1
+```
+
+При смене бэкенда нужно пересоздать коллекцию Qdrant — запуск с `--reset` (дефолт) сделает это автоматически.
+
+### Флаги
+
+| Флаг | По умолчанию | Описание |
+|------|-------------|----------|
+| `--chapters N` | 15 | Количество глав |
+| `--output-language` | ru | Язык генерации (ru, en, uk) |
+| `--with-memory` | выкл | Включить SQLite + Qdrant continuity |
+| `--reset` / `--no-reset` | reset=on | Очистить БД перед стартом |
+| `--character NAME` | — | Seed-персонаж (повторяемый) |
+| `--env-file PATH` | — | Путь к .env файлу |
