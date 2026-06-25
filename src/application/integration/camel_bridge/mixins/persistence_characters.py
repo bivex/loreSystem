@@ -392,6 +392,79 @@ class CharacterPersistenceMixin:
         return character
 
 
+    # ---------------------------------------------------------------------------
+    # Transliteration table: Latin ↔ Cyrillic equivalents used by LLMs when
+    # switching script mid-generation (e.g. "Mara Voss" vs "Мара Восс").
+    # Keys are normalised Latin tokens; values are the Cyrillic equivalents and
+    # vice-versa so we can compare names regardless of script.
+    # ---------------------------------------------------------------------------
+    _TRANSLIT_TO_LATIN: dict[str, str] = {
+        "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+        "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+        "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+        "ф": "f", "х": "kh", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+        "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    }
+
+    @classmethod
+    def _name_to_latin_tokens(cls, name: str) -> frozenset[str]:
+        """Normalise a character name to a set of Latin tokens for fuzzy comparison."""
+        result = []
+        for ch in name.lower():
+            result.append(cls._TRANSLIT_TO_LATIN.get(ch, ch))
+        joined = "".join(result)
+        return frozenset(t for t in re.split(r"[\s\-_]+", joined) if len(t) >= 2)
+
+    @classmethod
+    def _names_are_equivalent(cls, a: str, b: str) -> bool:
+        """Return True if two character names refer to the same person across scripts."""
+        if a.strip().lower() == b.strip().lower():
+            return True
+        tokens_a = cls._name_to_latin_tokens(a)
+        tokens_b = cls._name_to_latin_tokens(b)
+        if not tokens_a or not tokens_b:
+            return False
+        # All tokens of the shorter name must appear in the longer.
+        shorter, longer = (tokens_a, tokens_b) if len(tokens_a) <= len(tokens_b) else (tokens_b, tokens_a)
+        if shorter.issubset(longer):
+            return True
+        # Fallback: first-token match for "Firstname Lastname" pairs where
+        # lastname transliterates differently (e.g. "Hale" vs "Хейл" → "kheyl").
+        # If both names have the same token count and the first tokens match,
+        # treat as the same person.
+        tokens_a_list = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(a)) if len(t) >= 2]
+        tokens_b_list = [t for t in re.split(r"[\s\-_]+", cls._name_to_latin_a(b)) if len(t) >= 2]
+        if (
+            len(tokens_a_list) >= 2
+            and len(tokens_a_list) == len(tokens_b_list)
+            and tokens_a_list[0] == tokens_b_list[0]
+        ):
+            return True
+        return False
+
+    @classmethod
+    def _name_to_latin_a(cls, name: str) -> str:
+        """Transliterate a name to Latin keeping token boundaries."""
+        result = []
+        for ch in name.lower():
+            result.append(cls._TRANSLIT_TO_LATIN.get(ch, ch))
+        return "".join(result)
+
+    def _fuzzy_find_character(
+        self,
+        tenant_id: TenantId,
+        world_id: EntityId,
+        name: str,
+    ) -> Character | None:
+        """Search all world characters for a name equivalent across Latin/Cyrillic scripts."""
+        if not self.character_repository:
+            return None
+        all_chars = self.character_repository.list_by_world(tenant_id, world_id)
+        for char in all_chars:
+            if self._names_are_equivalent(name, str(char.name)):
+                return char
+        return None
+
     def _resolve_character(
         self,
         request: RumorGenerationRequest,
@@ -416,6 +489,19 @@ class CharacterPersistenceMixin:
         if existing:
             characters[key] = existing
             return existing
+        # Fuzzy fallback: match across Latin/Cyrillic script variants
+        # (e.g. "Mara Voss" matches existing "Мара Восс").
+        fuzzy = self._fuzzy_find_character(tenant_id, world_id, text)
+        if fuzzy:
+            LOGGER.info(
+                "CAMEL bridge character fuzzy-matched %r -> %r (id=%s)",
+                text, str(fuzzy.name), fuzzy.id,
+            )
+            characters[key] = fuzzy
+            # Also register under canonical name so future exact lookups hit the cache.
+            canonical_key = str(fuzzy.name).strip().lower()
+            characters.setdefault(canonical_key, fuzzy)
+            return fuzzy
         if not auto_create or not self._should_auto_ground_character_name(
             text, request, characters
         ):
